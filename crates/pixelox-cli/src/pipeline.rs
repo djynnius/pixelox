@@ -974,6 +974,7 @@ outputs: [dist/poster.png, dist/og.png]
         assert_eq!(rows[1]["title"], "Rear \"Admiral\"");
         let it = item_binding(Path::new("in/a.jpg"), 3, Some(Path::new("out")));
         assert_eq!(it["stem"], "a");
-        assert_eq!(it["out"], "out/a.jpg");
+        // native separators: `out\a.jpg` on Windows
+        assert_eq!(it["out"], Path::new("out").join("a.jpg").display().to_string());
     }
 }
