@@ -34,11 +34,15 @@ prints any command's reference page.
 6. Finish with `pixelox verify out.png.pixelox.json --json` and report paths and hashes.
 7. Models download only with `-y` and the user's consent. In this build the AI commands
    (`detect *`, `mask refine`, `fill content-aware`) exit 12; make masks with
-   `select color --contiguous`, `select luma`, or `select path` instead.
+   `select sky`, `select color --contiguous`, `select luma`, or `select path` instead.
+8. Brushwork is `paint stroke` (points or an SVG path; size, hardness, flow, opacity, tip
+   images, jitter) onto pixels, a layer mask (`--target mask`), or the selection. Filters
+   on a placed layer stay editable as smart filters; `layer stamp` merges what is visible
+   into a new layer for a final grade. Walkthrough: `docs/guides/cookbook/photo-composite.md`.
 
 ## Addressing
 
-`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|mask.png`
+`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png`
 (`--invert-mask`) · geometry `X,Y,WxH`, `X,Y`, `WxH` in px, `%`, `pt`, `mm`, `in`
 (negative = from the right/bottom; `--anchor tl..br`) · colors `#rrggbb[aa]`, `rgb()`,
 `hsl()`, CSS names, `transparent`. Details: `pixelox docs addressing`.

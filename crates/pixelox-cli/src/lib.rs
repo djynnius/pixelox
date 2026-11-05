@@ -11,10 +11,62 @@ pub mod jobs;
 pub mod pipeline;
 pub mod progress;
 
-use pixelox_core::Registry;
+use pixelox_core::compose::{set_smart_filter_hook, SmartFilterHook};
+use pixelox_core::ctx::{NoIo, NoProgress};
+use pixelox_core::op::{json_to_pairs, ParamKind};
+use pixelox_core::{
+    Args, Document, Error, Globals, Image, LayerKind, OpCtx, OpSpec, Registry, Result, Runner, SmartFilter,
+};
+use serde_json::Value;
+use std::sync::OnceLock;
+
+/// The registry the smart-filter hook resolves commands in (built once).
+fn shared_registry() -> &'static Registry {
+    static REG: OnceLock<Registry> = OnceLock::new();
+    REG.get_or_init(registry)
+}
+
+/// `filter *` and `adjust *` pixel commands can be smart filters when they read no files
+/// (no path or extra mask argument given).
+fn smart_eligible_spec(spec: &OpSpec, args: &Args) -> bool {
+    (spec.name.starts_with("filter ") || spec.name.starts_with("adjust "))
+        && matches!(spec.runner, Runner::Doc(_))
+        && !spec.is_read_only()
+        && spec.params.iter().any(|p| p.name == "layer")
+        && !spec
+            .params
+            .iter()
+            .any(|p| (p.kind == ParamKind::Path || (p.kind == ParamKind::Mask && p.name != "mask")) && args.has(p.name))
+}
+
+fn smart_eligible(id: &str, args: &Args) -> bool {
+    shared_registry().get(id).map(|s| smart_eligible_spec(s, args)).unwrap_or(false)
+}
+
+/// Re-run a recorded smart filter on a canvas-sized image (one temporary raster layer).
+fn run_smart_filter(f: &SmartFilter, img: &mut Image) -> Result<()> {
+    let spec = shared_registry().require(&f.op)?;
+    let Runner::Doc(run) = spec.runner else {
+        return Err(Error::internal(format!("{} is not a document command", f.op)));
+    };
+    let args = Args::build(spec, json_to_pairs(&Value::Object(f.params.clone()))?)?;
+    let mut doc = Document::from_image(std::mem::take(img));
+    let globals = Globals { seed: f.seed, ..Globals::default() };
+    let mut ctx = OpCtx::new(spec.name, vec![], globals, &NoIo, &NoProgress);
+    ctx.op_index = f.op_index;
+    run(&args, &mut doc, &mut ctx)?;
+    match doc.layers.pop().map(|l| l.content) {
+        Some(LayerKind::Raster { image }) if doc.layers.is_empty() => {
+            *img = image;
+            Ok(())
+        }
+        _ => Err(Error::internal(format!("smart filter {} did not leave one raster layer", f.op))),
+    }
+}
 
 /// Install every renderer hook (text, shapes, adjustments, layer styles, asset decoding).
 pub fn install() {
+    set_smart_filter_hook(SmartFilterHook { eligible: smart_eligible, run: run_smart_filter });
     pixelox_io::install();
     pixelox_adjust::install();
     pixelox_filter::install();

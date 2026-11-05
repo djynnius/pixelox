@@ -229,6 +229,7 @@ fn every_command_is_documented() {
         "select path",
         "select color",
         "select luma",
+        "select sky",
         "select all",
         "select none",
         "select invert",
@@ -264,7 +265,7 @@ fn every_command_is_documented() {
     ] {
         assert!(names.contains(&want), "missing {want}");
     }
-    assert_eq!(names.len(), 38);
+    assert_eq!(names.len(), 39);
     assert!(!names.contains(&"mask refine"));
     for o in &all {
         assert!(o.summary.len() <= 60 && !o.summary.ends_with('.'), "{}: summary '{}'", o.name, o.summary);

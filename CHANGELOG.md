@@ -4,6 +4,28 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+Closes the gaps found by replaying a long-form Photoshop compositing tutorial against the
+command surface (see `docs/guides/cookbook/photo-composite.md`).
+
+### Added
+- `paint stroke`: brush strokes along points, a points file, or SVG path data, onto
+  pixels, a layer mask, the selection, or a named mask. Size, hardness, flow, opacity
+  (Photoshop's per-stroke cap), spacing, angle and roundness, image tips, seeded size/angle
+  jitter, scatter and count, tapers, pressure, blend modes, erase. Warning PXW2004 when a
+  stroke paints nothing.
+- `select sky`: a classical (no-AI) Select › Sky with clouds, `--holes`, edge-aware
+  refinement, a horizon estimate, and a confidence score with advice.
+- `adjust clarity`, `adjust texture`, `adjust dehaze` (dark channel prior; negative adds
+  haze), destructive or as adjustment layers.
+- Smart filters: `filter` and `adjust` commands run on a placed layer are recorded on it
+  and re-run at render time; `layer smart-filter` disables, enables, or removes one;
+  `layer rasterize` bakes them (ADR 0011).
+- `layer blend-if` (Blend If on this layer and the underlying composite, with split
+  ramps), `layer stamp` (Stamp Visible), and the `@mask:<layer>` mask reference.
+- Cookbook: blend a photo composite.
+
 ## [0.1.0] — 2026-11-05
 
 First implementation of the PRD: the v0.1 "Document engine" milestone, most of v0.2–v0.5, and

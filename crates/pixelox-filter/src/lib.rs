@@ -1,7 +1,9 @@
-//! Filters (`filter *`), retouching (`retouch *`), and fills (`fill *`) for pixelox.
+//! Filters (`filter *`), retouching (`retouch *`), fills (`fill *`), and painting
+//! (`paint stroke`) for pixelox.
 //!
 //! Every command is a region op on a raster layer: `--layer` picks the layer (the only
-//! one by default) and `--mask` / `--invert-mask` limit the effect. Kernels are O(pixels)
+//! one by default) and `--mask` / `--invert-mask` limit the effect (`paint stroke` can also
+//! paint layer masks, the selection, and named masks). Kernels are O(pixels)
 //! per op; the few that are not radius-independent document their bounds (`util.rs`).
 //! `fill content-aware` (inpainting) lives in pixelox-ml.
 
@@ -13,6 +15,7 @@ mod blur;
 mod fill;
 mod kern;
 mod noise;
+mod paint;
 mod retouch;
 mod sharpen;
 mod stylize;
@@ -27,6 +30,7 @@ pub fn ops() -> Vec<OpSpec> {
     v.extend(stylize::ops());
     v.extend(retouch::ops());
     v.extend(fill::ops());
+    v.extend(paint::ops());
     v
 }
 
@@ -69,6 +73,7 @@ mod contract {
         "fill solid",
         "fill gradient",
         "fill pattern",
+        "paint stroke",
     ];
 
     const GLOBALS: &[&str] = &[
@@ -231,6 +236,7 @@ mod regions {
         ("retouch redeye", &[("at", "4,4"), ("radius", "30"), ("strength", "100")]),
         ("fill solid", &[("color", "#ff00ff")]),
         ("fill gradient", &[("stops", "#f00@0,#00f@1")]),
+        ("paint stroke", &[("points", "0,8 24,8"), ("size", "40"), ("color", "#00ff00")]),
     ];
 
     fn texture(w: u32, h: u32) -> Image {
@@ -292,7 +298,7 @@ mod regions {
                             r.data.iter().all(|v| v.is_finite() && (0.0..=1.0).contains(v)),
                             "{name}: values out of range"
                         );
-                        if img.width == 4 && !name.starts_with("fill") {
+                        if img.width == 4 && !name.starts_with("fill") && !name.starts_with("paint") {
                             assert_eq!(r.alpha_bbox(0.0), None, "{name}: transparent layer gained alpha");
                         }
                     }
@@ -342,6 +348,23 @@ mod determinism {
             ("filter smart-sharpen", &[("radius", "3")]),
             ("filter pixelate", &[("cell", "7"), ("kind", "hex")]),
             ("fill gradient", &[("dither", "true"), ("kind", "angular")]),
+            (
+                "paint stroke",
+                &[
+                    ("points", "10,20 290,180; 50,150 250,30"),
+                    ("size", "40"),
+                    ("flow", "30"),
+                    ("size-jitter", "40"),
+                    ("angle-jitter", "90"),
+                    ("scatter", "50"),
+                    ("count", "2"),
+                    ("roundness", "60"),
+                ],
+            ),
+            (
+                "paint stroke",
+                &[("d", "M 0 100 C 100 0 200 200 300 100"), ("size", "8%"), ("blend", "dissolve"), ("opacity", "60")],
+            ),
         ];
         let run_with = |threads: usize, name: &str, params: &[(&str, &str)]| {
             let pool = rayon::ThreadPoolBuilder::new().num_threads(threads).build().unwrap();
@@ -416,6 +439,20 @@ mod bench {
             ("retouch heal", &[("at", "3000,2000"), ("radius", "40")]),
             ("retouch clone", &[("from", "1000,1000"), ("to", "3000,2000"), ("radius", "300")]),
             ("retouch erase", &[("rect", "0,0,50%x50%")]),
+            ("paint stroke", &[("points", "5%,50% 95%,55%"), ("size", "400"), ("flow", "8")]),
+            ("paint stroke", &[("d", "M 0 0 L 6000 4000"), ("size", "60"), ("spacing", "2")]),
+            (
+                "paint stroke",
+                &[
+                    ("points", "10%,10% 90%,30% 10%,60% 90%,90%"),
+                    ("size", "40"),
+                    ("scatter", "200"),
+                    ("count", "8"),
+                    ("size-jitter", "50"),
+                    ("angle-jitter", "360"),
+                ],
+            ),
+            ("paint stroke", &[("points", "0,50% 100%,50%"), ("size", "3000"), ("spacing", "1")]),
         ];
         let only = std::env::var("PIXELOX_BENCH").unwrap_or_default();
         for (name, params) in cases.iter().filter(|(n, _)| n.contains(only.as_str())) {

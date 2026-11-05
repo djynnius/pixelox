@@ -77,6 +77,9 @@ fn cases() -> Vec<(&'static str, Vec<(&'static str, String)>)> {
         ("adjust exposure", vec![("ev", s("0.8")), ("offset", s("-0.01")), ("gamma", s("1.1"))]),
         ("adjust shadows-highlights", vec![("shadows", s("60")), ("highlights", s("40")), ("radius", s("4"))]),
         ("adjust tone-map", vec![("strength", s("70"))]),
+        ("adjust clarity", vec![("amount", s("60")), ("radius", s("3"))]),
+        ("adjust texture", vec![("amount", s("80"))]),
+        ("adjust dehaze", vec![("amount", s("60"))]),
         ("adjust hsl", vec![("hue", s("40")), ("saturation", s("30")), ("lightness", s("-10"))]),
         (
             "adjust color-balance",
@@ -166,7 +169,7 @@ fn every_command_is_defined() {
     for a in ["analyze histogram", "analyze stats", "analyze colors", "analyze diff"] {
         assert!(names.contains(&a), "missing {a}");
     }
-    assert_eq!(names.len(), 24);
+    assert_eq!(names.len(), 27);
     assert!(!names.contains(&"analyze exif"));
 }
 
@@ -259,6 +262,10 @@ fn identity_settings_change_nothing() {
         ("adjust exposure", vec![]),
         ("adjust shadows-highlights", vec![("shadows", "0")]),
         ("adjust tone-map", vec![("strength", "0")]),
+        ("adjust clarity", vec![("amount", "0")]),
+        ("adjust texture", vec![("amount", "0")]),
+        ("adjust dehaze", vec![("amount", "0")]),
+        ("adjust dehaze", vec![("amount", "0"), ("atmosphere", "#c0c8d0"), ("patch", "3")]),
         ("adjust hsl", vec![]),
         ("adjust color-balance", vec![]),
         ("adjust vibrance", vec![]),
@@ -394,6 +401,321 @@ fn tone_map_compresses_large_scale_contrast() {
     let (c, _) = apply("adjust tone-map", &[], Image::filled(8, 8, Rgba::new(0.2, 0.1, 0.05, 1.0)));
     let p = px(&c, 4, 4);
     assert!(p[0] > p[1] && p[1] > p[2]);
+}
+
+// ---------------------------------------------------------------------------------------
+// clarity, texture, dehaze
+
+/// Encoded luma per pixel.
+fn lumas(img: &Image) -> Vec<f32> {
+    img.data.chunks_exact(4).map(|p| color::luma(p[0], p[1], p[2])).collect()
+}
+
+/// Standard deviation of `v` over the pixels of a `w`-wide image inside `x0..x1, y0..y1`.
+fn std_in(v: &[f32], w: u32, (x0, x1): (u32, u32), (y0, y1): (u32, u32)) -> f64 {
+    let vals: Vec<f64> = (y0..y1).flat_map(|y| (x0..x1).map(move |x| v[(y * w + x) as usize] as f64)).collect();
+    let m = vals.iter().sum::<f64>() / vals.len() as f64;
+    (vals.iter().map(|v| (v - m) * (v - m)).sum::<f64>() / vals.len() as f64).sqrt()
+}
+
+/// Std of a high-pass (luma minus a σ-3 blur) inside a region: local contrast.
+fn local_contrast(img: &Image, xs: (u32, u32), ys: (u32, u32)) -> f64 {
+    let blur = kernels::gaussian_blur(img, 3.0, kernels::Edge::Clamp);
+    let hp: Vec<f32> = lumas(img).iter().zip(lumas(&blur)).map(|(a, b)| a - b).collect();
+    std_in(&hp, img.width, xs, ys)
+}
+
+fn gray(v: f32) -> [f32; 4] {
+    [v, v, v, 1.0]
+}
+
+/// Smooth midtone blobs on the left (x < 48), a shadow version in the middle
+/// (48 ≤ x < 96), flat gray on the right.
+fn blobs() -> Image {
+    Image::from_fn(160, 48, |x, y| {
+        let b = (x as f32 * std::f32::consts::TAU / 12.0).sin() * (y as f32 * std::f32::consts::TAU / 12.0).sin();
+        if x < 48 {
+            gray(0.5 + 0.08 * b)
+        } else if x < 96 {
+            gray(0.07 + 0.03 * b)
+        } else {
+            gray(0.5)
+        }
+    })
+}
+
+#[test]
+fn clarity_raises_midtone_local_contrast_and_keeps_flat_areas() {
+    let img = blobs();
+    let mid = ((8, 40), (8, 40));
+    let dark = ((56, 88), (8, 40));
+    let (up, v) = apply("adjust clarity", &[("amount", "60"), ("radius", "4")], img.clone());
+    assert_eq!(v["clarity"]["radius"], 4.0);
+    let gain_mid = local_contrast(&up, mid.0, mid.1) / local_contrast(&img, mid.0, mid.1);
+    let gain_dark = local_contrast(&up, dark.0, dark.1) / local_contrast(&img, dark.0, dark.1);
+    assert!(gain_mid > 1.2, "midtone local contrast ×{gain_mid}");
+    assert!(gain_dark < gain_mid, "shadows ×{gain_dark} should gain less than midtones ×{gain_mid}");
+    // flat gray far from the pattern stays exactly as it was
+    let flat = (0..48).all(|y| (128..160).all(|x| px(&up, x, y) == px(&img, x, y)));
+    assert!(flat, "flat area changed");
+    // negative clarity softens
+    let (down, _) = apply("adjust clarity", &[("amount", "-60"), ("radius", "4")], img.clone());
+    let soft = local_contrast(&down, mid.0, mid.1) / local_contrast(&img, mid.0, mid.1);
+    assert!(soft < 0.8, "negative clarity ×{soft}");
+    // gray stays gray; a colored pixel keeps its hue
+    assert!(up.data.chunks(4).all(|p| p[0] == p[1] && p[1] == p[2]));
+    let tinted = Image::from_fn(48, 48, |x, y| {
+        let b = (x as f32 * 0.5).sin() * (y as f32 * 0.5).sin();
+        [0.6 + 0.08 * b, 0.4 + 0.06 * b, 0.25 + 0.04 * b, 1.0]
+    });
+    let (t, _) = apply("adjust clarity", &[("amount", "80"), ("radius", "4")], tinted.clone());
+    for (a, b) in tinted.data.chunks(4).zip(t.data.chunks(4)) {
+        let (h0, _, _) = color::rgb_to_hsl(a[0], a[1], a[2]);
+        let (h1, _, _) = color::rgb_to_hsl(b[0], b[1], b[2]);
+        assert!((h0 - h1).abs() < 1.5, "hue {h0} → {h1}");
+    }
+}
+
+#[test]
+fn clarity_adds_no_wide_halos_at_strong_edges() {
+    let step = Image::from_fn(96, 8, |x, _| if x < 48 { gray(0.15) } else { gray(0.85) });
+    let (o, _) = apply("adjust clarity", &[("amount", "100"), ("radius", "6")], step.clone());
+    let change = |x: u32| (px(&o, x, 4)[0] - px(&step, x, 4)[0]).abs();
+    // a plain (not edge-aware) unsharp mask of this radius overshoots by about 0.25
+    let worst = (0..96).map(change).fold(0.0f32, f32::max);
+    assert!(worst < 0.06, "overshoot {worst}");
+    let wide = (0..42).chain(54..96).map(change).fold(0.0f32, f32::max);
+    assert!(wide < 0.025, "overshoot 6 px from the edge {wide}");
+}
+
+#[test]
+fn clarity_radius_scales_with_the_canvas() {
+    let (_, v) = apply("adjust clarity", &[], Image::filled(400, 8, Rgba::new(0.5, 0.4, 0.3, 1.0)));
+    assert_eq!(v["clarity"]["radius"], 6.0);
+    let (_, v) = apply("adjust texture", &[], Image::filled(1200, 4, Rgba::new(0.5, 0.4, 0.3, 1.0)));
+    assert_eq!(v["texture"]["radius"], 3.0);
+    // a smaller layer on a big canvas still uses the canvas's scale
+    let mut d = testing::doc_layers(400, 100, vec![("Small", Image::filled(40, 10, Rgba::new(0.5, 0.5, 0.5, 1.0)))]);
+    let v = run(&spec("adjust clarity"), &[], &mut d).unwrap();
+    assert_eq!(v["clarity"]["radius"], 6.0);
+}
+
+/// Fine low-contrast stripes on the left (x < 64), a large step edge at x = 96.
+fn stripes_and_edge() -> Image {
+    Image::from_fn(128, 32, |x, y| {
+        if x < 64 {
+            gray(
+                0.5 + 0.04
+                    * (x as f32 * std::f32::consts::TAU / 8.0).sin()
+                    * (y as f32 * std::f32::consts::TAU / 8.0).cos(),
+            )
+        } else if x < 96 {
+            gray(0.2)
+        } else {
+            gray(0.8)
+        }
+    })
+}
+
+#[test]
+fn texture_boosts_fine_detail_more_than_large_edges() {
+    let img = stripes_and_edge();
+    let (o, v) = apply("adjust texture", &[("amount", "80"), ("radius", "4")], img.clone());
+    assert_eq!(v["texture"]["radius"], 4.0);
+    let (li, lo) = (lumas(&img), lumas(&o));
+    let pattern = std_in(&lo, 128, (8, 56), (4, 28)) / std_in(&li, 128, (8, 56), (4, 28));
+    // the edge: the largest change near it, relative to its height
+    let edge = (0..32)
+        .flat_map(|y| (72..124).map(move |x| (y * 128 + x) as usize))
+        .map(|i| (lo[i] - li[i]).abs())
+        .fold(0.0f32, f32::max)
+        / 0.6;
+    assert!(pattern > 1.5, "texture ×{pattern}");
+    assert!(edge < 0.06, "the edge moved by {edge} of its height");
+    // negative texture smooths the stripes
+    let (s, _) = apply("adjust texture", &[("amount", "-80"), ("radius", "4")], img.clone());
+    let smooth = std_in(&lumas(&s), 128, (8, 56), (4, 28)) / std_in(&li, 128, (8, 56), (4, 28));
+    assert!(smooth < 0.75, "negative texture ×{smooth}");
+    // pixel-level noise is boosted much less than the texture band
+    let noise = Image::from_fn(64, 32, |x, y| gray(0.5 + if (x + y) % 2 == 0 { 0.03 } else { -0.03 }));
+    let (n, _) = apply("adjust texture", &[("amount", "80"), ("radius", "4")], noise.clone());
+    let noise_gain = std_in(&lumas(&n), 64, (4, 60), (4, 28)) / std_in(&lumas(&noise), 64, (4, 60), (4, 28));
+    assert!(noise_gain < 1.0 + (pattern - 1.0) / 3.0, "noise ×{noise_gain} vs texture ×{pattern}");
+}
+
+const HAZE_A: [f32; 3] = [0.78, 0.8, 0.84];
+
+/// A colorful haze-free scene J (linear values with a dark channel near zero) under a sky
+/// band, and its hazy version I = J·t + A·(1 − t) (t falls with height), both encoded.
+fn hazy_scene() -> (Image, Image) {
+    let palette: [[f32; 3]; 6] = [
+        [0.6, 0.12, 0.02],
+        [0.04, 0.35, 0.08],
+        [0.03, 0.1, 0.5],
+        [0.4, 0.35, 0.02],
+        [0.03, 0.03, 0.03],
+        [0.45, 0.04, 0.35],
+    ];
+    let lin = |x: u32, y: u32| -> ([f32; 3], f32) {
+        if y < 10 {
+            ([0.5, 0.6, 0.8], 0.04)
+        } else {
+            let c = palette[((x / 8 + y / 8 * 3) % 6) as usize];
+            let shade = 0.75 + 0.25 * ((x % 8) as f32 / 7.0);
+            (c.map(|v| v * shade), 0.35 + 0.5 * (y - 10) as f32 / 53.0)
+        }
+    };
+    let enc =
+        |c: [f32; 3]| [color::linear_to_srgb(c[0]), color::linear_to_srgb(c[1]), color::linear_to_srgb(c[2]), 1.0];
+    let j = Image::from_fn(64, 64, |x, y| enc(lin(x, y).0));
+    let i = Image::from_fn(64, 64, |x, y| {
+        let (c, t) = lin(x, y);
+        enc([0, 1, 2].map(|k| c[k] * t + HAZE_A[k] * (1.0 - t)))
+    });
+    (j, i)
+}
+
+/// Mean absolute difference of the colors below the sky band.
+fn scene_error(a: &Image, b: &Image) -> f64 {
+    let mut s = 0.0f64;
+    let mut n = 0;
+    for y in 12..64 {
+        for x in 0..64 {
+            for c in 0..3 {
+                s += (px(a, x, y)[c] - px(b, x, y)[c]).abs() as f64;
+                n += 1;
+            }
+        }
+    }
+    s / n as f64
+}
+
+#[test]
+fn dehaze_recovers_a_synthetic_hazy_scene() {
+    let (j, hazy) = hazy_scene();
+    let mut d = doc_from(hazy.clone());
+    let (v, resolved, _) = run_ctx("adjust dehaze", &[("amount", "100")], &mut d);
+    let out = raster(&d, "Background").clone();
+    let (before, after) = (scene_error(&hazy, &j), scene_error(&out, &j));
+    assert!(after < before * 0.5, "error {before} → {after}");
+    let contrast = |img: &Image| std_in(&lumas(img), 64, (0, 64), (12, 64));
+    assert!(contrast(&out) > contrast(&hazy) * 1.3, "contrast {} → {}", contrast(&hazy), contrast(&out));
+    // A is found in the sky, reported, and recorded for replay
+    let hex = v["dehaze"]["atmosphere"].as_str().unwrap().to_string();
+    let a = Rgba::parse(&hex).unwrap();
+    for (got, want) in [a.r, a.g, a.b].iter().zip(HAZE_A) {
+        assert!((color::srgb_to_linear(*got) - want).abs() < 0.06, "A {hex}");
+    }
+    assert_eq!(resolved["atmosphere"], hex.as_str());
+    let t = v["dehaze"]["mean_transmission"].as_f64().unwrap();
+    assert!(t > 0.2 && t < 0.9, "mean transmission {t}");
+    assert_eq!(v["dehaze"]["patch"], 1);
+    // replaying with the recorded A gives the same pixels
+    let (again, _) = apply("adjust dehaze", &[("amount", "100"), ("atmosphere", &hex)], hazy.clone());
+    assert_eq!(again, out);
+    // a milder amount lands in between
+    let (mild, _) = apply("adjust dehaze", &[("amount", "40")], hazy.clone());
+    let e = scene_error(&mild, &j);
+    assert!(e < before && e > after, "{before} > {e} > {after}");
+}
+
+#[test]
+fn negative_dehaze_adds_haze() {
+    let (j, _) = hazy_scene();
+    let (o, v) = apply("adjust dehaze", &[("amount", "-60"), ("atmosphere", "#e0e4ea")], j.clone());
+    let contrast = |img: &Image| std_in(&lumas(img), 64, (0, 64), (12, 64));
+    assert!(contrast(&o) < contrast(&j) * 0.85, "contrast {} → {}", contrast(&j), contrast(&o));
+    assert_eq!(v["dehaze"]["atmosphere"], "#e0e4ea");
+    // everything moves toward the haze color
+    let haze = Rgba::parse("#e0e4ea").unwrap();
+    let dist = |img: &Image| {
+        img.data
+            .chunks(4)
+            .map(|p| ((p[0] - haze.r).abs() + (p[1] - haze.g).abs() + (p[2] - haze.b).abs()) as f64)
+            .sum::<f64>()
+    };
+    assert!(dist(&o) < dist(&j));
+}
+
+#[test]
+fn local_adjustments_as_layers_match_and_report() {
+    install();
+    let (_, hazy) = hazy_scene();
+    for (name, pairs) in [
+        ("adjust dehaze", vec![("amount", "70")]),
+        ("adjust dehaze", vec![("amount", "-50")]),
+        ("adjust clarity", vec![("amount", "50")]),
+        ("adjust texture", vec![("amount", "-40")]),
+    ] {
+        let (destructive, dv) = apply(name, &pairs, hazy.clone());
+        let mut d = doc_from(hazy.clone());
+        let mut p = pairs.clone();
+        p.push(("as-layer", "true"));
+        let v = run(&spec(name), &p, &mut d).unwrap();
+        let diff = max_diff(&compose::composite(&d).unwrap(), &destructive);
+        assert!(diff < 1e-4, "{name} {pairs:?}: layer renders {diff} away");
+        let op = name.strip_prefix("adjust ").unwrap();
+        assert_eq!(v[op], dv[op], "{name}: the layer reports what the destructive op does");
+        if let LayerKind::Adjustment { params, .. } = &d.layers[1].content {
+            if op == "dehaze" {
+                assert_eq!(params["atmosphere"], dv["dehaze"]["atmosphere"], "A is embedded");
+                assert_eq!(params["patch"], "auto");
+            } else {
+                assert_eq!(params["radius"], "auto", "{name}: the layer follows the canvas size");
+            }
+        }
+    }
+    // a hand-made layer with `auto` detects A at render time
+    let mut img = hazy.clone();
+    let mut params = Map::new();
+    params.insert("amount".into(), json!("70"));
+    compose::apply_adjustment("dehaze", &params, &mut img).unwrap();
+    let (destructive, _) = apply("adjust dehaze", &[("amount", "70")], hazy.clone());
+    assert!(max_diff(&img, &destructive) < 1e-4);
+}
+
+#[test]
+fn local_adjustments_respect_masks_and_transparency() {
+    let (_, hazy) = hazy_scene();
+    for name in ["adjust clarity", "adjust texture", "adjust dehaze"] {
+        let mut d = doc_from(hazy.clone());
+        d.put_mask("left", testing::half_mask(64, 64), false).unwrap();
+        run(&spec(name), &[("amount", "80"), ("mask", "left")], &mut d).unwrap();
+        let out = raster(&d, "Background");
+        assert!((0..64).all(|y| (32..64).all(|x| px(out, x, y) == px(&hazy, x, y))), "{name}: outside the mask");
+        assert!((0..64).any(|y| (0..32).any(|x| px(out, x, y) != px(&hazy, x, y))), "{name}: inside the mask");
+        // transparent pixels keep their alpha and do not darken their visible neighbors
+        let cut = Image::from_fn(64, 64, |x, y| {
+            let p = px(&hazy, x, y);
+            if x >= 40 {
+                [0.0, 0.0, 0.0, 0.0]
+            } else {
+                [p[0], p[1], p[2], if x >= 36 { 0.5 } else { 1.0 }]
+            }
+        });
+        let (o, _) = apply(name, &[("amount", "80")], cut.clone());
+        assert!(o.data.chunks(4).zip(cut.data.chunks(4)).all(|(a, b)| a[3] == b[3]), "{name}: alpha changed");
+        let (opaque, _) = apply(name, &[("amount", "80")], hazy.crop(RectI::new(0, 0, 40, 64)));
+        let near_edge = (0..64).map(|y| (px(&o, 34, y)[1] - px(&opaque, 34, y)[1]).abs()).fold(0.0f32, f32::max);
+        assert!(near_edge < 0.05, "{name}: transparent pixels leaked {near_edge}");
+    }
+}
+
+#[test]
+fn local_adjustments_ignore_the_thread_count() {
+    let (_, hazy) = hazy_scene();
+    let pool1 = rayon::ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+    let pool4 = rayon::ThreadPoolBuilder::new().num_threads(4).build().unwrap();
+    // radii above 4 px take the running-box path
+    for (name, pairs) in [
+        ("adjust clarity", vec![("amount", "70"), ("radius", "9")]),
+        ("adjust texture", vec![("amount", "70"), ("radius", "6")]),
+        ("adjust dehaze", vec![("amount", "70"), ("patch", "4")]),
+    ] {
+        let a = pool1.install(|| apply(name, &pairs, hazy.clone()));
+        let b = pool4.install(|| apply(name, &pairs, hazy.clone()));
+        assert!(a.0 == b.0 && a.1 == b.1, "{name} depends on the thread count");
+    }
 }
 
 #[test]

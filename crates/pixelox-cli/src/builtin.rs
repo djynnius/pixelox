@@ -166,7 +166,7 @@ const BRIEFING: &str = "pixelox: image editor CLI for agents. Grammar: pixelox <
 INPUT: image (jpg png tif webp gif bmp psd svg) or .pxo document; images open as one layer `Background`. -o x.pxo keeps layers; -o x.png flattens. --in-place only rewrites .pxo.
 Always: --json (one envelope: ok, result, outputs[].path+sha256, warnings[], error{code,hint}); --dry-run before writing; --overwrite only when asked; -y only with download consent.
 Globals: --seed N|random --threads N --progress json --no-sidecar --background --redact-paths --config F.
-Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom), --anchor tl..br; colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
+Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom), --anchor tl..br; colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
 Exit: 0 ok 1 runtime 2 usage 3 input 4 exists 5 format 6 consent 7 script 8 job 9 verify 10 interrupt 11 memory 12 not-in-build. Each output gets out.pixelox.json (replay/verify).
 More than 3 steps: write a pipeline (pixelox docs pipelines). Check work: analyze diff A B; verify out.pixelox.json.
 Workflows:

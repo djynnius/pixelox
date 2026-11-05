@@ -6,7 +6,7 @@
 //! call [`prepare`], so an adjustment layer renders exactly what the destructive op does.
 
 use crate::util::{self, conflict, num};
-use crate::{auto, curve, hue, lut, tone};
+use crate::{auto, curve, hue, local, lut, tone};
 use pixelox_core::op::{json_to_pairs, DocFn, ParamSpec};
 use pixelox_core::prelude::*;
 use std::sync::OnceLock;
@@ -27,6 +27,9 @@ pub const OPS: &[(&str, &str)] = &[
     ("exposure", "Exposure"),
     ("shadows-highlights", "Shadows/Highlights"),
     ("tone-map", "Tone Map"),
+    ("clarity", "Clarity"),
+    ("texture", "Texture"),
+    ("dehaze", "Dehaze"),
     ("hsl", "Hue/Saturation"),
     ("color-balance", "Color Balance"),
     ("vibrance", "Vibrance"),
@@ -55,6 +58,9 @@ pub fn prepare(op: &str, a: &Args) -> Result<Job> {
         "exposure" => tone::exposure(a),
         "shadows-highlights" => tone::shadows_highlights(a),
         "tone-map" => tone::tone_map(a),
+        "clarity" => local::clarity(a),
+        "texture" => local::texture(a),
+        "dehaze" => local::dehaze(a),
         "hsl" => hue::hsl(a),
         "color-balance" => hue::color_balance(a),
         "vibrance" => hue::vibrance(a),
@@ -71,6 +77,15 @@ pub fn prepare(op: &str, a: &Args) -> Result<Job> {
         "auto" => auto_job(a),
         other => Err(Error::new("PX3001", format!("unknown adjustment '{other}'"))
             .with_context("known", OPS.iter().map(|(n, _)| *n).collect::<Vec<_>>())),
+    }
+}
+
+/// Like [`prepare`], plus the slot where the job reports what it found while running
+/// (dehaze: A, the patch, and the mean transmission).
+fn prepare_reporting(op: &str, a: &Args) -> Result<(Job, Option<local::Report>)> {
+    match op {
+        "dehaze" => local::dehaze_reporting(a).map(|(job, r)| (job, Some(r))),
+        _ => prepare(op, a).map(|job| (job, None)),
     }
 }
 
@@ -194,6 +209,7 @@ pub fn needs_image(op: &str, a: &Args) -> bool {
     match op {
         "white-balance" => a.has("from-point") || wb_auto(a),
         "auto" => !(a.has("black") && a.has("white") && a.has("gamma")),
+        "dehaze" => a.is_auto("atmosphere") && a.f64("amount").map(|v| v != 0.0).unwrap_or(false),
         _ => false,
     }
 }
@@ -270,6 +286,18 @@ pub fn resolve_image(op: &str, a: &mut Args, src: &Source) -> Result<Resolved> {
             );
             r.record = vec![("black", json!(black)), ("white", json!(white)), ("gamma", json!(gamma))];
         }
+        "dehaze" => {
+            let patch = match a.opt_int("patch")? {
+                Some(p) => p.max(1) as usize,
+                None => local::auto_scale(op, src.canvas.0.max(src.canvas.1)).map_or(1, |(_, v)| v as usize),
+            };
+            // nothing visible: stay `auto` (the job then leaves the pixels alone)
+            if let Some(c) = local::atmosphere(src.img, patch) {
+                let hex = local::hex_of_linear(c);
+                a.set("atmosphere", hex.clone());
+                r.record = vec![("atmosphere", json!(hex))];
+            }
+        }
         _ => {}
     }
     Ok(r)
@@ -316,8 +344,14 @@ pub fn run(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> R
             .with_hint("add --as-layer to make an adjustment layer, or drop --name"));
     }
     let path = target_layer(a, doc)?;
+    if matches!(doc.layer(&path).content, LayerKind::Placed { .. }) && compose::smart_filter_eligible(&ctx.id, a) {
+        // recorded as a smart filter on the placed layer (re-run at render time)
+        return apply_to_raster(a, doc, ctx, |img, _| Ok(img.clone()));
+    }
     let mut ra = a.clone();
     resolve_files(op, &mut ra, ctx)?;
+    // radii that scale with the canvas (`auto`) become px before anything measures pixels
+    let scale = local::resolve_scale(op, &mut ra, doc.width.max(doc.height) as f64)?;
     let resolved = {
         let layer = doc.layer(&path);
         let src = Source {
@@ -329,13 +363,15 @@ pub fn run(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> R
         resolve_image(op, &mut ra, &src)?
     };
     record(ctx, &resolved);
-    let job = prepare(op, &ra)?;
+    let (job, report) = prepare_reporting(op, &ra)?;
     let mut v = apply_to_raster(a, doc, ctx, |img, _| {
         let mut out = img.clone();
         job(&mut out);
         Ok(out)
     })?;
     merge(&mut v, resolved.info);
+    let report = report.map(|r| r.lock().map(|m| m.clone()).unwrap_or_default());
+    merge(&mut v, local::info(op, scale, report));
     Ok(v)
 }
 
@@ -346,16 +382,30 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
     };
     let mut ra = a.clone();
     resolve_files(op, &mut ra, ctx)?;
+    let mut below = None;
     let resolved = if needs_image(op, &ra) {
-        let below = composite_below(doc, at.as_deref())?;
-        let src = Source { img: &below, x: 0, y: 0, canvas: (doc.width as f64, doc.height as f64, doc.dpi()) };
-        resolve_image(op, &mut ra, &src)?
+        let img = composite_below(doc, at.as_deref())?;
+        let src = Source { img: &img, x: 0, y: 0, canvas: (doc.width as f64, doc.height as f64, doc.dpi()) };
+        let r = resolve_image(op, &mut ra, &src)?;
+        below = Some(img);
+        r
     } else {
         Resolved::default()
     };
     record(ctx, &resolved);
     // validate every value now rather than when the layer first renders
     let _validated: Job = prepare(op, &ra)?;
+    // the layer keeps `auto` radii (they follow the canvas at render time); report the px
+    let scale = local::resolve_scale(op, &mut ra.clone(), doc.width.max(doc.height) as f64)?;
+    let report = if op == "dehaze" && ra.f64("amount")? != 0.0 {
+        let img = match below {
+            Some(img) => img,
+            None => composite_below(doc, at.as_deref())?,
+        };
+        local::dehaze_summary(&ra, &img)?
+    } else {
+        None
+    };
     let mut params = ra.to_json();
     for k in LAYER_ONLY {
         params.remove(*k);
@@ -390,6 +440,7 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
         v["above"] = json!(doc.layer(p).name);
     }
     merge(&mut v, resolved.info);
+    merge(&mut v, local::info(op, scale, report));
     Ok(v)
 }
 
@@ -437,6 +488,9 @@ runners! {
     run_exposure => "exposure",
     run_shadows_highlights => "shadows-highlights",
     run_tone_map => "tone-map",
+    run_clarity => "clarity",
+    run_texture => "texture",
+    run_dehaze => "dehaze",
     run_hsl => "hsl",
     run_color_balance => "color-balance",
     run_vibrance => "vibrance",
@@ -552,6 +606,46 @@ pub fn specs() -> Vec<OpSpec> {
         .example("pixelox adjust tone-map photo.jpg -o out.jpg", "Default tone mapping")
         .example("pixelox adjust tone-map photo.jpg -o out.jpg --strength 80", "Strong HDR look")
         .example("pixelox adjust tone-map doc.pxo --in-place --strength 40 --as-layer", "As an adjustment layer"),
+        adj(
+            "adjust clarity",
+            "Midtone local contrast (Lightroom Clarity)",
+            run_clarity,
+            vec![
+                param("amount", ParamKind::Float).default("25").range("-100..100").help("Midtone local contrast: + adds punch, − softens into a glow; 0 changes nothing"),
+                param("radius", ParamKind::Float).default("auto").auto().range("0.5..2500").help("Size of the neighborhood in px (Gaussian sigma); auto = 1.5% of the canvas's long side, at least 2"),
+            ],
+        )
+        .about("Lightroom/Camera Raw Clarity. Perceptual luminance is split into a smooth, edge-aware base (a guided filter over --radius) and detail; the detail is scaled by --amount, weighted toward the midtones, and written back through linear light so hues are kept. Strong edges count as edges, not detail, so they gain no wide halos. Negative amounts fade the detail into the base for a soft, Orton-like look. The radius used is reported.")
+        .example("pixelox adjust clarity photo.jpg -o out.jpg", "Default clarity (+25)")
+        .example("pixelox adjust clarity photo.jpg -o out.jpg --amount 60 --radius 40", "Strong local contrast over a fixed radius")
+        .example("pixelox adjust clarity doc.pxo --in-place --amount=-40 --as-layer --name Glow", "Dreamy softening as an adjustment layer"),
+        adj(
+            "adjust texture",
+            "Boost or smooth medium-sized texture",
+            run_texture,
+            vec![
+                param("amount", ParamKind::Float).default("25").range("-100..100").help("Surface detail: + brings out pores, fabric, and rock; − smooths it; 0 changes nothing"),
+                param("radius", ParamKind::Float).default("auto").auto().range("0.5..500").help("Largest detail treated as texture, in px (Gaussian sigma); auto = 0.25% of the canvas's long side, at least 1.5"),
+            ],
+        )
+        .about("Lightroom/Camera Raw Texture. The band between pixel-level noise (a 0.8 px blur) and --radius is taken from perceptual luminance with an edge-aware guided filter, so large edges and high-contrast outlines barely change while low-contrast surface detail is scaled by --amount; the change is written back through linear light so hues are kept. Negative amounts smooth skin and surfaces without blurring edges. The radius used is reported.")
+        .example("pixelox adjust texture photo.jpg -o out.jpg", "Default texture boost (+25)")
+        .example("pixelox adjust texture portrait.jpg -o out.jpg --amount=-50", "Smooth skin, keep edges sharp")
+        .example("pixelox adjust texture doc.pxo --in-place --amount 60 --mask rocks", "Bring out rock texture inside a mask"),
+        adj(
+            "adjust dehaze",
+            "Remove or add atmospheric haze",
+            run_dehaze,
+            vec![
+                param("amount", ParamKind::Float).default("25").range("-100..100").help("Haze removed (+) or added (−); 0 changes nothing"),
+                param("atmosphere", ParamKind::Color).default("auto").auto().help("Haze color A; auto = mean of the brightest 0.1% of the dark channel (detected values are recorded)"),
+                param("patch", ParamKind::Int).default("auto").auto().range("1..500").advanced().help("Dark-channel patch radius in px; auto = 1.2% of the canvas's long side"),
+            ],
+        )
+        .about("Lightroom/Camera Raw Dehaze by the dark channel prior (He, Sun & Tang 2009), in linear light. The dark channel (each pixel's smallest channel, min-filtered over a square --patch) locates haze; A is the mean color of its brightest 0.1%; the transmission t = 1 − ω·dark(I/A), ω = 0.95·amount/100, uses a morphological opening of the dark channel (so it keeps the scene's outlines) and is refined with a guided filter; and the scene is recovered as (I − A)/max(t, 0.1) + A. Negative amounts blend toward A, most where t is low (far away). The result reports A and the mean transmission; a detected A is recorded for replay and embedded in adjustment layers.")
+        .example("pixelox adjust dehaze landscape.jpg -o out.jpg", "Default haze removal (+25)")
+        .example("pixelox adjust dehaze landscape.jpg -o out.jpg --amount 70 --json", "Strong dehaze; the result reports A and mean transmission")
+        .example("pixelox adjust dehaze doc.pxo --in-place --amount=-30 --as-layer --name Mist", "Add atmospheric haze as a layer"),
         adj(
             "adjust hsl",
             "Hue/saturation/lightness, per color range or colorize",

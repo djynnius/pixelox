@@ -36,7 +36,7 @@ pub mod units;
 pub use blend::BlendMode;
 pub use color::Rgba;
 pub use ctx::{EncodeOptions, Globals, ImageInfo, ImageIo, OpCtx, OpenOptions, Progress};
-pub use doc::{Document, Layer, LayerKind, RecipeStep};
+pub use doc::{BlendIf, Document, Layer, LayerKind, RecipeStep, SmartFilter};
 pub use envelope::{Envelope, Sidecar, PIXELOX_VERSION};
 pub use error::{Error, ErrorKind, Result};
 pub use image::{Image, Mask, Rendered};
@@ -49,7 +49,7 @@ pub mod prelude {
     pub use crate::color::{self, Rgba};
     pub use crate::compose;
     pub use crate::ctx::{EncodeOptions, OpCtx};
-    pub use crate::doc::{Document, Layer, LayerKind, LayerMask};
+    pub use crate::doc::{BlendIf, Document, Layer, LayerKind, LayerMask, SmartFilter};
     pub use crate::error::{Error, Result};
     pub use crate::geom;
     pub use crate::image::{Image, Mask, Rendered};

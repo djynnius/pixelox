@@ -153,11 +153,11 @@ pub fn mask_image(m: &Mask) -> Image {
     img
 }
 
-/// Resolve a mask reference (`@sel`, a library name, `@alpha:<layer>`, or a grayscale
+/// Resolve a mask reference (`@sel`, a library name, `@alpha:<layer>`, `@mask:<layer>`, or a grayscale
 /// image path) recording a file under this op's `param` for replay.
 pub fn resolve_mask_ref(ctx: &mut OpCtx, doc: &Document, r: &str, param: &str) -> Result<Mask> {
     let r = r.trim();
-    if r.starts_with("@alpha:") || r == "@sel" || doc.masks.contains_key(r) {
+    if r.starts_with("@alpha:") || r.starts_with("@mask:") || r == "@sel" || doc.masks.contains_key(r) {
         return ctx.resolve_mask(doc, r).map(|m| fit_mask(m, doc.width, doc.height));
     }
     let path = Path::new(r);

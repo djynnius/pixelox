@@ -38,7 +38,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Mask reference: @sel, a library name, or @alpha:<layer> Type: mask.",
+        "description": "Mask reference: @sel, a library name, @alpha:<layer>, or @mask:<layer> Type: mask.",
         "x-pixelox-kind": "mask"
       },
       "from_file": {

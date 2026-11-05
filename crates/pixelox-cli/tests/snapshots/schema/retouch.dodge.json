@@ -38,7 +38,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Region to work on: a named mask, @sel, @alpha:<layer>, or a grayscale image path Type: mask.",
+        "description": "Region to work on: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path Type: mask.",
         "x-pixelox-kind": "mask"
       },
       "invert_mask": {

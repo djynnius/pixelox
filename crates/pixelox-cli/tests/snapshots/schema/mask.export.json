@@ -30,7 +30,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Mask to write: a library name, @sel, or @alpha:<layer> Type: mask.",
+        "description": "Mask to write: a library name, @sel, @alpha:<layer>, or @mask:<layer> Type: mask.",
         "x-pixelox-kind": "mask"
       }
     },

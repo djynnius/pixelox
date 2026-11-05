@@ -768,6 +768,7 @@ dependencies = [
 name = "pixelox-filter"
 version = "0.1.0"
 dependencies = [
+ "kurbo",
  "pixelox-core",
  "rand_core",
  "rayon",

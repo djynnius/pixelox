@@ -2,7 +2,8 @@
 //! pixelox.
 //!
 //! * `select`: anti-aliased shape selections (tiny-skia), color range / magic wand,
-//!   luminosity ranges, boolean modes, and the named-mask library round trip.
+//!   luminosity ranges, a classical sky selection, boolean modes, and the named-mask
+//!   library round trip.
 //! * `mask`: library masks, layer masks (raster and vector), and refinement (density,
 //!   feather, expand, contract, smooth, invert) on any stored mask, `@sel`, or a layer mask.
 //! * `transform`: layer and document geometry that keeps text, shape, placed, and group
@@ -14,6 +15,7 @@ mod mask;
 mod raster;
 mod sample;
 mod select;
+mod sky;
 mod straighten;
 mod transform;
 mod util;
@@ -24,6 +26,7 @@ use pixelox_core::prelude::*;
 /// Every command this crate defines.
 pub fn ops() -> Vec<OpSpec> {
     let mut v = select::ops();
+    v.extend(sky::ops());
     v.extend(mask::ops());
     v.extend(transform::ops());
     v

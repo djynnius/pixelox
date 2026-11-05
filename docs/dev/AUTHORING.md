@@ -44,7 +44,7 @@ library), `guides`, `grid`, `slots` (template slots), `recipe`, `assets`, `meta`
   | None, layer)`, `doc.remove(&path)`, `doc.siblings_mut(&path)`, `layer.raster()`,
   `layer.raster_mut()` (PX2303 when not raster), `layer.check_unlocked()` (PX2304).
 * Masks: `doc.named_mask(name)` (named or `@sel`), `doc.put_mask(name, mask, replace)`,
-  `ctx.resolve_mask(doc, ref)` (also `@alpha:<layer>` and image paths),
+  `ctx.resolve_mask(doc, ref)` (also `@alpha:<layer>`, `@mask:<layer>`, and image paths),
   `ctx.mask_arg(args, doc)` (reads `--mask` and `--invert-mask`).
 * Rendering: `compose::composite(doc)`, `compose::composite_subset(doc, &ids)`,
   `compose::render_layer(doc, layer)` (one layer's content with fx, no mask/opacity),

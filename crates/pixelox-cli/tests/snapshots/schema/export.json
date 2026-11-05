@@ -95,7 +95,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Multiply a mask into the output alpha (named mask, @sel, @alpha:<layer>, or image) Type: mask.",
+        "description": "Multiply a mask into the output alpha (named mask, @sel, @alpha:<layer>, @mask:<layer>, or image) Type: mask.",
         "x-pixelox-kind": "mask"
       },
       "region": {

@@ -49,7 +49,7 @@ pub enum ParamKind {
     Range,
     /// Layer reference: name, `#N`, `@top`, `@bottom`, `@active`.
     Layer,
-    /// Mask reference: mask name, `@sel`, `@alpha:<layer>`, or a grayscale image path.
+    /// Mask reference: mask name, `@sel`, `@alpha:<layer>`, `@mask:<layer>` (a layer mask), or a grayscale image path.
     Mask,
     /// `1.5s`, `500ms`.
     Duration,
@@ -256,6 +256,7 @@ pub enum Category {
     Adjust,
     Filter,
     Retouch,
+    Paint,
     Text,
     Vector,
     Transform,
@@ -282,6 +283,7 @@ impl Category {
             Category::Adjust => "Adjustments",
             Category::Filter => "Filters",
             Category::Retouch => "Retouch and fill",
+            Category::Paint => "Painting",
             Category::Text => "Type",
             Category::Vector => "Shapes and paths",
             Category::Transform => "Transform",
@@ -809,8 +811,9 @@ pub mod common {
             .help("Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers")
     }
     pub fn mask() -> ParamSpec {
-        param("mask", ParamKind::Mask)
-            .help("Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, or a grayscale image path")
+        param("mask", ParamKind::Mask).help(
+            "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path",
+        )
     }
     pub fn invert_mask() -> ParamSpec {
         param("invert-mask", ParamKind::Flag).help("Apply outside the mask instead of inside it")

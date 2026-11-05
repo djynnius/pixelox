@@ -89,6 +89,9 @@ mod tests {
         "comp template slots",
         "comp template apply",
         "comp presets",
+        "layer blend-if",
+        "layer stamp",
+        "layer smart-filter",
     ];
 
     #[test]

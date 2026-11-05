@@ -106,7 +106,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, or a grayscale image path Type: mask.",
+        "description": "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path Type: mask.",
         "x-pixelox-kind": "mask"
       },
       "invert_mask": {

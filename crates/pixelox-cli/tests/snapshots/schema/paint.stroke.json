@@ -1,0 +1,556 @@
+{
+  "command": "paint.stroke",
+  "cli": "pixelox paint stroke",
+  "summary": "Paint brush strokes along points or a path",
+  "category": "paint",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/paint.stroke.params.json",
+    "title": "pixelox paint.stroke parameters",
+    "description": "Paint brush strokes along points or a path",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "points": {
+        "type": "string",
+        "description": "Strokes 'x,y x,y ...' (';' between strokes, x,y,p adds pressure 0..1); px or %, negative = from the far edge Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "points_file": {
+        "type": "string",
+        "description": "JSON file of strokes in canvas px (see the command description) Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "d": {
+        "type": "string",
+        "description": "SVG path data in canvas px; each subpath is one stroke, curves followed Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Brush diameter in px, or % of the shorter canvas side Type: length.",
+        "default": "50",
+        "x-pixelox-kind": "length"
+      },
+      "hardness": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Round-tip edge in % (0 = soft falloff, 100 = crisp anti-aliased edge) Range: 0..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "flow": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Strength of each dab in %; low flow builds up where dabs overlap Range: 1..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Maximum strength of each stroke in %; build-up never exceeds it Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "spacing": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Distance between dabs in % of the brush diameter Range: 1..1000. Type: number.",
+        "default": "10",
+        "x-pixelox-kind": "float"
+      },
+      "angle": {
+        "type": "string",
+        "examples": [
+          "45"
+        ],
+        "description": "Tip rotation in degrees (counter-clockwise) Type: degrees.",
+        "default": "0",
+        "x-pixelox-kind": "angle"
+      },
+      "roundness": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Tip roundness in %; lower squashes the tip into an ellipse Range: 1..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "follow": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Rotate the tip along the stroke direction (added to --angle) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "tip": {
+        "type": "string",
+        "description": "Brush-tip image: its alpha, or 1 - luma when opaque (dark paints); longer side = --size Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "size_jitter": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Random size reduction per dab, up to this % of the size Range: 0..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "angle_jitter": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 360.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Random tip rotation spread in degrees (360 = any angle) Range: 0..360. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "scatter": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Random offset across the stroke, up to ± this % of the size Range: 0..1000. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "count": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 16.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Dabs per spacing step, each jittered and scattered on its own Range: 1..16. Type: integer.",
+        "default": "1",
+        "x-pixelox-kind": "int"
+      },
+      "taper": {
+        "type": "string",
+        "description": "START[,END]: grow from 10% size over the first START and shrink over the last END (px or % of the stroke) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "pressure": {
+        "type": "string",
+        "enum": [
+          "size",
+          "flow",
+          "both",
+          "none"
+        ],
+        "description": "What point pressure scales: size, flow, both, or none Type: choice.",
+        "default": "size",
+        "x-pixelox-kind": "choice"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Paint color; on masks its luma is the value (white reveals, black hides) Type: color.",
+        "default": "#000000",
+        "x-pixelox-kind": "color"
+      },
+      "blend": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "dissolve",
+          "darken",
+          "multiply",
+          "color-burn",
+          "linear-burn",
+          "darker-color",
+          "lighten",
+          "screen",
+          "color-dodge",
+          "linear-dodge",
+          "lighter-color",
+          "overlay",
+          "soft-light",
+          "hard-light",
+          "vivid-light",
+          "linear-light",
+          "pin-light",
+          "hard-mix",
+          "difference",
+          "exclusion",
+          "subtract",
+          "divide",
+          "hue",
+          "saturation",
+          "color",
+          "luminosity"
+        ],
+        "description": "Blend mode of the paint over the layer's pixels (--target pixels only) Type: choice.",
+        "default": "normal",
+        "x-pixelox-kind": "choice"
+      },
+      "erase": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Erase instead: lower the layer's alpha, or paint 0 into a mask Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "target": {
+        "type": "string",
+        "enum": [
+          "pixels",
+          "mask",
+          "selection"
+        ],
+        "description": "What to paint: the layer's pixels, its layer mask, or the selection Type: choice.",
+        "default": "pixels",
+        "x-pixelox-kind": "choice"
+      },
+      "into": {
+        "type": "string",
+        "description": "Paint a named mask in the document's library instead (created black if missing) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Limit where paint lands: a named mask, @sel, @alpha:<layer>, or a grayscale image path Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "invert_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Apply outside the mask instead of inside it Type: flag.",
+        "x-pixelox-kind": "flag"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/paint.stroke.result.json",
+    "title": "pixelox paint.stroke envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "paint.stroke"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

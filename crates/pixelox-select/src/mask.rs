@@ -25,9 +25,9 @@ fn target_layer_param() -> ParamSpec {
 
 fn export_spec() -> OpSpec {
     OpSpec::doc("mask export", CAT, "Write a mask as a grayscale image", export)
-        .about("Render any mask reference (library name, @sel, @alpha:<layer>) as an opaque grayscale image (white = covered) at canvas size. The document itself is not changed; the image's sidecar records the document's recipe plus this step.")
+        .about("Render any mask reference (library name, @sel, @alpha:<layer>, @mask:<layer>) as an opaque grayscale image (white = covered) at canvas size. The document itself is not changed; the image's sidecar records the document's recipe plus this step.")
         .export_mode()
-        .param(param("mask", ParamKind::Mask).required().help("Mask to write: a library name, @sel, or @alpha:<layer>"))
+        .param(param("mask", ParamKind::Mask).required().help("Mask to write: a library name, @sel, @alpha:<layer>, or @mask:<layer>"))
         .example("pixelox mask export doc.pxo --mask subject -o subject-mask.png", "Export a named mask")
         .example("pixelox mask export doc.pxo --mask @sel -o selection.png", "Export the active selection")
         .example("pixelox mask export doc.pxo --mask @alpha:Logo -o logo-alpha.png --overwrite", "Export a layer's alpha")
@@ -60,7 +60,7 @@ pub fn ops() -> Vec<OpSpec> {
         OpSpec::doc("mask add", CAT, "Attach a layer mask", add)
             .about("Attach a non-destructive layer mask (Photoshop semantics: white reveals, black hides) from the selection or a mask reference (--from), an image (--from-file), all revealed or hidden, or SVG path data (--from-path: a vector mask, rasterized anti-aliased into the layer mask with the path kept on the layer). With no source flag: the active selection if there is one, else reveal-all. Replaces an existing layer mask.")
             .param(param("layer", ParamKind::Layer).help("Layer to mask (default: the only layer)"))
-            .param(param("from", ParamKind::Mask).help("Mask reference: @sel, a library name, or @alpha:<layer>"))
+            .param(param("from", ParamKind::Mask).help("Mask reference: @sel, a library name, @alpha:<layer>, or @mask:<layer>"))
             .param(param("from-file", ParamKind::Path).help("Grayscale image the size of the canvas"))
             .param(param("reveal-all", ParamKind::Flag).help("A white mask (everything visible)"))
             .param(param("hide-all", ParamKind::Flag).help("A black mask (everything hidden)"))

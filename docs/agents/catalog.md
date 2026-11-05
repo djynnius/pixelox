@@ -7,7 +7,7 @@ pixelox: image editor CLI for agents. Grammar: pixelox <group> <cmd> INPUT [flag
 INPUT: image (jpg png tif webp gif bmp psd svg) or .pxo document; images open as one layer `Background`. -o x.pxo keeps layers; -o x.png flattens. --in-place only rewrites .pxo.
 Always: --json (one envelope: ok, result, outputs[].path+sha256, warnings[], error{code,hint}); --dry-run before writing; --overwrite only when asked; -y only with download consent.
 Globals: --seed N|random --threads N --progress json --no-sidecar --background --redact-paths --config F.
-Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom), --anchor tl..br; colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
+Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom), --anchor tl..br; colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
 Exit: 0 ok 1 runtime 2 usage 3 input 4 exists 5 format 6 consent 7 script 8 job 9 verify 10 interrupt 11 memory 12 not-in-build. Each output gets out.pixelox.json (replay/verify).
 More than 3 steps: write a pipeline (pixelox docs pipelines). Check work: analyze diff A B; verify out.pixelox.json.
 Workflows:
@@ -24,6 +24,7 @@ open: Open any image as a document; inspect without -o
 save: Normalize a document and drop unused assets
 layer add: Add an empty or solid-filled raster layer
 layer blend: Set a layer's blend mode
+layer blend-if: Show a layer only where tones fall in ranges
 layer clip: Clip a layer to the layer below (or release it)
 layer dup: Duplicate a layer with its mask and styles
 layer flatten: Flatten the document to one Background layer
@@ -38,6 +39,8 @@ layer rename: Rename a layer (names stay unique)
 layer reorder: Move a layer above/below another or to an index
 layer rm: Remove a layer
 layer show: Make a layer visible
+layer smart-filter: Disable, enable, or remove a smart filter
+layer stamp: Merge all visible layers into a new top layer
 layer ungroup: Dissolve a group, keeping its children in place
 layer unlock: Unlock a layer
 select all: Select the whole canvas
@@ -52,6 +55,7 @@ select path: Select a region from SVG path data or points
 select poly: Select a polygon from vertices
 select rect: Select a rectangle
 select save: Store the selection as a named mask
+select sky: Select the sky (classical, no AI)
 mask add: Attach a layer mask
 mask contract: Shrink a mask morphologically
 mask density: Set a mask's density (maximum strength)
@@ -78,8 +82,10 @@ adjust auto: Auto levels, contrast, color, or tone
 adjust brightness-contrast: Brightness and contrast
 adjust bw: Black & white with per-color weights
 adjust channel-mixer: Channel mixer: rebuild a channel from R, G, B
+adjust clarity: Midtone local contrast (Lightroom Clarity)
 adjust color-balance: Color balance for shadows, midtones, highlights
 adjust curves: Tone curve through control points (monotone cubic)
+adjust dehaze: Remove or add atmospheric haze
 adjust equalize: Equalize the brightness histogram
 adjust exposure: Exposure in stops, offset, and gamma (linear light)
 adjust gradient-map: Map brightness onto a gradient
@@ -90,6 +96,7 @@ adjust lut: Apply a .cube 3D LUT
 adjust posterize: Posterize to N levels per channel
 adjust selective-color: Selective color: CMYK shifts within one color family
 adjust shadows-highlights: Lift shadows and recover highlights locally
+adjust texture: Boost or smooth medium-sized texture
 adjust threshold: Threshold to black and white
 adjust tone-map: Local HDR-style tone mapping
 adjust vibrance: Vibrance (protects saturated colors and skin)
@@ -125,6 +132,7 @@ retouch erase: Erase a region to transparency
 retouch heal: Spot heal: repair small regions seamlessly
 retouch redeye: Remove red-eye at a point
 retouch sharpen: Sharpen inside a mask
+paint stroke: Paint brush strokes along points or a path
 text add: Add a live text layer
 text edit: Change a text layer's content or style
 text list: List text layers and the fonts they use

@@ -1,6 +1,7 @@
 //! Tonal and color adjustments (adjust *), adjustment-layer rendering, and analysis (analyze *) for pixelox.
 //!
-//! * `adjust *` — twenty Photoshop-style adjustments. Each changes a raster layer's pixels
+//! * `adjust *` — twenty Photoshop-style adjustments and three Lightroom-style local ones
+//!   (clarity, texture, dehaze). Each changes a raster layer's pixels
 //!   (limited by `--mask`), or with `--as-layer` adds an adjustment layer whose params are
 //!   self-contained: curve points, LUT tables, and detected `auto` values are embedded.
 //! * [`install`] registers the compositor's adjuster hook, which renders those layers
@@ -12,6 +13,7 @@ mod analyze;
 mod auto;
 mod curve;
 mod hue;
+mod local;
 mod lut;
 mod tone;
 mod util;

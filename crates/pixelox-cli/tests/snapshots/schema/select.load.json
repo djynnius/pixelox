@@ -27,7 +27,7 @@
       },
       "name": {
         "type": "string",
-        "description": "Mask to load: a library name, @alpha:<layer>, or an image path Type: text.",
+        "description": "Mask to load: a library name, @alpha:<layer>, @mask:<layer>, or an image path Type: text.",
         "x-pixelox-kind": "str"
       },
       "mode": {

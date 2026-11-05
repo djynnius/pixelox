@@ -243,7 +243,182 @@ pub fn ops() -> Vec<OpSpec> {
                 "pixelox layer rasterize doc.pxo -o raster.pxo --layer Badge --json",
                 "Rasterize a shape into a new document",
             ),
+        OpSpec::doc("layer blend-if", Category::Layer, "Show a layer only where tones fall in ranges", blend_if)
+            .about(
+                "Photoshop's Blend If (Blending Options): the layer shows only where its own values (--this) \
+                 and the composite beneath it (--underlying) fall inside the ranges. A range is `B,W` or the \
+                 split form `B1,B2,W1,W2` on 0..255; a split pair ramps softly instead of cutting hard (like \
+                 Alt-dragging the slider halves). --channel picks gray (luma), red, green, or blue. Works on \
+                 every layer kind; a pass-through group with Blend If composites isolated. `--off` removes it.",
+            )
+            .param(layer_p())
+            .param(
+                param("this", ParamKind::Str)
+                    .default("0,255")
+                    .help("This layer's visible range: B,W or B1,B2,W1,W2 on 0..255"),
+            )
+            .param(
+                param("underlying", ParamKind::Str)
+                    .default("0,255")
+                    .help("The underlying composite's range: B,W or B1,B2,W1,W2 on 0..255"),
+            )
+            .param(
+                param("channel", ParamKind::Choice)
+                    .choices(&["gray", "red", "green", "blue"])
+                    .default("gray")
+                    .help("Channel the ranges read: gray (luma), red, green, or blue"),
+            )
+            .param(param("off", ParamKind::Flag).help("Remove Blend If from the layer"))
+            .example(
+                "pixelox layer blend-if doc.pxo --in-place --layer Clouds --this 30,90,255,255",
+                "Drop a texture's dark parts with a soft ramp",
+            )
+            .example(
+                "pixelox layer blend-if doc.pxo --in-place --layer Shadows --underlying 0,0,110,190",
+                "Paint shadows only over darker areas below",
+            )
+            .example("pixelox layer blend-if doc.pxo --in-place --layer Clouds --off", "Remove Blend If"),
+        OpSpec::doc("layer stamp", Category::Layer, "Merge all visible layers into a new top layer", stamp)
+            .about(
+                "Photoshop's Stamp Visible (Ctrl+Alt+Shift+E): composites every visible layer into one new raster \
+                 layer and inserts it on top (or above --above), leaving the layers underneath untouched, so \
+                 finishing filters and grades can work on the whole image non-destructively.",
+            )
+            .param(param("name", ParamKind::Str).default("Stamp").help("Name of the new layer (made unique)"))
+            .param(param("above", ParamKind::Layer).help("Insert above this layer instead of on top"))
+            .example("pixelox layer stamp doc.pxo --in-place", "Stamp everything visible onto a new top layer")
+            .example("pixelox layer stamp doc.pxo --in-place --name Final --above Grade", "Stamp above a named layer")
+            .example("pixelox layer stamp doc.pxo -o stamped.pxo --json", "Stamp into a new document"),
+        OpSpec::doc("layer smart-filter", Category::Layer, "Disable, enable, or remove a smart filter", smart_filter)
+            .about(
+                "Manages the smart filters of a placed layer (`filter` and `adjust` commands run on a placed \
+                 layer are recorded as smart filters and re-run whenever it renders). --index counts from 1 in \
+                 the order they were added (`layer list` shows them); the default is the last one.",
+            )
+            .param(layer_p())
+            .param(
+                param("action", ParamKind::Choice)
+                    .choices(&["disable", "enable", "remove"])
+                    .required()
+                    .help("What to do with the filter: disable, enable, or remove"),
+            )
+            .param(param("index", ParamKind::Int).range("1..").help("Which filter, from 1 (default: the last)"))
+            .example(
+                "pixelox layer smart-filter doc.pxo --in-place --layer Photo --action disable",
+                "Turn off the last smart filter",
+            )
+            .example(
+                "pixelox layer smart-filter doc.pxo --in-place --layer Photo --action remove --index 1",
+                "Remove the first smart filter",
+            )
+            .example(
+                "pixelox layer smart-filter doc.pxo --in-place --layer Photo --action enable --index 2",
+                "Turn the second one back on",
+            ),
     ]
+}
+
+fn smart_filter(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
+    let p = layer_path(a, doc)?;
+    let l = doc.layer(&p);
+    l.check_unlocked()?;
+    let n = l.smart_filters.len();
+    if n == 0 {
+        return Err(Error::new("PX1010", format!("layer '{}' has no smart filters", l.name))
+            .with_hint("run a filter or adjust command on a placed layer to add one; `pixelox layer list` shows them")
+            .with_context("layer", l.name.clone()));
+    }
+    let i = a.opt_int("index")?.map(|v| v.max(0) as usize).unwrap_or(n);
+    if i == 0 || i > n {
+        return Err(Error::new(
+            "PX1013",
+            format!("--index {i} is out of range; layer '{}' has {n} smart filters", l.name),
+        )
+        .with_context("count", n));
+    }
+    let action = a.choice("action");
+    let l = doc.layer_mut(&p);
+    let op = l.smart_filters[i - 1].op.clone();
+    match action.as_str() {
+        "remove" => {
+            l.smart_filters.remove(i - 1);
+        }
+        "enable" => l.smart_filters[i - 1].enabled = true,
+        _ => l.smart_filters[i - 1].enabled = false,
+    }
+    let list: Vec<Value> = l.smart_filters.iter().map(|f| json!({"op": f.op, "enabled": f.enabled})).collect();
+    Ok(json!({"layer": l.name, "action": action, "index": i, "op": op, "smart_filters": list}))
+}
+
+/// A Blend If range: `B,W` or `B1,B2,W1,W2` on 0..255, non-decreasing.
+fn parse_blend_range(name: &str, s: &str) -> Result<[f32; 4]> {
+    let bad = |why: &str| {
+        Error::new("PX1010", format!("--{name} '{s}': {why}"))
+            .with_hint(format!("use B,W or B1,B2,W1,W2 on 0..255, e.g. --{name} 0,0,120,200"))
+            .with_context(name, s)
+    };
+    let v: Vec<f32> = s
+        .split(',')
+        .map(|t| t.trim().parse::<f32>())
+        .collect::<std::result::Result<_, _>>()
+        .map_err(|_| bad("not a list of numbers"))?;
+    let r = match v.as_slice() {
+        [b, w] => [*b, *b, *w, *w],
+        [a, b, c, d] => [*a, *b, *c, *d],
+        _ => return Err(bad("expected 2 or 4 numbers")),
+    };
+    if r.iter().any(|x| !(0.0..=255.0).contains(x)) {
+        return Err(Error::new("PX1013", format!("--{name} '{s}': values must be within 0..255")).with_context(name, s));
+    }
+    if r.windows(2).any(|w| w[0] > w[1]) {
+        return Err(bad("values must not decrease (black range first, then white)"));
+    }
+    Ok(r)
+}
+
+fn blend_if(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
+    let p = layer_path(a, doc)?;
+    doc.layer(&p).check_unlocked()?;
+    if a.flag("off") {
+        for k in ["this", "underlying"] {
+            if a.is_explicit(k) {
+                return Err(Error::new("PX1005", format!("--off removes Blend If; drop --{k}")));
+            }
+        }
+        let l = doc.layer_mut(&p);
+        let had = l.blend_if.take().is_some();
+        return Ok(json!({"layer": l.name, "blend_if": null, "removed": had}));
+    }
+    let bi = BlendIf {
+        channel: a.choice("channel"),
+        this: parse_blend_range("this", &a.str("this").unwrap_or_default())?,
+        underlying: parse_blend_range("underlying", &a.str("underlying").unwrap_or_default())?,
+    };
+    let l = doc.layer_mut(&p);
+    let v = json!({"layer": l.name, "blend_if": bi, "identity": bi.is_identity()});
+    l.blend_if = if bi.is_identity() { None } else { Some(bi) };
+    Ok(v)
+}
+
+fn stamp(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
+    let above = match a.raw("above") {
+        Some(r) => Some(doc.resolve(r)?),
+        None => None,
+    };
+    let full = compose::composite(doc)?;
+    let (image, x, y) = match full.alpha_bbox(0.0) {
+        Some(r) if (r.w, r.h) != (full.width, full.height) => (full.crop(r), r.x, r.y),
+        Some(_) => (full, 0, 0),
+        None => (Image::new(doc.width, doc.height), 0, 0),
+    };
+    let name = a.str("name").unwrap_or_else(|| "Stamp".into());
+    let mut l = doc.new_layer(&name, LayerKind::Raster { image });
+    l.x = x;
+    l.y = y;
+    let (id, nm) = (l.id.clone(), l.name.clone());
+    doc.insert_above(above.as_deref(), l);
+    let bounds = doc.find_by_id(&id).and_then(|p| compose::layer_bounds(doc, doc.layer(&p)).ok().flatten());
+    Ok(json!({"layer": nm, "id": id, "bounds": bounds.map(|b| b.to_json())}))
 }
 
 // ---------------------------------------------------------------------------------------
@@ -697,8 +872,14 @@ fn rasterize(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
     };
     let mut bare = l.clone();
     bare.fx.clear();
+    let baked_filters = bare.smart_filters.len();
     let rendered = compose::render_layer(doc, &bare)?;
     let (image, x, y) = match rendered {
+        // smart filters render canvas-sized: keep only the visible part
+        Some(r) if baked_filters > 0 => match r.image.alpha_bbox(0.0) {
+            Some(b) => (r.image.crop(b), r.x + b.x, r.y + b.y),
+            None => (Image::new(doc.width, doc.height), 0, 0),
+        },
         Some(r) => (r.image, r.x, r.y),
         None => (Image::new(doc.width, doc.height), 0, 0),
     };
@@ -707,8 +888,11 @@ fn rasterize(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
     l.content = LayerKind::Raster { image };
     l.x = x;
     l.y = y;
+    l.smart_filters.clear();
     l.props.insert("rasterized_from".into(), origin);
-    Ok(json!({"layer": l.name, "from": kind, "changed": true, "offset": [x, y], "size": size, "fx_live": l.fx.len()}))
+    Ok(
+        json!({"layer": l.name, "from": kind, "changed": true, "offset": [x, y], "size": size, "fx_live": l.fx.len(), "smart_filters_baked": baked_filters}),
+    )
 }
 
 #[cfg(test)]
@@ -758,6 +942,103 @@ mod tests {
             },
         );
         d.insert_above(None, l);
+    }
+
+    #[test]
+    fn blend_if_sets_validates_and_removes() {
+        let mut d = abc();
+        let v = run(&op("layer blend-if"), &[("layer", "A"), ("underlying", "0,0,100,150")], &mut d).unwrap();
+        assert_eq!(v["identity"], false);
+        let a = d.resolve("A").unwrap();
+        assert_eq!(d.layer(&a).blend_if.as_ref().unwrap().underlying, [0.0, 0.0, 100.0, 150.0]);
+        // the white backdrop (255) is outside 0..150: A disappears where nothing dark is below
+        let c = compose::composite(&d).unwrap();
+        assert_eq!(c.get(0, 5), [1.0, 1.0, 1.0, 1.0]);
+        let v = run(&op("layer list"), &[], &mut d).unwrap();
+        assert!(v["layers"].as_array().unwrap().iter().any(|l| l["name"] == "A" && l["blend_if"]["channel"] == "gray"));
+        for bad in ["10", "0,300", "200,100", "a,b"] {
+            let e = run(&op("layer blend-if"), &[("layer", "A"), ("this", bad)], &mut d).unwrap_err();
+            assert!(e.code == "PX1010" || e.code == "PX1013", "{bad}: {}", e.code);
+        }
+        let v = run(&op("layer blend-if"), &[("layer", "A"), ("off", "true")], &mut d).unwrap();
+        assert_eq!(v["removed"], true);
+        assert!(d.layer(&a).blend_if.is_none());
+        assert_eq!(
+            run(&op("layer blend-if"), &[("layer", "A"), ("off", "true"), ("this", "0,200")], &mut d).unwrap_err().code,
+            "PX1005"
+        );
+        // full ranges are the identity: nothing stored
+        run(&op("layer blend-if"), &[("layer", "A")], &mut d).unwrap();
+        assert!(d.layer(&a).blend_if.is_none());
+    }
+
+    #[test]
+    fn stamp_composites_visible_into_new_top_layer() {
+        let mut d = abc();
+        let before = compose::composite(&d).unwrap();
+        let v = run(&op("layer stamp"), &[], &mut d).unwrap();
+        assert_eq!(v["layer"], "Stamp");
+        assert_eq!(d.layers.last().unwrap().name, "Stamp");
+        assert_eq!(d.layer_count(), 4);
+        // hiding everything else leaves the same picture
+        for l in d.layers.iter_mut().filter(|l| l.name != "Stamp") {
+            l.visible = false;
+        }
+        assert!(max_diff(&compose::composite(&d).unwrap(), &before) < 1e-6);
+        // --above and unique names
+        let v = run(&op("layer stamp"), &[("above", "Background")], &mut d).unwrap();
+        assert_eq!(v["layer"], "Stamp 2");
+        assert_eq!(d.layers[1].name, "Stamp 2");
+    }
+
+    #[test]
+    fn smart_filter_toggle_and_remove() {
+        let mut d = abc();
+        placed(&mut d, "P", [2.0, 2.0, 4.0, 4.0]);
+        let sm = op("layer smart-filter");
+        assert_eq!(run(&sm, &[("layer", "P"), ("action", "disable")], &mut d).unwrap_err().code, "PX1010");
+        let p = d.resolve("P").unwrap();
+        for name in ["a.one", "b.two"] {
+            d.layer_mut(&p).smart_filters.push(pixelox_core::SmartFilter {
+                op: name.into(),
+                enabled: true,
+                params: Map::new(),
+                seed: 0,
+                op_index: 0,
+            });
+        }
+        let v = run(&sm, &[("layer", "P"), ("action", "disable")], &mut d).unwrap();
+        assert_eq!(v["op"], "b.two");
+        assert!(!d.layer(&p).smart_filters[1].enabled);
+        run(&sm, &[("layer", "P"), ("action", "enable"), ("index", "2")], &mut d).unwrap();
+        assert!(d.layer(&p).smart_filters[1].enabled);
+        run(&sm, &[("layer", "P"), ("action", "remove"), ("index", "1")], &mut d).unwrap();
+        assert_eq!(d.layer(&p).smart_filters.len(), 1);
+        assert_eq!(d.layer(&p).smart_filters[0].op, "b.two");
+        assert_eq!(
+            run(&sm, &[("layer", "P"), ("action", "remove"), ("index", "3")], &mut d).unwrap_err().code,
+            "PX1013"
+        );
+    }
+
+    #[test]
+    fn rasterize_bakes_smart_filters() {
+        let mut d = abc();
+        placed(&mut d, "P", [2.0, 2.0, 4.0, 4.0]);
+        let p = d.resolve("P").unwrap();
+        d.layer_mut(&p).smart_filters.push(pixelox_core::SmartFilter {
+            op: "nothing.registered".into(),
+            enabled: false,
+            params: Map::new(),
+            seed: 0,
+            op_index: 0,
+        });
+        let v = run(&op("layer rasterize"), &[("layer", "P")], &mut d).unwrap();
+        assert_eq!(v["smart_filters_baked"], 1);
+        let l = d.layer(&p);
+        assert!(l.smart_filters.is_empty());
+        assert_eq!((l.x, l.y), (2, 2));
+        assert_eq!(l.raster().unwrap().width, 4);
     }
 
     #[test]
