@@ -1,0 +1,292 @@
+{
+  "command": "batch.run",
+  "cli": "pixelox batch run",
+  "summary": "Run a pipeline or command over many files",
+  "category": "automation",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/batch.run.params.json",
+    "title": "pixelox batch.run parameters",
+    "description": "Run a pipeline or command over many files",
+    "type": "object",
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "glob": {
+        "type": "string",
+        "description": "Files to process, e.g. 'shoot/*.jpg' (quote it) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "pipeline": {
+        "type": "string",
+        "description": "Pipeline file run once per item Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "cmd": {
+        "type": "string",
+        "description": "Command template, e.g. 'export {in} -o out/{stem}.webp' Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "out_dir": {
+        "type": "string",
+        "description": "Directory for {out} / ${item.out} Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "jobs": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 256.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Items processed in parallel Range: 1..256. Type: integer.",
+        "default": "1",
+        "x-pixelox-kind": "int"
+      },
+      "continue_on_error": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Keep going after a failed item and exit 0 (failures stay in the report) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "manifest": {
+        "type": "string",
+        "description": "Also write the per-item report to this JSON file Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "var": {
+        "description": "Pipeline variable override k=v Type: text. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Pipeline variable override k=v Type: text.",
+            "x-pixelox-kind": "str"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Pipeline variable override k=v Type: text.",
+              "x-pixelox-kind": "str"
+            }
+          }
+        ]
+      }
+    },
+    "required": [
+      "glob"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/batch.run.result.json",
+    "title": "pixelox batch.run envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "batch.run"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1013",
+    "PX1106",
+    "PX1401",
+    "PX1403",
+    "PX9001"
+  ]
+}

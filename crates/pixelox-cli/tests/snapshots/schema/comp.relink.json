@@ -1,0 +1,243 @@
+{
+  "command": "comp.relink",
+  "cli": "pixelox comp relink",
+  "summary": "Point a placed layer at a different file",
+  "category": "comp",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/comp.relink.params.json",
+    "title": "pixelox comp.relink parameters",
+    "description": "Point a placed layer at a different file",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "to": {
+        "type": "string",
+        "description": "The new source file Type: path.",
+        "x-pixelox-kind": "path"
+      }
+    },
+    "required": [
+      "input",
+      "to"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/comp.relink.result.json",
+    "title": "pixelox comp.relink envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "comp.relink"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

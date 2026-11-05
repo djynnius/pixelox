@@ -1,0 +1,23 @@
+[package]
+name = "pixelox-text"
+description = "Type layers (text *) and fonts (fonts *): shaping, layout, text on a path, text to path"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+rustybuzz.workspace = true
+ttf-parser.workspace = true
+fontdb.workspace = true
+unicode-bidi.workspace = true
+unicode-linebreak.workspace = true
+tiny-skia.workspace = true
+kurbo.workspace = true
+# Pure-Rust math (sin/cos/atan2/tan) so layout is identical on every platform.
+libm = "0.2"

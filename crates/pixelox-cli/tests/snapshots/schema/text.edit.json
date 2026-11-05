@@ -1,0 +1,376 @@
+{
+  "command": "text.edit",
+  "cli": "pixelox text edit",
+  "summary": "Change a text layer's content or style",
+  "category": "text",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/text.edit.params.json",
+    "title": "pixelox text.edit parameters",
+    "description": "Change a text layer's content or style",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Text layer: name, #N (1 = top), @top, @bottom, or @active; defaults to the only text layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "content": {
+        "type": "string",
+        "description": "New text; \\n in the value starts a new paragraph Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "font": {
+        "type": "string",
+        "description": "Font family (case-insensitive) or a generic name: sans-serif, serif, monospace; see `pixelox fonts list` Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Font size: 48pt (points at the document DPI), 64px, a bare number of px, or % of the canvas height Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "weight": {
+        "type": "string",
+        "description": "Weight 100..900 or a name (thin, light, normal, medium, semibold, bold, extrabold, black) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "style": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "italic",
+          "oblique"
+        ],
+        "description": "Upright or italic; a missing italic face is slanted synthetically Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "variation": {
+        "type": "string",
+        "description": "Variable-font axis values, e.g. 'wght=650,slnt=-5' (none clears them) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Fill color of the glyphs Type: color.",
+        "x-pixelox-kind": "color"
+      },
+      "stroke": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Outline color, centered on the glyph edges (transparent removes it) Type: color.",
+        "x-pixelox-kind": "color"
+      },
+      "stroke_width": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Outline width: px, pt, or % of the font size Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "align": {
+        "type": "string",
+        "enum": [
+          "left",
+          "center",
+          "right",
+          "justify"
+        ],
+        "description": "Line alignment inside the text box; justify stretches all but each paragraph's last line Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "tracking": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -1000.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Letter spacing in 1/1000 em (60 = 0.06 em); nonzero tracking turns ligatures off Range: -1000..10000. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "leading": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Line spacing: auto (the font's line height), px or pt, or % of the font size (120%) Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "kerning": {
+        "type": "string",
+        "enum": [
+          "metrics",
+          "none"
+        ],
+        "description": "metrics applies the font's kerning; none turns it off Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "at": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "Anchor point on the canvas: X,Y in px, %, pt, mm, or in; negative values count from the far edge Type: X,Y.",
+        "x-pixelox-kind": "point"
+      },
+      "anchor": {
+        "type": "string",
+        "enum": [
+          "tl",
+          "t",
+          "tr",
+          "l",
+          "c",
+          "r",
+          "bl",
+          "b",
+          "br"
+        ],
+        "description": "Which point of the text box sits at --at: tl t tr l c r bl b br Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "box": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Paragraph box WxH (px or % of the canvas): lines wrap at its width; the height is reported if exceeded Type: WxH.",
+        "x-pixelox-kind": "size"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/text.edit.result.json",
+    "title": "pixelox text.edit envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "text.edit"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

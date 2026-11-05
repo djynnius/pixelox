@@ -1,0 +1,22 @@
+[package]
+name = "pixelox-io"
+description = "Codecs and containers for pixelox: JPEG/PNG/GIF/TIFF/WebP/BMP, layered PSD read, basic PSD write, SVG read, the .pxo document format, and EXIF/ICC metadata"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+image.workspace = true
+zip.workspace = true
+usvg.workspace = true
+resvg.workspace = true
+tiff = { version = "0.11", default-features = false, features = ["lzw", "deflate"] }
+gif = "0.14"
+psd = "0.3"
+kamadak-exif = "0.6"

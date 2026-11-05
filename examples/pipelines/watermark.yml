@@ -1,0 +1,17 @@
+# E7: watermark one image (run it per file with batch run --pipeline).
+#   pixelox batch run --glob 'shoot/*.jpg' --pipeline watermark.yml --out-dir out/ --jobs 8
+version: 1
+name: watermark
+steps:
+  - id: wm
+    run: comp.place
+    with: { input: "${item.in}", file: brand/logo.png, as: Watermark, anchor: br, at: "-24,-24", size: "120x" }
+  - id: blend
+    run: layer.blend
+    with: { layer: Watermark, mode: multiply }
+  - id: fade
+    run: layer.opacity
+    with: { layer: Watermark, value: 85 }
+  - id: out
+    run: export
+    with: { output: "${item.out}", quality: 92 }

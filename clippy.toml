@@ -1,0 +1,4 @@
+type-complexity-threshold = 500
+too-many-arguments-threshold = 10
+# pixelox_core::Error carries code, message, hint, docs link, and context by design (PRD §6.8)
+large-error-threshold = 512

@@ -1,0 +1,15 @@
+# cargo-deny: license and source policy (PRD §11.8, risk R11). Permissive licenses only.
+[licenses]
+allow = [
+  "MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause",
+  "ISC", "Zlib", "MPL-2.0", "Unicode-3.0", "Unicode-DFS-2016", "CC0-1.0", "BSL-1.0", "0BSD",
+  "MIT-0", "Unlicense", "OFL-1.1", "IJG", "bzip2-1.0.6",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "allow"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

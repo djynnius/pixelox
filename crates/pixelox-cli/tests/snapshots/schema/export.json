@@ -1,0 +1,473 @@
+{
+  "command": "export",
+  "cli": "pixelox export",
+  "summary": "Render a deliverable (format from the -o extension)",
+  "category": "document",
+  "mode": "export",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/export.params.json",
+    "title": "pixelox export parameters",
+    "description": "Render a deliverable (format from the -o extension)",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "quality": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "JPEG quality [default: 90] Range: 1..100. Type: integer.",
+        "x-pixelox-kind": "int"
+      },
+      "bit_depth": {
+        "type": "string",
+        "enum": [
+          "8",
+          "16"
+        ],
+        "description": "Bits per channel [default: the document's where the format allows] Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "scale": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.001,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Scale factor applied after rendering Range: 0.001..100. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Output size; one side blank keeps the aspect (2048x) Type: WxH.",
+        "x-pixelox-kind": "size"
+      },
+      "interp": {
+        "type": "string",
+        "enum": [
+          "nearest",
+          "bilinear",
+          "bicubic",
+          "lanczos3"
+        ],
+        "description": "Resampling filter [default: lanczos3 down, bicubic up] Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Export only this layer or group Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "apply_mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Multiply a mask into the output alpha (named mask, @sel, @alpha:<layer>, or image) Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "region": {
+        "type": "string",
+        "examples": [
+          "10,20,300x200"
+        ],
+        "description": "Export only this region of the canvas Type: X,Y,WxH.",
+        "x-pixelox-kind": "rect"
+      },
+      "flatten": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Flatten transparency onto --background-color Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "background_color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Background for --flatten and formats without alpha (--background is the global run-as-job flag) Type: color.",
+        "default": "white",
+        "x-pixelox-kind": "color"
+      },
+      "strip_metadata": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Drop EXIF from the output (the ICC profile is kept) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "profile": {
+        "type": "string",
+        "description": "Output profile: srgb (default); conversions need a color engine not in this build Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "progressive": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Progressive JPEG (falls back to baseline in this build, with a warning) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "compression": {
+        "type": "string",
+        "enum": [
+          "lzw",
+          "deflate",
+          "none"
+        ],
+        "description": "TIFF compression [default: lzw] Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "layered_basic": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "PSD: write raster layers, groups, opacity, blend modes, and masks Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "colors": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 2.0,
+            "maximum": 256.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "GIF palette size [default: 256] Range: 2..256. Type: integer.",
+        "x-pixelox-kind": "int"
+      },
+      "dither": {
+        "type": "string",
+        "enum": [
+          "fs",
+          "ordered",
+          "none"
+        ],
+        "description": "GIF dithering [default: fs] Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "ladder": {
+        "description": "Longest-side sizes to export into the -o directory, e.g. 2048,1024,512 Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Longest-side sizes to export into the -o directory, e.g. 2048,1024,512 Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Longest-side sizes to export into the -o directory, e.g. 2048,1024,512 Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "formats": {
+        "description": "Formats for --ladder, e.g. png,webp [default: the input's] Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Formats for --ladder, e.g. png,webp [default: the input's] Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Formats for --ladder, e.g. png,webp [default: the input's] Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/export.result.json",
+    "title": "pixelox export envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "export"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

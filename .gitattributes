@@ -1,0 +1,7 @@
+# LF everywhere: snapshot and catalog tests compare bytes, and example scripts must run from a
+# Windows checkout.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
+*.pxo binary

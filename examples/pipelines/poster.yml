@@ -1,0 +1,36 @@
+# §9.2: a poster built end to end in one process — template, fill, two deliverables.
+#   pixelox pipeline run poster.yml --var headline="WINTER DROP 01" --json
+version: 1
+name: poster
+description: A template built and filled in memory, then a print PNG and an OG card
+defaults: { seed: 0, on-error: stop }
+vars:
+  headline: "FALL DROP 09"
+  accent: "#0ea5e9"
+inputs:
+  product: samples/product.png
+steps:
+  - id: canvas
+    run: new
+    with: { size: 1200x1600, fill: "#101014" }
+  - id: accent
+    run: shape.rect
+    with: { rect: "0,0,100%x10%", fill: "${vars.accent}", name: Accent }
+  - id: title
+    run: text.add
+    with: { name: headline, content: "${vars.headline}", font: sans-serif, weight: bold, size: 96pt, color: white, at: "50%,14%", anchor: t }
+  - id: product
+    run: comp.place
+    with: { file: "${inputs.product}", as: product, at: "50%,64%", anchor: c, size: 760x760 }
+  - id: shadow
+    run: fx.drop-shadow
+    with: { layer: product, offset: "0,20", blur: 40, color: "#00000088", output: work/poster.pxo }
+  - id: print
+    run: export
+    needs: [shadow]
+    with: { input: work/poster.pxo, output: dist/poster.png }
+  - id: og
+    run: export
+    needs: [shadow]
+    with: { input: work/poster.pxo, output: dist/poster-og.png, size: 1200x630, region: "0,300,1200x630" }
+outputs: [dist/poster.png, dist/poster-og.png]

@@ -1,0 +1,21 @@
+[package]
+name = "pixelox-render"
+description = "Generative rendering (render js, d3, three, 3d) for pixelox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+tiny-skia.workspace = true
+usvg.workspace = true
+resvg.workspace = true
+rand_core.workspace = true
+rand_chacha.workspace = true
+# QuickJS-ng (MIT); compiles the vendored C engine with `cc`.
+rquickjs = { version = "0.14", default-features = false, features = ["std"] }

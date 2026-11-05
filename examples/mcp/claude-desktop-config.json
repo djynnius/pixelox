@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pixelox": {
+      "command": "pixelox",
+      "args": ["mcp", "serve", "--allow", "/absolute/path/to/your/work"]
+    }
+  }
+}

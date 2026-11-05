@@ -1,0 +1,16 @@
+[package]
+name = "pixelox-filter"
+description = "Filters (filter *), retouching (retouch *), and fills (fill *) for pixelox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+tiny-skia.workspace = true
+rand_core.workspace = true
