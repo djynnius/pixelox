@@ -69,7 +69,7 @@ pub fn ops() -> Vec<OpSpec> {
             .param(param("size", ParamKind::Size).help("Output size; one side blank keeps the aspect (2048x)"))
             .param(param("interp", ParamKind::Choice).choices(kernels::FILTERS).help("Resampling filter [default: lanczos3 down, bicubic up]"))
             .param(common::layer().help("Export only this layer or group"))
-            .param(param("apply-mask", ParamKind::Mask).help("Multiply a mask into the output alpha (named mask, @sel, @alpha:<layer>, or image)"))
+            .param(param("apply-mask", ParamKind::Mask).help("Multiply a mask into the output alpha (named mask, @sel, @alpha:<layer>, @mask:<layer>, or image)"))
             .param(param("region", ParamKind::Rect).help("Export only this region of the canvas"))
             .param(param("flatten", ParamKind::Flag).help("Flatten transparency onto --background-color"))
             .param(param("background-color", ParamKind::Color).default("white").help("Background for --flatten and formats without alpha (--background is the global run-as-job flag)"))

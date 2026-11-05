@@ -17,7 +17,9 @@ fn mask_required(help: &'static str) -> ParamSpec {
 
 fn tone_params(spec: OpSpec) -> OpSpec {
     spec.param(common::layer())
-        .param(mask_required("Region to work on: a named mask, @sel, @alpha:<layer>, or a grayscale image path"))
+        .param(mask_required(
+            "Region to work on: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path",
+        ))
         .param(common::invert_mask())
         .param(
             param("exposure", ParamKind::Float)
@@ -38,7 +40,7 @@ pub fn ops() -> Vec<OpSpec> {
         OpSpec::doc("retouch erase", CAT, "Erase a region to transparency", erase)
             .about("Sets alpha to 0 inside --mask or --rect (soft masks erase partially). With --to-mask the pixels are kept and the region is painted out of the layer mask instead (a mask is created when the layer has none), which works on any layer kind and can be undone by editing the mask.")
             .param(common::layer())
-            .param(param("mask", ParamKind::Mask).help("Region to erase: a named mask, @sel, @alpha:<layer>, or a grayscale image path"))
+            .param(param("mask", ParamKind::Mask).help("Region to erase: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path"))
             .param(common::invert_mask())
             .param(param("rect", ParamKind::Rect).help("Rectangle X,Y,WxH to erase, in canvas coordinates (instead of --mask)"))
             .param(param("to-mask", ParamKind::Flag).help("Hide the region through the layer mask instead of clearing pixels"))
@@ -77,7 +79,7 @@ pub fn ops() -> Vec<OpSpec> {
         OpSpec::doc("retouch sharpen", CAT, "Sharpen inside a mask", sharpen)
             .about("Brush-equivalent sharpening: an unsharp mask (radius 1 px) of --amount % applied through --mask.")
             .param(common::layer())
-            .param(mask_required("Region to sharpen: a named mask, @sel, @alpha:<layer>, or a grayscale image path"))
+            .param(mask_required("Region to sharpen: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path"))
             .param(common::invert_mask())
             .param(param("amount", ParamKind::Float).default("50").range("0..500").help("Sharpening strength in % (0 = no change)"))
             .example("pixelox retouch sharpen portrait.jpg -o crisp.jpg --mask eyes.png --amount 80", "Crisp eyes")
@@ -86,7 +88,7 @@ pub fn ops() -> Vec<OpSpec> {
         OpSpec::doc("retouch blur", CAT, "Blur inside a mask", blur)
             .about("Brush-equivalent blurring: a Gaussian blur of --sigma applied through --mask.")
             .param(common::layer())
-            .param(mask_required("Region to blur: a named mask, @sel, @alpha:<layer>, or a grayscale image path"))
+            .param(mask_required("Region to blur: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path"))
             .param(common::invert_mask())
             .param(param("sigma", ParamKind::Float).default("2").range("0..1000").help("Blur radius (Gaussian sigma) in px (0 = no change)"))
             .example("pixelox retouch blur portrait.jpg -o soft.jpg --mask skin.png --sigma 3", "Soften skin")

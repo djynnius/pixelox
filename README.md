@@ -23,19 +23,20 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
 * **Documents**: open JPEG, PNG, TIFF, WebP, GIF, BMP, layered PSD, and SVG; save `.pxo`
   documents (an inspectable ZIP); export PNG/TIFF at 8 or 16 bits, JPEG, WebP, GIF, BMP,
   flattened or basic-layered PSD, and size/format ladders in one pass.
-* **Layers**: raster, text, shape, adjustment, group, and placed (smart-object) layers; all
-  28 Photoshop blend modes; opacity, masks with density and feather, clipping masks,
-  merge, flatten, rasterize.
+* **Layers**: raster, text, shape, adjustment, group, and placed (smart-object) layers with
+  smart filters; all 28 Photoshop blend modes; Blend If; opacity, masks with density and
+  feather, clipping masks, merge, flatten, stamp visible, rasterize.
 * **Selections and masks**: rectangle, ellipse, polygon, path, color range and magic wand,
-  luminosity; add/subtract/intersect; feather, expand, contract, smooth; a named mask
+  luminosity, sky (classical, no AI); add/subtract/intersect; feather, expand, contract, smooth; a named mask
   library usable by every region op.
 * **Adjustments** (destructive or as adjustment layers): levels, curves, exposure,
-  shadows/highlights, tone mapping, hue/saturation, color balance, vibrance, white balance,
+  shadows/highlights, clarity, texture, dehaze, tone mapping, hue/saturation, color balance, vibrance, white balance,
   selective color, channel mixer, gradient map, 3D LUTs, black & white, auto tone.
 * **Filters and retouching**: Gaussian, box, motion, radial, lens, surface, and median
   blurs; unsharp and smart sharpen; noise, denoise, dust & scratches; emboss, edges, high
   pass, pixelate, vignette, lens correction; heal, clone, dodge, burn, red eye, erase;
-  solid, gradient, and pattern fills.
+  solid, gradient, and pattern fills; brush strokes (`paint stroke`: hardness, flow,
+  opacity, image tips, jitter and scatter) onto pixels, layer masks, or selections.
 * **Type and vectors**: HarfBuzz-class shaping (RTL, CJK, ligatures, variable fonts), text on
   a path, text to outlines; rectangles, ellipses, polygons, stars, arrows, Bézier paths,
   boolean path ops, stroke outlining.

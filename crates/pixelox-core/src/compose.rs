@@ -7,7 +7,7 @@
 //! content → fx → clipped layers → layer mask → opacity → blend mode onto the backdrop.
 
 use crate::blend::{composite_pixel, BlendMode};
-use crate::doc::{Document, FxSpec, Layer, LayerKind};
+use crate::doc::{BlendIf, Document, FxSpec, Layer, LayerKind, SmartFilter};
 use crate::error::{Error, Result};
 use crate::image::{Image, Mask, Rendered};
 use crate::kernels;
@@ -24,15 +24,25 @@ pub type AdjustFn = fn(&str, &Map<String, Value>, &mut Image) -> Result<()>;
 /// Applies a layer's style stack to its rendered content (may grow the bounds).
 pub type FxFn = fn(&[FxSpec], Rendered, &Document) -> Result<Rendered>;
 
+/// Smart filters: whether a command id can be recorded as a smart filter on a placed
+/// layer, and how to re-run one on an image (installed by `pixelox-cli`, which holds the
+/// full command registry).
+#[derive(Clone, Copy)]
+pub struct SmartFilterHook {
+    pub eligible: fn(&str, &crate::op::Args) -> bool,
+    pub run: fn(&SmartFilter, &mut Image) -> Result<()>,
+}
+
 #[derive(Default, Clone, Copy)]
 struct Hooks {
     text: Option<LayerRenderFn>,
     shape: Option<LayerRenderFn>,
     adjust: Option<AdjustFn>,
     fx: Option<FxFn>,
+    smart: Option<SmartFilterHook>,
 }
 
-static HOOKS: RwLock<Hooks> = RwLock::new(Hooks { text: None, shape: None, adjust: None, fx: None });
+static HOOKS: RwLock<Hooks> = RwLock::new(Hooks { text: None, shape: None, adjust: None, fx: None, smart: None });
 
 fn hooks() -> Hooks {
     *HOOKS.read().unwrap_or_else(|e| e.into_inner())
@@ -49,6 +59,15 @@ pub fn set_adjuster(f: AdjustFn) {
 }
 pub fn set_fx_renderer(f: FxFn) {
     HOOKS.write().unwrap_or_else(|e| e.into_inner()).fx = Some(f);
+}
+pub fn set_smart_filter_hook(h: SmartFilterHook) {
+    HOOKS.write().unwrap_or_else(|e| e.into_inner()).smart = Some(h);
+}
+
+/// True when command `id` with these args can be recorded as a smart filter on a placed
+/// layer (a `filter`/`adjust` pixel command that reads no files).
+pub fn smart_filter_eligible(id: &str, args: &crate::op::Args) -> bool {
+    hooks().smart.map(|h| (h.eligible)(id, args)).unwrap_or(false)
 }
 
 /// Decodes embedded asset bytes (installed by `pixelox-io`).
@@ -95,6 +114,9 @@ pub fn installed_renderers() -> Vec<&'static str> {
     if h.fx.is_some() {
         v.push("fx");
     }
+    if h.smart.is_some() {
+        v.push("smart-filters");
+    }
     v
 }
 
@@ -129,7 +151,13 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
         }
         LayerKind::Placed { source, rect, angle, .. } => match source {
             None => None,
-            Some(src) => render_placed(src, rect, *angle).map(|r| (Cow::Owned(r.image), r.x, r.y)),
+            Some(src) => match render_placed(src, rect, *angle) {
+                Some(r) if layer.smart_filters.iter().any(|f| f.enabled) => {
+                    let r = apply_smart_filters(&layer.smart_filters, r, doc)?;
+                    Some((Cow::Owned(r.image), r.x, r.y))
+                }
+                r => r.map(|r| (Cow::Owned(r.image), r.x, r.y)),
+            },
         },
         LayerKind::Group { children } => {
             let mut buf = Image::new(doc.width, doc.height);
@@ -147,6 +175,49 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
             Ok(Some((Cow::Owned(r.image), r.x, r.y)))
         }
         (None, _) => Ok(None),
+    }
+}
+
+/// Run a placed layer's smart filters on its rendered content. The content is first
+/// spread onto the canvas so blurs and other neighborhood filters can grow past the
+/// placed rectangle (clipped to the canvas, as in Photoshop).
+fn apply_smart_filters(filters: &[SmartFilter], r: Rendered, doc: &Document) -> Result<Rendered> {
+    let h = hooks().smart.ok_or_else(|| missing("smart filter"))?;
+    let mut img = r.to_canvas(doc.width, doc.height);
+    for f in filters.iter().filter(|f| f.enabled) {
+        (h.run)(f, &mut img).map_err(|e| {
+            let msg = format!("smart filter {} failed: {}", f.op, e.message);
+            Error { message: msg, ..e }
+        })?;
+        if (img.width, img.height) != (doc.width, doc.height) {
+            return Err(Error::internal(format!("smart filter {} changed the image size", f.op)));
+        }
+    }
+    Ok(Rendered { image: img, x: 0, y: 0 })
+}
+
+/// Coverage factors of a layer's Blend If ranges over the backdrop (None = identity).
+fn blend_if_mask(bi: Option<&BlendIf>, this: &Image, under: &Image) -> Option<Mask> {
+    let bi = bi.filter(|b| !b.is_identity())?;
+    let w = this.width as usize;
+    let mut m = Mask::new(this.width, this.height);
+    m.data.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
+        for (x, v) in row.iter_mut().enumerate() {
+            let i = (y * w + x) * 4;
+            *v = bi.factor(&this.data[i..i + 4], &under.data[i..i + 4]);
+        }
+    });
+    Some(m)
+}
+
+fn combine_masks(a: Option<Mask>, b: Option<Mask>) -> Option<Mask> {
+    match (a, b) {
+        (Some(mut a), Some(b)) => {
+            a.data.par_iter_mut().zip(b.data.par_iter()).for_each(|(x, y)| *x *= *y);
+            Some(a)
+        }
+        (a, None) => a,
+        (None, b) => b,
     }
 }
 
@@ -206,6 +277,7 @@ pub fn composite(doc: &Document) -> Result<Image> {
                 && matches!(l.blend, BlendMode::Normal | BlendMode::PassThrough)
                 && l.mask.as_ref().map(|m| !m.enabled).unwrap_or(true)
                 && l.fx.iter().all(|f| !f.enabled)
+                && l.blend_if.is_none()
                 && !l.clip
                 && (l.x, l.y, image.width, image.height) == (0, 0, doc.width, doc.height);
             if plain {
@@ -343,7 +415,8 @@ fn apply_adjustment_layer(layer: &Layer, target: &mut Image) -> Result<()> {
     if let LayerKind::Adjustment { op, params } = &layer.content {
         let mut adjusted = target.clone();
         apply_adjustment(op, params, &mut adjusted)?;
-        let m = mask_factor(layer);
+        let bi = blend_if_mask(layer.blend_if.as_ref(), &adjusted, target);
+        let m = combine_masks(mask_factor(layer), bi);
         mix_into(target, &adjusted, layer.opacity / 100.0, m.as_ref());
     }
     Ok(())
@@ -363,7 +436,10 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
             return Ok(());
         }
         LayerKind::Group { children }
-            if base.blend == BlendMode::PassThrough && clipped.is_empty() && base.fx.is_empty() =>
+            if base.blend == BlendMode::PassThrough
+                && clipped.is_empty()
+                && base.fx.is_empty()
+                && base.blend_if.is_none() =>
         {
             let m = mask_factor(base);
             if base.opacity >= 100.0 && m.is_none() {
@@ -413,7 +489,8 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
             p[3] = a;
         }
     }
-    let m = mask_factor(base);
+    let bi = blend_if_mask(base.blend_if.as_ref(), &layer_img, backdrop);
+    let m = combine_masks(mask_factor(base), bi);
     let mode = if base.blend == BlendMode::PassThrough { BlendMode::Normal } else { base.blend };
     blend_onto(backdrop, &layer_img, mode, base.opacity / 100.0, m.as_ref(), layer_seed(base));
     Ok(())
@@ -495,6 +572,103 @@ mod tests {
         let p = d.resolve("G").unwrap();
         d.layer_mut(&p).blend = BlendMode::Normal;
         assert!((composite(&d).unwrap().get(0, 0)[0] - 0.5).abs() < 1e-5);
+    }
+
+    #[test]
+    fn blend_if_ranges_and_ramps() {
+        let bi = BlendIf { channel: "gray".into(), this: [50.0, 100.0, 255.0, 255.0], underlying: BlendIf::FULL };
+        let g = |v: f32| [v / 255.0, v / 255.0, v / 255.0, 1.0];
+        assert_eq!(bi.factor(&g(20.0), &g(0.0)), 0.0);
+        assert!((bi.factor(&g(75.0), &g(0.0)) - 0.5).abs() < 1e-4);
+        assert_eq!(bi.factor(&g(200.0), &g(0.0)), 1.0);
+        // hard split (B == W pair) and the white side
+        let bi = BlendIf { channel: "red".into(), this: BlendIf::FULL, underlying: [0.0, 0.0, 128.0, 128.0] };
+        assert_eq!(bi.factor(&g(255.0), &[0.4, 1.0, 1.0, 1.0]), 1.0);
+        assert_eq!(bi.factor(&g(255.0), &[0.6, 0.0, 0.0, 1.0]), 0.0);
+        assert!(!bi.is_identity());
+    }
+
+    #[test]
+    fn blend_if_hides_layer_over_bright_backdrop() {
+        // backdrop: left dark, right bright; white top layer shows only over the dark half
+        let mut d = Document::from_image(Image::from_fn(4, 1, |x, _| {
+            let v = if x < 2 { 0.1 } else { 0.9 };
+            [v, v, v, 1.0]
+        }));
+        let mut top =
+            d.new_layer("Top", LayerKind::Raster { image: Image::filled(4, 1, Rgba::new(1.0, 0.0, 0.0, 1.0)) });
+        top.blend_if =
+            Some(BlendIf { channel: "gray".into(), this: BlendIf::FULL, underlying: [0.0, 0.0, 100.0, 120.0] });
+        d.insert_above(None, top);
+        let c = composite(&d).unwrap();
+        assert_eq!(c.get(0, 0)[0], 1.0);
+        assert!((c.get(3, 0)[0] - 0.9).abs() < 1e-5, "{:?}", c.get(3, 0));
+        // also applies to adjustment layers (invert only the dark half)
+        let mut d = Document::from_image(Image::from_fn(4, 1, |x, _| {
+            let v = if x < 2 { 0.1 } else { 0.9 };
+            [v, v, v, 1.0]
+        }));
+        set_adjuster(|_, _, img| {
+            for p in img.data.chunks_mut(4) {
+                for c in &mut p[..3] {
+                    *c = 1.0 - *c;
+                }
+            }
+            Ok(())
+        });
+        let mut adj = d.new_layer("Inv", LayerKind::Adjustment { op: "invert".into(), params: Map::new() });
+        adj.blend_if =
+            Some(BlendIf { channel: "gray".into(), this: BlendIf::FULL, underlying: [0.0, 0.0, 128.0, 128.0] });
+        d.insert_above(None, adj);
+        let c = composite(&d).unwrap();
+        assert!((c.get(0, 0)[0] - 0.9).abs() < 1e-5);
+        assert!((c.get(3, 0)[0] - 0.9).abs() < 1e-5);
+    }
+
+    #[test]
+    fn smart_filters_run_through_the_hook_on_the_canvas() {
+        fn eligible(id: &str, _: &crate::op::Args) -> bool {
+            id == "test.spread"
+        }
+        // a "filter" that paints every pixel half-opaque white: proves it runs on a
+        // canvas-sized image (it can reach beyond the placed rect)
+        fn run(f: &SmartFilter, img: &mut Image) -> Result<()> {
+            assert_eq!(f.op, "test.spread");
+            for p in img.data.chunks_mut(4) {
+                p.copy_from_slice(&[1.0, 1.0, 1.0, p[3].max(0.5)]);
+            }
+            Ok(())
+        }
+        set_smart_filter_hook(SmartFilterHook { eligible, run });
+        let mut d = Document::new(10, 10);
+        let mut l = d.new_layer(
+            "P",
+            LayerKind::Placed {
+                asset: "x".into(),
+                path: "x.png".into(),
+                linked: false,
+                rect: [2.0, 2.0, 4.0, 4.0],
+                angle: 0.0,
+                source: Some(std::sync::Arc::new(Image::filled(8, 8, Rgba::WHITE))),
+            },
+        );
+        l.smart_filters.push(SmartFilter {
+            op: "test.spread".into(),
+            enabled: true,
+            params: Map::new(),
+            seed: 0,
+            op_index: 0,
+        });
+        d.insert_above(None, l);
+        let c = composite(&d).unwrap();
+        assert_eq!(c.get(3, 3)[3], 1.0);
+        assert_eq!(c.get(0, 0)[3], 0.5);
+        // disabled filters are skipped
+        let p = d.resolve("P").unwrap();
+        d.layer_mut(&p).smart_filters[0].enabled = false;
+        assert_eq!(composite(&d).unwrap().get(0, 0)[3], 0.0);
+        assert!(smart_filter_eligible("test.spread", &crate::op::Args::new()));
+        assert!(!smart_filter_eligible("filter.gaussian", &crate::op::Args::new()));
     }
 
     #[test]

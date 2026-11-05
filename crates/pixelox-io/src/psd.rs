@@ -346,6 +346,9 @@ fn flatten_tree(
         if !l.fx.is_empty() {
             rasterized.push(format!("{} (styles not written)", l.name));
         }
+        if l.blend_if.is_some() {
+            rasterized.push(format!("{} (blend-if not written)", l.name));
+        }
         let (img, x, y) = rendered.unwrap_or_else(|| (Image::new(0, 0), 0, 0));
         let rect = (y, x, y + img.height as i32, x + img.width as i32);
         let mask = l.mask.as_ref().map(|lm| {

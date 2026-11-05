@@ -216,6 +216,7 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW2001", "the target layer is hidden"),
     ("PXW2002", "the mask or selection is empty"),
     ("PXW2003", "a live layer (text, shape, placed) was rasterized to apply a transform"),
+    ("PXW2004", "the strokes painted nothing (off the canvas, or masked out)"),
     ("PXW3002", "text auto-shrink was skipped or the text still overflows its slot"),
     ("PXW3001", "a parameter was clamped to its valid range"),
     ("PXW4001", "a glyph was missing from the font and drawn with a fallback"),

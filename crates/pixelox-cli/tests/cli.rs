@@ -227,6 +227,42 @@ fn pipelines_and_batches() {
 }
 
 #[test]
+fn smart_filters_on_placed_layers_replay_and_bake() {
+    let t = TempDir::new("cli-smart");
+    let d = t.0.as_path();
+    sample(d);
+    ok(d, &["new", "-o", "doc.pxo", "--size", "200x120", "--fill", "white"]);
+    ok(d, &["comp", "place", "doc.pxo", "--in-place", "photo.png", "--as", "Photo", "--size", "100x", "--at", "50,30"]);
+    let v = ok(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Photo", "--sigma", "6"]);
+    assert_eq!(v["result"]["smart_filter"], "filter.gaussian");
+    let v = ok(d, &["filter", "add-noise", "doc.pxo", "--in-place", "--layer", "Photo", "--amount", "8"]);
+    assert_eq!(v["result"]["smart_filters"], 2);
+    ok(d, &["adjust", "curves", "doc.pxo", "--in-place", "--layer", "Photo", "--points", "0,0 128,100 255,255"]);
+    // the layer stays placed and lists its filters
+    let v = ok(d, &["layer", "list", "doc.pxo"]);
+    let photo = v["result"]["layers"].as_array().unwrap().iter().find(|l| l["name"] == "Photo").unwrap().clone();
+    assert_eq!(photo["kind"], "placed");
+    assert_eq!(photo["smart_filters"].as_array().unwrap().len(), 3);
+    // the blur reaches past the placed rect (rendered on the canvas)
+    ok(d, &["export", "doc.pxo", "-o", "out.png"]);
+    let v = ok(d, &["analyze", "stats", "out.png", "--rect", "47,60,1x1"]);
+    assert!(v["result"]["channels"]["l"]["mean"].as_f64().unwrap() < 250.0, "{}", v["result"]);
+    // replay rebuilds it bit for bit
+    let v = ok(d, &["replay", "out.png.pixelox.json", "-o", "again.png"]);
+    assert_eq!(v["result"]["identical"], true);
+    // a masked filter on a placed layer is refused with a rasterize hint
+    let (code, v) =
+        run_in(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Photo", "--mask", "@alpha:Photo"]);
+    assert_eq!(code, 2);
+    assert_eq!(v["error"]["code"], "PX2303");
+    // rasterizing bakes the filters into pixels with the same look
+    ok(d, &["layer", "rasterize", "doc.pxo", "-o", "flat.pxo", "--layer", "Photo"]);
+    ok(d, &["export", "flat.pxo", "-o", "flat.png"]);
+    let v = ok(d, &["analyze", "diff", "out.png", "flat.png"]);
+    assert!(v["result"]["ssim"].as_f64().unwrap() > 0.999, "{}", v["result"]);
+}
+
+#[test]
 fn help_json_prints_the_schema() {
     let out = Command::new(BIN).args(["filter", "gaussian", "--help", "--json"]).output().unwrap();
     let v: Value = serde_json::from_slice(&out.stdout).unwrap();

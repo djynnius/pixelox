@@ -70,6 +70,81 @@ fn yes() -> bool {
     true
 }
 
+/// Blend If (Photoshop's Blending Options › Blend If): the layer shows only where its own
+/// values and the underlying composite's values fall inside the ranges. Each range is
+/// `[black_lo, black_hi, white_lo, white_hi]` on 0..255; a split pair (lo < hi) ramps
+/// instead of cutting hard.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct BlendIf {
+    /// `gray`, `red`, `green`, or `blue`.
+    pub channel: String,
+    pub this: [f32; 4],
+    pub underlying: [f32; 4],
+}
+
+impl BlendIf {
+    pub const FULL: [f32; 4] = [0.0, 0.0, 255.0, 255.0];
+
+    pub fn is_identity(&self) -> bool {
+        self.this == Self::FULL && self.underlying == Self::FULL
+    }
+
+    /// 0..255 value of a straight-alpha sRGB pixel on the chosen channel.
+    #[inline]
+    fn value(&self, p: &[f32]) -> f32 {
+        let v = match self.channel.as_str() {
+            "red" => p[0],
+            "green" => p[1],
+            "blue" => p[2],
+            _ => 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2],
+        };
+        v.clamp(0.0, 1.0) * 255.0
+    }
+
+    #[inline]
+    fn range(v: f32, r: &[f32; 4]) -> f32 {
+        let lo = if v < r[0] {
+            0.0
+        } else if v >= r[1] {
+            1.0
+        } else {
+            (v - r[0]) / (r[1] - r[0])
+        };
+        let hi = if v > r[3] {
+            0.0
+        } else if v <= r[2] {
+            1.0
+        } else {
+            (r[3] - v) / (r[3] - r[2])
+        };
+        lo * hi
+    }
+
+    /// Coverage factor (0..1) for one pixel of this layer over one underlying pixel.
+    #[inline]
+    pub fn factor(&self, this: &[f32], under: &[f32]) -> f32 {
+        Self::range(self.value(this), &self.this) * Self::range(self.value(under), &self.underlying)
+    }
+}
+
+/// A non-destructive filter on a placed layer (Photoshop's smart filter): a `filter` or
+/// `adjust` command recorded with its params and random stream, re-run on the placed
+/// content whenever the layer renders.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct SmartFilter {
+    /// Command id (`filter.gaussian`, `adjust.curves`).
+    pub op: String,
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    #[serde(default)]
+    pub params: Map<String, Value>,
+    /// Seed and recipe index the command ran with (keys its random stream).
+    #[serde(default)]
+    pub seed: u64,
+    #[serde(default)]
+    pub op_index: usize,
+}
+
 /// Layer contents by kind.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -148,6 +223,12 @@ pub struct Layer {
     pub clip: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub fx: Vec<FxSpec>,
+    /// Blend If ranges (`layer blend-if`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blend_if: Option<BlendIf>,
+    /// Smart filters of a placed layer, applied in order before its styles.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub smart_filters: Vec<SmartFilter>,
     /// Free-form properties (imported PSD text, notes).
     #[serde(default, skip_serializing_if = "Map::is_empty")]
     pub props: Map<String, Value>,
@@ -170,6 +251,8 @@ impl Layer {
             vector_mask: None,
             clip: false,
             fx: Vec::new(),
+            blend_if: None,
+            smart_filters: Vec::new(),
             props: Map::new(),
         }
     }
@@ -665,6 +748,16 @@ impl Document {
                 v["children"] = Value::Array(children.iter().rev().map(|c| self.layer_json(c, depth + 1)).collect());
             }
             LayerKind::Shape { .. } => {}
+        }
+        if let Some(bi) = &l.blend_if {
+            v["blend_if"] = json!(bi);
+        }
+        if !l.smart_filters.is_empty() {
+            v["smart_filters"] = json!(l
+                .smart_filters
+                .iter()
+                .map(|f| json!({"op": f.op, "enabled": f.enabled, "params": f.params}))
+                .collect::<Vec<_>>());
         }
         if !l.props.is_empty() {
             v["props"] = Value::Object(l.props.clone());

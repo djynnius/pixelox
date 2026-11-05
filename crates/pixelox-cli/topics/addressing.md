@@ -17,9 +17,15 @@ documents with several layers require it where it matters (PX2302). Several laye
 ## Masks
 
 `--mask REF`: a named mask from the document's library, `@sel` (the active selection),
-`@alpha:<layer>` (a layer's transparency), or a grayscale image path (luma, or alpha when
-the image has transparency) of the canvas size. `--invert-mask` flips it. Without a mask
-an op applies everywhere.
+`@alpha:<layer>` (a layer's transparency), `@mask:<layer>` (a layer's layer mask, like
+Ctrl-clicking its thumbnail), or a grayscale image path (luma, or alpha when the image has
+transparency) of the canvas size. `--invert-mask` flips it. Without a mask an op applies
+everywhere.
+
+To edit a layer mask in steps, load it as the selection, change the selection, and write
+it back: `select load doc.pxo @mask:Sky`, then `select ellipse ... --mode subtract
+--feather 80`, then `mask add doc.pxo --layer Sky --from @sel`. `paint stroke --target
+mask` paints into a layer mask directly.
 
 ## Geometry
 

@@ -2,8 +2,10 @@ adjust.auto
 adjust.brightness-contrast
 adjust.bw
 adjust.channel-mixer
+adjust.clarity
 adjust.color-balance
 adjust.curves
+adjust.dehaze
 adjust.equalize
 adjust.exposure
 adjust.gradient-map
@@ -14,6 +16,7 @@ adjust.lut
 adjust.posterize
 adjust.selective-color
 adjust.shadows-highlights
+adjust.texture
 adjust.threshold
 adjust.tone-map
 adjust.vibrance
@@ -105,6 +108,7 @@ jobs.status
 jobs.wait
 layer.add
 layer.blend
+layer.blend-if
 layer.clip
 layer.dup
 layer.flatten
@@ -119,6 +123,8 @@ layer.rename
 layer.reorder
 layer.rm
 layer.show
+layer.smart-filter
+layer.stamp
 layer.ungroup
 layer.unlock
 mask.add
@@ -145,6 +151,7 @@ models.rm
 models.verify
 new
 open
+paint.stroke
 path.exclude
 path.intersect
 path.outline-stroke
@@ -182,6 +189,7 @@ select.path
 select.poly
 select.rect
 select.save
+select.sky
 self-update
 shape.arrow
 shape.ellipse

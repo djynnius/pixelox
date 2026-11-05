@@ -2,8 +2,8 @@
 //! locks, and limit the effect with `--mask` / `--invert-mask`.
 
 use crate::ctx::OpCtx;
-use crate::doc::{Document, LayerPath};
-use crate::error::Result;
+use crate::doc::{Document, LayerKind, LayerPath, SmartFilter};
+use crate::error::{Error, Result};
 use crate::image::{Image, Mask};
 use crate::op::Args;
 use rayon::prelude::*;
@@ -52,6 +52,10 @@ pub fn mix_by_mask(orig: &Image, processed: &Image, mask: &Mask, ox: i32, oy: i3
 /// The common shape of a pixel op: resolve the raster layer, run `f` on its pixels, and
 /// keep the result only inside `--mask` (all of it when no mask is given). `f` must return
 /// an image of the same size. Returns `{"layer": name}` for the envelope.
+///
+/// On a placed layer, `filter` and `adjust` commands are recorded as smart filters
+/// instead (non-destructive, re-run whenever the layer renders); other commands fail with
+/// PX2303 and a hint to rasterize.
 pub fn apply_to_raster(
     args: &Args,
     doc: &mut Document,
@@ -59,6 +63,11 @@ pub fn apply_to_raster(
     f: impl FnOnce(&Image, &mut OpCtx) -> Result<Image>,
 ) -> Result<Value> {
     let path = target_layer(args, doc)?;
+    if matches!(doc.layer(&path).content, LayerKind::Placed { .. })
+        && crate::compose::smart_filter_eligible(&ctx.id, args)
+    {
+        return add_smart_filter(args, doc, ctx, &path);
+    }
     let mask = ctx.mask_arg(args, doc)?;
     let layer = doc.layer(&path);
     if !layer.visible {
@@ -75,6 +84,32 @@ pub fn apply_to_raster(
     };
     *doc.layer_mut(&path).raster_mut()? = result;
     Ok(json!({"layer": name}))
+}
+
+/// Record the current command as a smart filter on the placed layer at `path`.
+fn add_smart_filter(args: &Args, doc: &mut Document, ctx: &mut OpCtx, path: &LayerPath) -> Result<Value> {
+    let name = doc.layer(path).name.clone();
+    if args.str("mask").is_some() {
+        return Err(Error::new("PX2303", format!("smart filters on placed layer '{name}' cannot take --mask"))
+            .with_hint(format!(
+                "rasterize first (pixelox layer rasterize <doc> --layer '{name}' --in-place), or mask the layer itself"
+            ))
+            .with_context("layer", name));
+    }
+    let mut params = args.to_json();
+    for k in ["layer", "mask", "invert-mask", "invert_mask"] {
+        params.remove(k);
+    }
+    let filter =
+        SmartFilter { op: ctx.id.clone(), enabled: true, params, seed: ctx.globals.seed, op_index: ctx.op_index };
+    // render once now so a bad filter fails here, not at export
+    let layer = doc.layer(path).clone();
+    let mut probe = layer.clone();
+    probe.smart_filters.push(filter.clone());
+    crate::compose::render_layer(doc, &probe)?;
+    let l = doc.layer_mut(path);
+    l.smart_filters.push(filter);
+    Ok(json!({"layer": name, "smart_filter": ctx.id, "smart_filters": l.smart_filters.len()}))
 }
 
 #[cfg(test)]

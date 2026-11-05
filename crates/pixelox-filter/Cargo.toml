@@ -1,6 +1,6 @@
 [package]
 name = "pixelox-filter"
-description = "Filters (filter *), retouching (retouch *), and fills (fill *) for pixelox"
+description = "Filters (filter *), retouching (retouch *), fills (fill *), and painting (paint *) for pixelox"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,4 +13,5 @@ serde.workspace = true
 serde_json.workspace = true
 rayon.workspace = true
 tiny-skia.workspace = true
+kurbo.workspace = true
 rand_core.workspace = true

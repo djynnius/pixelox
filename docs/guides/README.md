@@ -11,7 +11,8 @@ every command with a JSON envelope, a JSON Schema, a provenance sidecar, and an 
 * **Building an agent?** Read the [agent guide](agents.md), the [contract](topics/contract.md),
   and the cookbook: [watermark a folder](cookbook/watermark-a-folder.md),
   [social cards from a CSV](cookbook/social-cards-from-csv.md),
-  [MCP tool calls](cookbook/mcp-tool-calls.md), [ImageMagick equivalents](cookbook/imagemagick-equivalents.md).
+  [MCP tool calls](cookbook/mcp-tool-calls.md), [ImageMagick equivalents](cookbook/imagemagick-equivalents.md),
+  [blend a photo composite](cookbook/photo-composite.md).
 * **Looking up a command?** Every command has a page under *Command reference*;
   `pixelox docs <command>` prints the same page offline.
 * **Something wrong?** The [error catalog](errors.md) lists every code with what to do.

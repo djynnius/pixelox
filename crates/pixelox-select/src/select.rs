@@ -95,8 +95,8 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox select save doc.pxo --as sky --replace --in-place", "Overwrite 'sky'")
             .example("pixelox select save doc.pxo --as subject -o masked.pxo", "Save into a copy"),
         OpSpec::doc("select load", CAT, "Load a named mask as the selection", load)
-            .about("Make a mask the active selection, combined by --mode. NAME may be a library mask, @alpha:<layer>, or a grayscale image path the size of the canvas.")
-            .param(param("name", ParamKind::Str).required().help("Mask to load: a library name, @alpha:<layer>, or an image path"))
+            .about("Make a mask the active selection, combined by --mode. NAME may be a library mask, @alpha:<layer>, @mask:<layer> (a layer mask), or a grayscale image path the size of the canvas.")
+            .param(param("name", ParamKind::Str).required().help("Mask to load: a library name, @alpha:<layer>, @mask:<layer>, or an image path"))
             .positional("name")
             .param(mode_param())
             .example("pixelox select load doc.pxo sky --in-place", "Select the 'sky' mask")

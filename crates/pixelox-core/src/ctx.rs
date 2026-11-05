@@ -492,10 +492,20 @@ impl<'a> OpCtx<'a> {
     }
 
     /// Resolve a mask reference against a document: a named mask, `@sel`,
-    /// `@alpha:<layer>`, or a grayscale image path (luma, or alpha when the image has
+    /// `@alpha:<layer>`, `@mask:<layer>` (a layer mask), or a grayscale image path (luma, or alpha when the image has
     /// transparency). The result is canvas-sized.
     pub fn resolve_mask(&mut self, doc: &Document, r: &str) -> Result<Mask> {
         let r = r.trim();
+        if let Some(layer) = r.strip_prefix("@mask:") {
+            let p = doc.resolve(layer)?;
+            let l = doc.layer(&p);
+            return match &l.mask {
+                Some(lm) => Ok(lm.mask.clone()),
+                None => Err(Error::new("PX2311", format!("layer '{}' has no layer mask", l.name))
+                    .with_hint(format!("add one with `pixelox mask add <doc> --layer '{}' --in-place`", l.name))
+                    .with_context("layer", l.name.clone())),
+            };
+        }
         if let Some(layer) = r.strip_prefix("@alpha:") {
             let p = doc.resolve(layer)?;
             let l = doc.layer(&p);
@@ -853,6 +863,19 @@ mod tests {
 
     fn ctx(globals: Globals) -> OpCtx<'static> {
         OpCtx::new("filter gaussian", vec![], globals, &NoIo, &crate::ctx::NoProgress)
+    }
+
+    #[test]
+    fn layer_masks_resolve_as_mask_references() {
+        use crate::doc::LayerMask;
+        let mut d = Document::from_image(Image::new(4, 2));
+        let p = d.resolve("Background").unwrap();
+        let mut c = ctx(Globals::default());
+        assert_eq!(c.resolve_mask(&d, "@mask:Background").unwrap_err().code, "PX2311");
+        d.layer_mut(&p).mask = Some(LayerMask::new(Mask::from_fn(4, 2, |x, _| if x < 1 { 1.0 } else { 0.0 })));
+        let m = c.resolve_mask(&d, "@mask:Background").unwrap();
+        assert_eq!((m.at(0, 0), m.at(3, 1)), (1.0, 0.0));
+        assert_eq!(c.resolve_mask(&d, "@mask:Nope").unwrap_err().code, "PX2301");
     }
 
     #[test]
