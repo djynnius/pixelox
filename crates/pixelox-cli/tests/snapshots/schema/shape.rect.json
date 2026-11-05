@@ -1,0 +1,382 @@
+{
+  "command": "shape.rect",
+  "cli": "pixelox shape rect",
+  "summary": "Add a rectangle shape layer (rounded via radius)",
+  "category": "vector",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.rect.params.json",
+    "title": "pixelox shape.rect parameters",
+    "description": "Add a rectangle shape layer (rounded via radius)",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "rect": {
+        "type": "string",
+        "examples": [
+          "10,20,300x200"
+        ],
+        "description": "Rectangle X,Y,WxH in px or % of the canvas Type: X,Y,WxH.",
+        "x-pixelox-kind": "rect"
+      },
+      "radius": {
+        "description": "Corner radius in px, or 'tl,tr,br,bl' per corner Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Corner radius in px, or 'tl,tr,br,bl' per corner Type: list.",
+            "default": "0",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Corner radius in px, or 'tl,tr,br,bl' per corner Type: list.",
+              "default": "0",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "fill": {
+        "type": "string",
+        "description": "Fill color (CSS color) or none; black when neither --fill nor --stroke is given Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "stroke": {
+        "type": "string",
+        "description": "Stroke color (CSS color) or none (default none) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "stroke_width": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Stroke width in px (default 1; 2 for line and arrow) Range: 0..10000. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "dash": {
+        "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "dash_offset": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Offset into the dash pattern in px Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "cap": {
+        "type": "string",
+        "enum": [
+          "butt",
+          "round",
+          "square"
+        ],
+        "description": "Line cap at open path ends Type: choice.",
+        "default": "butt",
+        "x-pixelox-kind": "choice"
+      },
+      "join": {
+        "type": "string",
+        "enum": [
+          "miter",
+          "round",
+          "bevel"
+        ],
+        "description": "Line join at corners Type: choice.",
+        "default": "miter",
+        "x-pixelox-kind": "choice"
+      },
+      "miter_limit": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Miter limit (ratio of miter length to stroke width) Range: 1..1000. Type: number.",
+        "default": "4",
+        "x-pixelox-kind": "float"
+      },
+      "fill_rule": {
+        "type": "string",
+        "enum": [
+          "nonzero",
+          "evenodd"
+        ],
+        "description": "Fill rule for self-overlapping paths and holes Type: choice.",
+        "default": "nonzero",
+        "x-pixelox-kind": "choice"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Layer opacity 0-100 Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: generated, unique) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input",
+      "rect"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.rect.result.json",
+    "title": "pixelox shape.rect envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "shape.rect"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

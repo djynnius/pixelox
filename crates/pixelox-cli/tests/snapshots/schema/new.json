@@ -1,0 +1,287 @@
+{
+  "command": "new",
+  "cli": "pixelox new",
+  "summary": "Create an empty document",
+  "category": "document",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/new.params.json",
+    "title": "pixelox new parameters",
+    "description": "Create an empty document",
+    "type": "object",
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Canvas size in px, e.g. 1080x1350 Type: WxH.",
+        "x-pixelox-kind": "size"
+      },
+      "preset": {
+        "type": "string",
+        "enum": [
+          "a4",
+          "a3",
+          "letter",
+          "business-card",
+          "poster-18x24",
+          "flier-letter",
+          "ig-post",
+          "ig-portrait",
+          "ig-story",
+          "x-post",
+          "yt-thumb",
+          "og-card",
+          "fb-cover"
+        ],
+        "description": "Canvas preset (sets size and dpi) Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "fill": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Background fill color, or `transparent` Type: color.",
+        "default": "white",
+        "x-pixelox-kind": "color"
+      },
+      "dpi": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Resolution for pt/mm/in units [default: 72, or the preset's] Range: 1..10000. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "color_space": {
+        "type": "string",
+        "enum": [
+          "srgb",
+          "display-p3",
+          "adobe-rgb"
+        ],
+        "description": "Working color space Type: choice.",
+        "default": "srgb",
+        "x-pixelox-kind": "choice"
+      },
+      "depth": {
+        "type": "string",
+        "enum": [
+          "8",
+          "16"
+        ],
+        "description": "Bits per channel stored in the document Type: choice.",
+        "default": "8",
+        "x-pixelox-kind": "choice"
+      }
+    },
+    "required": [],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/new.result.json",
+    "title": "pixelox new envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "new"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1106",
+    "PX1401",
+    "PX1403",
+    "PX9001"
+  ]
+}

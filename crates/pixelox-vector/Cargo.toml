@@ -1,0 +1,21 @@
+[package]
+name = "pixelox-vector"
+description = "Vector shapes (shape *, path *), SVG authoring (svg *), and tracing (trace) for pixelox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+tiny-skia.workspace = true
+kurbo.workspace = true
+usvg.workspace = true
+resvg.workspace = true
+base64 = "0.22"
+i_overlay = "9.1"
+visioncortex = "0.9.3"

@@ -1,0 +1,380 @@
+{
+  "command": "fx.stroke",
+  "cli": "pixelox fx stroke",
+  "summary": "Add or replace a stroke along a layer's edges",
+  "category": "fx",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/fx.stroke.params.json",
+    "title": "pixelox fx.stroke parameters",
+    "description": "Add or replace a stroke along a layer's edges",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "width": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Stroke width in px Range: 0..1000. Type: number.",
+        "default": "3",
+        "x-pixelox-kind": "float"
+      },
+      "position": {
+        "type": "string",
+        "enum": [
+          "inside",
+          "center",
+          "outside"
+        ],
+        "description": "Where the stroke sits relative to the edge Type: choice.",
+        "default": "outside",
+        "x-pixelox-kind": "choice"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Stroke color Type: color.",
+        "default": "#000000",
+        "x-pixelox-kind": "color"
+      },
+      "stops": {
+        "type": "string",
+        "examples": [
+          "#000@0,#fff@1"
+        ],
+        "description": "Gradient fill stops, instead of --color Type: stops.",
+        "x-pixelox-kind": "stops"
+      },
+      "angle": {
+        "type": "string",
+        "examples": [
+          "45"
+        ],
+        "description": "Gradient angle in degrees (0 = left to right, 90 = bottom to top) Type: degrees.",
+        "default": "90",
+        "x-pixelox-kind": "angle"
+      },
+      "from": {
+        "type": "string",
+        "description": "Pattern tile image to fill the stroke with, embedded in the document Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "scale": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Pattern tile scale in percent Range: 1..1000. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "blend": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "dissolve",
+          "darken",
+          "multiply",
+          "color-burn",
+          "linear-burn",
+          "darker-color",
+          "lighten",
+          "screen",
+          "color-dodge",
+          "linear-dodge",
+          "lighter-color",
+          "overlay",
+          "soft-light",
+          "hard-light",
+          "vivid-light",
+          "linear-light",
+          "pin-light",
+          "hard-mix",
+          "difference",
+          "exclusion",
+          "subtract",
+          "divide",
+          "hue",
+          "saturation",
+          "color",
+          "luminosity"
+        ],
+        "description": "Blend mode of the stroke Type: choice.",
+        "default": "normal",
+        "x-pixelox-kind": "choice"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Opacity of the effect in percent Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "enabled": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "on|off; given alone, turns the layer's existing effect on or off and keeps its settings Type: on|off.",
+        "default": "on",
+        "x-pixelox-kind": "switch"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/fx.stroke.result.json",
+    "title": "pixelox fx.stroke envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "fx.stroke"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

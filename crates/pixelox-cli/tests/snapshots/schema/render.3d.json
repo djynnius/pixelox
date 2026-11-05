@@ -1,0 +1,407 @@
+{
+  "command": "render.3d",
+  "cli": "pixelox render 3d",
+  "summary": "Render primitives, extrusions, or OBJ scenes (CPU 3D)",
+  "category": "render",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.3d.params.json",
+    "title": "pixelox render.3d parameters",
+    "description": "Render primitives, extrusions, or OBJ scenes (CPU 3D)",
+    "type": "object",
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "scene": {
+        "type": "string",
+        "description": "Scene file (.p3d.json): objects (primitives, obj meshes, SVG extrusions), camera, light Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "primitive": {
+        "type": "string",
+        "enum": [
+          "box",
+          "sphere",
+          "cylinder",
+          "cone",
+          "torus",
+          "plane"
+        ],
+        "description": "Render one primitive: box, sphere, cylinder, cone, torus, or plane Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "dims": {
+        "type": "string",
+        "description": "Primitive dimensions X,Y,Z (default 1,1,1; torus 1,0.3,1); see `about` for each shape Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "extrude": {
+        "type": "string",
+        "description": "SVG whose path outlines are extruded (filled paths; holes kept) Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "depth": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Extrusion depth in SVG units (auto: 20% of the larger side) Range: 0..1000000. Type: number.",
+        "default": "auto",
+        "x-pixelox-kind": "float"
+      },
+      "camera": {
+        "type": "string",
+        "enum": [
+          "iso",
+          "dimetric",
+          "front",
+          "top",
+          "persp"
+        ],
+        "description": "Camera: iso, dimetric, front, top (orthographic) or persp (perspective) Type: choice.",
+        "default": "iso",
+        "x-pixelox-kind": "choice"
+      },
+      "fov": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 170.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Vertical field of view in degrees (persp) Range: 1..170. Type: number.",
+        "default": "40",
+        "x-pixelox-kind": "float"
+      },
+      "look_at": {
+        "type": "string",
+        "description": "Point X,Y,Z the camera aims at (default: the model's center) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "style": {
+        "type": "string",
+        "enum": [
+          "wireframe",
+          "hidden-line",
+          "shaded"
+        ],
+        "description": "wireframe (all edges), hidden-line (visible edges only), or shaded (flat Lambert) Type: choice.",
+        "default": "hidden-line",
+        "x-pixelox-kind": "choice"
+      },
+      "edges": {
+        "type": "string",
+        "enum": [
+          "feature",
+          "all"
+        ],
+        "description": "hidden-line/outline edges: feature (creases, silhouettes, boundaries) or all (every visible mesh edge) Type: choice.",
+        "default": "feature",
+        "x-pixelox-kind": "choice"
+      },
+      "line_width": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 200.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Line width in output pixels Range: 0.05..200. Type: number.",
+        "default": "1.5",
+        "x-pixelox-kind": "float"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Output size WxH (with --as-layer: the document size unless given) Type: WxH.",
+        "default": "1024x768",
+        "x-pixelox-kind": "size"
+      },
+      "as_layer": {
+        "type": "string",
+        "description": "Add the render as a raster layer to this .pxo document (--in-place, or -o for a copy) Type: path.",
+        "x-pixelox-kind": "path"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name of the layer added with --as-layer (default: 3D render) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Surface color of the model (scene objects may set their own) Type: color.",
+        "default": "#8fa6c8",
+        "x-pixelox-kind": "color"
+      },
+      "line_color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Line color for wireframe, hidden-line, and --outline Type: color.",
+        "default": "#1f2937",
+        "x-pixelox-kind": "color"
+      },
+      "bg_color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Background color (transparent by default; a scene file may set `background`) Type: color.",
+        "default": "transparent",
+        "x-pixelox-kind": "color"
+      },
+      "outline": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "With --style shaded: draw the hidden-line edges on top Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "segments": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 3.0,
+            "maximum": 512.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Tessellation segments around curved primitives Range: 3..512. Type: integer.",
+        "default": "32",
+        "x-pixelox-kind": "int"
+      }
+    },
+    "required": [],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.3d.result.json",
+    "title": "pixelox render.3d envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "render.3d"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1106",
+    "PX1401",
+    "PX1403",
+    "PX9001"
+  ]
+}

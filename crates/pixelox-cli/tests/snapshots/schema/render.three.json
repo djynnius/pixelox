@@ -1,0 +1,329 @@
+{
+  "command": "render.three",
+  "cli": "pixelox render three",
+  "summary": "Run a three.js script (bundle via --lib) to SVG/PNG",
+  "category": "render",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.three.params.json",
+    "title": "pixelox render.three parameters",
+    "description": "Run a three.js script (bundle via --lib) to SVG/PNG",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Default size for px.canvas()/px.svg() called without arguments (px.width, px.height); also the raster size when an SVG result is written to PNG and --size is given Type: WxH.",
+        "default": "800x600",
+        "x-pixelox-kind": "size"
+      },
+      "data": {
+        "description": "name=file: expose a file as px.data.name (.csv/.tsv → array of row objects, .json → parsed, else text); repeatable Type: text. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "name=file: expose a file as px.data.name (.csv/.tsv → array of row objects, .json → parsed, else text); repeatable Type: text.",
+            "x-pixelox-kind": "str"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "name=file: expose a file as px.data.name (.csv/.tsv → array of row objects, .json → parsed, else text); repeatable Type: text.",
+              "x-pixelox-kind": "str"
+            }
+          }
+        ]
+      },
+      "param": {
+        "description": "k=v: expose a string value as px.params.k; repeatable Type: text. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "k=v: expose a string value as px.params.k; repeatable Type: text.",
+            "x-pixelox-kind": "str"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "k=v: expose a string value as px.params.k; repeatable Type: text.",
+              "x-pixelox-kind": "str"
+            }
+          }
+        ]
+      },
+      "lib": {
+        "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
+            "x-pixelox-kind": "path"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
+              "x-pixelox-kind": "path"
+            }
+          }
+        ]
+      },
+      "timeout": {
+        "type": "string",
+        "examples": [
+          "1.5s"
+        ],
+        "description": "Wall-clock limit for the whole run (seconds, or 500ms, 2m); exceeding it fails with PX6002 Type: duration.",
+        "default": "30s",
+        "x-pixelox-kind": "duration"
+      },
+      "js_mem": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 16.0,
+            "maximum": 16384.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Memory limit in MB for the JS heap plus canvases; exceeding it fails with PX6003 Range: 16..16384. Type: integer.",
+        "default": "512",
+        "x-pixelox-kind": "int"
+      },
+      "allow_time": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Let Date.now()/new Date() read the real clock (otherwise 0); breaks determinism and warns PXW6001 Type: flag.",
+        "x-pixelox-kind": "flag"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.three.result.json",
+    "title": "pixelox render.three envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "render.three"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1401",
+    "PX1403",
+    "PX9001"
+  ]
+}

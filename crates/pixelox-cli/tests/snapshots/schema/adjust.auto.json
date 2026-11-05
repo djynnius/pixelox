@@ -1,0 +1,415 @@
+{
+  "command": "adjust.auto",
+  "cli": "pixelox adjust auto",
+  "summary": "Auto levels, contrast, color, or tone",
+  "category": "adjust",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/adjust.auto.params.json",
+    "title": "pixelox adjust.auto parameters",
+    "description": "Auto levels, contrast, color, or tone",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "levels": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Per-channel black and white points (removes casts at the extremes) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "contrast": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "One contrast stretch for all channels (keeps colors) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "color": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Map the darkest and lightest colors to black and white and neutralize midtones Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "tone": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Contrast stretch plus neutral midtones (the default) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "black": {
+        "description": "Per-channel black points R,G,B (0–255); set by detection and recorded for replay Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Per-channel black points R,G,B (0–255); set by detection and recorded for replay Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Per-channel black points R,G,B (0–255); set by detection and recorded for replay Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "white": {
+        "description": "Per-channel white points R,G,B (0–255); set by detection and recorded for replay Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Per-channel white points R,G,B (0–255); set by detection and recorded for replay Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Per-channel white points R,G,B (0–255); set by detection and recorded for replay Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "gamma": {
+        "description": "Per-channel gammas R,G,B; set by detection and recorded for replay Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Per-channel gammas R,G,B; set by detection and recorded for replay Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Per-channel gammas R,G,B; set by detection and recorded for replay Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, or a grayscale image path Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "invert_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Apply outside the mask instead of inside it Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "as_layer": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Create a non-destructive adjustment layer instead of changing pixels Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: generated, unique) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/adjust.auto.result.json",
+    "title": "pixelox adjust.auto envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "adjust.auto"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

@@ -1,0 +1,405 @@
+{
+  "command": "shape.star",
+  "cli": "pixelox shape star",
+  "summary": "Add a star or burst shape layer",
+  "category": "vector",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.star.params.json",
+    "title": "pixelox shape.star parameters",
+    "description": "Add a star or burst shape layer",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "center": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "Center X,Y in px or % of the canvas Type: X,Y.",
+        "default": "50%,50%",
+        "x-pixelox-kind": "point"
+      },
+      "points": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 2.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Number of tips Range: 2..1000. Type: integer.",
+        "default": "5",
+        "x-pixelox-kind": "int"
+      },
+      "outer": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Tip radius in px or % of the shorter canvas side Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "inner": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Valley radius in px or %; auto = half of --outer Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "rotation": {
+        "type": "string",
+        "examples": [
+          "45"
+        ],
+        "description": "Clockwise rotation in degrees Type: degrees.",
+        "default": "0",
+        "x-pixelox-kind": "angle"
+      },
+      "fill": {
+        "type": "string",
+        "description": "Fill color (CSS color) or none; black when neither --fill nor --stroke is given Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "stroke": {
+        "type": "string",
+        "description": "Stroke color (CSS color) or none (default none) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "stroke_width": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Stroke width in px (default 1; 2 for line and arrow) Range: 0..10000. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "dash": {
+        "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Dash pattern in px, e.g. '4,2' (none = solid) Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "dash_offset": {
+        "oneOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Offset into the dash pattern in px Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "cap": {
+        "type": "string",
+        "enum": [
+          "butt",
+          "round",
+          "square"
+        ],
+        "description": "Line cap at open path ends Type: choice.",
+        "default": "butt",
+        "x-pixelox-kind": "choice"
+      },
+      "join": {
+        "type": "string",
+        "enum": [
+          "miter",
+          "round",
+          "bevel"
+        ],
+        "description": "Line join at corners Type: choice.",
+        "default": "miter",
+        "x-pixelox-kind": "choice"
+      },
+      "miter_limit": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 1000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Miter limit (ratio of miter length to stroke width) Range: 1..1000. Type: number.",
+        "default": "4",
+        "x-pixelox-kind": "float"
+      },
+      "fill_rule": {
+        "type": "string",
+        "enum": [
+          "nonzero",
+          "evenodd"
+        ],
+        "description": "Fill rule for self-overlapping paths and holes Type: choice.",
+        "default": "nonzero",
+        "x-pixelox-kind": "choice"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Layer opacity 0-100 Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: generated, unique) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input",
+      "outer"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.star.result.json",
+    "title": "pixelox shape.star envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "shape.star"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

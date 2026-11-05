@@ -1,0 +1,14 @@
+[package]
+name = "pixelox-mcp"
+description = "MCP server exposing pixelox to AI agents (pixelox mcp serve)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+pixelox-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon.workspace = true

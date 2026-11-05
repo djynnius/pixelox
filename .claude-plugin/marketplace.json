@@ -1,0 +1,11 @@
+{
+  "name": "pixelox",
+  "owner": { "name": "Sunday Ikpe", "url": "https://github.com/djynnius" },
+  "plugins": [
+    {
+      "name": "pixelox",
+      "source": "./",
+      "description": "Skill for driving the pixelox image workstation CLI: layers, masks, adjustments, filters, type, shapes, styles, templates, SVG, and batches."
+    }
+  ]
+}

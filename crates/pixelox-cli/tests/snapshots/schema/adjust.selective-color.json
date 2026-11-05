@@ -1,0 +1,385 @@
+{
+  "command": "adjust.selective-color",
+  "cli": "pixelox adjust selective-color",
+  "summary": "Selective color: CMYK shifts within one color family",
+  "category": "adjust",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/adjust.selective-color.params.json",
+    "title": "pixelox adjust.selective-color parameters",
+    "description": "Selective color: CMYK shifts within one color family",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "target": {
+        "type": "string",
+        "enum": [
+          "reds",
+          "yellows",
+          "greens",
+          "cyans",
+          "blues",
+          "magentas",
+          "whites",
+          "neutrals",
+          "blacks"
+        ],
+        "description": "Color family to change Type: choice.",
+        "default": "reds",
+        "x-pixelox-kind": "choice"
+      },
+      "c": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Cyan: + removes red, − adds it Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "m": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Magenta: + removes green, − adds it Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "y": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Yellow: + removes blue, − adds it Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "k": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Black: + darkens, − lightens Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "relative": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Scale changes by the ink already present (Photoshop's Relative method) instead of absolute Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, or a grayscale image path Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "invert_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Apply outside the mask instead of inside it Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "as_layer": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Create a non-destructive adjustment layer instead of changing pixels Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: generated, unique) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/adjust.selective-color.result.json",
+    "title": "pixelox adjust.selective-color envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "adjust.selective-color"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

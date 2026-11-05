@@ -1,0 +1,19 @@
+# E6: one card per CSV row (foreach), in parallel with --jobs.
+#   pixelox pipeline run social-cards.yml --var csv=samples/speakers.csv --jobs 2
+version: 1
+name: social-cards
+vars: { csv: samples/speakers.csv }
+steps:
+  - id: cards
+    foreach: { csv: "${vars.csv}", as: row }
+    run: text.add
+    with:
+      input: work/card.pxo
+      name: Name
+      content: "${row.name} — ${row.title}"
+      font: sans-serif
+      size: 40pt
+      color: white
+      at: "50%,50%"
+      anchor: c
+      output: "dist/cards/${row.slug}.png"

@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+*.pixelox.json.tmp
+.*.part.*
+.DS_Store
+/.claude/
+/pixelox-out
