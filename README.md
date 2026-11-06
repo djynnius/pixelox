@@ -106,9 +106,25 @@ More in [examples/](examples/) (every script runs in CI) and the guides under
 | Windows (PowerShell) | `powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/djynnius/pixelox/main/install.ps1 \| iex"` |
 | From source | `cargo install --path crates/pixelox-cli` |
 
-The installers fetch the latest release (or `PIXELOX_VERSION=0.2.0`), verify its SHA-256,
-and put `pixelox` in `~/.pixelox/bin` (`PIXELOX_INSTALL_DIR` overrides it) on your PATH,
-without sudo. Builds: macOS (Apple silicon and Intel), Linux x86-64 and ARM64 (glibc 2.38+,
+The installers fetch the latest release, verify its SHA-256, put `pixelox` in
+`~/.pixelox/bin`, and add that to your PATH, without sudo. Options are environment
+variables of the installing shell, so with `curl` they go on the `sh` side of the pipe:
+
+| Variable | Effect |
+| --- | --- |
+| `PIXELOX_VERSION=0.2.0` | install that release instead of the latest |
+| `PIXELOX_INSTALL_DIR=~/bin` | install there instead of `~/.pixelox/bin` |
+| `PIXELOX_NO_MODIFY_PATH=1` | leave shell profiles and the user PATH alone |
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/djynnius/pixelox/main/install.sh | PIXELOX_NO_MODIFY_PATH=1 sh
+```
+
+```powershell
+$env:PIXELOX_NO_MODIFY_PATH = 1; irm https://raw.githubusercontent.com/djynnius/pixelox/main/install.ps1 | iex
+```
+
+Builds: macOS (Apple silicon and Intel), Linux x86-64 and ARM64 (glibc 2.38+,
 with a static musl fallback for older systems), Windows x86-64 and ARM64. Local AI models
 run on Apple silicon, glibc Linux, and Windows (which needs the Visual C++ Redistributable);
 the Intel macOS and musl builds have no ML runtime.

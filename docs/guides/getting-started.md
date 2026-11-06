@@ -12,8 +12,11 @@ cargo install --path crates/pixelox-cli
 pixelox doctor                              # what this build can do
 ```
 
-The installers pick the right build, verify its SHA-256, and install to `~/.pixelox/bin`
-(`PIXELOX_INSTALL_DIR` overrides it). `PIXELOX_VERSION=0.2.0` pins a release.
+The installers pick the right build, verify its SHA-256, install to `~/.pixelox/bin`, and
+add it to your PATH. Options go on the `sh` side of the pipe (in PowerShell, set them with
+`$env:` first): `PIXELOX_VERSION=0.2.0` pins a release, `PIXELOX_INSTALL_DIR=~/bin` installs
+elsewhere, and `PIXELOX_NO_MODIFY_PATH=1` leaves your shell profiles alone, e.g.
+`curl -fsSL https://raw.githubusercontent.com/djynnius/pixelox/main/install.sh | PIXELOX_NO_MODIFY_PATH=1 sh`.
 
 ## Your first edit
 
