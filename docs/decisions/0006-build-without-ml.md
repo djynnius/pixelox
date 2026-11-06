@@ -1,6 +1,6 @@
 # ADR 0006: This build ships without the `ml` feature
 
-Status: accepted (2026-11-04); superseded for `detect subject` and `detect salient` by ADR 0012
+Status: accepted (2026-11-04); superseded for `detect subject` and `detect salient` by ADR 0012, and for `mask refine` by ADR 0013 (classical matting, no model)
 
 ## Context
 PRD §7.8 runs local ONNX models (BiRefNet-lite, MobileSAM, ViTMatte, LaMa, YOLOX-s, YuNet,

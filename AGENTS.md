@@ -35,7 +35,7 @@ prints any command's reference page.
 7. Models download only with `-y` and the user's consent. `detect subject` (BiRefNet-lite,
    224 MB) and `detect salient` (U²-Netp, 5 MB) run locally once downloaded; until then
    they exit 6 (PX1502) with the download command: ask the user, then add `-y`. The other
-   AI commands (`detect objects|faces|text|segment`, `mask refine`, `fill content-aware`)
+   AI commands (`detect objects|faces|text|segment`, `fill content-aware`)
    exit 12; make those masks with `select sky`, `select color --contiguous`, `select luma`,
    or `select path`.
 8. Brushwork is `paint stroke` (points or an SVG path; size, hardness, flow, opacity, tip
@@ -47,6 +47,11 @@ prints any command's reference page.
    `redness` (pimples are red, moles are not: `--min-redness 10 --heal` keeps moles);
    `retouch frequency-split` builds exact Low/High layers; smooth only `Low`. The playbook
    is `skills/pixelox-retouch/SKILL.md`.
+10. Cutouts: get a rough mask (`detect subject --save-mask subject`, a selection, or a
+    path), then `mask refine --mask subject --decontaminate` for hair-level edges without
+    a background fringe (`docs/guides/cookbook/extract-a-subject.md`). Effects: `render
+    lens-flare`, `fx fire`, `fx smoke`; art looks are `filter pencil|charcoal|ink|oil-paint|
+    watercolor|cartoon|cutout|halftone`.
 
 ## Addressing
 

@@ -1,10 +1,11 @@
-//! AI-assisted ops (PRD §7.8, §8.6): `detect *`, `mask refine`, `fill content-aware`,
-//! and the model registry (`models *`).
+//! AI-assisted ops (PRD §7.8, §8.6): `detect *`, `fill content-aware`, and the model
+//! registry (`models *`). (`mask refine` lives in pixelox-select: closed-form matting needs
+//! no model; its `--model vitmatte` choice exits 12 there.)
 //!
 //! With the `ml` feature (on supported targets, see build.rs) `detect subject` and
 //! `detect salient` run local ONNX models through ONNX Runtime: BiRefNet-lite and U²-Netp,
 //! downloaded on first use only with consent (`-y`) and verified by SHA-256. The other
-//! detect commands, `mask refine`, and `fill content-aware` are registered with their full
+//! detect commands and `fill content-aware` are registered with their full
 //! flag surface but their models are not in this release: `--dry-run` returns the plan and a
 //! real run exits 12 (PX1520). Builds without the feature exit 12 with PX1510 for every
 //! model-backed command.
@@ -184,16 +185,6 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox detect list-models --json", "The detect model table")
             .example("pixelox detect list-models", "As text")
             .example("pixelox models list --for detect --json", "The same through models list"),
-        OpSpec::doc("mask refine", Category::Mask, "Refine mask edges for hair and fur (matting)", mask_refine)
-            .export_mode()
-            .milestone("v0.2")
-            .about("Re-solves a band around the mask edge with ViTMatte (a trimap built from --band). Its model is not in this release; `detect subject` already refines edges with a guided filter.")
-            .param(param("mask", ParamKind::Mask).required().help("Mask to refine (name or @sel)"))
-            .param(param("model", ParamKind::Choice).choices(&["vitmatte"]).default("vitmatte").help("Matting model"))
-            .param(param("band", ParamKind::Length).default("16").help("Width of the unknown band around the edge, px"))
-            .example("pixelox mask refine shot.pxo --in-place --mask subject --model vitmatte --band 16", "Refine a subject mask")
-            .example("pixelox mask refine shot.pxo --in-place --mask @sel --band 24", "Refine the selection")
-            .example("pixelox mask refine shot.pxo --mask subject --dry-run --json", "Plan it"),
         OpSpec::doc("fill content-aware", Category::Retouch, "Fill a region from its surroundings (inpaint)", fill_content_aware)
             .export_mode()
             .milestone("v0.2")
@@ -527,9 +518,6 @@ fn detect_segment(a: &Args, _d: &mut Document, ctx: &mut OpCtx) -> Result<Value>
         return Err(Error::new("PX1003", "detect segment needs --point X,Y, --box X,Y,WxH, or --prompt"));
     }
     plan_or_gate(ctx, "detect segment", &["mobilesam"])
-}
-fn mask_refine(_a: &Args, _d: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
-    plan_or_gate(ctx, "mask refine", &["vitmatte-s"])
 }
 fn fill_content_aware(_a: &Args, _d: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     plan_or_gate(ctx, "fill content-aware", &["lama"])

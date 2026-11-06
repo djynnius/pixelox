@@ -55,10 +55,13 @@ fn every_command_is_documented() {
         "fx satin",
         "fx overlay",
         "fx stroke",
+        "fx fire",
+        "fx smoke",
         "fx list",
         "fx rm",
         "fx copy",
         "fx scale",
+        "render lens-flare",
     ] {
         assert!(names.contains(&n), "missing {n}");
     }
@@ -77,7 +80,7 @@ fn every_command_is_documented() {
             }
         }
     }
-    for n in &names[..8] {
+    for n in names[..8].iter().chain(&["fx fire", "fx smoke"]) {
         let o = find(&ops, n);
         for p in ["layer", "blend", "opacity", "enabled"] {
             assert!(o.find_param(p).is_some(), "{n} lacks --{p}");

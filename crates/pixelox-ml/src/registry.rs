@@ -98,7 +98,7 @@ pub const MODELS: &[ModelEntry] = &[
         class: "ViTMatte",
         license: "Apache-2.0",
         approx_mb: 100,
-        used_by: "mask refine, detect subject --matte",
+        used_by: "mask refine --model vitmatte, detect subject --matte",
         source: None,
     },
     ModelEntry {

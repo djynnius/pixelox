@@ -42,6 +42,12 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
 * **Portrait retouching**: `select skin` (a skin mask sampled at points, for every skin tone),
   `retouch blemishes` (finds pimples and spots at pixel accuracy and heals them, keeping
   moles with `--min-redness`), and `retouch frequency-split` (exact tone/texture layers).
+* **Extraction** (Photoshop's Extract, rebuilt): `mask refine` turns any rough mask into a
+  hair-level matte with closed-form matting and cleans background color out of the edges
+  (`--decontaminate`); paint the uncertain band with `--unknown` for hard cases.
+* **Effects and art**: `render lens-flare` (zoom, 35 mm, 105 mm, movie lenses), fire and
+  smoke as live layer styles (`fx fire`, `fx smoke`), and art filters: pencil (and colored
+  pencil), charcoal, ink, oil paint, watercolor, cartoon, paper cutout, halftone.
 * **Local AI**: `detect subject` (BiRefNet-lite: background removal, cutouts, subject
   masks) and `detect salient` (U²-Netp) run on the CPU through ONNX Runtime. Models are
   never bundled: the first use downloads them with `-y` (224 MB and 5 MB), verified by
@@ -151,7 +157,7 @@ vendored QuickJS engine that the JS renderer compiles with `cc`.
 This is the v0.1 document engine with much of later milestones. These parts of the PRD
 are not in this build, and the commands say so with exit code 12 and a remedy:
 
-* **The rest of the AI ops** (`detect objects|faces|text|segment`, `mask refine`,
+* **The rest of the AI ops** (`detect objects|faces|text|segment`,
   `fill content-aware`): their models are not in this release. The commands, flags,
   schemas, and `--dry-run` plans are all present. (`detect subject` and `detect salient`
   run locally; see below.) Builds for Intel macOS and musl Linux have no ML runtime at all.

@@ -5,13 +5,16 @@
 //!   luminosity ranges, a classical sky selection, a sampled skin selection for
 //!   retouching, boolean modes, and the named-mask library round trip.
 //! * `mask`: library masks, layer masks (raster and vector), and refinement (density,
-//!   feather, expand, contract, smooth, invert) on any stored mask, `@sel`, or a layer mask.
+//!   feather, expand, contract, smooth, invert) on any stored mask, `@sel`, or a layer mask;
+//!   `mask refine` re-solves a rough mask's edge by closed-form matting (Photoshop's
+//!   Extract) and can decontaminate the edge colors.
 //! * `transform`: layer and document geometry that keeps text, shape, placed, and group
 //!   layers live where their specs can express the map, and moves every mask and guide
 //!   with the pixels.
 
 mod engine;
 mod mask;
+mod matte;
 mod raster;
 mod sample;
 mod select;
@@ -30,6 +33,7 @@ pub fn ops() -> Vec<OpSpec> {
     v.extend(sky::ops());
     v.extend(skin::ops());
     v.extend(mask::ops());
+    v.extend(matte::ops());
     v.extend(transform::ops());
     v
 }

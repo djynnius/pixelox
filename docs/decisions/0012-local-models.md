@@ -40,5 +40,5 @@ runtime.
 On an Apple M-series CPU, BiRefNet-lite takes about 8 s of inference (10 s end to end) at
 1024 px, which misses the PRD's 2.5 s budget; U²-Netp takes under 1 s. GPU providers
 (CoreML, CUDA, DirectML) would be faster but are not bit-stable across machines; they are
-left for an opt-in flag. The other detect commands, `mask refine`, `fill content-aware`, and
+left for an opt-in flag. The other detect commands, `fill content-aware`, and
 `models add` stay planned (exit 12, PX1520).

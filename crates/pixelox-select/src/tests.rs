@@ -251,6 +251,7 @@ fn every_command_is_documented() {
         "mask contract",
         "mask smooth",
         "mask invert",
+        "mask refine",
         "transform move",
         "transform scale",
         "transform rotate",
@@ -266,8 +267,7 @@ fn every_command_is_documented() {
     ] {
         assert!(names.contains(&want), "missing {want}");
     }
-    assert_eq!(names.len(), 40);
-    assert!(!names.contains(&"mask refine"));
+    assert_eq!(names.len(), 41);
     for o in &all {
         assert!(o.summary.len() <= 60 && !o.summary.ends_with('.'), "{}: summary '{}'", o.name, o.summary);
         assert!(!o.about.is_empty(), "{}: no about", o.name);

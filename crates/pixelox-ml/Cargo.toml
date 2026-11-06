@@ -1,6 +1,6 @@
 [package]
 name = "pixelox-ml"
-description = "AI-assisted ops (detect *, mask refine, fill content-aware) and the model registry (models *): ONNX Runtime inference with the ml feature, gated without it"
+description = "AI-assisted ops (detect *, fill content-aware) and the model registry (models *): ONNX Runtime inference with the ml feature, gated without it"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -114,7 +114,7 @@ fn gate_note(op: &OpSpec) -> &'static str {
         pixelox_core::Category::Detect | pixelox_core::Category::Models => {
             "Not in this release: `--dry-run` returns the plan (model, size, license) and a real run exits 12 (PX1520)."
         }
-        _ if op.name == "mask refine" || op.name == "fill content-aware" => {
+        _ if op.name == "fill content-aware" => {
             "Not in this release: `--dry-run` returns the plan (model, size, license) and a real run exits 12 (PX1520)."
         }
         _ => "Scheduled for this milestone in the PRD.",

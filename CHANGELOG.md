@@ -4,6 +4,23 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+### Added
+- `mask refine` works (ADR 0013): Photoshop's Extract rebuilt from published methods. Any
+  rough mask (a `detect subject` mask, a selection, a path) becomes a hair-level matte by
+  closed-form matting in a band around the edge (`--band`, or a painted `--unknown`
+  highlighter), and `--decontaminate` removes background color from the edge pixels;
+  `--force-foreground` for single-color hair. On a 12 MP portrait it removed a blue fringe
+  (62% → 0.2% of edge pixels) and recovered lost strands in about a second. No model needed.
+- `render lens-flare` (zoom, 35 mm, 105 mm, and movie lenses) as a movable screen layer.
+- `fx fire` and `fx smoke`: flames and smoke rising from a layer's outline, as live layer
+  styles (`--variant` picks the pattern).
+- Art filters: `filter pencil` (and colored pencil with `--color`), `filter charcoal`,
+  `filter ink`, `filter oil-paint`, `filter watercolor`, `filter cartoon`, `filter cutout`,
+  `filter halftone` (mono or CMYK).
+- Cookbook: extract a subject; lens flares, fire, and art filters.
+
 ## [0.3.0] — 2026-11-06
 
 ### Added
