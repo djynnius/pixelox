@@ -3,16 +3,20 @@
 //!
 //! Every command is a region op on a raster layer: `--layer` picks the layer (the only
 //! one by default) and `--mask` / `--invert-mask` limit the effect (`paint stroke` can also
-//! paint layer masks, the selection, and named masks). Kernels are O(pixels)
-//! per op; the few that are not radius-independent document their bounds (`util.rs`).
-//! `fill content-aware` (inpainting) lives in pixelox-ml.
+//! paint layer masks, the selection, and named masks). Two retouching commands build on
+//! the others: `retouch frequency-split` adds a Low/High group above a layer, and
+//! `retouch blemishes` finds spots (and heals them with the `retouch heal` machinery).
+//! Kernels are O(pixels) per op; the few that are not radius-independent document their
+//! bounds (`util.rs`). `fill content-aware` (inpainting) lives in pixelox-ml.
 
 #![allow(clippy::needless_range_loop, clippy::too_many_arguments)]
 
 use pixelox_core::prelude::*;
 
+mod blemish;
 mod blur;
 mod fill;
+mod freqsep;
 mod kern;
 mod noise;
 mod paint;
@@ -29,6 +33,8 @@ pub fn ops() -> Vec<OpSpec> {
     v.extend(noise::ops());
     v.extend(stylize::ops());
     v.extend(retouch::ops());
+    v.extend(freqsep::ops());
+    v.extend(blemish::ops());
     v.extend(fill::ops());
     v.extend(paint::ops());
     v
@@ -70,6 +76,8 @@ mod contract {
         "retouch sharpen",
         "retouch blur",
         "retouch redeye",
+        "retouch frequency-split",
+        "retouch blemishes",
         "fill solid",
         "fill gradient",
         "fill pattern",
@@ -439,6 +447,9 @@ mod bench {
             ("retouch heal", &[("at", "3000,2000"), ("radius", "40")]),
             ("retouch clone", &[("from", "1000,1000"), ("to", "3000,2000"), ("radius", "300")]),
             ("retouch erase", &[("rect", "0,0,50%x50%")]),
+            ("retouch frequency-split", &[]),
+            ("retouch blemishes", &[]),
+            ("retouch blemishes", &[("kind", "both"), ("min-size", "4"), ("max-size", "200")]),
             ("paint stroke", &[("points", "5%,50% 95%,55%"), ("size", "400"), ("flow", "8")]),
             ("paint stroke", &[("d", "M 0 0 L 6000 4000"), ("size", "60"), ("spacing", "2")]),
             (

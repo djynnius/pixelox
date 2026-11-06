@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: natural-headshot
+expected_outcome: |
+  The agent builds a skin mask from sample points, finds and heals the pimples inside it, smooths tone on the low-frequency layer while keeping the pore texture, leaves the beauty mark at about (760,1000), and shows a before/after check without changing the skin tone.
+context:
+  scaffold_script: place-files.sh

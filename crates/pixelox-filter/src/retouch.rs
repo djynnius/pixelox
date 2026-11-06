@@ -216,7 +216,7 @@ fn erase(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 // heal
 
 /// Fill pixels with zero weight from weighted neighbors (Gortler-style push-pull).
-fn push_pull(v: &mut [f32], wt: &[f32], w: usize, h: usize) {
+pub(crate) fn push_pull(v: &mut [f32], wt: &[f32], w: usize, h: usize) {
     if (w <= 1 && h <= 1) || wt.iter().all(|&x| x >= 1.0) {
         return;
     }
@@ -510,6 +510,24 @@ fn heal(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     if !layer.visible {
         ctx.warn("PXW2001", format!("layer '{}' is hidden", layer.name));
     }
+    let name = layer.name.clone();
+    let r = heal_region(doc, &path, &region)?;
+    Ok(json!({"layer": name, "regions": r.regions, "pixels_changed": r.pixels_changed}))
+}
+
+/// What [`heal_region`] repaired.
+pub(crate) struct HealReport {
+    /// One entry per connected region: canvas `bbox`, `source_offset`, `pixels`.
+    pub regions: Vec<Value>,
+    pub pixels_changed: usize,
+}
+
+/// Heal every 8-connected region of `region` (canvas-sized, soft: pixels above 0.01 are
+/// holes, and the result is mixed in by coverage) on the raster layer at `path`. Shared by
+/// `retouch heal` and `retouch blemishes --heal`. PX3320 when the region covers none or
+/// all of the layer, PX2303 when the layer is not raster.
+pub(crate) fn heal_region(doc: &mut Document, path: &[usize], region: &Mask) -> Result<HealReport> {
+    let layer = doc.layer(path);
     let (lx, ly, name) = (layer.x as i64, layer.y as i64, layer.name.clone());
     let img = layer.raster()?;
     let (w, h) = (img.width as usize, img.height as usize);
@@ -525,8 +543,7 @@ fn heal(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             .with_hint("heal smaller regions, or use fill content-aware for large areas")
             .with_context("layer", &name));
     }
-    let orig = Buf::premul(img);
-    let mut work = orig.clone();
+    let mut work = Buf::premul(img);
     let holes_sat = sat(&hole, w, h);
     let mut regions = Vec::new();
     let mut changed = 0;
@@ -539,14 +556,14 @@ fn heal(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             "pixels": r.pixels,
         }));
     }
-    let img = doc.layer_mut(&path).raster_mut()?;
+    let img = doc.layer_mut(path).raster_mut()?;
     img.data.par_chunks_mut(4).enumerate().for_each(|(i, p)| {
         let t = soft[i];
         if t > 0.0 {
             mix_premul(p, &work.data[i * 4..i * 4 + 4], t.min(1.0));
         }
     });
-    Ok(json!({"layer": name, "regions": regions, "pixels_changed": changed}))
+    Ok(HealReport { regions, pixels_changed: changed })
 }
 
 // ---------------------------------------------------------------------------------------

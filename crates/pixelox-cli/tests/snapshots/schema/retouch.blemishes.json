@@ -1,0 +1,365 @@
+{
+  "command": "retouch.blemishes",
+  "cli": "pixelox retouch blemishes",
+  "summary": "Find (and heal) blemishes: small dark or light spots",
+  "category": "retouch",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/retouch.blemishes.params.json",
+    "title": "pixelox retouch.blemishes parameters",
+    "description": "Find (and heal) blemishes: small dark or light spots",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Where to search, normally a skin mask: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path (default: the whole layer) Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "invert_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Search outside the mask instead of inside it Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "min_size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Smallest spot diameter in px, %, mm, in, or pt (% of the long side; auto = 0.2% of it, at least 3 px) Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "max_size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Largest spot diameter (auto = 2% of the long side, at least 12 px and twice --min-size) Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "sensitivity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "0..100: higher finds fainter spots (each +25 halves the contrast a spot needs over the skin's texture) Range: 0..100. Type: number.",
+        "default": "50",
+        "x-pixelox-kind": "float"
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "dark",
+          "light",
+          "both"
+        ],
+        "description": "Spots darker than the skin around them (pimples, marks; redness counts), lighter, or both Type: choice.",
+        "default": "dark",
+        "x-pixelox-kind": "choice"
+      },
+      "max": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 100000.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Most spots to report and heal, strongest first Range: 1..100000. Type: integer.",
+        "default": "300",
+        "x-pixelox-kind": "int"
+      },
+      "min_redness": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -255.0,
+            "maximum": 255.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Keep only spots at least this much redder than the skin around them (levels): about 10 keeps pimples and drops moles and freckles Range: -255..255. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "heal": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Heal every spot found, in one pass; needs -o or --in-place Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "save_mask": {
+        "type": "string",
+        "description": "Store the spots (the discs --heal uses) as a named mask; needs -o or --in-place Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/retouch.blemishes.result.json",
+    "title": "pixelox retouch.blemishes envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "retouch.blemishes"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

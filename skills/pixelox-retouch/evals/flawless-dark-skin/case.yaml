@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: flawless-dark-skin
+expected_outcome: |
+  The agent removes the pimples on the dark skin with select skin plus retouch blemishes, smooths the low-frequency layer more strongly than for a natural look but keeps the texture layer, keeps or asks about the beauty mark (a permanent feature) rather than silently removing it, and does not lighten the skin.
+context:
+  scaffold_script: place-files.sh

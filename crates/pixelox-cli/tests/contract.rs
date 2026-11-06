@@ -83,6 +83,19 @@ fn agent_briefing_under_budget_and_in_sync() {
 fn skill_under_budget() {
     let skill = std::fs::read_to_string(repo_root().join("skills/pixelox/SKILL.md")).unwrap();
     assert!(skill.len() / 4 <= 2500, "SKILL.md is ~{} tokens; the PRD budget is 2,500", skill.len() / 4);
+    // companion skills load on demand, but stay compact
+    for entry in std::fs::read_dir(repo_root().join("skills")).unwrap().flatten() {
+        let f = entry.path().join("SKILL.md");
+        if let Ok(s) = std::fs::read_to_string(&f) {
+            assert!(s.starts_with("---\nname: "), "{} needs name/description frontmatter", f.display());
+            assert!(
+                s.len() / 4 <= 5000,
+                "{} is ~{} tokens; keep companion skills under 5,000",
+                f.display(),
+                s.len() / 4
+            );
+        }
+    }
 }
 
 #[test]
@@ -215,6 +228,7 @@ fn guide_and_readme_examples_parse() {
         root.join("AGENTS.md"),
         root.join("HOWTO.md"),
         root.join("skills/pixelox/SKILL.md"),
+        root.join("skills/pixelox-retouch/SKILL.md"),
     ];
     fn walk(d: &Path, out: &mut Vec<PathBuf>) {
         if let Ok(rd) = std::fs::read_dir(d) {

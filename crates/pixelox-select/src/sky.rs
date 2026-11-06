@@ -159,7 +159,7 @@ impl Limits {
     }
 }
 
-type Lab = [f32; 3];
+pub(crate) type Lab = [f32; 3];
 
 /// Find the sky in `src` (canvas-sized), analyzing at most `work_long` px on the long side.
 fn detect(src: &Image, o: &SkyOptions, work_long: u32) -> Result<Detection> {
@@ -277,16 +277,16 @@ fn no_sky(reason: &str) -> Error {
 // color
 
 #[inline]
-fn oklab(p: &[f32]) -> Lab {
+pub(crate) fn oklab(p: &[f32]) -> Lab {
     let (l, a, b) = color::rgb_to_oklab(p[0].clamp(0.0, 1.0), p[1].clamp(0.0, 1.0), p[2].clamp(0.0, 1.0));
     [l, a, b]
 }
 
-fn to_oklab(img: &Image) -> Vec<Lab> {
+pub(crate) fn to_oklab(img: &Image) -> Vec<Lab> {
     img.data.par_chunks(4).map(oklab).collect()
 }
 
-fn hex(c: Lab) -> String {
+pub(crate) fn hex(c: Lab) -> String {
     let (r, g, b) = color::oklab_to_rgb(c[0], c[1], c[2]);
     Rgba::new(r.clamp(0.0, 1.0), g.clamp(0.0, 1.0), b.clamp(0.0, 1.0), 1.0).to_hex()
 }
@@ -382,7 +382,7 @@ fn sky_dist(c: Lab, m: Lab) -> f32 {
 }
 
 /// Per-channel median (`px` not empty).
-fn median3(px: &[Lab]) -> Lab {
+pub(crate) fn median3(px: &[Lab]) -> Lab {
     let mut out = [0f32; 3];
     let mut v: Vec<f32> = Vec::with_capacity(px.len());
     for (ch, o) in out.iter_mut().enumerate() {
@@ -395,7 +395,7 @@ fn median3(px: &[Lab]) -> Lab {
 }
 
 /// The `q`-quantile (0..1) of `v` (not empty); reorders `v`.
-fn quantile(v: &mut [f32], q: f64) -> f32 {
+pub(crate) fn quantile(v: &mut [f32], q: f64) -> f32 {
     let k = ((v.len() as f64 * q) as usize).min(v.len() - 1);
     *v.select_nth_unstable_by(k, f32::total_cmp).1
 }
@@ -421,7 +421,7 @@ fn gradient(c: &[Lab], w: usize, h: usize) -> Vec<f32> {
 // regions
 
 #[inline]
-fn neighbors(p: usize, w: usize, h: usize) -> impl Iterator<Item = usize> {
+pub(crate) fn neighbors(p: usize, w: usize, h: usize) -> impl Iterator<Item = usize> {
     let (x, y) = (p % w, p / w);
     [(x > 0).then(|| p - 1), (x + 1 < w).then(|| p + 1), (y > 0).then(|| p - w), (y + 1 < h).then(|| p + w)]
         .into_iter()
@@ -431,7 +431,7 @@ fn neighbors(p: usize, w: usize, h: usize) -> impl Iterator<Item = usize> {
 /// Pixels reachable from `seeds` through 4-neighbor moves `p → q` that `accept`. A pixel is
 /// marked only when accepted, so the result is the reachability closure, independent of
 /// visiting order.
-fn flood(seeds: &[usize], w: usize, h: usize, accept: impl Fn(usize, usize) -> bool) -> Vec<bool> {
+pub(crate) fn flood(seeds: &[usize], w: usize, h: usize, accept: impl Fn(usize, usize) -> bool) -> Vec<bool> {
     let mut on = vec![false; w * h];
     let mut stack = Vec::with_capacity(seeds.len());
     for &s in seeds {
@@ -453,7 +453,7 @@ fn flood(seeds: &[usize], w: usize, h: usize, accept: impl Fn(usize, usize) -> b
 
 /// Call `f(pixels, touches_border)` for every component of `on` pixels joined by 4-neighbor
 /// moves that `link`, in scan order.
-fn for_each_component(
+pub(crate) fn for_each_component(
     on: &[bool],
     w: usize,
     h: usize,
@@ -873,7 +873,7 @@ impl Axis {
 
 /// Guided filter coefficients (He et al.) with Gaussian windows of `sigma`, already
 /// averaged: the output is `a·I + b` for the guide `I` at any resolution.
-fn guided_coeffs(i: &[f32], p: &[f32], w: usize, h: usize, sigma: f64) -> (Vec<f32>, Vec<f32>) {
+pub(crate) fn guided_coeffs(i: &[f32], p: &[f32], w: usize, h: usize, sigma: f64) -> (Vec<f32>, Vec<f32>) {
     let blur = |mut v: Vec<f32>| {
         kernels::gaussian_planar(&mut v, w, h, 1, sigma, sigma, Edge::Clamp);
         v
@@ -896,7 +896,7 @@ fn guided_coeffs(i: &[f32], p: &[f32], w: usize, h: usize, sigma: f64) -> (Vec<f
 
 /// The full-size mask `a·I + b`, with `a`, `b` bilinearly upsampled from the analysis size
 /// and `I = guide(x, y, pixel)` at full size; times the source alpha.
-fn upsample(
+pub(crate) fn upsample(
     src: &Image,
     ca: &[f32],
     cb: &[f32],

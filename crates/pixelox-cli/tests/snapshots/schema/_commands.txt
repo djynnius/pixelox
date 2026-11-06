@@ -167,11 +167,13 @@ render.d3
 render.js
 render.three
 replay
+retouch.blemishes
 retouch.blur
 retouch.burn
 retouch.clone
 retouch.dodge
 retouch.erase
+retouch.frequency-split
 retouch.heal
 retouch.redeye
 retouch.sharpen
@@ -189,6 +191,7 @@ select.path
 select.poly
 select.rect
 select.save
+select.skin
 select.sky
 self-update
 shape.arrow
