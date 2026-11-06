@@ -382,6 +382,10 @@ pub struct OpSpec {
     pub examples: Vec<Example>,
     pub aliases: Vec<&'static str>,
     pub mode: DocMode,
+    /// A mutating command that may run without `-o`/`--in-place` because it can write side
+    /// files instead (`detect subject --cutout`); the command checks it has somewhere to write.
+    #[serde(skip)]
+    pub target_optional: bool,
     /// Milestone tag when the command is gated or partial in this build (`"v0.2"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub milestone: Option<&'static str>,
@@ -402,6 +406,7 @@ impl OpSpec {
             examples: Vec::new(),
             aliases: Vec::new(),
             mode: DocMode::Mutate,
+            target_optional: false,
             milestone: None,
             runner,
         }
@@ -454,6 +459,11 @@ impl OpSpec {
     }
     pub fn export_mode(mut self) -> Self {
         self.mode = DocMode::Export;
+        self
+    }
+    /// See [`OpSpec::target_optional`].
+    pub fn target_optional(mut self) -> Self {
+        self.target_optional = true;
         self
     }
     pub fn milestone(mut self, m: &'static str) -> Self {

@@ -37,6 +37,10 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
   pass, pixelate, vignette, lens correction; heal, clone, dodge, burn, red eye, erase;
   solid, gradient, and pattern fills; brush strokes (`paint stroke`: hardness, flow,
   opacity, image tips, jitter and scatter) onto pixels, layer masks, or selections.
+* **Local AI**: `detect subject` (BiRefNet-lite: background removal, cutouts, subject
+  masks) and `detect salient` (U²-Netp) run on the CPU through ONNX Runtime. Models are
+  never bundled: the first use downloads them with `-y` (224 MB and 5 MB), verified by
+  SHA-256; results are reproducible and replay like every other step.
 * **Type and vectors**: HarfBuzz-class shaping (RTL, CJK, ligatures, variable fonts), text on
   a path, text to outlines; rectangles, ellipses, polygons, stars, arrows, Bézier paths,
   boolean path ops, stroke outlining.
@@ -94,6 +98,21 @@ pixelox batch run --glob 'shoot/*.jpg' --cmd 'export {in} -o web/{stem}.webp' --
 More in [examples/](examples/) (every script runs in CI) and the guides under
 [docs/guides](docs/guides/).
 
+## Install
+
+| Platform | Command |
+| --- | --- |
+| macOS and Linux | `curl -fsSL https://raw.githubusercontent.com/djynnius/pixelox/main/install.sh \| sh` |
+| Windows (PowerShell) | `powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/djynnius/pixelox/main/install.ps1 \| iex"` |
+| From source | `cargo install --path crates/pixelox-cli` |
+
+The installers fetch the latest release (or `PIXELOX_VERSION=0.2.0`), verify its SHA-256,
+and put `pixelox` in `~/.pixelox/bin` (`PIXELOX_INSTALL_DIR` overrides it) on your PATH,
+without sudo. Builds: macOS (Apple silicon and Intel), Linux x86-64 and ARM64 (glibc 2.38+,
+with a static musl fallback for older systems), Windows x86-64 and ARM64. Local AI models
+run on Apple silicon, glibc Linux, and Windows (which needs the Visual C++ Redistributable);
+the Intel macOS and musl builds have no ML runtime.
+
 ## Build
 
 ```bash
@@ -110,9 +129,10 @@ vendored QuickJS engine that the JS renderer compiles with `cc`.
 This is the v0.1 document engine with much of later milestones. These parts of the PRD
 are not in this build, and the commands say so with exit code 12 and a remedy:
 
-* **AI-assisted ops** (`detect *`, `mask refine`, `fill content-aware`, `models pull`):
-  no ONNX runtime or model weights are bundled. The commands, flags, schemas, and
-  `--dry-run` plans are all present.
+* **The rest of the AI ops** (`detect objects|faces|text|segment`, `mask refine`,
+  `fill content-aware`): their models are not in this release. The commands, flags,
+  schemas, and `--dry-run` plans are all present. (`detect subject` and `detect salient`
+  run locally; see below.) Builds for Intel macOS and musl Linux have no ML runtime at all.
 * **Color-management conversions**: ICC profiles are kept and re-embedded, not converted.
 * **Lossy WebP and progressive JPEG** encoding; HEIC and RAW input (PRD stretch items).
 * **Vendored d3 and three.js**: `render d3` and `render three` load a local copy given with

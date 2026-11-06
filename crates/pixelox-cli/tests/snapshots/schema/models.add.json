@@ -4,7 +4,7 @@
   "summary": "Register a custom ONNX model",
   "category": "models",
   "mode": "mutate",
-  "milestone": null,
+  "milestone": "v0.3",
   "x-pixelox-schema-version": "1.0.0",
   "params": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -74,11 +74,13 @@ for using a photo of fog as a texture.
 
 ## 5. The hero subject, its shadows, and the light
 
-Without the AI cutout (`detect subject` exits 12 in this build), a subject on a plain
-backdrop is cut with `select color`; anything else with a traced path.
+`detect subject` is Select Subject: a local model (BiRefNet-lite; its first use downloads
+224 MB, hence `-y`) masks the subject of a layer. Without the model, cut a subject on a
+plain backdrop with `select color --contiguous`, anything else with a traced path.
 
 ```bash
 pixelox comp place scene.pxo --in-place camel.png --as Camel --size 420x --at 2700,1500
+pixelox detect subject scene.pxo --in-place --layer Camel --layer-mask -y
 # cast shadow from the subject's own outline: black copy, skewed, blurred, multiplied
 pixelox layer dup scene.pxo --in-place --layer Camel --name CamelShadow
 pixelox layer rasterize scene.pxo --in-place --layer CamelShadow

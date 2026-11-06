@@ -219,7 +219,7 @@ pub fn recipe_with(doc: &Document, step: RecipeStep) -> Vec<RecipeStep> {
 
 /// Where a mutating doc op writes: `--in-place` (the .pxo input), `-o`, or nothing in a
 /// dry run without `-o`.
-fn resolve_target(ctx: &OpCtx, input: &Path) -> Result<Option<PathBuf>> {
+fn resolve_target(ctx: &OpCtx, input: &Path, optional: bool) -> Result<Option<PathBuf>> {
     if ctx.globals.in_place {
         if ctx.globals.output.is_some() {
             return Err(Error::new("PX1005", "pass either -o or --in-place, not both"));
@@ -243,7 +243,7 @@ fn resolve_target(ctx: &OpCtx, input: &Path) -> Result<Option<PathBuf>> {
             ctx.prepare_output(&p)?;
             Ok(Some(p))
         }
-        None if ctx.globals.dry_run => Ok(None),
+        None if ctx.globals.dry_run || optional => Ok(None),
         None => Err(Error::new("PX1004", format!("'{}' changes the document; say where to write it", ctx.command))
             .with_hint(if is_pxo(input) {
                 "pass -o <path> or --in-place".to_string()
@@ -327,7 +327,8 @@ pub fn run_spec(spec: &OpSpec, args: &Args, ctx: &mut OpCtx) -> Result<Value> {
         }
         Runner::Doc(f) => {
             let input = ctx.input(0)?.to_path_buf();
-            let target = if spec.mode == DocMode::Mutate { resolve_target(ctx, &input)? } else { None };
+            let target =
+                if spec.mode == DocMode::Mutate { resolve_target(ctx, &input, spec.target_optional)? } else { None };
             let mut doc = ctx.load_document(&input)?;
             ctx.op_index = doc.recipe.len();
             ctx.set_progress(0.0);
@@ -568,6 +569,7 @@ pub fn run_recipe(ctx: &mut OpCtx, recipe: &[RecipeStep], opts: &ReplayOptions) 
             .map_err(|e| Error::new("PX1604", format!("step {} ('{}'): {}", i + 1, step.op, e.message)))?;
         let mut child = ctx.child(spec.name, sources);
         child.op_index = i;
+        child.replaying = true;
         child.globals.output = None;
         child.globals.in_place = false;
         child.globals.dry_run = false;

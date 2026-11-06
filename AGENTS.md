@@ -32,9 +32,12 @@ prints any command's reference page.
 5. Look at your work: `pixelox analyze stats out.png --json`,
    `pixelox analyze diff before.png after.png --json`, or the MCP `pixelox_preview` tool.
 6. Finish with `pixelox verify out.png.pixelox.json --json` and report paths and hashes.
-7. Models download only with `-y` and the user's consent. In this build the AI commands
-   (`detect *`, `mask refine`, `fill content-aware`) exit 12; make masks with
-   `select sky`, `select color --contiguous`, `select luma`, or `select path` instead.
+7. Models download only with `-y` and the user's consent. `detect subject` (BiRefNet-lite,
+   224 MB) and `detect salient` (U²-Netp, 5 MB) run locally once downloaded; until then
+   they exit 6 (PX1502) with the download command: ask the user, then add `-y`. The other
+   AI commands (`detect objects|faces|text|segment`, `mask refine`, `fill content-aware`)
+   exit 12; make those masks with `select sky`, `select color --contiguous`, `select luma`,
+   or `select path`.
 8. Brushwork is `paint stroke` (points or an SVG path; size, hardness, flow, opacity, tip
    images, jitter) onto pixels, a layer mask (`--target mask`), or the selection. Filters
    on a placed layer stay editable as smart filters; `layer stamp` merges what is visible

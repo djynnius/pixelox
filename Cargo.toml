@@ -49,6 +49,9 @@ unicode-linebreak = "0.1"
 clap = { version = "4.5", features = ["string", "wrap_help"] }
 clap_complete = "4.5"
 tiny_http = "0.12"
+# ML runtime (the `ml` feature): ONNX Runtime and verified model downloads, as in ferraus
+ort = { version = "=2.0.0-rc.14" }
+ureq = { version = "3", default-features = false, features = ["rustls"] }
 
 [profile.dev]
 opt-level = 1
@@ -65,3 +68,7 @@ debug = "line-tables-only"
 lto = "thin"
 codegen-units = 1
 strip = true
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"

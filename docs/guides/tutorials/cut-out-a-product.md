@@ -15,9 +15,15 @@ pixelox export p.pxo -o product-cut.png --apply-mask product
 Check the coverage before exporting: `pixelox select bounds p.pxo --json` reports the
 selection's box and how much of the canvas it covers.
 
-The AI path (`pixelox detect subject product.jpg --cutout cut.png`) handles busy
-backgrounds and hair; this build has no ML runtime, so it exits 12 and its
-`--dry-run` shows the model it would need.
+The AI path handles busy backgrounds and hair; it runs BiRefNet-lite locally:
+
+```bash
+pixelox detect subject product.jpg --cutout cut.png -y
+```
+
+Its first use downloads the model (224 MB, once), so without `-y` it stops with exit 6 and
+the command that downloads it; `--dry-run` shows the model, its size, and whether it is
+installed.
 
 Place the cutout on a new background:
 

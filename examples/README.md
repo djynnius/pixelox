@@ -15,7 +15,7 @@ Every shell script takes `[SAMPLES_DIR] [OUT_DIR]`, keeps each call's JSON envel
 | Example | Shows |
 | --- | --- |
 | [shell/photo-edit.sh](shell/photo-edit.sh) | E4: open, auto white balance, shadows/highlights, curves, an adjustment layer, sharpening, 16-bit TIFF and web JPEG, stats, verify |
-| [shell/cutout.sh](shell/cutout.sh) | E1 without models: the gated `detect subject` (plan, then exit 12), a magic-wand cutout, a transparent PNG placed on a new background with a shadow |
+| [shell/cutout.sh](shell/cutout.sh) | E1 without downloading a model: `detect subject` planned, then its consent gate (exit 6), a magic-wand cutout, a transparent PNG placed on a new background with a shadow |
 | [shell/sticker.sh](shell/sticker.sh) | E11: star burst, text on a circular path, stroke and drop shadow, transparent PNG |
 | [shell/poster-template.sh](shell/poster-template.sh) | E5: build a template with typed slots, PX3202 for a missing slot, fill it, print and OG exports |
 | [shell/vector-logo.sh](shell/vector-logo.sh) | E12: trace a scan, recolor with a selector, optimize, rasterize, measure fidelity with `analyze diff` |

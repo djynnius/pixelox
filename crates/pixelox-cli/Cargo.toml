@@ -20,6 +20,11 @@ path = "src/main.rs"
 name = "pixelox_cli"
 path = "src/lib.rs"
 
+[features]
+default = ["ml"]
+# Local AI models (ONNX Runtime); see crates/pixelox-ml. `--no-default-features` builds without.
+ml = ["pixelox-ml/ml"]
+
 [dependencies]
 pixelox-core.workspace = true
 pixelox-io.workspace = true

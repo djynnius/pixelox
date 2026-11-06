@@ -1,0 +1,58 @@
+[workspace]
+members = ["cargo:."]
+
+# Config for 'dist' (cargo-dist): the release workflow, archives, and the curl / PowerShell
+# installers. Mirrors ferraus's setup. Regenerate .github/workflows/release.yml with
+# `dist generate` after editing this file.
+[dist]
+# Build only the package that ships (the `pixelox` binary)
+precise-builds = true
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.32.0"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = ["shell", "powershell"]
+# Target platforms to build apps for (Rust target-triple syntax). ONNX Runtime (the `ml`
+# feature) is linked where `ort` ships a prebuilt library: glibc Linux, Apple-silicon macOS,
+# and Windows. Intel macOS and musl builds have no ML runtime (detect subject/salient exit 12).
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-musl",
+  "x86_64-unknown-linux-musl",
+  "aarch64-pc-windows-msvc",
+  "x86_64-pc-windows-msvc",
+]
+# Path that installers should place binaries in
+install-path = ["$PIXELOX_INSTALL_DIR/", "~/.pixelox/bin"]
+# Whether to install an updater program
+install-updater = false
+# Whether to enable GitHub Attestations
+github-attestations = true
+# Which actions to run on pull requests
+pr-run-mode = "plan"
+# Extra static files to include in each app archive
+include = ["LICENSE-MIT", "LICENSE-APACHE", "CHANGELOG.md"]
+# ONNX Runtime's prebuilt Windows libraries use the DLL C runtime (/MD); a static CRT does not
+# link. Windows users need the Visual C++ Redistributable (present on most systems).
+msvc-crt-static = false
+# release.yml was adapted by hand from dist 0.32's generated workflow (as in ferraus); keep it
+# when dist checks or regenerates CI
+allow-dirty = ["ci"]
+
+# ONNX Runtime's prebuilt Linux libraries need glibc 2.38+, so the glibc builds run on Ubuntu
+# 24.04 (they support Ubuntu 24.04+, Debian 13+, Fedora 39+); the installer falls back to the
+# fully static musl build on older systems. GitHub no longer starts macos-14 jobs.
+[dist.github-custom-runners]
+global = "ubuntu-24.04"
+x86_64-unknown-linux-gnu = "ubuntu-24.04"
+aarch64-unknown-linux-gnu = "ubuntu-24.04-arm"
+x86_64-unknown-linux-musl = "ubuntu-24.04"
+aarch64-unknown-linux-musl = "ubuntu-24.04-arm"
+aarch64-apple-darwin = "macos-15"
+x86_64-apple-darwin = "macos-15-intel"
+aarch64-pc-windows-msvc = "windows-11-arm"
+x86_64-pc-windows-msvc = "windows-2022"

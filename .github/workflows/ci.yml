@@ -52,6 +52,42 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --locked --no-fail-fast
 
+  # The local-model path end to end with the 5 MB U²-Net model (pinned by SHA-256, cached).
+  models:
+    name: local models
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pixelox-test
+          key: u2netp-309c8469
+      - name: Fetch u2netp (verified)
+        run: |
+          f=~/.cache/pixelox-test/u2netp.onnx
+          if [ ! -f "$f" ]; then
+            mkdir -p "$(dirname "$f")"
+            curl -fsSL --retry 3 -o "$f" https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx
+          fi
+          echo "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8  $f" | sha256sum -c -
+          echo "PIXELOX_TEST_U2NETP=$f" >> "$GITHUB_ENV"
+      - run: cargo test -p pixelox --test cli local_models_end_to_end -- --nocapture
+      - run: cargo test -p pixelox-ml --features ml
+
+  # The build without the ML runtime (Intel macOS and musl releases) must stay clean.
+  no-ml:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy -p pixelox --no-default-features --all-targets -- -D warnings
+      - run: cargo test -p pixelox-ml --no-default-features
+
   docs:
     runs-on: ubuntu-24.04
     steps:

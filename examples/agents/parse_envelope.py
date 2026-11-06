@@ -35,6 +35,6 @@ print("refused:", env["error"]["code"], "-", env["error"]["hint"])
 code, env = pixelox("export", photo, "-o", os.path.join(a.out, "flat.jpg"))
 print("warnings:", [w["code"] for w in env["warnings"]] or "none")
 
-# AI commands are gated in this build: exit 12 with a remedy
+# a model-backed command without its model: exit 6 (consent) with the command that downloads it
 code, env = pixelox("detect", "subject", photo, "--cutout", os.path.join(a.out, "cut.png"))
 print("detect:", code, env["error"]["code"], "-", env["error"]["hint"])

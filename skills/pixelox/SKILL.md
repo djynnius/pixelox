@@ -39,6 +39,7 @@ from the right/bottom, `--anchor tl..br`); colors `#rrggbb[aa]`, `rgb()`, `hsl()
 | Inspect | `pixelox info shot.jpg --json` |
 | Resize / convert | `pixelox transform resize shot.jpg -o small.jpg --size 1600x` · `pixelox export doc.pxo -o out.webp` |
 | Grade | `pixelox adjust curves doc.pxo --in-place --points '0,0 64,56 192,206 255,255'` · `pixelox adjust white-balance doc.pxo --in-place --auto` |
+| Cut out (any backdrop, local model) | `pixelox detect subject shot.jpg -o cut.png --layer-mask -y` (first use downloads 224 MB: ask the user before -y) |
 | Cut out (plain backdrop) | `pixelox select color doc.pxo --in-place --ref white --at 4,4 --contiguous --tolerance 40` → `pixelox select invert doc.pxo --in-place` → `pixelox export doc.pxo -o cut.png --apply-mask @sel` |
 | Blur the background | `pixelox filter gaussian doc.pxo --in-place --sigma 8 --mask subject --invert-mask` |
 | Replace a sky | `pixelox select sky doc.pxo --in-place --layer Hills` → `pixelox select invert doc.pxo --in-place` → `pixelox mask add doc.pxo --in-place --layer Hills --from @sel` |

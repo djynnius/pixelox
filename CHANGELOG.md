@@ -25,6 +25,23 @@ command surface (see `docs/guides/cookbook/photo-composite.md`).
 - `layer blend-if` (Blend If on this layer and the underlying composite, with split
   ramps), `layer stamp` (Stamp Visible), and the `@mask:<layer>` mask reference.
 - Cookbook: blend a photo composite.
+- **Local AI models** (ADR 0012): `detect subject` (BiRefNet-lite, MIT, 224 MB; `--fast` uses
+  U²-Netp) and `detect salient` (U²-Netp, Apache-2.0, 5 MB) run on the CPU through ONNX
+  Runtime, reproducibly (fixed threads, deterministic kernels). Results go to the selection,
+  `--save-mask`, `--layer-mask` (one-step cutouts with `-o cut.png`), and side files
+  (`--cutout`, `--mask-out`) whose sidecars replay bit for bit. Edges are refined by guided
+  joint upsampling (`--refine`).
+- `models pull|rm|verify` work: downloads need `-y` (PX1502, exit 6, otherwise), resume
+  after interruptions, are SHA-256 verified before use, and respect `PIXELOX_OFFLINE=1`; a
+  model file copied into the models directory is adopted when its hash matches.
+- **Installers**: `curl -fsSL …/install.sh | sh` (macOS, Linux) and
+  `irm …/install.ps1 | iex` (Windows) run the installers that the new release workflow
+  (cargo-dist 0.32, 8 targets, attested) attaches to each GitHub release.
+
+### Changed
+- `detect subject` and `detect salient` are document commands now (they need `-o` or
+  `--in-place` unless they only write `--cutout`/`--mask-out`); `--annotate` was dropped
+  from them. Builds for Intel macOS and musl have no ML runtime (exit 12, PX1510).
 
 ## [0.1.0] — 2026-11-05
 

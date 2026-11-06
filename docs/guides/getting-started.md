@@ -3,9 +3,17 @@
 ## Install
 
 ```bash
-cargo install --path crates/pixelox-cli     # from a checkout
+# macOS and Linux
+curl -fsSL https://raw.githubusercontent.com/djynnius/pixelox/main/install.sh | sh
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/djynnius/pixelox/main/install.ps1 | iex"
+# from a checkout
+cargo install --path crates/pixelox-cli
 pixelox doctor                              # what this build can do
 ```
+
+The installers pick the right build, verify its SHA-256, and install to `~/.pixelox/bin`
+(`PIXELOX_INSTALL_DIR` overrides it). `PIXELOX_VERSION=0.2.0` pins a release.
 
 ## Your first edit
 
