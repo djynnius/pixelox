@@ -133,7 +133,7 @@ catalog! {
     "PX1201", Unsupported, "Unsupported PSD feature", "The feature is rendered from the PSD composite; see the PSD fidelity matrix.";
     "PX1203", Unsupported, "Unsupported PSD color mode", "Convert the PSD to RGB in its source application.";
     "PX1210", Runtime, "Corrupt .pxo document", "Restore the document from its sidecar with `pixelox replay`.";
-    "PX1211", Unsupported, "Document written by a newer pixelox", "Upgrade pixelox (`pixelox self-update`).";
+    "PX1211", Unsupported, "Document written by a newer pixelox", "Upgrade pixelox (`pixelox update`).";
     "PX1310", Usage, "Path outside the allowed roots", "Serve with `--allow <dir>` for that directory, or use a path inside an allowed root.";
     // PX14xx — write protection
     "PX1401", WriteProtected, "Output exists and --overwrite was not given", "Re-run with --overwrite, or choose a new path with -o.";
@@ -146,6 +146,9 @@ catalog! {
     "PX1504", Runtime, "Download failed", "Check connectivity and retry.";
     "PX1510", FeatureGate, "ML features are not in this build", "Use a build with the `ml` feature (see `pixelox doctor`).";
     "PX1520", FeatureGate, "Feature not available in this build", "The message names the milestone or the local file that enables it.";
+    "PX1530", Usage, "This copy is updated by another tool", "Run the update command in the hint.";
+    "PX1531", Verification, "The update could not be verified", "Run the installer command in the hint.";
+    "PX1532", Runtime, "Release information is unreadable", "Retry later, or open the releases page.";
     // PX16xx — provenance
     "PX1601", Verification, "Input hash drift on replay", "Restore the recorded input, map a new one with `--input role=path`, or pass `--allow-input-drift`.";
     "PX1602", Verification, "Output does not match its sidecar", "The file changed after it was written; re-create it with `pixelox replay`.";

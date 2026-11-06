@@ -5,6 +5,7 @@
 | `curl … install.sh \| sh` (macOS, Linux) | the root `install.sh` runs the `pixelox-installer.sh` attached to the latest GitHub release |
 | `irm … install.ps1 \| iex` (Windows) | the root `install.ps1` runs the release's `pixelox-installer.ps1` |
 | GitHub releases | `.github/workflows/release.yml` (cargo-dist 0.32, config in `dist-workspace.toml`): on a `v*` tag it builds 8 targets, attests them, and publishes archives, checksums, and both installers |
+| `pixelox update` | updates an installer copy in place by running the newest release's installer into the receipt's folder; other installs get their update command |
 | `cargo install --path crates/pixelox-cli` | works from a checkout |
 | Docker (`packaging/docker/Dockerfile`) | builds a slim image; uses the embedded font only |
 | Homebrew, scoop, MSI, apt/dnf (PRD §11.9) | not set up yet; ferraus's `dist-workspace.toml` shows the Homebrew and MSI settings to add |

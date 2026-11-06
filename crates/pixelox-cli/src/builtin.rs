@@ -1,5 +1,5 @@
 //! Contract-level commands: `schema`, `describe`, `docs`, `replay`, `verify`, `history *`,
-//! `version`, `completions`, `doctor`, and `self-update`.
+//! `version`, `completions`, and `doctor` (`update` lives in update.rs).
 
 use crate::docgen;
 use pixelox_core::ctx::{is_pxo, OpCtx};
@@ -101,13 +101,6 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox doctor --json", "The same report as JSON")
             .example("pixelox doctor --config ./ci.toml --json", "With another config file")
             .example("pixelox doctor --migrate-pxo old.pxo", "Rewrite an old document in the current format"),
-        OpSpec::custom("self-update", Category::System, "Update pixelox (signed releases)", self_update)
-            .inputs(Inputs::NONE)
-            .param(param("channel", ParamKind::Choice).choices(&["stable"]).default("stable").help("Release channel"))
-            .param(param("check", ParamKind::Flag).help("Only report whether an update exists"))
-            .example("pixelox self-update --check", "Is there a newer release?")
-            .example("pixelox self-update", "Install it")
-            .example("pixelox self-update --check --json", "As JSON"),
     ]
 }
 
@@ -505,7 +498,7 @@ pub fn features() -> Value {
         "color_management": false,
         "js_render": true,
         "vendored_d3_three": false,
-        "self_update": false,
+        "self_update": true,
     })
 }
 
@@ -615,11 +608,6 @@ fn doctor(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         "ok": true,
         "text": text,
     }))
-}
-
-fn self_update(_a: &Args, _ctx: &mut OpCtx) -> Result<Value> {
-    Err(Error::new("PX1520", "self-update needs a signed release channel, and this is a source build")
-        .with_hint("update with `cargo install --path crates/pixelox-cli --force` from a fresh checkout"))
 }
 
 /// Used by tests: a document's path is a .pxo.

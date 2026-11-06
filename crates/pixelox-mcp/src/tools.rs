@@ -26,7 +26,7 @@ pub const TOOL_NAMES: &[&str] = &[
 ];
 
 /// Commands that make no sense inside a tool call (they own the process or the terminal).
-pub const CLI_ONLY: &[&str] = &["mcp serve", "self-update", "self-uninstall"];
+pub const CLI_ONLY: &[&str] = &["mcp serve", "update", "self-update", "self-uninstall"];
 
 /// Commands that reach the network: they need both keys (server flag and call consent).
 pub const NETWORK_COMMANDS: &[&str] = &["models pull"];

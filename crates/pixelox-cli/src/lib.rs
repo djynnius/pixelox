@@ -10,6 +10,7 @@ pub mod docgen;
 pub mod jobs;
 pub mod pipeline;
 pub mod progress;
+pub mod update;
 
 use pixelox_core::compose::{set_smart_filter_hook, SmartFilterHook};
 use pixelox_core::ctx::{NoIo, NoProgress};
@@ -99,6 +100,7 @@ pub fn registry() -> Registry {
     r.extend(batch::ops());
     r.extend(jobs::ops());
     r.extend(config::ops());
+    r.extend(update::ops());
     r
 }
 
