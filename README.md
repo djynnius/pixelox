@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/guides/images/banner.jpg" alt="pixelOx banner: the word pixelOx cut out of a wall of blue and orange butterflies, over a softly blurred studio" width="100%"></p>
+
 # pixelox
 
 **A command-line raster and vector graphics workstation for scripts and AI agents.**
