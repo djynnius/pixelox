@@ -39,6 +39,9 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
   pass, pixelate, vignette, lens correction; heal, clone, dodge, burn, red eye, erase;
   solid, gradient, and pattern fills; brush strokes (`paint stroke`: hardness, flow,
   opacity, image tips, jitter and scatter) onto pixels, layer masks, or selections.
+* **Portrait retouching**: `select skin` (a skin mask sampled at points, for every skin tone),
+  `retouch blemishes` (finds pimples and spots at pixel accuracy and heals them, keeping
+  moles with `--min-redness`), and `retouch frequency-split` (exact tone/texture layers).
 * **Local AI**: `detect subject` (BiRefNet-lite: background removal, cutouts, subject
   masks) and `detect salient` (U²-Netp) run on the CPU through ONNX Runtime. Models are
   never bundled: the first use downloads them with `-y` (224 MB and 5 MB), verified by
@@ -69,7 +72,8 @@ claude mcp add pixelox -- pixelox mcp serve --allow ~/work
 ```
 
 The skill in [skills/pixelox/SKILL.md](skills/pixelox/SKILL.md) teaches an agent when and how
-to use it. In Claude Code: `claude plugin marketplace add djynnius/pixelox`, then
+to use it, and [skills/pixelox-retouch](skills/pixelox-retouch/SKILL.md) is a companion skill for
+portrait retouching (blemishes, frequency separation, natural skin smoothing). In Claude Code: `claude plugin marketplace add djynnius/pixelox`, then
 `claude plugin install pixelox@pixelox`.
 
 ## A few recipes

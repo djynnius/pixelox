@@ -42,6 +42,11 @@ prints any command's reference page.
    images, jitter) onto pixels, a layer mask (`--target mask`), or the selection. Filters
    on a placed layer stay editable as smart filters; `layer stamp` merges what is visible
    into a new layer for a final grade. Walkthrough: `docs/guides/cookbook/photo-composite.md`.
+9. Portrait retouching: `select skin --at X,Y` (sample a cheek; add a shadow sample in hard
+   light) gives the skin mask; `retouch blemishes --mask skin` lists spots with their
+   `redness` (pimples are red, moles are not: `--min-redness 10 --heal` keeps moles);
+   `retouch frequency-split` builds exact Low/High layers; smooth only `Low`. The playbook
+   is `skills/pixelox-retouch/SKILL.md`.
 
 ## Addressing
 

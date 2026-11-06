@@ -1,0 +1,354 @@
+{
+  "command": "select.skin",
+  "cli": "pixelox select skin",
+  "summary": "Select skin sampled at points, for retouching",
+  "category": "select",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/select.skin.params.json",
+    "title": "pixelox select.skin parameters",
+    "description": "Select skin sampled at points, for retouching",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "at": {
+        "description": "A point on plain skin X,Y (repeatable): a lit cheek, plus the neck or the shadow side when the light is uneven Type: X,Y. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "examples": [
+              "50%,120"
+            ],
+            "description": "A point on plain skin X,Y (repeatable): a lit cheek, plus the neck or the shadow side when the light is uneven Type: X,Y.",
+            "x-pixelox-kind": "point"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "examples": [
+                "50%,120"
+              ],
+              "description": "A point on plain skin X,Y (repeatable): a lit cheek, plus the neck or the shadow side when the light is uneven Type: X,Y.",
+              "x-pixelox-kind": "point"
+            }
+          }
+        ]
+      },
+      "tolerance": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "How far hue and saturation may stray from the samples, 0..100: raise when skin is missed, lower when lips, hair, or background leak in Range: 0..100. Type: integer.",
+        "default": "50",
+        "x-pixelox-kind": "int"
+      },
+      "lightness": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "How much darker (shadow) or lighter than the samples skin may be, 0..100: raise for deep shadows, lower when dark hair or brows leak in Range: 0..100. Type: integer.",
+        "default": "50",
+        "x-pixelox-kind": "int"
+      },
+      "contiguous": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "on: only skin connected to the --at points; off: every skin-colored region (hands, other people) except small specks Type: on|off.",
+        "default": "on",
+        "x-pixelox-kind": "switch"
+      },
+      "holes": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Clean-up size: fill holes in the skin up to this diameter in px (blemishes, moles; highlights up to about 2.8x it; never eyes, brows, or mouths) and, with --contiguous off, drop specks; auto scales with the skin area, 0 = off Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "refine": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Edge refinement radius in px (a guided filter snaps the soft edge to the image); auto scales with the image size, 0 = off Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Sample this layer instead of the composite Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "feather": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Soften the edge by this radius in px (Gaussian; % of the shorter canvas side); 0 = crisp anti-aliased edge Type: length.",
+        "default": "0",
+        "x-pixelox-kind": "length"
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "replace",
+          "add",
+          "subtract",
+          "intersect"
+        ],
+        "description": "How the result combines with the active selection: replace, add, subtract, or intersect Type: choice.",
+        "default": "replace",
+        "x-pixelox-kind": "choice"
+      }
+    },
+    "required": [
+      "input",
+      "at"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/select.skin.result.json",
+    "title": "pixelox select.skin envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "select.skin"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

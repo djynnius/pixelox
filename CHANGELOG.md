@@ -4,6 +4,21 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+### Added
+- `select skin`: a skin mask sampled at `--at` points (so it works for every skin tone),
+  tolerant of light and shadow, excluding eyes, brows, lips, teeth, hair, and backdrops, with
+  advice when a sample or the mask looks off.
+- `retouch blemishes`: finds pimples and small spots at pixel accuracy inside a mask
+  (scale-space blob detection against the skin's own texture), lists them with contrast and
+  redness, and heals them in one pass (`--heal`); `--min-redness` keeps moles and freckles.
+  Warning PXW2005 when it searched without a mask.
+- `retouch frequency-split`: Photoshop's frequency separation done exactly (Low + High in
+  linear light, reconstruction error 0 at 8 and 16 bit).
+- Companion skill `skills/pixelox-retouch`: a portrait retouching playbook (keep the person,
+  keep the texture, skin only, prove it) with two evals.
+
 ## [0.2.0] — 2026-11-05
 
 Closes the gaps found by replaying a long-form Photoshop compositing tutorial against the

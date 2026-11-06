@@ -55,6 +55,7 @@ select path: Select a region from SVG path data or points
 select poly: Select a polygon from vertices
 select rect: Select a rectangle
 select save: Store the selection as a named mask
+select skin: Select skin sampled at points, for retouching
 select sky: Select the sky (classical, no AI)
 mask add: Attach a layer mask
 mask contract: Shrink a mask morphologically
@@ -124,11 +125,13 @@ fill content-aware: Fill a region from its surroundings (inpaint) (ml)
 fill gradient: Fill with a linear, radial, angular, or reflected gradient
 fill pattern: Fill with a tiled image pattern
 fill solid: Fill a layer or region with a color
+retouch blemishes: Find (and heal) blemishes: small dark or light spots
 retouch blur: Blur inside a mask
 retouch burn: Burn (darken) a region
 retouch clone: Clone stamp from one point to another
 retouch dodge: Dodge (lighten) a region
 retouch erase: Erase a region to transparency
+retouch frequency-split: Frequency separation into Low and High layers
 retouch heal: Spot heal: repair small regions seamlessly
 retouch redeye: Remove red-eye at a point
 retouch sharpen: Sharpen inside a mask
