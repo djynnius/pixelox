@@ -1,0 +1,4 @@
+[env]
+# ONNX Runtime's prebuilt macOS objects target macOS 13.4; build everything for the same floor
+# (as ferraus does) so the linker does not mix deployment targets.
+MACOSX_DEPLOYMENT_TARGET = "13.4"

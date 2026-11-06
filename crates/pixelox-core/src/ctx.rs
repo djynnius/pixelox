@@ -277,6 +277,9 @@ pub struct OpCtx<'a> {
     pub op_index: usize,
     /// Files created by this op that must be removed if it fails.
     pub temp_files: Vec<PathBuf>,
+    /// This op is a step being re-executed by `replay`/`verify`/a pipeline rebuild: side
+    /// files it would write as a command (`detect subject --cutout`) are skipped.
+    pub replaying: bool,
 }
 
 impl<'a> OpCtx<'a> {
@@ -307,6 +310,7 @@ impl<'a> OpCtx<'a> {
             stdout: None,
             op_index: 0,
             temp_files: Vec::new(),
+            replaying: false,
         }
     }
 

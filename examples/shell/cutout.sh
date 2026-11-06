@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
-# E1 without models: cut a product out of a plain backdrop with a magic-wand selection,
-# then place it on a new background.   cutout.sh [SAMPLES_DIR] [OUT_DIR]
+# E1 without downloading a model: plan the AI cutout, then cut a product out of a plain
+# backdrop with a magic-wand selection and place it on a new background.
+#   cutout.sh [SAMPLES_DIR] [OUT_DIR]
 set -euo pipefail
 source "$(dirname "$0")/common.sh"
 setup_dirs "${1:-}" "${2:-}"
 D=$OUT/p.pxo
 
-say "the AI path is planned only in this build"
+say "the AI path: plan it, and see the consent gate (the model is not downloaded here)"
 px plan detect subject "$SAMPLES/product.png" --cutout "$OUT/never.png" --dry-run
-note "dry run ok=$(jget "$ENV" .ok); model: $(jget "$ENV" .result.plan.models_required[0].name)"
-px real detect subject "$SAMPLES/product.png" --cutout "$OUT/never.png"
-expect_eq "$RC" "12" "detect exits 12 without ML"
-note "real run: $(jget "$ENV" .error.code) (exit $RC)"
+note "dry run ok=$(jget "$ENV" .ok); model: $(jget "$ENV" .result.plan.models_required[0].name), installed: $(jget "$ENV" .result.plan.models_required[0].installed)"
+PIXELOX_OFFLINE=1 px real detect subject "$SAMPLES/product.png" --cutout "$OUT/never.png"
+# exit 6: the model must be downloaded with -y (224 MB, once); exit 12: a build without ML
+if [ "$RC" != 6 ] && [ "$RC" != 12 ] && [ "$RC" != 0 ]; then echo "FAIL: detect exit $RC" >&2; exit 1; fi
+note "real run: $(jget "$ENV" .error.code) (exit $RC); with -y it downloads BiRefNet-lite and writes the cutout"
 
 say "select the backdrop, invert, refine"
 pxx open open "$SAMPLES/product.png" -o "$D"

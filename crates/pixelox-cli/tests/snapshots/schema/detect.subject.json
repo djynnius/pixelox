@@ -3,8 +3,8 @@
   "cli": "pixelox detect subject",
   "summary": "Separate the main subject (background removal)",
   "category": "detect",
-  "mode": "export",
-  "milestone": "v0.2",
+  "mode": "mutate",
+  "milestone": null,
   "x-pixelox-schema-version": "1.0.0",
   "params": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -25,6 +25,24 @@
         "type": "boolean",
         "description": "Mutate the input .pxo document instead of writing -o"
       },
+      "fast": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Use the small U²-Netp model (5 MB, faster, coarser edges) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
       "matte": {
         "oneOf": [
           {
@@ -40,18 +58,25 @@
             ]
           }
         ],
-        "description": "Refine edges with the matting model Type: flag.",
+        "description": "Refine hair-grade edges with ViTMatte (not in this release: exit 12) Type: flag.",
         "x-pixelox-kind": "flag"
       },
-      "cutout": {
+      "layer": {
         "type": "string",
-        "description": "Write the RGBA cutout to this path Type: path.",
-        "x-pixelox-kind": "path"
+        "examples": [
+          "@top"
+        ],
+        "description": "Detect on this layer (placed on the canvas) instead of the composite; also the layer --layer-mask masks Type: layer.",
+        "x-pixelox-kind": "layer"
       },
-      "save_mask": {
+      "refine": {
         "type": "string",
-        "description": "Store the result in the document's mask library under this name (comma list for several) Type: text.",
-        "x-pixelox-kind": "str"
+        "examples": [
+          "12px"
+        ],
+        "description": "Edge refinement radius in px (guided upsampling snaps the mask's edge to the image); auto = two pixels of the model's map, 0 = plain bilinear Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
       },
       "select": {
         "oneOf": [
@@ -68,17 +93,40 @@
             ]
           }
         ],
-        "description": "Make the result the active selection Type: flag.",
+        "description": "Make the mask the active selection (the default when no other result is asked for) Type: flag.",
         "x-pixelox-kind": "flag"
+      },
+      "save_mask": {
+        "type": "string",
+        "description": "Store the mask in the document's mask library under this name Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "layer_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Attach the mask to --layer (or the only layer) as its layer mask; with -o cut.png this is a one-step cutout Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "cutout": {
+        "type": "string",
+        "description": "Also write the composite with the mask as alpha (an RGBA PNG, WebP, or TIFF); works without -o Type: path.",
+        "x-pixelox-kind": "path"
       },
       "mask_out": {
         "type": "string",
-        "description": "Write the result as a grayscale mask image Type: path.",
-        "x-pixelox-kind": "path"
-      },
-      "annotate": {
-        "type": "string",
-        "description": "Write a debug overlay image of the detections Type: path.",
+        "description": "Also write the mask as a grayscale image; works without -o Type: path.",
         "x-pixelox-kind": "path"
       }
     },
@@ -270,6 +318,7 @@
     "PX1003",
     "PX1004",
     "PX1010",
+    "PX1011",
     "PX1101",
     "PX1103",
     "PX1105",

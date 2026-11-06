@@ -111,11 +111,11 @@ pub fn command_page(op: &OpSpec) -> String {
 
 fn gate_note(op: &OpSpec) -> &'static str {
     match op.category {
-        pixelox_core::Category::Detect => {
-            "This build has no ML runtime: `--dry-run` returns the plan and a real run exits 12 (PX1510)."
+        pixelox_core::Category::Detect | pixelox_core::Category::Models => {
+            "Not in this release: `--dry-run` returns the plan (model, size, license) and a real run exits 12 (PX1520)."
         }
-        _ if op.name.starts_with("models") || op.name == "mask refine" || op.name == "fill content-aware" => {
-            "This build has no ML runtime: `--dry-run` returns the plan and a real run exits 12 (PX1510)."
+        _ if op.name == "mask refine" || op.name == "fill content-aware" => {
+            "Not in this release: `--dry-run` returns the plan (model, size, license) and a real run exits 12 (PX1520)."
         }
         _ => "Scheduled for this milestone in the PRD.",
     }

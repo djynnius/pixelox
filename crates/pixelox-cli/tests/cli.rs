@@ -100,9 +100,17 @@ fn consent_gates_and_exit_codes() {
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1001")));
     let (code, v) = run_in(&t.0, &["layer", "opacity", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--value", "150"]);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1013")));
-    // gated feature: exit 12
+    // a model-backed command whose model is not downloaded: consent needed (exit 6), or
+    // exit 12 in builds without the ML runtime
     let (code, v) = run_in(&t.0, &["detect", "subject", "photo.png", "--cutout", "c.png"]);
-    assert_eq!((code, v["error"]["code"].as_str()), (12, Some("PX1510")));
+    assert!(
+        matches!((code, v["error"]["code"].as_str()), (6, Some("PX1502")) | (12, Some("PX1510"))),
+        "{code} {}",
+        v["error"]
+    );
+    assert!(!t.path("c.png").exists());
+    // models that are not in this release: exit 12
+    assert_eq!(run_in(&t.0, &["detect", "faces", "photo.png"]).0, 12);
     // wrong layer kind names the remedy
     let (code, v) = run_in(&t.0, &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun"]);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
@@ -260,6 +268,52 @@ fn smart_filters_on_placed_layers_replay_and_bake() {
     ok(d, &["export", "flat.pxo", "-o", "flat.png"]);
     let v = ok(d, &["analyze", "diff", "out.png", "flat.png"]);
     assert!(v["result"]["ssim"].as_f64().unwrap() > 0.999, "{}", v["result"]);
+}
+
+/// Runs only when CI (or you) points PIXELOX_TEST_U2NETP at the 5 MB u2netp.onnx; the
+/// file is copied into a private models directory, so nothing is downloaded here.
+#[test]
+fn local_models_end_to_end() {
+    let Some(model) = std::env::var_os("PIXELOX_TEST_U2NETP") else {
+        eprintln!("skipped: set PIXELOX_TEST_U2NETP to a u2netp.onnx to run the model test");
+        return;
+    };
+    let t = TempDir::new("cli-ml");
+    let d = t.0.as_path();
+    sample(d);
+    let v = ok(d, &["models", "list"]);
+    if v["result"]["build_supports_ml"] != true {
+        eprintln!("skipped: this build has no ML runtime");
+        return;
+    }
+    let dir = std::path::PathBuf::from(v["result"]["models_dir"].as_str().unwrap());
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::copy(&model, dir.join("u2netp.onnx")).unwrap();
+    // side files without a document; the model file is adopted after its hash is checked
+    let v = ok(d, &["detect", "subject", "photo.png", "--fast", "--cutout", "cut.png", "--mask-out", "mask.png"]);
+    assert_eq!(v["result"]["model"], "u2netp");
+    let cov = v["result"]["mask"]["coverage"].as_f64().unwrap();
+    assert!(cov > 0.5 && cov < 99.5, "coverage {cov}");
+    for f in ["cut.png", "mask.png"] {
+        let r = ok(d, &["replay", &format!("{f}.pixelox.json"), "-o", &format!("again-{f}")]);
+        assert_eq!(r["result"]["identical"], true, "{f}");
+    }
+    // into a document, then the classic export --apply-mask: the same bytes as --cutout
+    ok(d, &["open", "photo.png", "-o", "doc.pxo"]);
+    ok(d, &["detect", "subject", "doc.pxo", "--in-place", "--fast", "--save-mask", "subject"]);
+    ok(d, &["export", "doc.pxo", "-o", "doc-cut.png", "--apply-mask", "subject"]);
+    assert_eq!(std::fs::read(t.path("cut.png")).unwrap(), std::fs::read(t.path("doc-cut.png")).unwrap());
+    let r = ok(d, &["replay", "doc-cut.png.pixelox.json", "-o", "again-doc-cut.png"]);
+    assert_eq!(r["result"]["identical"], true);
+    // salient into the selection; registry bookkeeping
+    let v = ok(d, &["detect", "salient", "doc.pxo", "-o", "sal.pxo"]);
+    assert_eq!(v["result"]["selection"], true);
+    let v = ok(d, &["models", "verify"]);
+    assert_eq!(v["result"]["models"][0]["ok"], true);
+    let v = ok(d, &["models", "rm", "u2netp"]);
+    assert_eq!(v["result"]["removed"], true);
+    let (code, v) = run_in(d, &["detect", "salient", "doc.pxo", "-o", "sal2.pxo"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (6, Some("PX1502")));
 }
 
 #[test]
