@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/djynnius/pixelox"
@@ -12,18 +12,18 @@ authors = ["Sunday Ikpe <ikakke.ikpe@gmail.com>"]
 rust-version = "1.85"
 
 [workspace.dependencies]
-pixelox-core = { path = "crates/pixelox-core", version = "0.1.0" }
-pixelox-io = { path = "crates/pixelox-io", version = "0.1.0" }
-pixelox-adjust = { path = "crates/pixelox-adjust", version = "0.1.0" }
-pixelox-filter = { path = "crates/pixelox-filter", version = "0.1.0" }
-pixelox-select = { path = "crates/pixelox-select", version = "0.1.0" }
-pixelox-fx = { path = "crates/pixelox-fx", version = "0.1.0" }
-pixelox-comp = { path = "crates/pixelox-comp", version = "0.1.0" }
-pixelox-text = { path = "crates/pixelox-text", version = "0.1.0" }
-pixelox-vector = { path = "crates/pixelox-vector", version = "0.1.0" }
-pixelox-ml = { path = "crates/pixelox-ml", version = "0.1.0" }
-pixelox-render = { path = "crates/pixelox-render", version = "0.1.0" }
-pixelox-mcp = { path = "crates/pixelox-mcp", version = "0.1.0" }
+pixelox-core = { path = "crates/pixelox-core", version = "0.2.0" }
+pixelox-io = { path = "crates/pixelox-io", version = "0.2.0" }
+pixelox-adjust = { path = "crates/pixelox-adjust", version = "0.2.0" }
+pixelox-filter = { path = "crates/pixelox-filter", version = "0.2.0" }
+pixelox-select = { path = "crates/pixelox-select", version = "0.2.0" }
+pixelox-fx = { path = "crates/pixelox-fx", version = "0.2.0" }
+pixelox-comp = { path = "crates/pixelox-comp", version = "0.2.0" }
+pixelox-text = { path = "crates/pixelox-text", version = "0.2.0" }
+pixelox-vector = { path = "crates/pixelox-vector", version = "0.2.0" }
+pixelox-ml = { path = "crates/pixelox-ml", version = "0.2.0" }
+pixelox-render = { path = "crates/pixelox-render", version = "0.2.0" }
+pixelox-mcp = { path = "crates/pixelox-mcp", version = "0.2.0" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }

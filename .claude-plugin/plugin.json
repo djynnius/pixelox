@@ -1,7 +1,7 @@
 {
   "name": "pixelox",
   "description": "Skill for driving the pixelox image workstation CLI: layers, masks, adjustments, filters, type, shapes, styles, templates, SVG, and batches.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Sunday Ikpe", "url": "https://github.com/djynnius" },
   "homepage": "https://djynnius.github.io/pixelox/",
   "repository": "https://github.com/djynnius/pixelox",

@@ -4,7 +4,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
-## [Unreleased]
+## [0.2.0] — 2026-11-05
 
 Closes the gaps found by replaying a long-form Photoshop compositing tutorial against the
 command surface (see `docs/guides/cookbook/photo-composite.md`).
