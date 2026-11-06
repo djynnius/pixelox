@@ -6,7 +6,13 @@
 # Resolves the latest (or $PIXELOX_VERSION) GitHub release and runs the installer that the
 # release workflow generated and attached to it. That installer picks the build for this
 # machine (glibc or static musl on Linux), verifies the archive's SHA-256, installs to
-# ~/.pixelox/bin (override with PIXELOX_INSTALL_DIR), adds it to PATH, and never asks for sudo.
+# ~/.pixelox/bin, adds it to PATH, and never asks for sudo.
+#
+# Options (environment variables on the `sh` side of the pipe):
+#   PIXELOX_VERSION=0.2.0       install that release instead of the latest
+#   PIXELOX_INSTALL_DIR=DIR     install into DIR instead of ~/.pixelox/bin
+#   PIXELOX_NO_MODIFY_PATH=1    leave shell profiles and PATH alone
+# e.g.  curl -fsSL https://raw.githubusercontent.com/djynnius/pixelox/main/install.sh | PIXELOX_NO_MODIFY_PATH=1 sh
 set -eu
 
 repo="djynnius/pixelox"

@@ -4,8 +4,13 @@
 #
 # Resolves the latest (or $env:PIXELOX_VERSION) GitHub release and runs the installer that the
 # release workflow generated and attached to it. That installer verifies the archive's SHA-256,
-# installs pixelox.exe to %USERPROFILE%\.pixelox\bin (override with $env:PIXELOX_INSTALL_DIR),
-# and adds it to the user PATH; no administrator rights are needed. pixelox's local models use
+# installs pixelox.exe to %USERPROFILE%\.pixelox\bin, and adds it to the user PATH; no
+# administrator rights are needed.
+#
+# Options (set before the command): $env:PIXELOX_VERSION = '0.2.0' installs that release,
+# $env:PIXELOX_INSTALL_DIR = 'C:\tools' installs elsewhere, and
+# $env:PIXELOX_NO_MODIFY_PATH = 1 leaves the user PATH alone, e.g.
+#   $env:PIXELOX_NO_MODIFY_PATH = 1; irm https://raw.githubusercontent.com/djynnius/pixelox/main/install.ps1 | iex pixelox's local models use
 # ONNX Runtime, which needs the Visual C++ Redistributable (present on most systems).
 $ErrorActionPreference = 'Stop'
 
