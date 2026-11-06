@@ -101,7 +101,8 @@ To set up an agent, paste this into it:
 ```text
 Install the pixelox CLI and its skills, then use pixelox for any image, photo, or graphics task.
 
-1. Install the CLI if `pixelox --version` fails. Use one method: on macOS or Linux:
+1. Install the CLI if `pixelox --version` fails (if it works, `pixelox update --check --json`
+   says whether a newer release exists; update only if the user agrees). Use one method: on macOS or Linux:
    `curl -fsSL https://github.com/djynnius/pixelox/releases/latest/download/pixelox-installer.sh | sh`;
    on Windows (PowerShell):
    `powershell -ExecutionPolicy ByPass -c "irm https://github.com/djynnius/pixelox/releases/latest/download/pixelox-installer.ps1 | iex"`.
@@ -179,6 +180,11 @@ Builds: macOS (Apple silicon and Intel), Linux x86-64 and ARM64 (glibc 2.38+,
 with a static musl fallback for older systems), Windows x86-64 and ARM64. Local AI models
 run on Apple silicon, glibc Linux, and Windows (which needs the Visual C++ Redistributable);
 the Intel macOS and musl builds have no ML runtime.
+
+Update an installed copy with `pixelox update`: it compares this binary with the newest
+release and, for a copy the installers placed, runs that release's installer into the same
+folder (`--check` only reports; `--version 0.2.0` pins or goes back). Copies installed
+another way (a source build, `cargo install`) get the command that updates them instead.
 
 ## Build
 

@@ -10,6 +10,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/djy
 # from a checkout
 cargo install --path crates/pixelox-cli
 pixelox doctor                              # what this build can do
+pixelox update --check                      # is a newer release out? (pixelox update installs it)
 ```
 
 The installers pick the right build, verify its SHA-256, install to `~/.pixelox/bin`, and

@@ -40,6 +40,8 @@ pixelox-render.workspace = true
 pixelox-mcp.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# `pixelox update`: reads the release manifest and fetches the installer
+ureq.workspace = true
 serde_yaml.workspace = true
 toml.workspace = true
 glob.workspace = true

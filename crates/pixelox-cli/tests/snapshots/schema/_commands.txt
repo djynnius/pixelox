@@ -204,7 +204,6 @@ select.rect
 select.save
 select.skin
 select.sky
-self-update
 shape.arrow
 shape.ellipse
 shape.line
@@ -242,5 +241,6 @@ transform.skew
 transform.straighten
 transform.trim
 transform.warp
+update
 verify
 version

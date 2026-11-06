@@ -20,6 +20,11 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   `filter ink`, `filter oil-paint`, `filter watercolor`, `filter cartoon`, `filter cutout`,
   `filter halftone` (mono or CMYK).
 - Cookbook: extract a subject; lens flares, fire, and art filters.
+- `pixelox update` (alias `self-update`, which was a stub): reads the newest release from
+  GitHub, and for a copy the curl or PowerShell installer placed runs that release's
+  installer into the same folder, then checks the new binary's version; `--check` only
+  reports, `--version` pins or goes back. Ported from ferraus. Errors PX1530-PX1532.
+- README: one prompt that sets up an agent (CLI, skills, MCP, contract), and the skills tables.
 
 ## [0.3.0] — 2026-11-06
 

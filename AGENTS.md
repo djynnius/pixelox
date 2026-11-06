@@ -32,6 +32,8 @@ prints any command's reference page.
 5. Look at your work: `pixelox analyze stats out.png --json`,
    `pixelox analyze diff before.png after.png --json`, or the MCP `pixelox_preview` tool.
 6. Finish with `pixelox verify out.png.pixelox.json --json` and report paths and hashes.
+   `pixelox update --check --json` tells whether a newer release exists; run `pixelox update`
+   only when the user asks (it replaces the installed binary).
 7. Models download only with `-y` and the user's consent. `detect subject` (BiRefNet-lite,
    224 MB) and `detect salient` (U²-Netp, 5 MB) run locally once downloaded; until then
    they exit 6 (PX1502) with the download command: ask the user, then add `-y`. The other

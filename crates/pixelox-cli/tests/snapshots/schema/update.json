@@ -1,30 +1,21 @@
 {
-  "command": "self-update",
-  "cli": "pixelox self-update",
-  "summary": "Update pixelox (signed releases)",
+  "command": "update",
+  "cli": "pixelox update",
+  "summary": "Check for a newer release and update pixelox",
   "category": "system",
   "mode": "mutate",
   "milestone": null,
   "x-pixelox-schema-version": "1.0.0",
   "params": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://djynnius.github.io/pixelox/schema/v1/self-update.params.json",
-    "title": "pixelox self-update parameters",
-    "description": "Update pixelox (signed releases)",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/update.params.json",
+    "title": "pixelox update parameters",
+    "description": "Check for a newer release and update pixelox",
     "type": "object",
     "properties": {
       "output": {
         "type": "string",
         "description": "Output path (-o); format from the extension"
-      },
-      "channel": {
-        "type": "string",
-        "enum": [
-          "stable"
-        ],
-        "description": "Release channel Type: choice.",
-        "default": "stable",
-        "x-pixelox-kind": "choice"
       },
       "check": {
         "oneOf": [
@@ -41,8 +32,13 @@
             ]
           }
         ],
-        "description": "Only report whether an update exists Type: flag.",
+        "description": "Only report the current and newest version and how to update; change nothing Type: flag.",
         "x-pixelox-kind": "flag"
+      },
+      "version": {
+        "type": "string",
+        "description": "Install this release instead of the newest, e.g. 0.2.0 (an older one goes back) Type: text.",
+        "x-pixelox-kind": "str"
       }
     },
     "required": [],
@@ -51,8 +47,8 @@
   },
   "result": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://djynnius.github.io/pixelox/schema/v1/self-update.result.json",
-    "title": "pixelox self-update envelope",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/update.result.json",
+    "title": "pixelox update envelope",
     "type": "object",
     "required": [
       "tool",
@@ -78,7 +74,7 @@
         "const": 1
       },
       "command": {
-        "const": "self-update"
+        "const": "update"
       },
       "ok": {
         "type": "boolean"

@@ -261,6 +261,6 @@ schema <command>: JSON Schema of a command, or the command list
 verify: Check an output against its sidecar
 completions <shell>: Print a shell completion script
 doctor: Environment diagnostics: build, codecs, fonts, paths
-self-update: Update pixelox (signed releases)
+update: Check for a newer release and update pixelox
 version: Version, build, and features
 ```
