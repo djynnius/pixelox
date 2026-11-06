@@ -4,7 +4,7 @@ Every written output `X` gets `X.pixelox.json`:
 
 ```json
 {"pixelox_sidecar": 1,
- "tool": {"name": "pixelox", "version": "0.1.0", "build": "git:a1b2c3d", "target": "aarch64-apple-darwin", "profile": "release"},
+ "tool": {"name": "pixelox", "version": "0.2.0", "build": "git:a1b2c3d", "target": "aarch64-apple-darwin", "profile": "release"},
  "created_utc": "2026-11-04T14:03:22Z", "base_dir": "/work",
  "command": {"id": "export", "argv": ["export", "walk.pxo", "-o", "walk-blur.png"], "params": {}, "seed": 0},
  "recipe": [
