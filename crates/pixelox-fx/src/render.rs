@@ -4,16 +4,21 @@
 //! composited, on a canvas grown by the largest effect extent and trimmed back to the
 //! visible pixels. Order (bottom → top), after Photoshop's style stack:
 //!
-//! 1. beneath the content: drop shadow, outer glow, outside stroke;
+//! 1. beneath the content: drop shadow, smoke, fire, outer glow, outside stroke;
 //! 2. the content, with these clipped to its alpha (colors change, coverage does not):
 //!    pattern, gradient, and color overlays, satin, inner glow, inner shadow, the inner
 //!    part of bevel & emboss (highlight and shadow), and an inside stroke;
-//! 3. on top: the outer part of bevel & emboss and a center stroke.
+//! 3. on top: the outer part of bevel & emboss, a center stroke, and the part of the
+//!    fire that licks over the content's edges (`--front`).
+//!
+//! Fire and smoke are computed by [`crate::flame`] from the content's alpha, anchored to
+//! the content (not the canvas), so they move with the layer unchanged.
 //!
 //! Every effect uses its own blend mode and opacity. Within the layer, an effect over
 //! transparent pixels composites like `normal` (the W3C rule); the layer as a whole is
 //! then blended onto the backdrop with the layer's own mode.
 
+use crate::flame::{self, Plume, Rise};
 use pixelox_core::blend::composite_pixel;
 use pixelox_core::color::{Interp, Stop};
 use pixelox_core::doc::FxSpec;
@@ -29,6 +34,12 @@ const MAX_PAD: f64 = 4096.0;
 
 /// The default gradient when an overlay or stroke asks for one without `--stops`.
 pub(crate) const DEFAULT_STOPS: &str = "#000000@0,#ffffff@1";
+
+/// The default fire ramp: black, deep red, orange, yellow, white.
+pub(crate) const FIRE_STOPS: &str = "#000000@0,#6e0a00@0.22,#d2320a@0.45,#ff8c1a@0.66,#ffd84a@0.84,#fffbe6@1";
+
+/// The default smoke color.
+pub(crate) const SMOKE_COLOR: &str = "#8c8c8c";
 
 // ---------------------------------------------------------------------------------------
 // params
@@ -97,6 +108,17 @@ impl<'a> Params<'a> {
     /// A lower-case word; `None` when absent, empty, or `auto`.
     fn word(&self, key: &str) -> Option<String> {
         self.raw(key).map(|v| v.trim().to_ascii_lowercase()).filter(|v| !v.is_empty() && v != "auto")
+    }
+
+    /// The stored noise pattern (`variant`, or `seed` in hand-written specs); 0 if absent.
+    fn variant(&self) -> Result<u64> {
+        match self.raw("variant").or_else(|| self.raw("seed")) {
+            None => Ok(0),
+            Some(v) => match parse_num(&v) {
+                Some(n) if n >= 0.0 => Ok(n as u64),
+                _ => Err(self.bad("variant", &v, "a whole number")),
+            },
+        }
     }
 
     fn angle(&self, key: &str, d: f64) -> Result<f64> {
@@ -271,6 +293,19 @@ enum Effect {
         width: f64,
         pos: StrokePos,
     },
+    Plume(PlumeFx),
+}
+
+/// Fire or smoke.
+struct PlumeFx {
+    look: Look,
+    rise: Rise,
+    /// Fire: the color ramp sampled at 256 heats (straight RGBA).
+    ramp: Vec<[f32; 4]>,
+    /// Smoke: the base color.
+    color: [f32; 4],
+    /// Fire: the share of the flames drawn over the content's edges (0..1).
+    front: f32,
 }
 
 /// Split a blur radius into a hard part (dilate/erode radius, `pct` of `r`) and the
@@ -307,6 +342,16 @@ impl Effect {
             Effect::Satin { off, blur, .. } => reach(off) + 1.5 * blur,
             Effect::Overlay { .. } => 0.0,
             Effect::Stroke { width, .. } => *width,
+            Effect::Plume(p) => p.rise.margins().into_iter().fold(0.0, f64::max),
+        }
+    }
+
+    /// How far the effect reaches beyond the content on each side: left, top, right,
+    /// bottom (px). Plumes reach far only toward their rise direction.
+    fn margins(&self) -> [f64; 4] {
+        match self {
+            Effect::Plume(p) => p.rise.margins(),
+            other => [other.extent(); 4],
         }
     }
 
@@ -314,8 +359,10 @@ impl Effect {
     fn phase(&self) -> u8 {
         match self {
             Effect::DropShadow { .. } => 0,
-            Effect::OuterGlow { .. } => 1,
-            Effect::Stroke { pos: StrokePos::Outside, .. } => 2,
+            Effect::Plume(p) if p.rise.plume == Plume::Smoke => 1,
+            Effect::Plume(_) => 2,
+            Effect::OuterGlow { .. } => 3,
+            Effect::Stroke { pos: StrokePos::Outside, .. } => 4,
             Effect::Overlay { rank, .. } => 10 + rank,
             Effect::Satin { .. } => 13,
             Effect::InnerGlow { .. } => 14,
@@ -385,8 +432,9 @@ fn parse_glow(p: &Params) -> Result<Glow> {
 }
 
 /// Interpret one spec; `None` for kinds this renderer does not know (kept for
-/// forward compatibility, e.g. styles imported from PSD).
-fn parse(spec: &FxSpec, doc: &Document) -> Result<Option<Effect>> {
+/// forward compatibility, e.g. styles imported from PSD). `size` is the content's
+/// visible width and height (percent lengths refer to it).
+fn parse(spec: &FxSpec, doc: &Document, size: (u32, u32)) -> Result<Option<Effect>> {
     let p = Params::new(&spec.kind, &spec.params);
     Ok(Some(match spec.kind.as_str() {
         "drop-shadow" => Effect::DropShadow {
@@ -473,8 +521,50 @@ fn parse(spec: &FxSpec, doc: &Document) -> Result<Option<Effect>> {
                 pos,
             }
         }
+        "fire" | "smoke" => Effect::Plume(parse_plume(&p, spec.kind == "fire", doc, size)?),
         _ => return Ok(None),
     }))
+}
+
+/// Fire (`--height --intensity --turbulence --colors --angle --front`) or smoke
+/// (`--height --density --turbulence --color --drift`); both keep their noise pattern
+/// in `variant`.
+fn parse_plume(p: &Params, fire: bool, doc: &Document, size: (u32, u32)) -> Result<PlumeFx> {
+    let angle = p.angle(if fire { "angle" } else { "drift" }, 90.0)?;
+    // percent heights are of the content's extent along the rise direction
+    let th = angle.to_radians();
+    let reference = th.cos().abs() * size.0 as f64 + th.sin().abs() * size.1 as f64;
+    let height = match p.raw("height") {
+        None => reference * if fire { 0.5 } else { 0.8 },
+        Some(v) => Length::parse(&v).map_err(|_| p.bad("height", &v, "a length"))?.to_px(reference, doc.dpi()),
+    };
+    let strength =
+        if fire { p.num("intensity", 100.0)?.clamp(0.0, 200.0) } else { p.num("density", 50.0)?.clamp(0.0, 100.0) };
+    let rise = Rise {
+        plume: if fire { Plume::Fire } else { Plume::Smoke },
+        height: height.clamp(0.0, MAX_PAD / 2.0),
+        strength: strength / 100.0,
+        turbulence: p.num("turbulence", 50.0)?.clamp(0.0, 100.0) / 100.0,
+        angle,
+        seed: p.variant()?,
+    };
+    let ramp = if fire {
+        let stops = match p.stops("colors")? {
+            Some(s) => s,
+            None => color::parse_stops(FIRE_STOPS)?,
+        };
+        (0..256).map(|i| color::sample_stops(&stops, i as f32 / 255.0, Interp::Perceptual).to_array()).collect()
+    } else {
+        Vec::new()
+    };
+    let color = if fire { [0.0; 4] } else { p.color("color", color::parse_color(SMOKE_COLOR)?)? };
+    Ok(PlumeFx {
+        look: p.look("blend", BlendMode::Normal, 100.0)?,
+        rise,
+        ramp,
+        color,
+        front: if fire { (p.num("front", 15.0)?.clamp(0.0, 100.0) / 100.0) as f32 } else { 0.0 },
+    })
 }
 
 // ---------------------------------------------------------------------------------------
@@ -546,6 +636,8 @@ enum Paint<'a> {
         oy: i64,
         zoom: f64,
     },
+    /// The colors of a fire or smoke field over the buffer (coverage comes separately).
+    Plume(&'a flame::Field, &'a PlumeFx),
 }
 
 impl Paint<'_> {
@@ -576,6 +668,10 @@ impl Paint<'_> {
                     return tile.get(tx, ty);
                 }
                 sample_wrapped(tile, (cx as f64 + 0.5) / zoom - 0.5, (cy as f64 + 0.5) / zoom - 0.5)
+            }
+            Paint::Plume(f, pf) => {
+                let i = y * f.value.width as usize + x;
+                plume_color(f.value.data[i], f.aux.data[i], pf)
             }
         }
     }
@@ -759,30 +855,76 @@ fn bevel_maps(a: &Mask, b: &Bevel) -> BevelMaps {
 }
 
 // ---------------------------------------------------------------------------------------
+// fire and smoke colors
+
+/// The color of a plume pixel: fire from its ramp (hotter near the outline, cooler
+/// toward the tips), smoke as lighter and darker shades of its color.
+#[inline]
+fn plume_color(v: f32, aux: f32, pf: &PlumeFx) -> [f32; 4] {
+    if pf.rise.plume == Plume::Fire {
+        let heat = (v * (1.05 - 0.4 * aux)).clamp(0.0, 1.0);
+        let c = pf.ramp[(heat * 255.0).round() as usize];
+        [c[0], c[1], c[2], 1.0]
+    } else {
+        let shade = 0.72 + 0.56 * aux;
+        let c = pf.color;
+        [(c[0] * shade).min(1.0), (c[1] * shade).min(1.0), (c[2] * shade).min(1.0), 1.0]
+    }
+}
+
+/// The coverage of a plume: fire fades in over low heats (the ramp's cold end is
+/// transparent), smoke is as opaque as it is dense.
+fn plume_cov(f: &flame::Field, pf: &PlumeFx) -> Mask {
+    let fire = pf.rise.plume == Plume::Fire;
+    let ramp = &pf.ramp;
+    let alpha = pf.color[3];
+    let mut cov = f.value.clone();
+    cov.data.par_iter_mut().zip(&f.aux.data).for_each(|(v, &aux)| {
+        if *v <= 0.0 {
+            *v = 0.0;
+        } else if fire {
+            let heat = (*v * (1.05 - 0.4 * aux)).clamp(0.0, 1.0);
+            let t = ((*v - 0.07) / 0.33).clamp(0.0, 1.0);
+            *v = t * t * (3.0 - 2.0 * t) * ramp[(heat * 255.0).round() as usize][3];
+        } else {
+            *v = v.min(1.0) * alpha;
+        }
+    });
+    cov
+}
+
+// ---------------------------------------------------------------------------------------
 // the renderer
 
 /// Apply a layer's style stack to its rendered content (the `compose` fx hook).
 pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Rendered> {
+    let visible = content.image.alpha_bbox(0.0);
+    let size = visible.map(|b| (b.w, b.h)).unwrap_or((0, 0));
     let mut effects = Vec::new();
     for s in specs.iter().filter(|s| s.enabled) {
-        if let Some(e) = parse(s, doc)? {
+        if let Some(e) = parse(s, doc, size)? {
             effects.push(e);
         }
     }
     if effects.is_empty() || content.image.is_empty() {
         return Ok(content);
     }
-    let Some(bb) = content.image.alpha_bbox(0.0) else {
+    let Some(bb) = visible else {
         return Ok(content);
     };
-    let pad = effects.iter().map(Effect::extent).fold(0.0, f64::max).clamp(0.0, MAX_PAD).ceil() as u32 + 2;
-    let (w, h) = (bb.w + 2 * pad, bb.h + 2 * pad);
-    let origin = (content.x + bb.x - pad as i32, content.y + bb.y - pad as i32);
-    let mut fill = content.image.crop(RectI::new(bb.x - pad as i32, bb.y - pad as i32, w, h));
+    let reach = effects.iter().map(Effect::margins).fold([0.0f64; 4], |m, e| [0, 1, 2, 3].map(|k| m[k].max(e[k])));
+    let [pl, pt, pr, pb] = reach.map(|v| v.clamp(0.0, MAX_PAD).ceil() as u32 + 2);
+    let (w, h) = (bb.w + pl + pr, bb.h + pt + pb);
+    let origin = (content.x + bb.x - pl as i32, content.y + bb.y - pt as i32);
+    let mut fill = content.image.crop(RectI::new(bb.x - pl as i32, bb.y - pt as i32, w, h));
     let a = fill.alpha_mask();
-    let cbox = [pad as f64, pad as f64, bb.w as f64, bb.h as f64];
+    let cbox = [pl as f64, pt as f64, bb.w as f64, bb.h as f64];
     let grow = |d: f64| [cbox[0] - d, cbox[1] - d, cbox[2] + 2.0 * d, cbox[3] + 2.0 * d];
     let seed = |i: usize| 0xF0F0_5EED_u64 ^ (i as u64 + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15);
+    // the buffer's corner relative to the content: plumes are anchored there
+    let anchor = ((bb.x - pl as i32) as f64, (bb.y - pt as i32) as f64);
+    // fire drawn over the content's edges, composited last: (coverage, field, effect)
+    let mut fronts: Vec<(Mask, flame::Field, usize)> = Vec::new();
 
     let mut order: Vec<usize> = (0..effects.len()).collect();
     order.sort_by_key(|&i| effects[i].phase());
@@ -800,6 +942,17 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
                 let (m, s) = blur_parts(*blur, *spread);
                 let cov = map(gauss(&kernels::dilate(&a, m), s, Edge::Zero), boost);
                 apply(&mut below, &cov, &glow_paint(glow), *look, false, seed(i), origin);
+            }
+            Effect::Plume(pf) => {
+                let f = flame::field(&a, &pf.rise, anchor);
+                let cov = plume_cov(&f, pf);
+                apply(&mut below, &cov, &Paint::Plume(&f, pf), pf.look, false, seed(i), origin);
+                if pf.front > 0.0 {
+                    // tongues of the flames over the content's own edges
+                    let k = pf.front;
+                    let licks = flame::licks(&a, &pf.rise, anchor);
+                    fronts.push((zip(&cov, &licks, move |c, l| c * l * k), f, i));
+                }
             }
             Effect::Stroke { look, fill: f, width, pos: StrokePos::Outside } => {
                 // the coverage that, under the content, makes the union reach the dilation
@@ -877,6 +1030,11 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
             let half = width / 2.0;
             let cov = zip(&kernels::dilate(&a, half), &kernels::erode(&a, half), |d, e| (d - e).clamp(0.0, 1.0));
             apply(&mut out, &cov, &fill_paint(f, grow(half), origin), *look, false, seed(i), origin);
+        }
+    }
+    for (cov, f, i) in &fronts {
+        if let Effect::Plume(pf) = &effects[*i] {
+            apply(&mut out, cov, &Paint::Plume(f, pf), pf.look, false, seed(*i) ^ 2, origin);
         }
     }
 

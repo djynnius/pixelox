@@ -29,9 +29,11 @@ Run pixelox with `--json` and read `result`, `warnings`, and `error.hint`. Check
 6. **Ask before you trace.** When the job needs the person cut out (a new background, a
    composite) and `detect subject` stops with exit 6 (PX1502: its 224 MB model is not
    downloaded yet), ask the user to approve the download, then rerun with `-y`
-   (`pixelox detect subject portrait.jpg -o cutout.png --layer-mask -y`). Do not quietly
-   trace the outline by hand instead: a traced path loses hair and soft edges. Trace only
-   when the user declines the download or works offline, and say that you did.
+   (`pixelox detect subject work.pxo --in-place --save-mask subject -y`), then refine the
+   hair with `pixelox mask refine work.pxo --in-place --mask subject --decontaminate`. Do
+   not quietly trace the outline by hand instead: a traced path loses hair and soft edges.
+   Trace only when the user declines the download or works offline (then refine the traced
+   mask the same way), and say that you did.
 
 ## Workflow
 

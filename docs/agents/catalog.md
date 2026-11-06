@@ -68,7 +68,7 @@ mask feather: Feather a mask (Gaussian)
 mask import <file>: Import a grayscale image as a named mask
 mask invert: Invert a mask
 mask list: List named masks and layer masks with coverage
-mask refine: Refine mask edges for hair and fur (matting) (ml)
+mask refine: Refine a mask's edge: hair-level alpha and clean colors
 mask remove: Delete a layer mask, or bake it into alpha
 mask rm: Remove a named mask from the library
 mask smooth: Median-smooth jagged mask edges
@@ -104,23 +104,31 @@ adjust vibrance: Vibrance (protects saturated colors and skin)
 adjust white-balance: White balance: auto, temperature/tint, or gray point
 filter add-noise: Add seeded Gaussian or uniform noise
 filter box: Box blur
+filter cartoon: Cartoon: flat color areas with bold outlines
+filter charcoal: Charcoal drawing: bold smudged strokes
+filter cutout: Cutout: few flat colors, simplified shapes
 filter denoise: Edge-aware noise reduction (non-local means)
 filter despeckle: Remove speckles while keeping edges
 filter dust: Dust and scratches removal
 filter emboss: Emboss into a gray relief
 filter find-edges: Highlight edges (Sobel, inverted)
 filter gaussian: Gaussian blur
+filter halftone: Halftone dot screen, mono or CMYK
 filter high-pass: High-pass filter for frequency separation
+filter ink: Pen and ink: crisp lines, solid blacks
 filter lens-blur: Depth-aware lens blur with bokeh
 filter lens-correct: Fix distortion, chromatic aberration, falloff
 filter median: Median filter (constant-time histogram)
 filter motion-blur: Linear motion blur along an angle
+filter oil-paint: Oil painting: brushwork that follows the forms
+filter pencil: Pencil sketch: graphite lines and hatching
 filter pixelate: Mosaic into square or hexagonal cells
 filter radial-blur: Spin or zoom blur around a center
 filter smart-sharpen: Smart sharpen with halo and noise control
 filter surface-blur: Edge-preserving surface blur (bilateral)
 filter unsharp: Unsharp mask sharpening
 filter vignette: Add (+) or remove (−) a vignette
+filter watercolor: Watercolor: soft washes, pooled edges, grain
 fill content-aware: Fill a region from its surroundings (inpaint) (ml)
 fill gradient: Fill with a linear, radial, angular, or reflected gradient
 fill pattern: Fill with a tiled image pattern
@@ -171,6 +179,7 @@ transform warp: Grid-mesh warp of a layer
 fx bevel: Add or replace a layer's bevel & emboss
 fx copy: Copy a layer's style stack to other layers
 fx drop-shadow: Add or replace a layer's drop shadow
+fx fire: Add or replace flames rising from a layer's outline
 fx inner-glow: Add or replace a layer's inner glow
 fx inner-shadow: Add or replace a layer's inner shadow
 fx list: List a layer's style effects
@@ -179,6 +188,7 @@ fx overlay: Add a color, gradient, or pattern overlay
 fx rm: Remove style effects from a layer
 fx satin: Add or replace a layer's satin sheen
 fx scale: Scale all effect geometry on a layer
+fx smoke: Add or replace smoke rising from a layer's outline
 fx stroke: Add or replace a stroke along a layer's edges
 comp align: Align layers to the canvas, selection, or a layer
 comp distribute: Distribute layers with even or fixed spacing
@@ -208,6 +218,7 @@ trace: Vectorize a bitmap into an SVG
 render 3d: Render primitives, extrusions, or OBJ scenes (CPU 3D)
 render d3: Run a d3 script (d3 bundle via --lib) to SVG or PNG
 render js: Run a sandboxed JS script that draws to canvas or SVG
+render lens-flare: Add a camera lens flare as a new screen layer
 render three: Run a three.js script (bundle via --lib) to SVG/PNG
 frames assemble FILES..: Build an animated GIF from stills
 frames extract: Explode an animated GIF or multi-page TIFF to stills

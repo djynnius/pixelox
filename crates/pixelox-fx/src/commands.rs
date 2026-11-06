@@ -1,11 +1,12 @@
 //! The `fx *` commands: one doc op per style (add or replace that style on a layer) plus
 //! `list`, `rm`, `copy`, and `scale` for managing a layer's style stack.
 
-use crate::render::{fmt_len, fmt_num, parse_num, value_str, DEFAULT_STOPS};
+use crate::render::{fmt_len, fmt_num, parse_num, value_str, DEFAULT_STOPS, FIRE_STOPS, SMOKE_COLOR};
 use pixelox_core::doc::{FxSpec, LayerPath};
 use pixelox_core::op::ParamSpec;
 use pixelox_core::prelude::*;
-use pixelox_core::units::PointSpec;
+use pixelox_core::units::{Length, PointSpec, Unit};
+use rand_core::RngCore;
 use std::path::Path;
 
 /// Blend modes an effect accepts (every layer mode except `pass-through`).
@@ -49,6 +50,8 @@ const RM_KINDS: &[&str] = &[
     "satin",
     "overlay",
     "stroke",
+    "fire",
+    "smoke",
     "color-overlay",
     "gradient-overlay",
     "pattern-overlay",
@@ -94,6 +97,21 @@ fn tile_scale() -> ParamSpec {
 
 fn grad_angle(help: &'static str) -> ParamSpec {
     param("angle", ParamKind::Angle).default("90").help(help)
+}
+
+/// `--height`, `--turbulence`, `--variant`: shared by fire and smoke.
+fn plume(height: &'static str, height_help: &'static str) -> Vec<ParamSpec> {
+    vec![
+        param("height", ParamKind::Length).default(height).help(height_help),
+        param("turbulence", ParamKind::Float)
+            .range("0..100")
+            .default("50")
+            .help("How much the plume wavers and breaks up, in percent"),
+        param("variant", ParamKind::Int).range("0..4294967295").auto().default("auto").help(
+            "Noise pattern number: the same number draws the same shapes; auto keeps the layer's current \
+             pattern or picks one from the op's seed (--seed)",
+        ),
+    ]
 }
 
 /// Every command this crate defines.
@@ -236,6 +254,44 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox fx stroke badge.pxo --in-place --layer Arc --width 6 --position outside --color '#ffffff'", "White outline")
             .example("pixelox fx stroke doc.pxo --in-place --layer Title --width 3 --position center --stops '#22d3ee@0,#6366f1@1' --angle 0", "Gradient outline")
             .example("pixelox fx stroke doc.pxo --in-place --layer Photo --width 12 --position inside --from tile.png", "Patterned inner frame"),
+        OpSpec::doc("fx fire", Category::Fx, "Add or replace flames rising from a layer's outline", fire)
+            .about(
+                "Flames that rise from the layer's outline (its alpha), strongest where the edge faces --angle, drawn \
+                 behind the layer; --front draws part of them over the layer's own edges too. Heat is injected along \
+                 the outline in noisy patches, carried along --angle with sideways turbulence, and cooled at varying \
+                 rates, so it breaks into tongues that are white-hot at the base and dark red at the tips (--colors, \
+                 from cold to hot; the cold end is transparent). Nothing reaches farther than --height from the \
+                 outline. The style is live: it follows the layer when it moves or changes, grows its bounds, and is \
+                 removed with fx rm --kind fire. --variant fixes the flame pattern (stored with the style).",
+            )
+            .param(common::layer())
+            .params(plume("50%", "Flame height: px, or % of the layer's height (its size along --angle)"))
+            .param(param("intensity", ParamKind::Float).range("0..200").default("100").help("Heat in percent: more is brighter, denser, and taller"))
+            .param(param("colors", ParamKind::Stops).default(FIRE_STOPS).help("Color ramp from cold (0) to hot (1)"))
+            .param(param("angle", ParamKind::Angle).default("90").help("Direction the flames rise in degrees (90 = up, 0 = right)"))
+            .param(param("front", ParamKind::Float).range("0..100").default("15").help("Percent of the flames also drawn over the layer's edges"))
+            .params(look("normal", "100", "Blend mode of the flames"))
+            .example("pixelox fx fire doc.pxo --in-place --layer Subject", "Set a cut-out subject on fire")
+            .example("pixelox fx fire doc.pxo --in-place --layer Title --height 150% --intensity 130 --turbulence 70 --front 30", "Tall, wild flames over a title")
+            .example("pixelox fx fire logo.png -o logo-fire.png --height 80 --colors '#000000@0,#0a1a6e@0.3,#2a7bff@0.65,#e6f4ff@1' --variant 7", "Blue flames with a fixed pattern")
+            .example("pixelox fx fire doc.pxo --in-place --layer Car --angle 180 --height 40%", "Flames streaming to the left, as if moving"),
+        OpSpec::doc("fx smoke", Category::Fx, "Add or replace smoke rising from a layer's outline", smoke)
+            .about(
+                "Soft, translucent smoke that rises from the layer's outline (its alpha) behind the layer, drifting \
+                 toward --drift: density is released along the outline, carried with sideways turbulence, spread \
+                 wider the higher it rises, broken into billows, and faded out by --height. Shaded variations of \
+                 --color give it volume. Live like the other styles; remove it with fx rm --kind smoke. --variant \
+                 fixes the pattern (stored with the style).",
+            )
+            .param(common::layer())
+            .params(plume("80%", "Smoke height: px, or % of the layer's height (its size along --drift)"))
+            .param(param("density", ParamKind::Float).range("0..100").default("50").help("Opacity of the thickest smoke in percent"))
+            .param(param("drift", ParamKind::Angle).default("90").help("Direction the smoke drifts in degrees (90 = up, 60 = up and to the right)"))
+            .param(color(SMOKE_COLOR, "Smoke color (lighter and darker shades of it are mixed in)"))
+            .params(look("normal", "100", "Blend mode of the smoke"))
+            .example("pixelox fx smoke doc.pxo --in-place --layer Subject", "Gray smoke rising behind a subject")
+            .example("pixelox fx smoke doc.pxo --in-place --layer Mug --height 120% --density 35 --drift 75 --color '#e8e8e8'", "Thin white steam drifting right")
+            .example("pixelox fx smoke doc.pxo --in-place --layer Wreck --height 200% --density 80 --turbulence 80 --color '#2b2b2b' --variant 3", "Thick black smoke"),
         OpSpec::doc("fx list", Category::Fx, "List a layer's style effects", list)
             .about("Shows the layer's style stack in order with each effect's settings (the params its command stored) and the layer's bounds with the styles applied.")
             .param(common::layer())
@@ -259,7 +315,7 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox fx copy doc.pxo --in-place --from 'Button 1' --to 'Button 2,Button 3'", "Style a row of buttons alike")
             .example("pixelox fx copy doc.pxo -o styled.pxo --from @top --to '#2,#3'", "Copy the top layer's styles down"),
         OpSpec::doc("fx scale", Category::Fx, "Scale all effect geometry on a layer", scale)
-            .about("Multiplies every effect's pixel sizes on the layer by --by percent: offsets, blur radii, bevel size and soften, stroke width, and pattern scale. Percent settings (spread, choke, depth) are relative and unchanged. Values beyond a setting's range are clamped (PXW3001).")
+            .about("Multiplies every effect's pixel sizes on the layer by --by percent: offsets, blur radii, bevel size and soften, stroke width, fire and smoke heights given in px (or pt, mm, in), and pattern scale. Percent settings (spread, choke, depth, % heights) are relative and unchanged. Values beyond a setting's range are clamped (PXW3001).")
             .param(common::layer())
             .param(param("by", ParamKind::Float).range("1..1000").required().help("Scale factor in percent (200 doubles every effect size)"))
             .example("pixelox fx scale doc.pxo --in-place --layer Title --by 200", "Double the styles after enlarging a layer")
@@ -388,6 +444,30 @@ fn overlay(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 fn stroke(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     set_style("stroke", a, doc, ctx)
 }
+fn fire(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
+    set_style("fire", a, doc, ctx)
+}
+fn smoke(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
+    set_style("smoke", a, doc, ctx)
+}
+
+/// The `--variant` of a new fire or smoke: the number given; with `auto`, the pattern of
+/// the layer's current effect of that kind, else a draw from the op's RNG.
+fn variant(kind: &str, a: &Args, layer: &Layer, ctx: &OpCtx) -> Result<u64> {
+    if let Some(v) = a.opt_int("variant")? {
+        return Ok(v as u64);
+    }
+    let kept = layer
+        .fx
+        .iter()
+        .filter(|f| f.kind == kind)
+        .find_map(|f| f.params.get("variant").and_then(value_str).and_then(|v| parse_num(&v)))
+        .filter(|v| *v >= 0.0);
+    Ok(match kept {
+        Some(v) => v as u64,
+        None => ctx.rng().next_u32() as u64,
+    })
+}
 
 /// Add or replace one effect of `kind` on `--layer`; `--enabled` alone toggles it.
 fn set_style(kind: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
@@ -436,6 +516,11 @@ fn set_style(kind: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) 
         }
         "stroke" => {
             params.insert("fill".into(), json!(fill_given(a).unwrap_or("color")));
+        }
+        "fire" | "smoke" => {
+            let v = variant(kind, a, doc.layer(&path), ctx)?;
+            params.insert("variant".into(), json!(v.to_string()));
+            ctx.resolve_param("variant", v);
         }
         _ => {}
     }
@@ -595,6 +680,13 @@ fn scale(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
                 clamped.push(format!("{} {key}", label(f)));
             }
             set(f, key, old, fmt_num(nv));
+        }
+        if let Some(old) = f.params.get("height").and_then(value_str) {
+            let mut l = Length::parse(&old)?;
+            if l.unit != Unit::Pct {
+                l.value *= k;
+                set(f, "height", old, fmt_len(l));
+            }
         }
         if let Some(old) = f.params.get("offset").and_then(value_str) {
             let mut p = PointSpec::parse(&old)?;

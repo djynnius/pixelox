@@ -1,6 +1,6 @@
 [package]
 name = "pixelox-fx"
-description = "Layer styles (fx *): shadows, glows, bevel, satin, overlays, stroke"
+description = "Layer styles (fx *): shadows, glows, bevel, satin, overlays, stroke, fire, smoke; render lens-flare"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,3 +12,7 @@ pixelox-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 rayon.workspace = true
+rand_core.workspace = true
+
+[dev-dependencies]
+pixelox-io.workspace = true

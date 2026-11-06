@@ -194,7 +194,6 @@ pub fn agent_catalog(reg: &Registry) -> Vec<(String, String)> {
             let pos: String = o.positionals.iter().map(|p| format!(" <{p}>")).collect();
             // (ml): runs a local model (downloaded on first use with -y)
             let gate = if (o.category == Category::Detect && o.name != "detect list-models")
-                || o.name == "mask refine"
                 || o.name == "fill content-aware"
             {
                 " (ml)"
@@ -576,9 +575,9 @@ fn doctor(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     let font_count = fonts.as_ref().and_then(|f| f.get("families").and_then(|x| x.as_array()).map(|a| a.len()));
     let mut issues = Vec::new();
     if !pixelox_ml::ML_AVAILABLE {
-        issues.push("this build has no ML runtime: detect *, mask refine, fill content-aware, and models pull exit 12 (PX1510); their --dry-run plans still work");
+        issues.push("this build has no ML runtime: detect *, fill content-aware, and models pull exit 12 (PX1510); their --dry-run plans still work (mask refine is classical and works)");
     } else {
-        issues.push("local models: detect subject and detect salient run here (models download on first use with -y); detect objects/faces/text/segment, mask refine, and fill content-aware are not in this release (exit 12)");
+        issues.push("local models: detect subject and detect salient run here (models download on first use with -y); detect objects/faces/text/segment and fill content-aware are not in this release (exit 12)");
     }
     issues.push("no color-management engine: ICC profiles are kept and re-embedded, not converted; export --profile other than srgb exits 12");
     issues.push("WebP is written lossless only; JPEG is written baseline (no progressive)");

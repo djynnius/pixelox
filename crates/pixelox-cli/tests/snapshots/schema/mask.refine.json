@@ -1,16 +1,16 @@
 {
   "command": "mask.refine",
   "cli": "pixelox mask refine",
-  "summary": "Refine mask edges for hair and fur (matting)",
+  "summary": "Refine a mask's edge: hair-level alpha and clean colors",
   "category": "mask",
-  "mode": "export",
-  "milestone": "v0.2",
+  "mode": "mutate",
+  "milestone": null,
   "x-pixelox-schema-version": "1.0.0",
   "params": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://djynnius.github.io/pixelox/schema/v1/mask.refine.params.json",
     "title": "pixelox mask.refine parameters",
-    "description": "Refine mask edges for hair and fur (matting)",
+    "description": "Refine a mask's edge: hair-level alpha and clean colors",
     "type": "object",
     "properties": {
       "input": {
@@ -30,26 +30,74 @@
         "examples": [
           "@sel"
         ],
-        "description": "Mask to refine (name or @sel) Type: mask.",
+        "description": "The rough mask: a library name, @sel, @mask:<layer>, @alpha:<layer>, or a grayscale image the size of the canvas Type: mask.",
         "x-pixelox-kind": "mask"
       },
-      "model": {
+      "layer": {
         "type": "string",
-        "enum": [
-          "vitmatte"
+        "examples": [
+          "@top"
         ],
-        "description": "Matting model Type: choice.",
-        "default": "vitmatte",
-        "x-pixelox-kind": "choice"
+        "description": "Image to pull alpha from, and the raster layer --decontaminate rewrites (default: the layer of an @mask:/@alpha: reference, else the composite; the only layer with --decontaminate) Type: layer.",
+        "x-pixelox-kind": "layer"
       },
       "band": {
         "type": "string",
         "examples": [
           "12px"
         ],
-        "description": "Width of the unknown band around the edge, px Type: length.",
-        "default": "16",
+        "description": "How far on each side of the rough edge alpha is re-solved, px (% of the shorter side); auto = 0.8% of the long side (none with --unknown) Type: length.",
+        "default": "auto",
         "x-pixelox-kind": "length"
+      },
+      "unknown": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Explicit unknown band (Extract's highlighter), e.g. painted with paint stroke --into; used instead of --band unless --band is also given Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "force_foreground": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Take band alpha from this foreground color against the local background (wispy hair of one color) Type: color.",
+        "x-pixelox-kind": "color"
+      },
+      "decontaminate": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Write background-free foreground colors into the layer's pixels in the band (removes color fringes) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
+      "into": {
+        "type": "string",
+        "description": "Where the refined mask goes: a library name, @sel, or @mask:<layer> (default: replace --mask) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "model": {
+        "type": "string",
+        "enum": [
+          "closed-form",
+          "vitmatte"
+        ],
+        "description": "Alpha solver: closed-form (the matting Laplacian, no model) or vitmatte (a model, not in this release) Type: choice.",
+        "default": "closed-form",
+        "x-pixelox-kind": "choice"
       }
     },
     "required": [
@@ -242,6 +290,7 @@
     "PX1004",
     "PX1010",
     "PX1011",
+    "PX1012",
     "PX1101",
     "PX1103",
     "PX1105",

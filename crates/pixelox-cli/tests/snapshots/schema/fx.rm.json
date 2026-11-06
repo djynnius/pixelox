@@ -44,6 +44,8 @@
           "satin",
           "overlay",
           "stroke",
+          "fire",
+          "smoke",
           "color-overlay",
           "gradient-overlay",
           "pattern-overlay"

@@ -13,6 +13,7 @@
 
 use pixelox_core::prelude::*;
 
+mod art;
 mod blemish;
 mod blur;
 mod fill;
@@ -32,6 +33,7 @@ pub fn ops() -> Vec<OpSpec> {
     v.extend(sharpen::ops());
     v.extend(noise::ops());
     v.extend(stylize::ops());
+    v.extend(art::ops());
     v.extend(retouch::ops());
     v.extend(freqsep::ops());
     v.extend(blemish::ops());
@@ -68,6 +70,14 @@ mod contract {
         "filter pixelate",
         "filter vignette",
         "filter lens-correct",
+        "filter pencil",
+        "filter charcoal",
+        "filter ink",
+        "filter oil-paint",
+        "filter watercolor",
+        "filter cartoon",
+        "filter cutout",
+        "filter halftone",
         "retouch erase",
         "retouch heal",
         "retouch clone",
@@ -234,6 +244,15 @@ mod regions {
         ("filter pixelate", &[("cell", "4")]),
         ("filter vignette", &[("amount", "80")]),
         ("filter lens-correct", &[("distortion", "50")]),
+        ("filter pencil", &[]),
+        ("filter pencil", &[("color", "true")]),
+        ("filter charcoal", &[]),
+        ("filter ink", &[("shading", "hatch")]),
+        ("filter oil-paint", &[]),
+        ("filter watercolor", &[]),
+        ("filter cartoon", &[]),
+        ("filter cutout", &[]),
+        ("filter halftone", &[("mode", "cmyk")]),
         ("retouch erase", &[]),
         ("retouch heal", &[]),
         ("retouch clone", &[("from", "3,3"), ("to", "9,9"), ("radius", "30")]),
@@ -330,14 +349,49 @@ mod determinism {
     use super::*;
     use pixelox_core::testing;
 
-    #[test]
-    fn outputs_do_not_depend_on_thread_count() {
-        let (w, h) = (300u32, 200u32);
-        let img = Image::from_fn(w, h, |x, y| {
+    fn test_image() -> Image {
+        Image::from_fn(300, 200, |x, y| {
             let n = ((x.wrapping_mul(2_654_435_761) ^ y.wrapping_mul(40_503)) % 97) as f32 / 97.0 * 0.2;
             let v = 0.2 + 0.5 * ((x as f32 * 0.05).sin() * (y as f32 * 0.07).cos()).abs() + n;
             [v, 1.0 - v, (v * 1.7) % 1.0, if x < 10 { 0.5 } else { 1.0 }]
-        });
+        })
+    }
+
+    fn check(cases: &[(&str, &[(&str, &str)])]) {
+        let img = test_image();
+        let run_with = |threads: usize, name: &str, params: &[(&str, &str)]| {
+            let pool = rayon::ThreadPoolBuilder::new().num_threads(threads).build().unwrap();
+            let spec = testing::find(&ops(), name);
+            let mut doc = testing::doc_from(img.clone());
+            pool.install(|| testing::run(&spec, params, &mut doc)).unwrap();
+            testing::raster(&doc, "Background").clone()
+        };
+        for (name, params) in cases {
+            let a = run_with(1, name, params);
+            let b = run_with(3, name, params);
+            assert!(
+                a.data.iter().zip(&b.data).all(|(x, y)| x.to_bits() == y.to_bits()),
+                "{name} {params:?} differs across thread counts"
+            );
+        }
+    }
+
+    #[test]
+    fn art_filters_do_not_depend_on_thread_count() {
+        check(&[
+            ("filter pencil", &[("color", "true"), ("stroke", "2")]),
+            ("filter charcoal", &[("smudge", "80")]),
+            ("filter ink", &[("shading", "stipple")]),
+            ("filter oil-paint", &[("brush", "9")]),
+            ("filter watercolor", &[]),
+            ("filter cartoon", &[("smooth", "14")]),
+            ("filter cutout", &[("levels", "5")]),
+            ("filter halftone", &[("mode", "cmyk"), ("shape", "line")]),
+        ]);
+    }
+
+    #[test]
+    fn outputs_do_not_depend_on_thread_count() {
         let cases: &[(&str, &[(&str, &str)])] = &[
             ("filter gaussian", &[("sigma", "2")]),
             ("filter gaussian", &[("sigma", "7")]),
@@ -374,21 +428,7 @@ mod determinism {
                 &[("d", "M 0 100 C 100 0 200 200 300 100"), ("size", "8%"), ("blend", "dissolve"), ("opacity", "60")],
             ),
         ];
-        let run_with = |threads: usize, name: &str, params: &[(&str, &str)]| {
-            let pool = rayon::ThreadPoolBuilder::new().num_threads(threads).build().unwrap();
-            let spec = testing::find(&ops(), name);
-            let mut doc = testing::doc_from(img.clone());
-            pool.install(|| testing::run(&spec, params, &mut doc)).unwrap();
-            testing::raster(&doc, "Background").clone()
-        };
-        for (name, params) in cases {
-            let a = run_with(1, name, params);
-            let b = run_with(3, name, params);
-            assert!(
-                a.data.iter().zip(&b.data).all(|(x, y)| x.to_bits() == y.to_bits()),
-                "{name} {params:?} differs across thread counts"
-            );
-        }
+        check(cases);
     }
 }
 
@@ -432,6 +472,17 @@ mod bench {
             ("filter lens-correct", &[("distortion", "20"), ("ca", "1,-1"), ("vignette", "30")]),
             ("retouch dodge", &[("mask", "all"), ("exposure", "0.3")]),
             ("fill gradient", &[("kind", "radial"), ("dither", "true")]),
+            ("filter pencil", &[]),
+            ("filter pencil", &[("color", "true")]),
+            ("filter charcoal", &[]),
+            ("filter ink", &[]),
+            ("filter ink", &[("shading", "hatch")]),
+            ("filter oil-paint", &[]),
+            ("filter watercolor", &[]),
+            ("filter cartoon", &[]),
+            ("filter cutout", &[]),
+            ("filter halftone", &[]),
+            ("filter halftone", &[("mode", "cmyk")]),
             // worst cases
             ("filter surface-blur", &[("radius", "3"), ("threshold", "15")]),
             ("filter surface-blur", &[("radius", "20"), ("threshold", "4")]),
