@@ -1,7 +1,7 @@
 {
   "name": "pixelox",
   "description": "Skills for driving the pixelox image workstation CLI (layers, masks, adjustments, filters, type, shapes, styles, templates, SVG, batches, local AI) and for portrait retouching (blemishes, frequency separation, natural skin smoothing).",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": { "name": "Sunday Ikpe", "url": "https://github.com/djynnius" },
   "homepage": "https://djynnius.github.io/pixelox/",
   "repository": "https://github.com/djynnius/pixelox",
