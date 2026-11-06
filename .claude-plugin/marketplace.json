@@ -5,7 +5,7 @@
     {
       "name": "pixelox",
       "source": "./",
-      "description": "Skill for driving the pixelox image workstation CLI: layers, masks, adjustments, filters, type, shapes, styles, templates, SVG, and batches."
+      "description": "Skills for driving the pixelox image workstation CLI (layers, masks, adjustments, filters, effects, type, shapes, SVG, batches, local AI cutouts) and for portrait retouching."
     }
   ]
 }

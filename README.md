@@ -74,13 +74,52 @@ place. `pixelox describe --agent` prints the whole surface in under 4,000 tokens
 pixelox is also an MCP server:
 
 ```bash
-claude mcp add pixelox -- pixelox mcp serve --allow ~/work
+claude mcp add pixelox -- pixelox mcp serve --allow ~/Pictures
 ```
 
-The skill in [skills/pixelox/SKILL.md](skills/pixelox/SKILL.md) teaches an agent when and how
-to use it, and [skills/pixelox-retouch](skills/pixelox-retouch/SKILL.md) is a companion skill for
-portrait retouching (blemishes, frequency separation, natural skin smoothing). In Claude Code: `claude plugin marketplace add djynnius/pixelox`, then
-`claude plugin install pixelox@pixelox`.
+### Skills
+
+| Skill | What it does |
+| --- | --- |
+| [`pixelox`](skills/pixelox/SKILL.md) | the CLI contract and the common one-command tasks; routes to the others |
+| [`pixelox-retouch`](skills/pixelox-retouch/SKILL.md) | portraits: skin masks, blemish removal, frequency separation, natural skin smoothing, before/after checks |
+
+Install them with one of:
+
+| Agent | Command |
+| --- | --- |
+| Claude Code | `claude plugin marketplace add djynnius/pixelox`, then `claude plugin install pixelox@pixelox` (all skills) |
+| Other agents (Cursor, Codex, Gemini CLI, …) | `npx skills add djynnius/pixelox`, then pick the skills and your agent |
+| Any agent, by hand | copy the folders under [`skills/`](skills/) into the agent's skills folder |
+
+The skills drive the `pixelox` command, so install the CLI first (see [Install](#install)).
+
+### One prompt that sets everything up
+
+To set up an agent, paste this into it:
+
+```text
+Install the pixelox CLI and its skills, then use pixelox for any image, photo, or graphics task.
+
+1. Install the CLI if `pixelox --version` fails. Use one method: on macOS or Linux:
+   `curl -fsSL https://github.com/djynnius/pixelox/releases/latest/download/pixelox-installer.sh | sh`;
+   on Windows (PowerShell):
+   `powershell -ExecutionPolicy ByPass -c "irm https://github.com/djynnius/pixelox/releases/latest/download/pixelox-installer.ps1 | iex"`.
+   The installer puts pixelox in ~/.pixelox/bin (Windows: %USERPROFILE%\.pixelox\bin) and adds it
+   to PATH for new shells; in the current shell call it by that full path. Then run
+   `pixelox doctor --json` and confirm "ok": true.
+2. Install the skills. In Claude Code: `claude plugin marketplace add djynnius/pixelox`, then
+   `claude plugin install pixelox@pixelox`. In another agent: `npx skills add djynnius/pixelox`
+   and select all the pixelox skills and your agent. Use one method. You can read the skills directly at
+   https://github.com/djynnius/pixelox/tree/main/skills
+   (the main one, raw: https://raw.githubusercontent.com/djynnius/pixelox/main/skills/pixelox/SKILL.md).
+3. Optional, if you support MCP: register `pixelox mcp serve --allow <pictures folder>` as an MCP server
+   (Claude Code: `claude mcp add pixelox -- pixelox mcp serve --allow ~/Pictures`).
+4. Before the first task, run `pixelox describe --agent` for the command catalog and read
+   https://raw.githubusercontent.com/djynnius/pixelox/main/AGENTS.md for the contract: add `--json` to
+   every call, plan with `--dry-run`, never pass `--overwrite` unless asked, and only download models
+   (`-y`, such as the 224 MB subject-cutout model) when the user agrees.
+```
 
 ## A few recipes
 
