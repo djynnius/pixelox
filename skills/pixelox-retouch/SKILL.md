@@ -26,6 +26,12 @@ Run pixelox with `--json` and read `result`, `warnings`, and `error.hint`. Check
 4. **Non-destructive and replayable.** Work in a `.pxo` on a copy of the photo; export at the
    end; the sidecar rebuilds every step.
 5. **Prove it.** Compare 100% crops before and after, and check that the skin's color held.
+6. **Ask before you trace.** When the job needs the person cut out (a new background, a
+   composite) and `detect subject` stops with exit 6 (PX1502: its 224 MB model is not
+   downloaded yet), ask the user to approve the download, then rerun with `-y`
+   (`pixelox detect subject portrait.jpg -o cutout.png --layer-mask -y`). Do not quietly
+   trace the outline by hand instead: a traced path loses hair and soft edges. Trace only
+   when the user declines the download or works offline, and say that you did.
 
 ## Workflow
 
