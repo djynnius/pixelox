@@ -7,7 +7,7 @@ pixelox is built to be driven by scripts and AI agents. These rules hold for eve
 With `--json`, stdout carries exactly one JSON object; logs and progress go to stderr.
 
 ```json
-{"tool": "pixelox", "version": "0.3.0", "envelope": 1, "command": "filter.gaussian",
+{"tool": "pixelox", "version": "0.4.0", "envelope": 1, "command": "filter.gaussian",
  "ok": true, "dry_run": false, "seed": 0,
  "result": {"op": "filter.gaussian", "params": {"sigma": "8"}, "document": {"size": [6000, 4000]}},
  "inputs": [{"path": "walk.pxo", "sha256": "9f2a…", "bytes": 24117248}],
