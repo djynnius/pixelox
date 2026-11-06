@@ -1,5 +1,7 @@
 # pixelox
 
+![pixelOx banner: the word pixelOx cut out of a wall of blue and orange butterflies](images/banner.jpg)
+
 **A command-line raster and vector graphics workstation for scripts and AI agents.**
 Layers, masks, selections, blend modes, adjustment layers, layer styles, type, vector
 shapes, filters, retouching, templates, SVG authoring, tracing, and scripted rendering —
