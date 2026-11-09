@@ -970,7 +970,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "pixelox"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "clap",
  "clap_complete",
@@ -997,7 +997,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-adjust"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "pixelox-core",
  "rand_chacha",
@@ -1009,7 +1009,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-comp"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "pixelox-core",
  "rayon",
@@ -1019,7 +1019,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "glob",
  "hex",
@@ -1036,7 +1036,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-filter"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "kurbo",
  "pixelox-core",
@@ -1049,7 +1049,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-fx"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "pixelox-core",
  "pixelox-io",
@@ -1061,7 +1061,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-io"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "gif 0.14.2",
  "image",
@@ -1079,7 +1079,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-mcp"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "pixelox-core",
  "rayon",
@@ -1089,7 +1089,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-ml"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "hex",
  "ort",
@@ -1103,7 +1103,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-render"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "pixelox-core",
  "rand_chacha",
@@ -1119,7 +1119,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-select"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "kurbo",
  "pixelox-core",
@@ -1131,7 +1131,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-text"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "fontdb",
  "kurbo",
@@ -1149,7 +1149,7 @@ dependencies = [
 
 [[package]]
 name = "pixelox-vector"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
  "i_overlay",
