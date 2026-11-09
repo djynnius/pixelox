@@ -1,6 +1,6 @@
 ---
 name: pixelox-retouch
-description: Retouch portraits with the pixelox CLI like a high-end beauty retoucher - find and heal blemishes, even skin tone with frequency separation, "airbrush" skin while keeping its pores, dodge and burn, and prove the result with before/after crops. Use this whenever someone wants a portrait, headshot, selfie, or beauty shot airbrushed, retouched, cleaned up, skin-smoothed, made "flawless" or "magazine ready", or wants pimples, acne, spots, blotches, or shine removed; when they mention frequency separation, the healing or patch tool, or a natural versus editorial skin look; and when they ask why retouched skin looks plastic, blotchy, or a different color. Works unsupervised: every change is masked to skin and measured.
+description: 'Retouch portraits with the pixelox CLI like a high-end beauty retoucher - find and heal blemishes, even skin tone with frequency separation, "airbrush" skin while keeping its pores, dodge and burn, and prove the result with before/after crops. Use this whenever someone wants a portrait, headshot, selfie, or beauty shot airbrushed, retouched, cleaned up, skin-smoothed, made "flawless" or "magazine ready", or wants pimples, acne, spots, blotches, or shine removed; when they mention frequency separation, the healing or patch tool, or a natural versus editorial skin look; and when they ask why retouched skin looks plastic, blotchy, or a different color. Works unsupervised: every change is masked to skin and measured.'
 ---
 
 # Portrait retouching with pixelox
