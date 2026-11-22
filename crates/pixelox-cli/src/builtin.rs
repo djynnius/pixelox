@@ -32,7 +32,7 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox describe --format markdown", "The catalog as Markdown"),
         OpSpec::custom("docs", Category::Agents, "Offline reference for a command, topic, or error", docs)
             .inputs(Inputs::NONE)
-            .about("Prints a command's full page (synopsis, every flag, examples, errors), a topic (contract, addressing, pipelines, sidecars, mcp), the error catalog (`errors`), or one code (`errors/PX1401`). With no argument, lists everything.")
+            .about("Prints a command's full page (synopsis, every flag, examples, errors), a topic (contract, addressing, masking, pipelines, sidecars, mcp), the error catalog (`errors`), or one code (`errors/PX1401`). With no argument, lists everything.")
             .param(param("topic", ParamKind::List).help("Command (dotted id or words), topic, `errors`, or `errors/PX####`"))
             .positional("topic")
             .example("pixelox docs filter.gaussian", "The Gaussian blur page")
@@ -243,7 +243,7 @@ fn docs(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     let what = a.list("topic").join(" ");
     let what = what.trim();
     let text = if what.is_empty() {
-        let mut s = String::from("pixelox documentation (offline). `pixelox docs <command|topic>`.\n\nTopics: contract, addressing, pipelines, sidecars, mcp, errors\n\nCommands:\n");
+        let mut s = String::from("pixelox documentation (offline). `pixelox docs <command|topic>`.\n\nTopics: contract, addressing, masking, pipelines, sidecars, mcp, errors\n\nCommands:\n");
         for (_, l) in agent_catalog(r) {
             s.push_str("  ");
             s.push_str(&l);

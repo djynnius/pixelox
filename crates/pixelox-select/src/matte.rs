@@ -318,7 +318,10 @@ fn store(doc: &mut Document, dest: &Dest, m: Mask) -> Result<()> {
         Dest::LayerMask(p) => {
             let l = doc.layer_mut(p);
             match &mut l.mask {
-                Some(lm) => lm.mask = m,
+                Some(lm) => {
+                    lm.mask = m;
+                    lm.link = None;
+                }
                 None => l.mask = Some(LayerMask::new(m)),
             }
             // the solved pixels no longer match a vector mask's path
