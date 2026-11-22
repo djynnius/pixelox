@@ -983,6 +983,10 @@ fn stroke(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             let created = layer.mask.is_none();
             let lm = layer.mask.get_or_insert_with(|| LayerMask::new(Mask::filled(cw, chh, 1.0)));
             let bounds = paint_mask(&mut lm.mask, &planned, &brush, canvas, mask_value, mask_strength, region);
+            if bounds.is_some() {
+                // painted pixels no longer follow a linked source layer
+                lm.link = None;
+            }
             // edited pixels no longer match a vector mask's path
             let dropped = bounds.is_some() && layer.vector_mask.take().is_some();
             (bounds, json!({"target": "mask", "layer": name, "created_mask": created, "vector_mask_dropped": dropped}))

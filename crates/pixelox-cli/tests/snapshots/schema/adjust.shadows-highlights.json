@@ -126,6 +126,30 @@
         "type": "string",
         "description": "Name for the new layer (default: generated, unique) Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "With --as-layer: insert the adjustment layer directly above this layer (like --layer; default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "With --as-layer: insert the adjustment layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "With --as-layer: insert the adjustment layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
       }
     },
     "required": [

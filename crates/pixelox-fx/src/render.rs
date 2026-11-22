@@ -184,7 +184,12 @@ pub(crate) fn fmt_len(l: Length) -> String {
         Unit::Mm => "mm",
         Unit::In => "in",
     };
-    format!("{}{unit}", fmt_num(l.value))
+    let mut out = format!("{}{unit}", fmt_num(l.value));
+    if let Some((v, u)) = l.plus {
+        let b = fmt_len(Length { value: v.abs(), unit: u, plus: None });
+        out.push_str(&format!("{}{b}", if v < 0.0 { "-" } else { "+" }));
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------------------

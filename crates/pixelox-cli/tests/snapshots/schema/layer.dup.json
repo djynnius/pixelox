@@ -37,6 +37,30 @@
         "type": "string",
         "description": "Name for the copy (default: '<name> copy', made unique) Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the copy directly above this layer (default: directly above the original) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the copy directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the copy on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
       }
     },
     "required": [

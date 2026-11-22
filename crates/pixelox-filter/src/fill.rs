@@ -54,6 +54,7 @@ fn paint(
     src: &(dyn Fn(i64, i64, &mut [f32]) + Sync),
 ) -> Result<Value> {
     let path = target_layer(a, doc)?;
+    live_layer_hint(doc.layer(&path), &ctx.id)?;
     let mask = ctx.mask_arg(a, doc)?;
     let layer = doc.layer(&path);
     if !layer.visible {
@@ -101,6 +102,35 @@ fn paint(
         })
         .collect();
     Ok(json!({"layer": name, "pixels_changed": counts.iter().sum::<usize>()}))
+}
+
+/// PX2303 for a fill aimed at a live (text, shape, or placed) layer, naming the command
+/// that does the same job and keeps the layer editable.
+fn live_layer_hint(l: &Layer, id: &str) -> Result<()> {
+    let n = &l.name;
+    let kind = l.kind_name();
+    let keep = match (kind, id) {
+        ("text", "fill.solid") => format!(
+            "to recolor live text: pixelox text style <doc> --layer '{n}' --color <color> --in-place (or pixelox fx overlay <doc> --layer '{n}' --color <color> --in-place)"
+        ),
+        ("shape", "fill.solid") => format!(
+            "to recolor a live shape: pixelox shape set <doc> --layer '{n}' --fill <color> --in-place (or pixelox fx overlay <doc> --layer '{n}' --color <color> --in-place)"
+        ),
+        ("placed", "fill.solid") => {
+            format!("to color it and keep it live: pixelox fx overlay <doc> --layer '{n}' --color <color> --in-place")
+        }
+        ("text" | "shape" | "placed", "fill.gradient") => format!(
+            "for a gradient that keeps the layer live: pixelox fx overlay <doc> --layer '{n}' --kind gradient --stops '<color>@0,<color>@1' --angle 90 --in-place"
+        ),
+        ("text" | "shape" | "placed", "fill.pattern") => format!(
+            "for a pattern that keeps the layer live: pixelox fx overlay <doc> --layer '{n}' --kind pattern --from <tile.png> --in-place"
+        ),
+        _ => return Ok(()),
+    };
+    Err(Error::new("PX2303", format!("layer '{n}' is a {kind} layer; fills need pixels"))
+        .with_hint(format!("{keep}; or rasterize first: pixelox layer rasterize <doc> --layer '{n}' --in-place"))
+        .with_context("layer", n)
+        .with_context("kind", kind))
 }
 
 fn solid(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {

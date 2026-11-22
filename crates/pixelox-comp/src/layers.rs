@@ -6,6 +6,7 @@ use crate::util::*;
 use pixelox_core::blend::BLEND_MODES;
 use pixelox_core::doc::LayerPath;
 use pixelox_core::prelude::*;
+use pixelox_core::stack;
 
 fn layer_p() -> pixelox_core::ParamSpec {
     common::layer()
@@ -27,10 +28,11 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox layer list brand.psd --json", "Inspect the layers imported from a PSD"),
         OpSpec::doc("layer add", Category::Layer, "Add an empty or solid-filled raster layer", add)
             .about(
-                "Adds a raster layer above the active layer (or at the top when none is active) and makes it \
-                 active. By default it is canvas-sized and transparent; `--size` and `--at` place a smaller \
-                 layer (`%` of the canvas; negative `--at` values count from the right/bottom) and `--fill` \
-                 paints it a solid color. An explicit `--name` must be unused (PX2305).",
+                "Adds a raster layer on top of the stack (or where `--above`, `--below`, or `--into` say) and \
+                 makes it active. By default it is canvas-sized and transparent; `--size` and `--at` place a \
+                 smaller layer (`%` of the canvas; negative `--at` values count from the right/bottom, `0-80` is \
+                 80 px past the left/top edge) and `--fill` paints it a solid color. An explicit `--name` must \
+                 be unused (PX2305).",
             )
             .param(param("name", ParamKind::Str).help("Name for the new layer (default: 'Layer', made unique)"))
             .param(
@@ -43,6 +45,7 @@ pub fn ops() -> Vec<OpSpec> {
                 ),
             )
             .param(param("fill", ParamKind::Color).help("Fill color (default: transparent)"))
+            .params(common::placement())
             .example("pixelox layer add doc.pxo --in-place --name Paint", "Add a transparent canvas-sized layer")
             .example(
                 "pixelox layer add doc.pxo --in-place --name Band --size 100%x200 --at 0,-200 --fill '#101014'",
@@ -51,15 +54,25 @@ pub fn ops() -> Vec<OpSpec> {
             .example(
                 "pixelox layer add photo.jpg -o layered.pxo --name Dim --fill '#0000004d'",
                 "Darken a photo with a translucent layer",
+            )
+            .example(
+                "pixelox layer add doc.pxo --in-place --name Shade --fill '#00000040' --below Title",
+                "Add a layer directly below another one",
             ),
         OpSpec::doc("layer dup", Category::Layer, "Duplicate a layer with its mask and styles", dup)
             .about(
                 "Copies a layer (with its mask, styles, and for groups every child) directly above the original \
-                 and makes the copy active. Copies get fresh ids and unique names ('Logo copy'); an explicit \
-                 `--name` must be unused (PX2305).",
+                 (or where `--above`, `--below`, or `--into` say) and makes the copy active. Copies get fresh ids \
+                 and unique names ('Logo copy'); an explicit `--name` must be unused (PX2305).",
             )
             .param(layer_p())
             .param(param("name", ParamKind::Str).help("Name for the copy (default: '<name> copy', made unique)"))
+            .param(
+                param("above", ParamKind::Layer)
+                    .help("Insert the copy directly above this layer (default: directly above the original)"),
+            )
+            .param(param("below", ParamKind::Layer).help("Insert the copy directly below this layer"))
+            .param(param("into", ParamKind::Layer).help("Insert the copy on top of this group's children"))
             .example("pixelox layer dup doc.pxo --in-place --layer Logo", "Duplicate a layer")
             .example(
                 "pixelox layer dup doc.pxo --in-place --layer Logo --name 'Logo shadow'",
@@ -68,6 +81,10 @@ pub fn ops() -> Vec<OpSpec> {
             .example(
                 "pixelox layer dup doc.pxo -o variant.pxo --layer @top --json",
                 "Duplicate the top layer into a new document",
+            )
+            .example(
+                "pixelox layer dup doc.pxo --in-place --layer Title --name Glow --below Title",
+                "A copy under the original, for a glow",
             ),
         OpSpec::doc("layer rm", Category::Layer, "Remove a layer", rm)
             .about(
@@ -281,19 +298,21 @@ pub fn ops() -> Vec<OpSpec> {
         OpSpec::doc("layer stamp", Category::Layer, "Merge all visible layers into a new top layer", stamp)
             .about(
                 "Photoshop's Stamp Visible (Ctrl+Alt+Shift+E): composites every visible layer into one new raster \
-                 layer and inserts it on top (or above --above), leaving the layers underneath untouched, so \
-                 finishing filters and grades can work on the whole image non-destructively.",
+                 layer and inserts it on top (or where `--above`, `--below`, or `--into` say), leaving the layers \
+                 underneath untouched, so finishing filters and grades can work on the whole image \
+                 non-destructively.",
             )
             .param(param("name", ParamKind::Str).default("Stamp").help("Name of the new layer (made unique)"))
-            .param(param("above", ParamKind::Layer).help("Insert above this layer instead of on top"))
+            .params(common::placement())
             .example("pixelox layer stamp doc.pxo --in-place", "Stamp everything visible onto a new top layer")
             .example("pixelox layer stamp doc.pxo --in-place --name Final --above Grade", "Stamp above a named layer")
             .example("pixelox layer stamp doc.pxo -o stamped.pxo --json", "Stamp into a new document"),
         OpSpec::doc("layer smart-filter", Category::Layer, "Disable, enable, or remove a smart filter", smart_filter)
             .about(
-                "Manages the smart filters of a placed layer (`filter` and `adjust` commands run on a placed \
-                 layer are recorded as smart filters and re-run whenever it renders). --index counts from 1 in \
-                 the order they were added (`layer list` shows them); the default is the last one.",
+                "Manages the smart filters of a placed, text, or shape layer (`filter` and `adjust` commands run \
+                 on such a layer are recorded as smart filters and re-run whenever it renders, so the text or \
+                 shape stays editable). --index counts from 1 in the order they were added (`layer list` shows \
+                 them); the default is the last one.",
             )
             .param(layer_p())
             .param(
@@ -325,7 +344,9 @@ fn smart_filter(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value>
     let n = l.smart_filters.len();
     if n == 0 {
         return Err(Error::new("PX1010", format!("layer '{}' has no smart filters", l.name))
-            .with_hint("run a filter or adjust command on a placed layer to add one; `pixelox layer list` shows them")
+            .with_hint(
+                "run a filter or adjust command on a placed, text, or shape layer to add one; `pixelox layer list` shows them",
+            )
             .with_context("layer", l.name.clone()));
     }
     let i = a.opt_int("index")?.map(|v| v.max(0) as usize).unwrap_or(n);
@@ -401,10 +422,7 @@ fn blend_if(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
 }
 
 fn stamp(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
-    let above = match a.raw("above") {
-        Some(r) => Some(doc.resolve(r)?),
-        None => None,
-    };
+    let at = stack::from_args(a, doc)?.unwrap_or(stack::Placement::Top);
     let full = compose::composite(doc)?;
     let (image, x, y) = match full.alpha_bbox(0.0) {
         Some(r) if (r.w, r.h) != (full.width, full.height) => (full.crop(r), r.x, r.y),
@@ -416,7 +434,7 @@ fn stamp(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
     l.x = x;
     l.y = y;
     let (id, nm) = (l.id.clone(), l.name.clone());
-    doc.insert_above(above.as_deref(), l);
+    stack::insert_at(doc, l, &at);
     let bounds = doc.find_by_id(&id).and_then(|p| compose::layer_bounds(doc, doc.layer(&p)).ok().flatten());
     Ok(json!({"layer": nm, "id": id, "bounds": bounds.map(|b| b.to_json())}))
 }
@@ -473,11 +491,12 @@ fn add(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         Some(n) => fresh_name(doc, &n, &[])?,
         None => doc.unique_name("Layer"),
     };
+    let at = stack::from_args(a, doc)?.unwrap_or(stack::Placement::Top);
     let mut l = doc.new_layer(&name, LayerKind::Raster { image: Image::filled(w, h, fill) });
     l.x = x;
     l.y = y;
     let id = l.id.clone();
-    let p = insert_new(doc, l);
+    let p = stack::insert_at(doc, l, &at);
     Ok(
         json!({"layer": name, "id": id, "size": [w, h], "offset": [x, y], "fill": fill.to_hex(), "parent": parent_name(doc, &p)}),
     )
@@ -509,7 +528,7 @@ fn dup(a: &Args, doc: &mut Document, _ctx: &mut OpCtx) -> Result<Value> {
     let mut taken: Vec<String> = explicit.iter().cloned().collect();
     fresh_copy(doc, &mut copy, &mut taken, explicit);
     let (name, id) = (copy.name.clone(), copy.id.clone());
-    let np = doc.insert_above(Some(&p), copy);
+    let np = stack::insert_derived(a, doc, copy, Some(&p))?;
     Ok(json!({"layer": name, "id": id, "source": source, "parent": parent_name(doc, &np), "layers": doc.layer_count()}))
 }
 
@@ -1068,14 +1087,24 @@ mod tests {
         assert_eq!(v["layer"], "Layer");
         assert_eq!(v["size"], json!([8, 8]));
         assert_eq!(raster(&d, "Layer").get(3, 3)[3], 0.0);
-        assert_eq!(names(&d)[0], "Layer", "on top when nothing is active");
-        // above the active layer (the new one is active now; activate A)
+        assert_eq!(names(&d)[0], "Layer", "on top");
+        // still on top when a lower layer is active (ADR 0014)
         d.active = Some(d.layer(&d.resolve("A").unwrap()).id.clone());
         let v =
             run(&op("layer add"), &[("name", "Band"), ("size", "100%x2"), ("at", "0,-2"), ("fill", "#ff0000")], &mut d)
                 .unwrap();
         assert_eq!(v["offset"], json!([0, 6]));
-        assert_eq!(names(&d), ["Layer", "B", "Band", "A", "Background"]);
+        assert_eq!(names(&d), ["Band", "Layer", "B", "A", "Background"]);
+        assert_eq!(d.layer(&d.resolve("@active").unwrap()).name, "Band");
+        // --above / --below / --into
+        run(&op("layer add"), &[("name", "OverA"), ("above", "A")], &mut d).unwrap();
+        run(&op("layer add"), &[("name", "UnderB"), ("below", "B")], &mut d).unwrap();
+        assert_eq!(names(&d), ["Band", "Layer", "B", "UnderB", "OverA", "A", "Background"]);
+        assert_eq!(run(&op("layer add"), &[("into", "A")], &mut d).unwrap_err().code, "PX2330");
+        assert_eq!(run(&op("layer add"), &[("above", "A"), ("below", "B")], &mut d).unwrap_err().code, "PX1005");
+        // a true negative position: 0-2 is two px left of the canvas
+        let v = run(&op("layer add"), &[("name", "Off"), ("size", "4x4"), ("at", "0-2,0-1")], &mut d).unwrap();
+        assert_eq!(v["offset"], json!([-2, -1]));
         let l = d.layer(&d.resolve("Band").unwrap());
         assert_eq!((l.x, l.y, l.raster().unwrap().width, l.raster().unwrap().height), (0, 6, 8, 2));
         assert_eq!(l.raster().unwrap().get(0, 0), [1.0, 0.0, 0.0, 1.0]);
@@ -1108,6 +1137,18 @@ mod tests {
         assert_eq!(ids.len(), n, "ids are unique");
         assert!(names(&d).contains(&"B copy".to_string()));
         assert_eq!(run(&op("layer dup"), &[("layer", "A"), ("name", "B")], &mut d).unwrap_err().code, "PX2305");
+    }
+    #[test]
+    fn dup_and_stamp_placement() {
+        let mut d = abc();
+        // the copy goes directly above its source by default, or where the flags say
+        run(&op("layer dup"), &[("layer", "A"), ("name", "A2")], &mut d).unwrap();
+        assert_eq!(names(&d), ["B", "A2", "A", "Background"]);
+        run(&op("layer dup"), &[("layer", "A"), ("name", "A3"), ("below", "Background")], &mut d).unwrap();
+        assert_eq!(names(&d), ["B", "A2", "A", "Background", "A3"]);
+        run(&op("layer stamp"), &[("name", "S"), ("below", "B")], &mut d).unwrap();
+        assert_eq!(names(&d)[..2], ["B", "S"]);
+        assert_eq!(run(&op("layer stamp"), &[("into", "B")], &mut d).unwrap_err().code, "PX2330");
     }
 
     #[test]

@@ -595,6 +595,109 @@ fn mask_add_every_source() {
 }
 
 #[test]
+fn mask_add_gradients_and_combine() {
+    let mut d = mixed_doc();
+    // linear: revealed at --from (y = 20), hidden at --to (y = 60)
+    let v =
+        run("mask add", &[("layer", "Pic"), ("gradient", "linear"), ("from", "0,20"), ("to", "0,60")], &mut d).unwrap();
+    assert_eq!(v["source"], "gradient:linear");
+    let m = &layer(&d, "Pic").mask.as_ref().unwrap().mask;
+    assert!(m.get(5, 10) > 0.999 && m.get(5, 79) < 1e-6);
+    assert!((m.get(5, 40) - 0.4875).abs() < 0.01, "{}", m.get(5, 40));
+    // smooth ease keeps the midpoint and flattens the ends
+    run(
+        "mask add",
+        &[("layer", "Pic"), ("gradient", "linear"), ("from", "0,20"), ("to", "0,60"), ("ease", "smooth")],
+        &mut d,
+    )
+    .unwrap();
+    let m = &layer(&d, "Pic").mask.as_ref().unwrap().mask;
+    assert!((m.get(5, 40) - 0.5).abs() < 0.03 && m.get(5, 21) > 0.99);
+    // radial: revealed at the center, hidden at the radius; percent and sums work
+    run("mask add", &[("layer", "Pic"), ("gradient", "radial"), ("from", "50%,50%"), ("to", "50%+30,50%")], &mut d)
+        .unwrap();
+    let m = &layer(&d, "Pic").mask.as_ref().unwrap().mask;
+    assert!(m.get(50, 40) > 0.97 && m.get(50, 5) < 1e-6 && m.get(81, 40) < 1e-6);
+    // intersect with an existing half mask keeps its outline and its density
+    let p = d.resolve("Pic").unwrap();
+    d.layer_mut(&p).mask = Some(LayerMask { density: 70.0, ..LayerMask::new(testing::half_mask(100, 80)) });
+    let v = run(
+        "mask add",
+        &[("layer", "Pic"), ("gradient", "linear"), ("from", "0,20"), ("to", "0,60"), ("combine", "intersect")],
+        &mut d,
+    )
+    .unwrap();
+    assert_eq!(v["combine"], "intersect");
+    let lm = layer(&d, "Pic").mask.as_ref().unwrap();
+    assert_eq!(lm.density, 70.0);
+    assert!(lm.mask.get(10, 10) > 0.999 && lm.mask.get(90, 10) < 1e-6 && lm.mask.get(10, 79) < 1e-6);
+    // errors
+    assert_eq!(code(run("mask add", &[("layer", "Pic"), ("gradient", "linear"), ("from", "0,0")], &mut d)), "PX1003");
+    assert_eq!(code(run("mask add", &[("layer", "Pic"), ("to", "0,0")], &mut d)), "PX1005");
+    assert_eq!(
+        code(run("mask add", &[("layer", "Pic"), ("gradient", "linear"), ("from", "5,5"), ("to", "5,5")], &mut d)),
+        "PX1010"
+    );
+    assert_eq!(
+        code(run(
+            "mask add",
+            &[("layer", "Pic"), ("gradient", "radial"), ("from", "0,0"), ("to", "9,9"), ("hide-all", "true")],
+            &mut d
+        )),
+        "PX1005"
+    );
+}
+
+#[test]
+fn live_masks_follow_their_source() {
+    let mut d = mixed_doc();
+    // the Box shape (10..30) masks Pic, live
+    let v = run("mask add", &[("layer", "Pic"), ("from-layer", "Box")], &mut d).unwrap();
+    assert_eq!(v["live"], true);
+    let snap = area(&layer(&d, "Pic").mask.as_ref().unwrap().mask);
+    assert!((snap - 400.0).abs() < 1.0, "{snap}");
+    // moving the source moves the mask: rendered at once, and the snapshot follows after a step
+    run("transform move", &[("layer", "Box"), ("by", "25,0")], &mut d).unwrap();
+    d.refresh_mask_links();
+    let m = &layer(&d, "Pic").mask.as_ref().unwrap().mask;
+    assert!(m.get(45, 20) > 0.99 && m.get(15, 20) < 1e-6);
+    // hide the box: Pic (red) shows only where the moved box is
+    let bp = d.resolve("Box").unwrap();
+    d.layer_mut(&bp).visible = false;
+    let c = compose::composite(&d).unwrap();
+    assert!(c.get(45, 25)[0] > 0.99, "Pic shows inside the moved box: {:?}", c.get(45, 25));
+    assert!(c.get(32, 25)[0] < 0.9, "and not outside it: {:?}", c.get(32, 25));
+    // invert keeps it live
+    let v = run("mask invert", &[("layer", "Pic")], &mut d).unwrap();
+    assert_eq!((v["live"].clone(), v["inverted"].clone()), (json!(true), json!(true)));
+    assert!(layer(&d, "Pic").mask.as_ref().unwrap().link.as_ref().unwrap().invert);
+    // listing names the source
+    let v = run("mask list", &[], &mut d).unwrap();
+    let pic = v["layer_masks"].as_array().unwrap().iter().find(|m| m["layer"] == "Pic").unwrap().clone();
+    assert_eq!(pic["link"]["layer"], "Box");
+    // editing the pixels makes it an ordinary mask
+    run("mask expand", &[("layer", "Pic"), ("by", "1")], &mut d).unwrap();
+    assert!(layer(&d, "Pic").mask.as_ref().unwrap().link.is_none());
+    // luminosity: a copy (@luma:) and live (--channel luma)
+    run("mask add", &[("layer", "Pic"), ("from", "@luma:Background")], &mut d).unwrap();
+    let m = &layer(&d, "Pic").mask.as_ref().unwrap().mask;
+    assert!(m.get(0, 40) < m.get(99, 40), "the gradient background is brighter to the right");
+    run("mask add", &[("layer", "Pic"), ("from-layer", "Background"), ("channel", "luma")], &mut d).unwrap();
+    assert_eq!(layer(&d, "Pic").mask.as_ref().unwrap().link.as_ref().unwrap().channel, "luma");
+    // a layer cannot be its own source; a live mask cannot be combined
+    assert_eq!(code(run("mask add", &[("layer", "Pic"), ("from-layer", "Pic")], &mut d)), "PX2331");
+    assert_eq!(code(run("mask add", &[("layer", "Pic"), ("from-layer", "Box"), ("combine", "add")], &mut d)), "PX1005");
+    // a removed source leaves the last snapshot in place
+    let bp = d.resolve("Box").unwrap();
+    run("mask add", &[("layer", "Pic"), ("from-layer", "Box")], &mut d).unwrap();
+    let before = layer(&d, "Pic").mask.as_ref().unwrap().mask.clone();
+    d.remove(&bp);
+    d.refresh_mask_links();
+    assert_eq!(layer(&d, "Pic").mask.as_ref().unwrap().mask.data, before.data);
+    compose::composite(&d).unwrap();
+}
+
+#[test]
 fn mask_add_from_file() {
     let dir = TempDir::new("mask-add");
     let f = dir.path("m.raw");

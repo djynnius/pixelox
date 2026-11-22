@@ -389,13 +389,22 @@ fn fill_and_stroke_composite_and_opacity_applies() {
 }
 
 #[test]
-fn shapes_stack_above_the_active_layer() {
+fn shapes_go_on_top_unless_placed() {
     let mut d = testing::doc_layers(50, 50, vec![("Bottom", Image::new(50, 50)), ("Top", Image::new(50, 50))]);
     crate::install();
+    // the active layer does not decide where a new layer goes (ADR 0014)
     d.active = Some(d.layer(&d.resolve("Bottom").unwrap()).id.clone());
     shape_op(&mut d, "shape rect", &[("rect", "0,0,10x10"), ("name", "Box")]);
-    assert_eq!(d.layers[1].name, "Box");
-    assert_eq!(d.active.as_deref(), Some(d.layers[1].id.as_str()));
+    assert_eq!(d.layers[2].name, "Box");
+    assert_eq!(d.active.as_deref(), Some(d.layers[2].id.as_str()));
+    shape_op(&mut d, "shape ellipse", &[("rect", "0-5,0-5,10x10"), ("name", "Dot"), ("below", "Top")]);
+    assert_eq!(d.layers[1].name, "Dot");
+    let s = crate::spec::ShapeSpec::from_value(match &d.layers[1].content {
+        LayerKind::Shape { spec } => spec,
+        _ => unreachable!(),
+    })
+    .unwrap();
+    assert_eq!(crate::spec::spec_bbox(&s), Some([-5.0, -5.0, 10.0, 10.0]), "0-5 is a true -5");
     let e = testing::run(&find(&ops(), "shape rect"), &[("rect", "0,0,10x10"), ("name", "Box")], &mut d).unwrap_err();
     assert_eq!(e.code, "PX2305");
 }

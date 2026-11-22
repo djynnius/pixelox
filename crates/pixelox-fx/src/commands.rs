@@ -699,10 +699,9 @@ fn scale(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             set(f, key, old, fmt_num(nv));
         }
         if let Some(old) = f.params.get("height").and_then(value_str) {
-            let mut l = Length::parse(&old)?;
+            let l = Length::parse(&old)?;
             if l.unit != Unit::Pct {
-                l.value *= k;
-                set(f, "height", old, fmt_len(l));
+                set(f, "height", old, fmt_len(l.scaled(k)));
             }
         }
         // long shadow, extrusion, reflection: px lengths scale, % lengths are relative
@@ -724,8 +723,8 @@ fn scale(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         }
         if let Some(old) = f.params.get("offset").and_then(value_str) {
             let mut p = PointSpec::parse(&old)?;
-            p.x.value *= k;
-            p.y.value *= k;
+            p.x = p.x.scaled(k);
+            p.y = p.y.scaled(k);
             set(f, "offset", old, format!("{},{}", fmt_len(p.x), fmt_len(p.y)));
         }
         if f.params.contains_key("asset") {

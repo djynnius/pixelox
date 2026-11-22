@@ -12,7 +12,7 @@ const CAT: Category = Category::Filter;
 pub fn ops() -> Vec<OpSpec> {
     vec![
         OpSpec::doc("filter gaussian", CAT, "Gaussian blur", gaussian)
-            .about("Separable Gaussian blur of the layer (premultiplied, so transparent pixels do not bleed dark). Direct convolution up to sigma 4, three running-box passes above, so any sigma costs O(pixels). Opaque layers clamp at the edges; layers with transparency fade out.")
+            .about("Separable Gaussian blur of the layer (premultiplied, so transparent pixels do not bleed dark). Direct convolution up to sigma 4, three running-box passes above, so any sigma costs O(pixels). A layer smaller than the canvas grows by 3 sigma first, so the blur is never cut off at the layer's edge (on a text, shape, or placed layer the blur is a live smart filter instead). At the canvas edge, opaque layers clamp and layers with transparency fade out.")
             .param(param("sigma", ParamKind::Float).default("2").range("0..1000").help("Blur radius as the Gaussian standard deviation, in px (0 = no change)"))
             .params(common::region())
             .param(common::linear())
@@ -29,8 +29,8 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox filter box photo.jpg -o smooth.png --radius 4 --passes 3", "Near-Gaussian with three passes")
             .example("pixelox filter box doc.pxo --layer Background --radius 12 --mask @sel --in-place", "Blur inside the selection"),
         OpSpec::doc("filter motion-blur", CAT, "Linear motion blur along an angle", motion)
-            .about("Averages each pixel along a line of --distance px at --angle (degrees counter-clockwise from horizontal). Lines are sampled once and prefix-summed, so cost is O(pixels) for any distance.")
-            .param(param("angle", ParamKind::Angle).default("0").help("Direction of motion in degrees (0 = horizontal, 90 = vertical)"))
+            .about("Averages each pixel along a line of --distance px centered on it, at --angle: degrees counter-clockwise from the right, like every direction in pixelox (fx overlay, fx bevel, filter emboss), so 45 streaks up-right and down-left and 90 is vertical. Canvas scripts (render js) measure angles clockwise, so their 52 is --angle=-52 here. Lines are sampled once and prefix-summed, so cost is O(pixels) for any distance. On a layer smaller than the canvas the layer grows to hold the streaks.")
+            .param(param("angle", ParamKind::Angle).default("0").help("Direction of motion in degrees counter-clockwise from the right (0 = horizontal, 90 = vertical, 45 = rising to the right)"))
             .param(param("distance", ParamKind::Float).default("10").range("0..4000").help("Length of the blur streak in px (0 = no change)"))
             .params(common::region())
             .param(common::linear())
@@ -73,10 +73,47 @@ fn sigma_edge(img: &Image) -> Edge {
     kernels::auto_edge(img)
 }
 
+/// A Gaussian carries content about 3σ (99.7% of its weight).
+pub(crate) fn gaussian_reach(sigma: f64) -> Reach {
+    if sigma <= 0.0 {
+        Reach::NONE
+    } else {
+        Reach::uniform(3.0 * sigma + 1.0)
+    }
+}
+
+/// A motion blur of `dist` px is centered on each pixel: half the streak on each side,
+/// split between x and y by the angle.
+fn motion_reach(angle_deg: f64, dist: f64) -> Reach {
+    let th = angle_deg.to_radians();
+    let half = dist / 2.0;
+    Reach::xy(half * th.cos().abs() + 2.0, half * th.sin().abs() + 2.0)
+}
+
+/// Spin moves content along circles by up to half the arc on each side; zoom scales it
+/// about the center by up to e^(amount/200). Both grow with the distance from the center
+/// to the layer's farthest corner.
+fn radial_reach(a: &Args, doc: &Document, kind: Radial, amount: f64, (cx, cy): (f64, f64)) -> Result<Reach> {
+    let p = target_layer(a, doc)?;
+    let l = doc.layer(&p);
+    let Ok(img) = l.raster() else { return Ok(Reach::NONE) };
+    let (x0, y0) = (l.x as f64, l.y as f64);
+    let (x1, y1) = (x0 + img.width as f64, y0 + img.height as f64);
+    let rmax = [(x0, y0), (x1, y0), (x0, y1), (x1, y1)]
+        .iter()
+        .map(|(x, y)| ((x - cx).powi(2) + (y - cy).powi(2)).sqrt())
+        .fold(0.0, f64::max);
+    let r = match kind {
+        Radial::Spin => rmax * (amount.to_radians() / 2.0).min(std::f64::consts::PI),
+        Radial::Zoom => rmax * ((amount / 200.0).exp() - 1.0),
+    };
+    Ok(Reach::uniform(r + 2.0))
+}
+
 fn gaussian(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let sigma = a.f64("sigma")?;
     let linear = a.flag("linear");
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    let v = apply_to_raster_grow(a, doc, ctx, gaussian_reach(sigma), |img, _, _| {
         if sigma <= 0.0 {
             return Ok(img.clone());
         }
@@ -89,7 +126,7 @@ fn box_(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let r = a.usize("radius")?;
     let passes = a.usize("passes")?.max(1);
     let linear = a.flag("linear");
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    let v = apply_to_raster_grow(a, doc, ctx, Reach::uniform((r * passes) as f64), |img, _, _| {
         if r == 0 {
             return Ok(img.clone());
         }
@@ -109,7 +146,8 @@ fn motion(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let angle = a.angle("angle")?;
     let dist = a.f64("distance")?;
     let linear = a.flag("linear");
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    let reach = if dist < 0.5 { Reach::NONE } else { motion_reach(angle, dist) };
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, _, _| {
         if dist < 0.5 {
             return Ok(img.clone());
         }
@@ -182,15 +220,15 @@ fn radial(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let kind = if a.choice("kind") == "zoom" { Radial::Zoom } else { Radial::Spin };
     let amount = a.f64("amount")?;
     let (ccx, ccy) = util::canvas_point(a, "center", doc)?.unwrap_or((doc.width as f64 / 2.0, doc.height as f64 / 2.0));
-    let (lx, ly) = util::layer_offset(a, doc)?;
-    // pixel centers are integers in the kernel's coordinates
-    let (cx, cy) = (ccx - lx as f64 - 0.5, ccy - ly as f64 - 0.5);
+    let reach = if amount <= 0.0 { Reach::NONE } else { radial_reach(a, doc, kind, amount, (ccx, ccy))? };
     let linear = a.flag("linear");
     let mut passes = 0;
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (lx, ly), _| {
         if amount <= 0.0 {
             return Ok(img.clone());
         }
+        // pixel centers are integers in the kernel's coordinates
+        let (cx, cy) = (ccx - lx as f64 - 0.5, ccy - ly as f64 - 0.5);
         util::maybe_linear(img, linear, |i| {
             let (b, k) = radial_blur(Buf::premul(i), kind, amount, cx, cy, sigma_edge(i));
             passes = k;
@@ -306,12 +344,8 @@ fn lens(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let shape = if a.choice("shape") == "circle" { Shape::Circle } else { Shape::Hex };
     let highlights = a.f64("highlights")? as f32;
     let linear = a.flag("linear");
-    let path = target_layer(a, doc)?;
-    let (lx, ly) = (doc.layer(&path).x, doc.layer(&path).y);
-    let (lw, lh) = {
-        let r = doc.layer(&path).raster()?;
-        (r.width as usize, r.height as usize)
-    };
+    target_layer(a, doc)?;
+    // the depth map, canvas-sized (luma 0..1)
     let depth: Option<Vec<f32>> = match a.raw("depth") {
         None => None,
         Some(v) if v.trim() == "auto" => {
@@ -327,8 +361,19 @@ fn lens(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             } else {
                 img
             };
-            let canvas = util::luma_plane(&img);
-            let (cw, ch) = (cw as i64, ch as i64);
+            Some(util::luma_plane(&img))
+        }
+    };
+    let (cw, ch) = (doc.width as i64, doc.height as i64);
+    let reach = if radius < 0.5 { Reach::NONE } else { Reach::uniform(radius as f64 + 2.0) };
+    let mut slices = 0;
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (lx, ly), _| {
+        if radius < 0.5 {
+            return Ok(img.clone());
+        }
+        // the depth of each layer pixel, read from the canvas-sized map
+        let (lw, lh) = (img.width as usize, img.height as usize);
+        let depth: Option<Vec<f32>> = depth.as_ref().map(|canvas| {
             let mut d = vec![0f32; lw * lh];
             d.par_chunks_mut(lw.max(1)).enumerate().for_each(|(y, row)| {
                 let sy = (y as i64 + ly as i64).clamp(0, ch - 1) as usize;
@@ -337,14 +382,8 @@ fn lens(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
                     *v = canvas[sy * cw as usize + sx];
                 }
             });
-            Some(d)
-        }
-    };
-    let mut slices = 0;
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
-        if radius < 0.5 {
-            return Ok(img.clone());
-        }
+            d
+        });
         util::maybe_linear(img, linear, |i| {
             let (b, n) = lens_blur(&Buf::premul(i), i, depth.as_deref(), radius, shape, highlights, sigma_edge(i));
             slices = n;
@@ -379,6 +418,7 @@ fn surface(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 mod tests {
     use super::*;
     use crate::util::test_io;
+    use pixelox_core::compose;
     use pixelox_core::testing::{self, find, max_diff, raster, run};
 
     fn op(name: &str) -> OpSpec {
@@ -412,6 +452,83 @@ mod tests {
         let mut doc = testing::doc_from(testing::solid(1, 1, Rgba::WHITE));
         run(&spec, &[("sigma", "5"), ("linear", "true")], &mut doc).unwrap();
         assert!((raster(&doc, "Background").get(0, 0)[0] - 1.0).abs() < 1e-4);
+    }
+
+    /// A white disc of radius 8 centered at (32, 32) on a 64×64 canvas, either on a
+    /// canvas-sized layer or on a tight 20×20 layer at (22, 22).
+    fn disc_doc(tight: bool) -> Document {
+        let disc = |x: f32, y: f32| if (x - 32.0).powi(2) + (y - 32.0).powi(2) < 64.0 { [1.0; 4] } else { [0.0; 4] };
+        let mut d = testing::doc_layers(64, 64, vec![("Bg", Image::filled(64, 64, Rgba::BLACK))]);
+        let img = if tight {
+            Image::from_fn(20, 20, |x, y| disc(x as f32 + 22.5, y as f32 + 22.5))
+        } else {
+            Image::from_fn(64, 64, |x, y| disc(x as f32 + 0.5, y as f32 + 0.5))
+        };
+        let mut l = d.new_layer("Disc", LayerKind::Raster { image: img });
+        if tight {
+            (l.x, l.y) = (22, 22);
+        }
+        d.insert_above(None, l);
+        d
+    }
+
+    #[test]
+    fn spatial_filters_grow_small_layers() {
+        for (name, pairs) in [
+            ("filter gaussian", vec![("sigma", "4")]),
+            ("filter box", vec![("radius", "5"), ("passes", "2")]),
+            ("filter motion-blur", vec![("angle", "30"), ("distance", "24")]),
+            ("filter lens-blur", vec![("radius", "6")]),
+            ("filter radial-blur", vec![("kind", "zoom"), ("amount", "40")]),
+        ] {
+            let mut pairs = pairs;
+            pairs.push(("layer", "Disc"));
+            let mut tight = disc_doc(true);
+            let v = run(&op(name), &pairs, &mut tight).unwrap();
+            assert!(v["grown"].is_array(), "{name}: {v}");
+            let mut full = disc_doc(false);
+            run(&op(name), &pairs, &mut full).unwrap();
+            // the same picture as on a canvas-sized layer: nothing is cut off (sheared
+            // sampling lines start at the layer origin, so motion blur differs subpixel)
+            let a = compose::composite(&tight).unwrap();
+            let b = compose::composite(&full).unwrap();
+            assert!(max_diff(&a, &b) < 0.03, "{name}: {}", max_diff(&a, &b));
+            // the canvas-sized layer keeps its size and offset
+            let l = &full.layers[1];
+            assert_eq!((l.x, l.y, l.raster().unwrap().width), (0, 0, 64), "{name}");
+        }
+        // pixelate fills cells the layer only touches (cells align to the canvas)
+        let mut tight = disc_doc(true);
+        run(&find(&crate::ops(), "filter pixelate"), &[("layer", "Disc"), ("cell", "16")], &mut tight).unwrap();
+        let l = &tight.layers[1];
+        assert_eq!((l.x, l.y, l.raster().unwrap().width), (16, 16, 32), "whole cells");
+    }
+
+    #[test]
+    fn growth_stops_at_the_canvas_and_keeps_opaque_edges() {
+        // an opaque band touching the left, right, and bottom edges grows only upward, and
+        // stays opaque where it meets the canvas edge
+        let mut d = testing::doc_layers(40, 40, vec![("Bg", Image::filled(40, 40, Rgba::BLACK))]);
+        let mut band = d.new_layer("Band", LayerKind::Raster { image: Image::filled(40, 10, Rgba::WHITE) });
+        band.y = 30;
+        d.insert_above(None, band);
+        let v = run(&op("filter gaussian"), &[("layer", "Band"), ("sigma", "3")], &mut d).unwrap();
+        let g = &v["grown"];
+        assert_eq!((g[0].as_i64(), g[2].as_i64(), g[3].as_i64()), (Some(0), Some(0), Some(0)), "{v}");
+        assert!(g[1].as_i64().unwrap() > 5);
+        let l = &d.layers[1];
+        let img = l.raster().unwrap();
+        assert_eq!((l.x, img.width), (0, 40));
+        let bottom = img.height - 1;
+        assert!(img.get(0, bottom)[3] > 0.999 && img.get(39, bottom)[3] > 0.999, "clamped at the canvas edge");
+        assert!(img.get(20, 0)[3] < 0.05, "soft upward");
+        // a mask limits the growth too: nothing outside it changes
+        let mut d = disc_doc(true);
+        d.put_mask("left", testing::half_mask(64, 64), false).unwrap();
+        run(&op("filter gaussian"), &[("layer", "Disc"), ("sigma", "4"), ("mask", "left")], &mut d).unwrap();
+        let c = compose::composite(&d).unwrap();
+        assert!(c.get(20, 32)[0] > 0.01, "the blur spreads left");
+        assert!(c.get(44, 32)[0] < 1e-6, "not right of the mask");
     }
 
     #[test]
