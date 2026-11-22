@@ -9,6 +9,7 @@ use crate::util::{self, conflict, num};
 use crate::{auto, curve, hue, local, lut, tone};
 use pixelox_core::op::{json_to_pairs, DocFn, ParamSpec};
 use pixelox_core::prelude::*;
+use pixelox_core::stack;
 use std::sync::OnceLock;
 
 /// An adjustment ready to run on an image (colors only; alpha untouched).
@@ -47,7 +48,7 @@ pub const OPS: &[(&str, &str)] = &[
 ];
 
 /// Params that address the layer stack, not the adjustment; never stored in a layer.
-const LAYER_ONLY: &[&str] = &["layer", "mask", "invert_mask", "as_layer", "name"];
+const LAYER_ONLY: &[&str] = &["layer", "mask", "invert_mask", "as_layer", "name", "above", "below", "into"];
 
 /// Build the job for `op` from resolved args (no file reads, no detection).
 pub fn prepare(op: &str, a: &Args) -> Result<Job> {
@@ -325,6 +326,24 @@ fn composite_below(doc: &Document, at: Option<&[usize]>) -> Result<Image> {
     }
 }
 
+/// The composite a new adjustment layer at `at` will see: every layer below it.
+fn composite_at(doc: &Document, at: &stack::Placement) -> Result<Image> {
+    match at {
+        stack::Placement::Top => compose::composite(doc),
+        stack::Placement::Above(p) => composite_below(doc, Some(p)),
+        other => {
+            // mark the spot with an empty group and take everything after it in panel order
+            let mut d = doc.clone();
+            let marker = d.new_layer("marker", LayerKind::Group { children: Vec::new() });
+            let id = marker.id.clone();
+            stack::insert_at(&mut d, marker, other);
+            let ids: Vec<String> =
+                d.walk().into_iter().skip_while(|(_, l)| l.id != id).skip(1).map(|(_, l)| l.id.clone()).collect();
+            compose::composite_subset(&d, &ids)
+        }
+    }
+}
+
 fn merge(v: &mut Value, info: Map<String, Value>) {
     if let Value::Object(m) = v {
         for (k, val) in info {
@@ -343,9 +362,15 @@ pub fn run(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> R
         return Err(Error::new("PX1005", "--name names the layer made by --as-layer")
             .with_hint("add --as-layer to make an adjustment layer, or drop --name"));
     }
+    if stack::given(a) {
+        return Err(Error::new("PX1005", "--above, --below, and --into place the layer made by --as-layer")
+            .with_hint("add --as-layer to make an adjustment layer, or drop the placement flag"));
+    }
     let path = target_layer(a, doc)?;
-    if matches!(doc.layer(&path).content, LayerKind::Placed { .. }) && compose::smart_filter_eligible(&ctx.id, a) {
-        // recorded as a smart filter on the placed layer (re-run at render time)
+    if pixelox_core::region::takes_smart_filters(&doc.layer(&path).content)
+        && compose::smart_filter_eligible(&ctx.id, a)
+    {
+        // recorded as a smart filter on the placed, text, or shape layer (re-run at render time)
         return apply_to_raster(a, doc, ctx, |img, _| Ok(img.clone()));
     }
     let mut ra = a.clone();
@@ -376,15 +401,25 @@ pub fn run(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> R
 }
 
 fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
-    let at = match a.raw("layer") {
+    let target = match a.raw("layer") {
         Some(r) => Some(doc.resolve(r)?),
         None => None,
+    };
+    // --layer X puts the adjustment directly above X; the placement flags say it otherwise
+    let at = match (stack::from_args(a, doc)?, &target) {
+        (Some(_), Some(_)) => {
+            return Err(Error::new("PX1005", "--layer and --above/--below/--into both place the adjustment layer")
+                .with_hint("give one: --layer X (directly above X) or --above/--below/--into"))
+        }
+        (Some(at), None) => at,
+        (None, Some(p)) => stack::Placement::Above(p.clone()),
+        (None, None) => stack::Placement::Top,
     };
     let mut ra = a.clone();
     resolve_files(op, &mut ra, ctx)?;
     let mut below = None;
     let resolved = if needs_image(op, &ra) {
-        let img = composite_below(doc, at.as_deref())?;
+        let img = composite_at(doc, &at)?;
         let src = Source { img: &img, x: 0, y: 0, canvas: (doc.width as f64, doc.height as f64, doc.dpi()) };
         let r = resolve_image(op, &mut ra, &src)?;
         below = Some(img);
@@ -400,7 +435,7 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
     let report = if op == "dehaze" && ra.f64("amount")? != 0.0 {
         let img = match below {
             Some(img) => img,
-            None => composite_below(doc, at.as_deref())?,
+            None => composite_at(doc, &at)?,
         };
         local::dehaze_summary(&ra, &img)?
     } else {
@@ -424,7 +459,7 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
     }
     let (id, lname) = (layer.id.clone(), layer.name.clone());
     let masked = layer.mask.is_some();
-    doc.insert_above(at.as_deref(), layer);
+    stack::insert_at(doc, layer, &at);
     let mut shown = params;
     if let Some(Value::String(t)) = shown.remove("cube_text") {
         shown.insert("cube_text".into(), json!(format!("<{} bytes of .cube text>", t.len())));
@@ -436,7 +471,7 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
         "masked": masked,
         "adjustment": {"op": op, "params": shown},
     });
-    if let Some(p) = &at {
+    if let stack::Placement::Above(p) = &at {
         v["above"] = json!(doc.layer(p).name);
     }
     merge(&mut v, resolved.info);
@@ -514,6 +549,11 @@ fn adj(name: &'static str, summary: &'static str, f: DocFn, params: Vec<ParamSpe
         .params(common::region())
         .param(common::as_layer())
         .param(common::name())
+        .param(param("above", ParamKind::Layer).help(
+            "With --as-layer: insert the adjustment layer directly above this layer (like --layer; default: on top of the stack)",
+        ))
+        .param(param("below", ParamKind::Layer).help("With --as-layer: insert the adjustment layer directly below this layer"))
+        .param(param("into", ParamKind::Layer).help("With --as-layer: insert the adjustment layer on top of this group's children"))
 }
 
 fn amount(name: &'static str, range: &'static str, help: &'static str) -> ParamSpec {

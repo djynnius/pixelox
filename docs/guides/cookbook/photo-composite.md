@@ -90,8 +90,8 @@ pixelox transform scale scene.pxo --in-place --layer CamelShadow --size 100%x40%
 pixelox filter gaussian scene.pxo --in-place --layer CamelShadow --sigma 3
 pixelox layer blend scene.pxo --in-place --layer CamelShadow --mode multiply
 pixelox layer reorder scene.pxo --in-place --layer CamelShadow --below Camel
-# painted shadows and sunlight on their own layers
-pixelox layer add scene.pxo --in-place --name Shadows
+# painted shadows (under the camel) and sunlight (over everything) on their own layers
+pixelox layer add scene.pxo --in-place --name Shadows --below Camel
 pixelox layer blend scene.pxo --in-place --layer Shadows --mode multiply
 pixelox paint stroke scene.pxo --in-place --layer Shadows --points '1800,1900 2600,1980 3400,1900' --size 380 --flow 10 --color '#3b2a22'
 pixelox layer add scene.pxo --in-place --name Beam
@@ -103,6 +103,9 @@ pixelox layer blend scene.pxo --in-place --layer Shade --mode luminosity
 pixelox mask add scene.pxo --in-place --layer Shade --hide-all
 pixelox paint stroke scene.pxo --in-place --layer Shade --target mask --points '2300,1300 2500,1600' --size 260 --flow 20 --color white
 ```
+
+New layers go on top of the stack; `--below`, `--above`, and `--into` put them anywhere
+else (every command that creates a layer takes them).
 
 Textured brushes take a tip image: `--tip chalk.png --scatter 60 --size-jitter 40
 --angle-jitter 360 --count 3` stands in for an oil-pastel brush.

@@ -19,7 +19,7 @@ enum Paint {
 /// The common paint flags. `set` gets them without defaults (only given flags change).
 fn paint_params(set: bool) -> Vec<ParamSpec> {
     let d = |p: ParamSpec, v: &'static str| if set { p } else { p.default(v) };
-    vec![
+    let mut v = vec![
         param("fill", ParamKind::Str).help(if set {
             "New fill color (CSS color), or none to remove the fill"
         } else {
@@ -52,13 +52,17 @@ fn paint_params(set: bool) -> Vec<ParamSpec> {
         } else {
             "Name for the new layer (default: generated, unique)"
         }),
-    ]
+    ];
+    if !set {
+        v.extend(common::placement());
+    }
+    v
 }
 
 pub fn ops() -> Vec<OpSpec> {
     vec![
         OpSpec::doc("shape rect", Category::Vector, "Add a rectangle shape layer (rounded via radius)", rect)
-            .about("Adds a live vector rectangle layer above the active layer. `--radius` rounds every corner, or give four radii 'tl,tr,br,bl'. The layer stays editable: restyle it with `shape set`, combine it with `path unite`, export it with `svg from-doc`.")
+            .about("Adds a live vector rectangle layer on top of the stack (or where --above, --below, or --into say). `--radius` rounds every corner, or give four radii 'tl,tr,br,bl'. The layer stays editable: restyle it with `shape set`, combine it with `path unite`, export it with `svg from-doc`.")
             .param(param("rect", ParamKind::Rect).required().help("Rectangle X,Y,WxH in px or % of the canvas"))
             .param(param("radius", ParamKind::List).default("0").help("Corner radius in px, or 'tl,tr,br,bl' per corner"))
             .params(paint_params(false))
@@ -72,7 +76,8 @@ pub fn ops() -> Vec<OpSpec> {
             .params(paint_params(false))
             .example("pixelox shape ellipse doc.pxo --in-place --rect 100,100,200x200 --fill '#ef4444'", "A red circle")
             .example("pixelox shape ellipse photo.jpg -o ringed.png --rect 50,50,300x150 --stroke yellow --stroke-width 6 --dash '12,6'", "A dashed ellipse outline")
-            .example("pixelox shape ellipse badge.pxo --in-place --rect 25%,25%,50%x50% --fill white --opacity 80 --name Halo", "A translucent centered disc"),
+            .example("pixelox shape ellipse badge.pxo --in-place --rect 25%,25%,50%x50% --fill white --opacity 80 --name Halo", "A translucent centered disc")
+            .example("pixelox shape ellipse poster.pxo --in-place --rect 0-200,0-200,600x600 --fill '#ffd400' --name Sun --below Title", "A disc hanging off the top-left corner, under the title"),
         OpSpec::doc("shape polygon", Category::Vector, "Add a regular polygon shape layer", polygon)
             .about("Adds a regular polygon with `--sides` vertices on a circle of `--radius` around `--center`. The first vertex points up; `--rotation` turns it clockwise.")
             .param(param("center", ParamKind::Point).default("50%,50%").help("Center X,Y in px or % of the canvas"))
@@ -213,7 +218,7 @@ fn apply_paint(s: &mut ShapeSpec, a: &Args, kind: Option<Paint>) -> Result<Vec<&
     Ok(changed)
 }
 
-/// Create a shape layer above the active layer (or at the top) and describe it.
+/// Create a shape layer on top of the stack (or where the placement flags say) and describe it.
 fn add_shape(
     a: &Args,
     doc: &mut Document,
@@ -243,11 +248,11 @@ fn add_shape_d(
         }
         None => default_name.to_string(),
     };
+    let at = pixelox_core::stack::from_args(a, doc)?.unwrap_or(pixelox_core::stack::Placement::Top);
     let mut layer = doc.new_layer(&name, LayerKind::Shape { spec: s.to_value() });
     layer.opacity = a.f64("opacity")? as f32;
     let (id, lname) = (layer.id.clone(), layer.name.clone());
-    let above = doc.active.as_deref().and_then(|id| doc.find_by_id(id));
-    doc.insert_above(above.as_deref(), layer);
+    pixelox_core::stack::insert_at(doc, layer, &at);
     Ok(json!({
         "layer": lname,
         "id": id,

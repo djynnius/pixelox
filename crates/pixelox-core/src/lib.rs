@@ -30,6 +30,7 @@ pub mod presets;
 pub mod region;
 pub mod registry;
 pub mod schema;
+pub mod stack;
 pub mod testing;
 pub mod units;
 
@@ -49,13 +50,13 @@ pub mod prelude {
     pub use crate::color::{self, Rgba};
     pub use crate::compose;
     pub use crate::ctx::{EncodeOptions, OpCtx};
-    pub use crate::doc::{BlendIf, Document, Layer, LayerKind, LayerMask, SmartFilter};
+    pub use crate::doc::{BlendIf, Document, Layer, LayerKind, LayerMask, MaskLink, SmartFilter};
     pub use crate::error::{Error, Result};
     pub use crate::geom;
     pub use crate::image::{Image, Mask, Rendered};
     pub use crate::kernels;
     pub use crate::op::{common, param, Args, Category, Inputs, OpSpec, ParamKind};
-    pub use crate::region::{apply_to_raster, mix_by_mask, target_layer};
+    pub use crate::region::{apply_to_raster, apply_to_raster_grow, mix_by_mask, target_layer, Reach};
     pub use crate::units::{self, Anchor, RectI};
     pub use serde_json::{json, Map, Value};
 }

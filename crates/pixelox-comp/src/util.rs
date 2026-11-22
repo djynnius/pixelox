@@ -81,10 +81,11 @@ pub fn unique_avoiding(doc: &Document, name: &str, taken: &[String]) -> String {
     }
 }
 
-/// Insert a new layer above the active layer (or at the top) and make it active.
+/// Insert a new layer on top of the stack and make it active (ADR 0014). Commands with
+/// the placement flags (`common::placement()`) use `pixelox_core::stack::insert_new`.
+#[allow(dead_code)]
 pub fn insert_new(doc: &mut Document, layer: Layer) -> LayerPath {
-    let active = doc.active.clone().and_then(|id| doc.find_by_id(&id));
-    doc.insert_above(active.as_deref(), layer)
+    doc.insert_above(None, layer)
 }
 
 /// The child vector of the group at `parent` (the top-level stack when `parent` is empty).

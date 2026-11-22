@@ -165,6 +165,8 @@ catalog! {
     "PX2312", Usage, "No active selection", "Make one with `pixelox select ...` first.";
     "PX2313", Usage, "Mask size does not match the canvas", "Resize the mask image to the document size.";
     "PX2320", Usage, "Document has no layers", "Add one with `pixelox layer add` or `pixelox comp place`.";
+    "PX2330", Usage, "--into names a layer that is not a group", "Use --above or --below, or group the layers first with `pixelox layer group`.";
+    "PX2331", Usage, "A layer cannot be masked by itself or by its own group", "Pick another layer for --from-layer, or use --from @alpha:<layer> for a fixed copy.";
     // PX3xxx — op semantics
     "PX3001", Runtime, "Operation failed", "Read the message; re-run with -v.";
     "PX3101", Usage, "Unknown blend mode", "See `pixelox docs layer.blend` for the 28 modes.";
