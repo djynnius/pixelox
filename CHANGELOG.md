@@ -71,7 +71,8 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
 - `fx overlay` on a shape or text layer that has both a fill and a stroke now recolors the
   fill and leaves the layer's own stroke on top (the gradient spans the fill), as designers
   expect; before, it painted over the stroke (Photoshop's behavior, still available with
-  `--cover-stroke`). Stroke-only shapes are recolored whole, as before.
+  `--cover-stroke`). Stroke-only shapes, and strokes in the fill's own color (used to fatten
+  letters), are recolored whole, as before.
 
 ### Fixed
 - Fills (`fill solid|gradient|pattern`) on a text, shape, or placed layer now fail with a

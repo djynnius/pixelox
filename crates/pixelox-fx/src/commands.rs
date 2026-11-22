@@ -224,8 +224,9 @@ pub fn ops() -> Vec<OpSpec> {
                  the layer's bounds; 0 = left to right, 90 = bottom to top), or a pattern tile (--from, embedded in \
                  the document, tiled from the canvas origin at --scale). --kind defaults to the fill you give. A layer \
                  holds one overlay of each kind; this replaces the overlay of the same kind. On a shape or text layer \
-                 with both a fill and a stroke, the overlay recolors the fill and the layer's own stroke stays on top \
-                 (the gradient spans the fill); --cover-stroke paints over the stroke too, as Photoshop does.",
+                 with a fill and a stroke in another color, the overlay recolors the fill and the layer's own stroke \
+                 stays on top (the gradient spans the fill); a stroke in the fill's color is covered with it, and \
+                 --cover-stroke paints over any stroke, as Photoshop does.",
             )
             .param(common::layer())
             .param(param("kind", ParamKind::Choice).choices(&["color", "gradient", "pattern"]).auto().default("auto").help("Overlay kind; auto picks it from --color, --stops, or --from"))

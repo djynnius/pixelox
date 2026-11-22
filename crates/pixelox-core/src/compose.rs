@@ -191,7 +191,8 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
 
 /// A color, gradient, or pattern overlay (`fx overlay`) recolors the fill of a shape or text
 /// layer that also has a stroke, and leaves the stroke on top, unless the overlay was given
-/// `--cover-stroke` (Photoshop's behavior, where the stroke is part of the content). Returns
+/// `--cover-stroke` (Photoshop's behavior, where the stroke is part of the content), or the
+/// stroke is in the fill's own color (a stroke that fattens the shape). Returns
 /// the content with those overlays applied under the stroke, and the effects still to apply;
 /// None when the layer needs no split (no such overlay, or no fill and stroke to separate;
 /// a layer with smart filters keeps the plain order, filters before styles).
@@ -204,11 +205,13 @@ fn overlays_under_stroke(doc: &Document, layer: &Layer) -> Result<Option<(Option
         LayerKind::Text { spec } => (spec, "color", Value::String("transparent".into())),
         _ => return Ok(None),
     };
-    let painted = |k: &str| {
-        spec.get(k).and_then(Value::as_str).and_then(|c| crate::color::parse_color(c).ok()).is_some_and(|c| c.a > 0.0)
+    let paint = |k: &str| {
+        spec.get(k).and_then(Value::as_str).and_then(|c| crate::color::parse_color(c).ok()).filter(|c| c.a > 0.0)
     };
     let stroked = spec.get("stroke_width").and_then(Value::as_f64).is_none_or(|w| w > 0.0);
-    if !(painted(fill_key) && painted("stroke") && stroked) {
+    let (Some(fill), Some(stroke)) = (paint(fill_key), paint("stroke")) else { return Ok(None) };
+    // a stroke in the fill's own color only fattens the shape: it is part of the fill
+    if !stroked || fill.to_hex() == stroke.to_hex() {
         return Ok(None);
     }
     let covers = |f: &FxSpec| {

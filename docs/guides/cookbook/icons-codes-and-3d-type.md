@@ -126,4 +126,5 @@ pixelox shape rect card.pxo --in-place --name Pill --rect 10%,80%,40%x7% --radiu
 pixelox fx overlay card.pxo --in-place --layer Pill --stops '#ffcf56@0,#e4572e@1' --angle 0
 ```
 
-Add `--cover-stroke` to paint over the stroke as well.
+A stroke in the fill's own color (used to fatten letters) is covered with the fill. Add
+`--cover-stroke` to paint over any stroke as well.

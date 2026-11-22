@@ -58,8 +58,10 @@ canvas edge where the canvas cut a shape, and `fx overlay` painted over a shape'
 * **Overlays recolor the fill.** On a shape or text layer with both a fill and a stroke, the
   compositor renders the fill alone with the layer's overlays, then draws the stroke on top,
   then applies the other effects; the gradient spans the fill. `fx overlay --cover-stroke`
-  keeps Photoshop's behavior (the stroke is part of the content), and a stroke-only shape is
-  still recolored whole. This lives in `compose::content` because the fx hook only sees
+  keeps Photoshop's behavior (the stroke is part of the content). A stroke-only shape, or a
+  stroke in the fill's own color (a common way to fatten letters, as in poster p062), is still
+  recolored whole: the regression run showed that a fattening stroke left on top reads as an
+  unwanted outline. This lives in `compose::content` because the fx hook only sees
   pixels.
 
 ## Consequences

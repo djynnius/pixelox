@@ -192,3 +192,33 @@ fn primitive_envelopes_and_exit_codes() {
     let v = ok(&t.0, &["shape", "icons"]);
     assert!(v["result"]["count"].as_u64().unwrap() > 2000);
 }
+
+/// `fx overlay` on a shape with a fill and a stroke: the stroke stays on top unless it is in
+/// the fill's own color (a fattening stroke) or the overlay asks for `--cover-stroke`.
+#[test]
+fn overlays_recolor_the_fill_and_keep_an_outline() {
+    use pixelox_core::prelude::*;
+    use pixelox_core::testing::{find, run};
+    pixelox_vector::install();
+    pixelox_fx::install();
+    let cases = [
+        ("#111111", false, [0.067, 0.067, 0.067]),
+        ("#ffffff", false, [1.0, 0.0, 0.0]),
+        ("#111111", true, [1.0, 0.0, 0.0]),
+    ];
+    for (stroke, cover, want) in cases {
+        let mut d = Document::new(100, 60);
+        let shape = find(&pixelox_vector::ops(), "shape rect");
+        run(&shape, &[("rect", "10,10,80x40"), ("fill", "#ffffff"), ("stroke", stroke), ("stroke-width", "8")], &mut d)
+            .unwrap();
+        let mut pairs = vec![("layer", "@top"), ("color", "#ff0000")];
+        if cover {
+            pairs.push(("cover-stroke", "true"));
+        }
+        run(&find(&pixelox_fx::ops(), "fx overlay"), &pairs, &mut d).unwrap();
+        let img = compose::composite(&d).unwrap();
+        assert_eq!(img.get(50, 30), [1.0, 0.0, 0.0, 1.0], "the fill is recolored");
+        let edge = img.get(50, 10);
+        assert!(edge.iter().zip(want).all(|(a, b)| (a - b).abs() < 0.01), "{stroke} cover={cover}: {edge:?}");
+    }
+}
