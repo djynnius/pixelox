@@ -83,6 +83,7 @@ claude mcp add pixelox -- pixelox mcp serve --allow ~/Pictures
 | --- | --- |
 | [`pixelox`](skills/pixelox/SKILL.md) | the CLI contract and the common one-command tasks; routes to the others |
 | [`pixelox-retouch`](skills/pixelox-retouch/SKILL.md) | portraits: skin masks, blemish removal, frequency separation, natural skin smoothing, before/after checks |
+| [`pixelox-design`](skills/pixelox-design/SKILL.md) | posters, flyers, ads, covers, and social posts from a brief: 126 studied designs to combine, 74 tested effect recipes, type and palette guides, a look-critique-fix loop |
 
 Install them with one of:
 
