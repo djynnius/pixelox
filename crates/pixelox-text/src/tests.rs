@@ -239,19 +239,48 @@ fn edit_and_style_change_the_layer() {
 }
 
 #[test]
-fn unknown_family_is_px4102() {
+fn unknown_family_is_px4102_in_strict_mode() {
     let mut d = Document::new(200, 100);
-    let e =
-        run(&find(&ops(), "text add"), &[("content", "x"), ("font", "Zzqx Nonexistent Family 9")], &mut d).unwrap_err();
+    let strict = ("strict-font", "true");
+    let e = run(&find(&ops(), "text add"), &[("content", "x"), ("font", "Zzqx Nonexistent Family 9"), strict], &mut d)
+        .unwrap_err();
     assert_eq!(e.code, "PX4102");
     assert!(e.context.contains_key("candidates"));
     assert!(e.hint.unwrap().contains("fonts"));
     assert_eq!(d.layers.len(), 0);
     // a misspelling suggests the real family
-    let e = run(&find(&ops(), "text add"), &[("content", "x"), ("font", "Tufy")], &mut d).unwrap_err();
+    let e = run(&find(&ops(), "text add"), &[("content", "x"), ("font", "Tufy"), strict], &mut d).unwrap_err();
     assert!(e.context["candidates"].as_array().unwrap().iter().any(|c| c == "Tuffy"), "{:?}", e.context);
+    // a curated Google Fonts family that is not installed asks for consent (exit 6)
+    if !fonts::has_family("Saira Stencil One") {
+        let e = run(&find(&ops(), "text add"), &[("content", "x"), ("font", "Saira Stencil One"), strict], &mut d)
+            .unwrap_err();
+        assert_eq!(e.code, "PX1540");
+        assert_eq!(e.exit_code, 6);
+        assert!(e.hint.unwrap().contains("pixelox fonts get \"Saira Stencil One\" -y"));
+    }
     // generic families always resolve
-    run(&find(&ops(), "text add"), &[("content", "x"), ("font", "monospace")], &mut d).unwrap();
+    run(&find(&ops(), "text add"), &[("content", "x"), ("font", "monospace"), strict], &mut d).unwrap();
+}
+
+#[test]
+fn unknown_family_is_substituted_with_a_warning() {
+    let mut d = Document::new(400, 100);
+    let (r, w) = run_with_warnings(
+        &find(&ops(), "text add"),
+        &[("content", "HELLO"), ("font", "Zzqx Nonexistent Condensed Black"), ("size", "40px")],
+        &mut d,
+    )
+    .unwrap();
+    assert!(w.contains(&"PXW4010".to_string()), "{w:?}");
+    assert_eq!(r["font"]["resolved"]["how"], "substitute");
+    assert_eq!(r["font"]["resolved"]["class"], "@condensed-heavy");
+    assert_eq!(d.layers.len(), 1);
+    // the layer keeps the requested family, so a machine that has it draws it
+    assert_eq!(spec(&d, "HELLO")["font"], "Zzqx Nonexistent Condensed Black");
+    // an unknown class is an error
+    let e = run(&find(&ops(), "text add"), &[("content", "x"), ("font", "@nope")], &mut d).unwrap_err();
+    assert_eq!(e.code, "PX4110");
 }
 
 #[test]
@@ -438,4 +467,149 @@ fn rtl_paragraph_lays_out() {
     let r = add(&mut d, "abc \u{5D0}\u{5D1}\u{5D2} 123", &[("name", "Mixed")]);
     assert_eq!(r["lines"], 1);
     assert!(rect(&r["box"])[2] > 50.0);
+}
+
+fn ink_size(r: &Value) -> (f64, f64) {
+    let f = &r["fit"]["ink"];
+    (f[0].as_f64().unwrap(), f[1].as_f64().unwrap())
+}
+
+#[test]
+fn fit_width_and_box_size_the_visible_letters() {
+    let mut d = Document::new(1000, 600);
+    let r = add(&mut d, "MAKE", &[("name", "A"), ("fit-width", "920"), ("stroke", "#000000"), ("stroke-width", "6")]);
+    let (w, _) = ink_size(&r);
+    assert!((w - 920.0).abs() < 1e-3, "ink width {w}");
+    // the fit follows new words
+    let ed = find(&ops(), "text edit");
+    let r = run(&ed, &[("layer", "A"), ("content", "TONIGHT")], &mut d).unwrap();
+    assert!((ink_size(&r).0 - 920.0).abs() < 1e-3);
+    // a box: the binding side matches
+    let r = add(&mut d, "WIDE WORDS", &[("name", "B"), ("fit-box", "400x60")]);
+    let (w, h) = ink_size(&r);
+    assert!(w <= 400.0 + 1e-3 && h <= 60.0 + 1e-3 && ((w - 400.0).abs() < 1e-3 || (h - 60.0).abs() < 1e-3), "{w}x{h}");
+    // an explicit size later replaces the fit
+    let st = find(&ops(), "text style");
+    let r = run(&st, &[("layer", "B"), ("size", "20px")], &mut d).unwrap();
+    assert!(r.get("fit").is_none());
+    assert!(spec(&d, "B").get("fit_box").is_none());
+    // nothing to fit
+    let e = run(&find(&ops(), "text add"), &[("content", "   "), ("font", "Tuffy"), ("fit-width", "100")], &mut d)
+        .unwrap_err();
+    assert_eq!(e.code, "PX4113");
+}
+
+#[test]
+fn anchor_to_ink_places_the_visible_letters() {
+    let mut d = Document::new(600, 300);
+    let r = add(&mut d, "Hxg", &[("at", "100,50"), ("anchor-to", "ink"), ("size", "80px")]);
+    let b = rect(&r["bounds"]);
+    assert_eq!((b[0], b[1]), (100.0, 50.0), "{b:?}");
+    let r = add(
+        &mut d,
+        "Hxg",
+        &[("name", "C"), ("at", "300,150"), ("anchor", "c"), ("anchor-to", "ink"), ("size", "80px")],
+    );
+    let b = rect(&r["bounds"]);
+    assert!((b[0] + b[2] / 2.0 - 300.0).abs() <= 1.0 && (b[1] + b[3] / 2.0 - 150.0).abs() <= 1.0, "{b:?}");
+}
+
+#[test]
+fn case_scale_and_faux_bold_stay_live() {
+    let mut d = Document::new(800, 300);
+    let plain = rect(&add(&mut d, "type", &[("name", "P")])["bounds"]);
+    let upper = add(&mut d, "type", &[("name", "U"), ("case", "upper")]);
+    assert_eq!(spec(&d, "U")["content"], "type", "the content keeps what was typed");
+    assert_eq!(upper["case"], "upper");
+    assert!(rect(&upper["bounds"])[2] > plain[2]);
+    let narrow = rect(&add(&mut d, "type", &[("name", "N"), ("scale-x", "50%")])["bounds"]);
+    assert!((narrow[2] - plain[2] / 2.0).abs() < 3.0, "{narrow:?} vs {plain:?}");
+    let tall = rect(&add(&mut d, "type", &[("name", "T"), ("scale-y", "2")])["bounds"]);
+    assert!(tall[3] > plain[3] * 1.8, "{tall:?}");
+    let bold = add(&mut d, "type", &[("name", "B"), ("faux-bold", "40")]);
+    assert!(rect(&bold["bounds"])[2] > plain[2] + 4.0);
+    assert_eq!(spec(&d, "B")["faux_bold"], 40.0);
+    // text to-path bakes the faux bold into the outlines
+    let r = run(&find(&ops(), "text to-path"), &[("layer", "B")], &mut d).unwrap();
+    assert!(r["d_bytes"].as_u64().unwrap() > 100);
+    // removing settings removes their keys
+    let st = find(&ops(), "text style");
+    run(&st, &[("layer", "U"), ("case", "none")], &mut d).unwrap();
+    assert!(spec(&d, "U").get("case").is_none());
+}
+
+#[test]
+fn warps_bend_the_outlines_and_stay_editable() {
+    install();
+    let mut d = Document::new(800, 400);
+    let flat = rect(&add(&mut d, "WARPED TYPE", &[("name", "F"), ("at", "400,200"), ("anchor", "c")])["bounds"]);
+    let w = find(&ops(), "text warp");
+    let outline = |d: &Document, n: &str| {
+        let s = crate::spec::TextSpec::from_value(&spec(d, n));
+        crate::render::svg_path_data(&crate::layout::compose(&s, d, false).unwrap())
+    };
+    let flat_d = outline(&d, "F");
+    let mut seen = vec![flat_d];
+    for p in crate::warp::PRESETS {
+        let name = format!("W-{p}");
+        add(&mut d, "WARPED TYPE", &[("name", &name), ("at", "400,200"), ("anchor", "c")]);
+        let r = run(&w, &[("layer", &name), ("preset", p), ("bend", "60")], &mut d).unwrap();
+        assert_eq!(r["warp"]["preset"], *p);
+        let o = outline(&d, &name);
+        assert!(!seen.contains(&o), "{p} looks like another preset or like flat text");
+        seen.push(o);
+        assert!(matches!(d.layer(&d.resolve(&name).unwrap()).content, LayerKind::Text { .. }));
+    }
+    // the arc's ends drop below the flat text (bend 60 = a 108° ring sector)
+    let arc = rect(&run(&w, &[("layer", "W-arc"), ("preset", "arc"), ("bend", "60")], &mut d).unwrap()["bounds"]);
+    assert!(arc[3] > flat[3] * 1.5, "{arc:?} vs {flat:?}");
+    // editing the words keeps the warp; none removes it
+    let r = run(&find(&ops(), "text edit"), &[("layer", "W-arc"), ("content", "NEW WORDS")], &mut d).unwrap();
+    assert_eq!(r["warp"]["preset"], "arc");
+    let r = run(&w, &[("layer", "W-arc"), ("preset", "none")], &mut d).unwrap();
+    assert!(r["warp"].is_null());
+    assert!(spec(&d, "W-arc").get("warp").is_none());
+    // text style --bend without a warp is an error
+    let st = find(&ops(), "text style");
+    assert_eq!(run(&st, &[("layer", "F"), ("bend", "20")], &mut d).unwrap_err().code, "PX1003");
+    run(&st, &[("layer", "F"), ("warp", "flag"), ("bend", "-30"), ("orient", "vertical")], &mut d).unwrap();
+    assert_eq!(spec(&d, "F")["warp"]["orient"], "vertical");
+    // rendering is deterministic
+    let a = compose::composite(&d).unwrap();
+    let b = compose::composite(&d).unwrap();
+    assert!(a.data.iter().zip(&b.data).all(|(x, y)| x.to_bits() == y.to_bits()));
+}
+
+#[test]
+fn on_path_overflow_warns_and_shrinks() {
+    let mut d = Document::new(400, 400);
+    add(&mut d, "A LONG LINE THAT CANNOT POSSIBLY FIT AROUND", &[("name", "Arc"), ("size", "40px")]);
+    let on = find(&ops(), "text on-path");
+    let circle = "M 200,140 A 60,60 0 1 1 199.9,140";
+    let (r, w) = run_with_warnings(&on, &[("layer", "Arc"), ("d", circle)], &mut d).unwrap();
+    assert!(w.contains(&"PXW4012".to_string()), "{w:?}");
+    assert!(r["overflow_glyphs"].as_u64().unwrap() > 5);
+    let (r, w) = run_with_warnings(&on, &[("layer", "Arc"), ("fit", "shrink")], &mut d).unwrap();
+    assert!(!w.contains(&"PXW4012".to_string()), "{w:?}");
+    assert_eq!(r["overflow_glyphs"], 0);
+    assert!(r["text_length"].as_f64().unwrap() <= r["path_length"].as_f64().unwrap());
+    assert!(r["size_px"].as_f64().unwrap() < 40.0);
+    assert_eq!(spec(&d, "Arc")["path_fit"], "shrink");
+    // an open path: letters past the end are counted too
+    add(&mut d, "TOO MANY LETTERS HERE", &[("name", "Line"), ("size", "30px")]);
+    let (r, w) = run_with_warnings(&on, &[("layer", "Line"), ("d", "M 10,300 L 150,300")], &mut d).unwrap();
+    assert!(w.contains(&"PXW4012".to_string()) && r["overflow_glyphs"].as_u64().unwrap() > 0);
+}
+
+#[test]
+fn stretch_and_weight_requests_are_recorded() {
+    let mut d = Document::new(400, 100);
+    let r = add(&mut d, "Wide", &[("name", "S"), ("stretch", "condensed"), ("weight", "700")]);
+    assert_eq!(r["stretch"], "condensed");
+    let s = spec(&d, "S");
+    assert_eq!((s["stretch"].as_f64(), s["weight"].as_u64()), (Some(75.0), Some(700)));
+    // no --weight: automatic, not 400
+    add(&mut d, "Auto", &[("name", "A")]);
+    assert!(spec(&d, "A")["weight"].is_null());
+    assert!(run(&find(&ops(), "text add"), &[("content", "x"), ("stretch", "squashed")], &mut d).is_err());
 }

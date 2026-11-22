@@ -149,6 +149,8 @@ catalog! {
     "PX1530", Usage, "This copy is updated by another tool", "Run the update command in the hint.";
     "PX1531", Verification, "The update could not be verified", "Run the installer command in the hint.";
     "PX1532", Runtime, "Release information is unreadable", "Retry later, or open the releases page.";
+    "PX1540", ConsentRequired, "Font absent; consent required to download it", "Run the `pixelox fonts get <family> -y` command in the hint, or pass -y.";
+    "PX1541", Runtime, "Font file SHA-256 mismatch", "Retry `pixelox fonts get <family> -y`; a repeated mismatch means a corrupted mirror.";
     // PX16xx — provenance
     "PX1601", Verification, "Input hash drift on replay", "Restore the recorded input, map a new one with `--input role=path`, or pass `--allow-input-drift`.";
     "PX1602", Verification, "Output does not match its sidecar", "The file changed after it was written; re-create it with `pixelox replay`.";
@@ -178,6 +180,10 @@ catalog! {
     // PX4xxx — text and fonts
     "PX4101", Runtime, "Font file unreadable", "Check the font path.";
     "PX4102", Usage, "Font family not found", "List fonts with `pixelox fonts list`, or add a folder with `pixelox fonts add <dir>`.";
+    "PX4110", Usage, "Unknown font class", "List the classes with `pixelox fonts classes`.";
+    "PX4111", Usage, "Not a Google Fonts family", "Check the name at fonts.google.com, or register the files with `pixelox fonts add <dir>`.";
+    "PX4112", Verification, "A font the recipe used is not installed", "Run the `pixelox fonts get` or `pixelox fonts add` command in the hint, then replay again.";
+    "PX4113", Usage, "The text has no visible letters to fit", "Give the layer visible content, or drop --fit-width / --fit-box.";
     // PX5xxx — ML inference
     "PX5201", Memory, "Model input too large for the memory budget", "Raise `--mem-budget` or downscale the input.";
     // PX6xxx — JS sandbox
@@ -225,6 +231,12 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW3001", "a parameter was clamped to its valid range"),
     ("PXW4001", "a glyph was missing from the font and drawn with a fallback"),
     ("PXW4002", "synthetic bold or italic was used because the face was not installed"),
+    ("PXW4010", "the font family is not installed; the closest installed face of its class was used"),
+    ("PXW4011", "a font the recipe used is not installed here; the replay used a substitute"),
+    ("PXW4012", "text on a path does not fit; some glyphs run past the end or overlap"),
+    ("PXW4013", "the family has no face of the requested weight or width; the nearest was used"),
+    ("PXW4014", "no member of the font class is installed; a stand-in was used"),
+    ("PXW4015", "text on a path is not warped"),
     ("PXW6001", "the script read the clock (--allow-time): output is not deterministic"),
     ("PXW6002", "canvas fillText/strokeText drew nothing (text on a JS canvas is not supported; use px.svg() text)"),
 ];

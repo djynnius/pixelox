@@ -4,6 +4,7 @@
 //! keys this crate does not own.
 
 use crate::fonts::FontStyle;
+use crate::warp::Warp;
 use pixelox_core::prelude::*;
 use pixelox_core::units::{Length, SizeSpec, ANCHORS};
 use pixelox_core::ParamSpec;
@@ -75,11 +76,74 @@ pub fn anchor_name(a: Anchor) -> &'static str {
     }
 }
 
+/// Case transform applied when the text is set (`--case`); the content keeps what was typed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Case {
+    Upper,
+    Lower,
+    Title,
+}
+
+pub const CASES: &[&str] = &["none", "upper", "lower", "title"];
+
+impl Case {
+    pub fn parse(s: &str) -> Option<Option<Case>> {
+        Some(match s.trim().to_ascii_lowercase().as_str() {
+            "none" | "as-typed" | "" => None,
+            "upper" | "uppercase" | "caps" => Some(Case::Upper),
+            "lower" | "lowercase" => Some(Case::Lower),
+            "title" | "capitalize" => Some(Case::Title),
+            _ => return None,
+        })
+    }
+    pub fn name(self) -> &'static str {
+        match self {
+            Case::Upper => "upper",
+            Case::Lower => "lower",
+            Case::Title => "title",
+        }
+    }
+    /// `title` capitalizes the first letter of every word and keeps the rest as typed
+    /// (CSS `text-transform: capitalize`).
+    pub fn apply(self, s: &str) -> String {
+        match self {
+            Case::Upper => s.to_uppercase(),
+            Case::Lower => s.to_lowercase(),
+            Case::Title => {
+                let mut out = String::with_capacity(s.len());
+                let mut start = true;
+                for c in s.chars() {
+                    if start && c.is_alphabetic() {
+                        out.extend(c.to_uppercase());
+                        start = false;
+                    } else {
+                        out.push(c);
+                        if c.is_whitespace() || c == '-' || c == '/' {
+                            start = true;
+                        } else if c.is_alphanumeric() {
+                            start = false;
+                        }
+                    }
+                }
+                out
+            }
+        }
+    }
+}
+
+/// Size the type to a width or into a box (`--fit-width`, `--fit-box`), measured on the
+/// visible letters (ink bounds, stroke included).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Fit {
+    Width(f64),
+    Box(f64, f64),
+}
+
 /// A text layer's parameters (see the crate docs for the JSON form).
 #[derive(Clone, Debug)]
 pub struct TextSpec {
     pub content: String,
-    /// Family as requested (`Inter`, `sans-serif`).
+    /// Family as requested (`Inter`, `sans-serif`, `@condensed-heavy`).
     pub font: String,
     /// SHA-256 of the resolved face's file, preferred when re-resolving.
     pub font_sha256: Option<String>,
@@ -87,8 +151,23 @@ pub struct TextSpec {
     pub font_face: Option<Value>,
     /// CSS length string: `48pt`, `64px`, `5%` (of the canvas height).
     pub size: String,
-    pub weight: u16,
+    /// `None`: automatic (400, or the weight of the class candidate).
+    pub weight: Option<u16>,
     pub style: FontStyle,
+    /// Width in percent (CSS font-stretch); `None`: normal or the class candidate's width.
+    pub stretch: Option<f64>,
+    pub case: Option<Case>,
+    /// Horizontal / vertical scale of the set text (1 = 100%).
+    pub scale_x: f64,
+    pub scale_y: f64,
+    /// Extra stem weight in 1/1000 em (faux bold, total of both sides).
+    pub faux_bold: f64,
+    pub fit: Option<Fit>,
+    /// `--at`/`--anchor` place the visible letters (ink bounds) instead of the text box.
+    pub anchor_ink: bool,
+    pub warp: Option<Warp>,
+    /// `text on-path --fit shrink`: the size shrinks until the text fits on the path.
+    pub path_shrink: bool,
     /// Variable-font axes, `wght=650,slnt=-5`.
     pub variation: Option<String>,
     pub color: Rgba,
@@ -124,8 +203,17 @@ impl Default for TextSpec {
             font_sha256: None,
             font_face: None,
             size: "48pt".into(),
-            weight: 400,
+            weight: None,
             style: FontStyle::Normal,
+            stretch: None,
+            case: None,
+            scale_x: 1.0,
+            scale_y: 1.0,
+            faux_bold: 0.0,
+            fit: None,
+            anchor_ink: false,
+            warp: None,
+            path_shrink: false,
             variation: None,
             color: Rgba::BLACK,
             stroke: None,
@@ -177,9 +265,24 @@ impl TextSpec {
             size,
             weight: g("weight")
                 .and_then(|w| w.as_u64().map(|n| n.to_string()).or_else(|| w.as_str().map(String::from)))
-                .and_then(|w| parse_weight(&w).ok())
-                .unwrap_or(d.weight),
+                .and_then(|w| parse_weight(&w).ok()),
             style: text(g("style")).and_then(|s| FontStyle::parse(&s)).unwrap_or(d.style),
+            stretch: num(g("stretch")).filter(|s| (50.0..=200.0).contains(s)),
+            case: text(g("case")).and_then(|c| Case::parse(&c)).flatten(),
+            scale_x: num(g("scale_x")).filter(|s| *s > 0.0).unwrap_or(1.0),
+            scale_y: num(g("scale_y")).filter(|s| *s > 0.0).unwrap_or(1.0),
+            faux_bold: num(g("faux_bold")).map(|f| f.clamp(0.0, 300.0)).unwrap_or(0.0),
+            fit: match (num(g("fit_width")), g("fit_box")) {
+                (Some(w), _) if w > 0.0 => Some(Fit::Width(w)),
+                (_, Some(Value::Array(a))) if a.len() == 2 => match (num(a.first()), num(a.get(1))) {
+                    (Some(w), Some(h)) if w > 0.0 && h > 0.0 => Some(Fit::Box(w, h)),
+                    _ => None,
+                },
+                _ => None,
+            },
+            anchor_ink: text(g("anchor_to")).as_deref() == Some("ink"),
+            warp: g("warp").and_then(Warp::from_json),
+            path_shrink: text(g("path_fit")).as_deref() == Some("shrink"),
             variation: text(g("variation")).filter(|s| parse_variations(s).map(|v| !v.is_empty()).unwrap_or(false)),
             color: text(g("color")).and_then(|c| color::parse_color(&c).ok()).unwrap_or(d.color),
             stroke: text(g("stroke")).and_then(|c| color::parse_color(&c).ok()).filter(|c| c.a > 0.0),
@@ -220,6 +323,41 @@ impl TextSpec {
         set("size", json!(self.size));
         set("weight", json!(self.weight));
         set("style", json!(self.style.name()));
+        // keys added in 0.5 are written only when they differ from the default (and
+        // removed otherwise), so documents that do not use them stay as they were
+        let mut opt = |k: &str, v: Option<Value>| match v {
+            Some(v) => {
+                m.insert(k.to_string(), v);
+            }
+            None => {
+                m.remove(k);
+            }
+        };
+        opt("stretch", self.stretch.map(|s| json!(s)));
+        opt("case", self.case.map(|c| json!(c.name())));
+        opt("scale_x", (self.scale_x != 1.0).then(|| json!(self.scale_x)));
+        opt("scale_y", (self.scale_y != 1.0).then(|| json!(self.scale_y)));
+        opt("faux_bold", (self.faux_bold != 0.0).then(|| json!(self.faux_bold)));
+        opt(
+            "fit_width",
+            match self.fit {
+                Some(Fit::Width(w)) => Some(json!(w)),
+                _ => None,
+            },
+        );
+        opt(
+            "fit_box",
+            match self.fit {
+                Some(Fit::Box(w, h)) => Some(json!([w, h])),
+                _ => None,
+            },
+        );
+        opt("anchor_to", self.anchor_ink.then(|| json!("ink")));
+        opt("warp", self.warp.as_ref().map(|w| w.to_json()));
+        opt("path_fit", self.path_shrink.then(|| json!("shrink")));
+        let mut set = |k: &str, v: Value| {
+            m.insert(k.to_string(), v);
+        };
         set("variation", json!(self.variation));
         set("color", json!(self.color.to_hex()));
         set("stroke", json!(self.stroke.map(|c| c.to_hex())));
@@ -326,7 +464,7 @@ pub fn style_params(defaults: bool) -> Vec<ParamSpec> {
     vec![
         d(
             param("font", ParamKind::Str).help(
-                "Font family (case-insensitive) or a generic name: sans-serif, serif, monospace; see `pixelox fonts list`",
+                "Font family (case-insensitive), a class such as @condensed-heavy or @didone (`pixelox fonts classes`), or a generic name: sans-serif, serif, monospace; a missing family is replaced by the closest installed face of its class (warning PXW4010)",
             ),
             "sans-serif",
         ),
@@ -335,16 +473,17 @@ pub fn style_params(defaults: bool) -> Vec<ParamSpec> {
                 .help("Font size: 48pt (points at the document DPI), 64px, a bare number of px, or % of the canvas height"),
             "48pt",
         ),
-        d(
-            param("weight", ParamKind::Str)
-                .help("Weight 100..900 or a name (thin, light, normal, medium, semibold, bold, extrabold, black)"),
-            "400",
+        param("weight", ParamKind::Str).help(
+            "Weight 100..900 or a name (thin, light, normal, medium, semibold, bold, extrabold, black); default 400, or the class's own weight with --font @class",
         ),
         d(
             param("style", ParamKind::Choice)
                 .choices(&["normal", "italic", "oblique"])
                 .help("Upright or italic; a missing italic face is slanted synthetically"),
             "normal",
+        ),
+        param("stretch", ParamKind::Str).help(
+            "Width: ultra-condensed, extra-condensed, condensed, semi-condensed, normal, semi-expanded, expanded (extended), ... or 50%..200%; picks the face of that width (a weight never changes the width) or sets a variable font's wdth axis",
         ),
         param("variation", ParamKind::Str)
             .help("Variable-font axis values, e.g. 'wght=650,slnt=-5' (none clears them)"),
@@ -375,10 +514,62 @@ pub fn style_params(defaults: bool) -> Vec<ParamSpec> {
                 .help("metrics applies the font's kerning; none turns it off"),
             "metrics",
         ),
+        param("case", ParamKind::Choice)
+            .choices(CASES)
+            .help("Set the text in upper, lower, or title case (the content keeps what was typed); none sets it as typed"),
+        param("scale-x", ParamKind::Length).help(
+            "Horizontal scale of the letters and their spacing (Photoshop's character scaling): 80% or 0.8; the text stays live",
+        ),
+        param("scale-y", ParamKind::Length).help("Vertical scale of the set text: 120% or 1.2; the text stays live"),
+        param("faux-bold", ParamKind::Float)
+            .range("0..300")
+            .help("Thicken every stem by this much, in 1/1000 em (20 is about one weight step; 0 removes it)"),
+        param("fit-width", ParamKind::Length).help(
+            "Size the type so its visible letters span exactly this width (px, or % of the canvas width); the fit is redone when the text changes; 0 removes it",
+        ),
+        param("fit-box", ParamKind::Size).help(
+            "Size the type as large as fits inside WxH (px or % of the canvas), measured on the visible letters; 0x0 removes it",
+        ),
+        param("warp", ParamKind::Choice).choices(&WARP_CHOICES).help(
+            "Warp the glyph outlines (they stay vector and editable): arc, arc-lower, arc-upper, arch, bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist; none removes it",
+        ),
+        param("bend", ParamKind::Float).range("-100..100").help("Warp strength in % (default 50; negative bends the other way)"),
+        param("h-distort", ParamKind::Float)
+            .range("-100..100")
+            .help("Warp horizontal distortion in %: a perspective that grows the right side (negative: the left)"),
+        param("v-distort", ParamKind::Float)
+            .range("-100..100")
+            .help("Warp vertical distortion in %: a perspective that grows the bottom (negative: the top)"),
+        param("orient", ParamKind::Choice)
+            .choices(&["horizontal", "vertical"])
+            .help("Apply the warp along the horizontal (default) or vertical axis"),
+        param("strict-font", ParamKind::Flag).help(
+            "Fail when the font is not installed (PX4102, or PX1540 when it can be downloaded) instead of substituting; PIXELOX_STRICT_FONTS=1 does the same",
+        ),
     ]
 }
 
-/// Placement flags (`--at`, `--anchor`, `--box`).
+/// `--warp` choices: `none` and the presets.
+pub const WARP_CHOICES: [&str; 16] = [
+    "none",
+    "arc",
+    "arc-lower",
+    "arc-upper",
+    "arch",
+    "bulge",
+    "shell-lower",
+    "shell-upper",
+    "flag",
+    "wave",
+    "fish",
+    "rise",
+    "fisheye",
+    "inflate",
+    "squeeze",
+    "twist",
+];
+
+/// Placement flags (`--at`, `--anchor`, `--box`, `--anchor-to`).
 pub fn place_params(defaults: bool) -> Vec<ParamSpec> {
     let d = |p: ParamSpec, v: &'static str| if defaults { p.default(v) } else { p };
     vec![
@@ -397,26 +588,50 @@ pub fn place_params(defaults: bool) -> Vec<ParamSpec> {
         param("box", ParamKind::Size).help(
             "Paragraph box WxH (px or % of the canvas): lines wrap at its width; the height is reported if exceeded",
         ),
+        param("anchor-to", ParamKind::Choice).choices(&["box", "ink"]).help(
+            "box: --at/--anchor place the text box (default); ink: they place the visible letters, so --at 80,90 --anchor tl puts the top-left of the letters exactly there",
+        ),
     ]
 }
 
 /// What a set of style flags changed.
 #[derive(Default)]
 pub struct Changes {
-    /// Family, weight, style, or variation changed: the face must be resolved again.
+    /// Family, weight, style, stretch, or variation changed: the face must be resolved again.
     pub face: bool,
-    /// `--font` was given (a missing family is an error rather than a fallback).
+    /// `--font` was given.
     pub font_given: bool,
     pub any: bool,
+}
+
+/// A scale factor: `80%` → 0.8, `0.8` → 0.8.
+fn parse_scale(name: &str, s: &str) -> Result<f64> {
+    let l = Length::parse(s)?;
+    let v = match l.unit {
+        pixelox_core::units::Unit::Pct => l.value / 100.0,
+        pixelox_core::units::Unit::Px => l.value,
+        _ => {
+            return Err(Error::usage(format!("--{name}: '{s}' is not a scale"))
+                .with_hint(format!("use a percent (--{name} 80%) or a factor (--{name} 0.8)")))
+        }
+    };
+    if !(0.01..=20.0).contains(&v) {
+        return Err(Error::new("PX1013", format!("--{name} {s} is outside 1%..2000%")).with_context(name, s));
+    }
+    Ok(v)
 }
 
 /// Apply the style flags present in `a` to `spec`.
 pub fn apply_style(a: &Args, doc: &Document, spec: &mut TextSpec) -> Result<Changes> {
     let mut ch = Changes::default();
+    let (cw, chh, dpi) = (doc.width as f64, doc.height as f64, doc.dpi());
     if let Some(f) = a.str("font") {
         let f = f.trim().to_string();
         if f.is_empty() {
             return Err(Error::usage("--font must not be empty").with_hint("pass a family, e.g. --font sans-serif"));
+        }
+        if crate::classes::is_class_ref(&f) && crate::classes::find(&f).is_none() {
+            return Err(crate::fonts::unknown_class(&f));
         }
         spec.font = f;
         ch.face = true;
@@ -428,15 +643,22 @@ pub fn apply_style(a: &Args, doc: &Document, spec: &mut TextSpec) -> Result<Chan
             return Err(Error::new("PX1013", format!("--size {s} must be greater than 0")).with_context("size", s));
         }
         spec.size = normalize_size(s);
+        // an explicit size replaces a fit, unless a fit is given in the same call
+        spec.fit = None;
         ch.any = true;
     }
     if let Some(w) = a.raw("weight") {
-        spec.weight = parse_weight(w)?;
+        spec.weight = Some(parse_weight(w)?);
         ch.face = true;
     }
     if let Some(s) = a.raw("style") {
         spec.style = FontStyle::parse(s)
             .ok_or_else(|| Error::usage(format!("--style: '{s}' is not normal, italic, or oblique")))?;
+        ch.face = true;
+    }
+    if let Some(s) = a.raw("stretch") {
+        let p = crate::fonts::parse_stretch(s)? as f64;
+        spec.stretch = Some(p);
         ch.face = true;
     }
     if let Some(v) = a.raw("variation") {
@@ -489,11 +711,91 @@ pub fn apply_style(a: &Args, doc: &Document, spec: &mut TextSpec) -> Result<Chan
         spec.kerning = k.trim() != "none";
         ch.any = true;
     }
+    if let Some(c) = a.raw("case") {
+        spec.case =
+            Case::parse(c).ok_or_else(|| Error::usage(format!("--case: '{c}' is not upper, lower, title, or none")))?;
+        ch.any = true;
+    }
+    if let Some(s) = a.raw("scale-x") {
+        spec.scale_x = parse_scale("scale-x", s)?;
+        ch.any = true;
+    }
+    if let Some(s) = a.raw("scale-y") {
+        spec.scale_y = parse_scale("scale-y", s)?;
+        ch.any = true;
+    }
+    if a.has("faux-bold") {
+        spec.faux_bold = a.f64("faux-bold")?.clamp(0.0, 300.0);
+        ch.any = true;
+    }
+    match (a.raw("fit-width"), a.raw("fit-box")) {
+        (Some(_), Some(_)) => {
+            return Err(Error::new("PX1005", "give either --fit-width or --fit-box, not both")
+                .with_hint("--fit-width 920 sizes to a width; --fit-box 920x300 sizes into a box"))
+        }
+        (Some(fw), None) => {
+            let w = Length::parse(fw)?.to_px(cw, dpi);
+            if w < 0.0 {
+                return Err(Error::new("PX1013", "--fit-width must not be negative"));
+            }
+            spec.fit = (w > 0.0).then_some(Fit::Width(w));
+            ch.any = true;
+        }
+        (None, Some(fb)) => {
+            let sz = SizeSpec::parse(fb)?;
+            let w = sz.w.map(|l| l.to_px(cw, dpi)).unwrap_or(0.0);
+            let h = sz.h.map(|l| l.to_px(chh, dpi)).unwrap_or(0.0);
+            spec.fit = match (w > 0.0, h > 0.0) {
+                (true, true) => Some(Fit::Box(w, h)),
+                (true, false) => Some(Fit::Width(w)),
+                (false, true) => Some(Fit::Box(f64::MAX / 4.0, h)),
+                _ => None,
+            };
+            ch.any = true;
+        }
+        (None, None) => {}
+    }
+    let warp_keys = ["bend", "h-distort", "v-distort", "orient"];
+    if let Some(p) = a.raw("warp") {
+        match crate::warp::parse_preset(p)? {
+            None => spec.warp = None,
+            Some(preset) => {
+                let base = spec.warp.clone();
+                spec.warp = Some(Warp {
+                    preset,
+                    bend: base.as_ref().map(|w| w.bend).unwrap_or(50.0),
+                    h_distort: base.as_ref().map(|w| w.h_distort).unwrap_or(0.0),
+                    v_distort: base.as_ref().map(|w| w.v_distort).unwrap_or(0.0),
+                    vertical: base.as_ref().map(|w| w.vertical).unwrap_or(false),
+                });
+            }
+        }
+        ch.any = true;
+    }
+    if warp_keys.iter().any(|k| a.has(k)) {
+        let w = spec.warp.as_mut().ok_or_else(|| {
+            Error::new("PX1003", "the layer has no warp to adjust: give --warp <preset> as well")
+                .with_hint("e.g. --warp arc --bend 40")
+        })?;
+        if a.has("bend") {
+            w.bend = a.f64("bend")?;
+        }
+        if a.has("h-distort") {
+            w.h_distort = a.f64("h-distort")?;
+        }
+        if a.has("v-distort") {
+            w.v_distort = a.f64("v-distort")?;
+        }
+        if let Some(o) = a.raw("orient") {
+            w.vertical = o.trim() == "vertical";
+        }
+        ch.any = true;
+    }
     ch.any |= ch.face;
     Ok(ch)
 }
 
-/// Apply `--at`, `--anchor`, and `--box` when present.
+/// Apply `--at`, `--anchor`, `--box`, and `--anchor-to` when present.
 pub fn apply_place(a: &Args, doc: &Document, spec: &mut TextSpec) -> Result<bool> {
     let (w, h, dpi) = (doc.width as f64, doc.height as f64, doc.dpi());
     let mut any = false;
@@ -514,6 +816,10 @@ pub fn apply_place(a: &Args, doc: &Document, spec: &mut TextSpec) -> Result<bool
         })?;
         let bh = sz.h.map(|l| l.to_px(h, dpi)).filter(|v| *v > 0.0);
         spec.box_size = Some((bw, bh));
+        any = true;
+    }
+    if let Some(t) = a.raw("anchor-to") {
+        spec.anchor_ink = t.trim() == "ink";
         any = true;
     }
     Ok(any)
@@ -537,6 +843,62 @@ mod tests {
         assert!(v["path"].is_null());
         let again = TextSpec::from_value(&v);
         assert_eq!(again.size, "64px");
+        // 0.5 keys are absent unless set
+        for k in ["stretch", "case", "scale_x", "faux_bold", "fit_width", "warp", "anchor_to", "path_fit"] {
+            assert!(v.get(k).is_none(), "{k}");
+        }
+        assert_eq!(again.weight, None);
+    }
+
+    #[test]
+    fn new_keys_roundtrip_and_reset() {
+        let mut s = TextSpec {
+            content: "Hi".into(),
+            weight: Some(700),
+            stretch: Some(75.0),
+            case: Some(Case::Upper),
+            scale_x: 0.8,
+            faux_bold: 20.0,
+            fit: Some(Fit::Box(900.0, 300.0)),
+            anchor_ink: true,
+            warp: Some(Warp {
+                preset: crate::warp::Preset::Arc,
+                bend: 40.0,
+                h_distort: 0.0,
+                v_distort: 10.0,
+                vertical: false,
+            }),
+            path_shrink: true,
+            ..TextSpec::default()
+        };
+        let v = s.to_value(None);
+        let back = TextSpec::from_value(&v);
+        assert_eq!(back.weight, Some(700));
+        assert_eq!(back.stretch, Some(75.0));
+        assert_eq!(back.case, Some(Case::Upper));
+        assert_eq!(back.scale_x, 0.8);
+        assert_eq!(back.faux_bold, 20.0);
+        assert_eq!(back.fit, Some(Fit::Box(900.0, 300.0)));
+        assert!(back.anchor_ink && back.path_shrink);
+        assert_eq!(back.warp, s.warp);
+        // resetting removes the keys from the stored spec, even with the old spec as base
+        s.case = None;
+        s.warp = None;
+        s.fit = None;
+        s.scale_x = 1.0;
+        let v2 = s.to_value(Some(&v));
+        assert!(v2.get("case").is_none() && v2.get("warp").is_none() && v2.get("fit_box").is_none());
+        assert!(v2.get("scale_x").is_none());
+    }
+
+    #[test]
+    fn cases_transform() {
+        assert_eq!(Case::Upper.apply("straße"), "STRASSE");
+        assert_eq!(Case::Lower.apply("HeLLo"), "hello");
+        assert_eq!(Case::Title.apply("night of worship-and praise"), "Night Of Worship-And Praise");
+        assert_eq!(Case::Title.apply("iPhone 15 pro"), "IPhone 15 Pro");
+        assert_eq!(Case::parse("none"), Some(None));
+        assert_eq!(Case::parse("caps"), Some(Some(Case::Upper)));
     }
 
     #[test]
