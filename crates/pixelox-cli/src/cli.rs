@@ -241,7 +241,15 @@ pub fn build_command(reg: &Registry) -> Command {
         .arg_required_else_help(true)
         .subcommand_required(true)
         .max_term_width(100)
-        .args(global_args());
+        .args(global_args())
+        // Listed in help and completions only: `expand_update_flag` turns it into the
+        // `update` command before clap parses, so clap never matches it here.
+        .arg(
+            Arg::new("update")
+                .long("update")
+                .action(ArgAction::SetTrue)
+                .help("Same as `pixelox update`: check for a newer release and install it"),
+        );
     for p in prefixes.iter().filter(|p| p.len() == 1) {
         root = root.subcommand(node(p.clone(), reg, &prefixes));
     }
@@ -408,8 +416,31 @@ pub fn invocation_from(
     Ok((inv, prefs))
 }
 
+/// `pixelox --update ...` is `pixelox update ...`, for people who type it as a flag like
+/// `--version`. It counts only before the command word (global flags and their values may
+/// come first), so a command's own `--update` would never be taken.
+pub fn expand_update_flag(mut argv: Vec<String>) -> Vec<String> {
+    let mut i = 1;
+    while i < argv.len() {
+        let a = argv[i].as_str();
+        if a == "--update" {
+            argv.remove(i);
+            argv.insert(1, "update".to_string());
+            break;
+        }
+        if !a.starts_with('-') || a == "--" {
+            break;
+        }
+        let name = a.trim_start_matches('-');
+        let takes_value = a == "-o" || (GLOBAL_FLAGS.contains(&name) && !GLOBAL_SWITCHES.contains(&name));
+        i += if takes_value { 2 } else { 1 };
+    }
+    argv
+}
+
 /// Parse a full argv (`["pixelox", "filter", "gaussian", ...]`) without running it.
 pub fn parse_argv(reg: &Registry, argv: &[String]) -> Result<(Invocation, Prefs)> {
+    let argv = &expand_update_flag(argv.to_vec());
     let m = build_command(reg).try_get_matches_from(argv).map_err(|e| {
         Error::new(
             "PX1002",
@@ -495,6 +526,7 @@ fn help_json(reg: &Registry, argv: &[String]) -> Option<i32> {
 }
 
 pub fn run(argv: Vec<String>) -> i32 {
+    let argv = expand_update_flag(argv);
     let reg = crate::registry();
     if let Some(code) = help_json(&reg, &argv) {
         return code;

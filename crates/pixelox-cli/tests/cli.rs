@@ -643,3 +643,30 @@ fn fonts_get_consent_and_download() {
     let (code, v) = run_env(d, &["fonts", "get", "No Such Family", "-y"], &env);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4111")));
 }
+
+/// `pixelox --update` is `pixelox update`, before the command word only.
+#[test]
+fn update_flag_is_the_update_command() {
+    use pixelox_cli::cli::expand_update_flag;
+    let x = |a: &[&str]| expand_update_flag(a.iter().map(|s| s.to_string()).collect());
+    assert_eq!(x(&["pixelox", "--update"]), ["pixelox", "update"]);
+    assert_eq!(x(&["pixelox", "--json", "--update", "--check"]), ["pixelox", "update", "--json", "--check"]);
+    assert_eq!(x(&["pixelox", "--seed", "5", "--update"]), ["pixelox", "update", "--seed", "5"]);
+    assert_eq!(x(&["pixelox", "-o", "a.png", "--update"]), ["pixelox", "update", "-o", "a.png"]);
+    // after a command word it stays that command's argument
+    assert_eq!(x(&["pixelox", "info", "--update"]), ["pixelox", "info", "--update"]);
+    assert_eq!(x(&["pixelox", "--", "--update"]), ["pixelox", "--", "--update"]);
+    // it runs the update command (offline, so it stops before any network)
+    let t = TempDir::new("cli-update-flag");
+    let d = t.0.as_path();
+    for args in [&["--update", "--check"][..], &["--quiet", "--update"][..]] {
+        let (code, v) = run_env(d, args, &[("PIXELOX_OFFLINE", "1")]);
+        assert_eq!(
+            (code, v["command"].as_str(), v["error"]["code"].as_str()),
+            (1, Some("update"), Some("PX1504")),
+            "{v}"
+        );
+    }
+    let (code, v) = run_in(d, &["info", "--update"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1002")), "{v}");
+}

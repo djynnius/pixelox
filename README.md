@@ -184,7 +184,7 @@ with a static musl fallback for older systems), Windows x86-64 and ARM64. Local 
 run on Apple silicon, glibc Linux, and Windows (which needs the Visual C++ Redistributable);
 the Intel macOS and musl builds have no ML runtime.
 
-Update an installed copy with `pixelox update`: it compares this binary with the newest
+Update an installed copy with `pixelox update` (or `pixelox --update`): it compares this binary with the newest
 release and, for a copy the installers placed, runs that release's installer into the same
 folder (`--check` only reports; `--version 0.2.0` pins or goes back). Copies installed
 another way (a source build, `cargo install`) get the command that updates them instead.
