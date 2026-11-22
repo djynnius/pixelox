@@ -4,6 +4,20 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+### Added
+- Companion skill `skills/pixelox-design`: an art-direction playbook for posters, flyers, ads,
+  covers, and social posts from a brief, including vague briefs with no reference image.
+  It ships text descriptions of 126 studied poster designs (grid in percent, layer stack,
+  palette, type table, a tested build recipe, variations, pitfalls), an index that says which
+  to combine for which brief, 27 layout archetypes, 74 tested effect recipes with stable IDs
+  (`T-smoke`, `T-grunge`, `T-duotone`, `T-fit-width`, `T-text-behind-subject`,
+  `T-water-splash`, ...), font classes with free look-alikes and per-OS stand-ins, named
+  palettes, and 15 `render js` generators (clouds, blobs, grunge, rays, particles, brush,
+  splatter, splash, torn, crack, waves, ribbons, pattern, tiles, stand-ins). No images are
+  included. Every documented command is parsed by the contract test.
+
 ## [0.4.1] — 2026-11-09
 
 ### Fixed

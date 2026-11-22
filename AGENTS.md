@@ -54,6 +54,12 @@ prints any command's reference page.
     a background fringe (`docs/guides/cookbook/extract-a-subject.md`). Effects: `render
     lens-flare`, `fx fire`, `fx smoke`; art looks are `filter pencil|charcoal|ink|oil-paint|
     watercolor|cartoon|cutout|halftone`.
+11. Designing from a brief (poster, flyer, ad, cover, social post): do not start from
+    commands. `skills/pixelox-design/SKILL.md` is the playbook: pick 2 to 4 of its 126
+    studied designs (`references/index.md`), combine layout, palette, and one effect
+    (`references/techniques.md`, 74 tested recipes such as `T-smoke`, `T-fit-width`,
+    `T-text-behind-subject`), build, export a preview, look, fix. Check installed fonts
+    first (`pixelox fonts list --json`): a missing font is an error.
 
 ## Addressing
 
