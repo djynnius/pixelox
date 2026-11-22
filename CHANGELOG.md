@@ -4,7 +4,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
-## [Unreleased]
+## [0.5.0] — 2026-11-22
 
 ### Added
 - Companion skill `skills/pixelox-design`: an art-direction playbook for posters, flyers, ads,
