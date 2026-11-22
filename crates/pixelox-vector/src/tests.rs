@@ -253,9 +253,12 @@ fn every_op_meets_the_authoring_contract() {
             }
             assert!(positional >= op.inputs.min, "{}: too few inputs in `{}`", op.name, ex.cmd);
             if let Some(max) = op.inputs.max {
+                // positional words after the inputs fill `.positional(..)` params
+                let max = max + op.positionals.len();
                 assert!(positional <= max, "{}: too many inputs in `{}`", op.name, ex.cmd);
             }
-            let req: Vec<&str> = op.params.iter().filter(|p| p.required).map(|p| p.name).collect();
+            let req: Vec<&str> =
+                op.params.iter().filter(|p| p.required && !op.positionals.contains(&p.name)).map(|p| p.name).collect();
             for r in req {
                 assert!(words.iter().any(|w| w == &format!("--{r}")), "{}: `{}` lacks required --{r}", op.name, ex.cmd);
             }

@@ -186,6 +186,12 @@ catalog! {
     "PX6003", Sandbox, "Script memory limit exceeded", "Raise `--js-mem`.";
     "PX6010", Sandbox, "Forbidden API", "Scripts may only use the `px` API; no filesystem, network, timers, or eval.";
     "PX6020", Usage, "Script produced no output", "Call `px.output(canvasOrSvg)` exactly once.";
+    // PX603x — vector primitives: icons, QR codes, barcodes
+    "PX6030", Usage, "Unknown icon", "Search the bundled icons with `pixelox shape icons --search <word>`.";
+    "PX6031", Usage, "Data cannot be encoded in this symbology", "Use the characters and length the message names, or another --type (code128 takes any ASCII).";
+    "PX6032", Usage, "Check digit does not match", "Use the check digit in the hint, or leave it off and pixelox adds it.";
+    "PX6033", Usage, "Data too long for a QR code", "Shorten the data (a short URL), or lower --ec.";
+    "PX6034", Usage, "Logo gap too large for the error correction", "Raise --ec (h holds the largest gap) or lower --logo-gap to the value in the hint.";
     // PX7xxx — jobs, pipelines, batches
     "PX7101", Usage, "Pipeline file is invalid", "Run `pixelox pipeline validate <file>`.";
     "PX7102", Usage, "Unknown step reference", "Every `needs` entry must name an earlier step id.";
@@ -227,6 +233,8 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW4002", "synthetic bold or italic was used because the face was not installed"),
     ("PXW6001", "the script read the clock (--allow-time): output is not deterministic"),
     ("PXW6002", "canvas fillText/strokeText drew nothing (text on a JS canvas is not supported; use px.svg() text)"),
+    ("PXW6010", "a QR code or barcode may not scan: low contrast, or light modules on a dark ground"),
+    ("PXW6011", "QR modules or barcode bars are too small to scan reliably"),
 ];
 
 pub fn catalog_entry(code: &str) -> Option<&'static CatalogEntry> {
