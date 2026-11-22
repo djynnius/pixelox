@@ -170,9 +170,11 @@ pub fn apply_to_raster_grow(
     let (w, h) = (orig.width as i64, orig.height as i64);
     let [pl, pt, pr, pb] = pads;
     // sides that already reach the canvas edge keep their old edge behavior: an opaque
-    // layer is clamped there, so replicate its edge pixels for the filter to read
+    // layer is clamped there, so replicate its edge pixels for the filter to read (at most
+    // REP_MAX px: beyond that only extreme kernels reach, and memory would grow quadratically)
+    const REP_MAX: u32 = 1024;
     let opaque = orig.is_opaque();
-    let rep = |touches: bool, r: u32| if opaque && touches { r as i64 } else { 0 };
+    let rep = |touches: bool, r: u32| if opaque && touches { r.min(REP_MAX) as i64 } else { 0 };
     let (rl, rt) = (rep(lx <= 0, reach.left), rep(ly <= 0, reach.top));
     let (rr, rb) = (rep(lx + w >= cw, reach.right), rep(ly + h >= ch, reach.bottom));
     let (gw, gh) = (rl + pl + w + pr + rr, rt + pt + h + pb + rb);
