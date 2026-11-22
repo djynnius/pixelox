@@ -35,7 +35,7 @@
       },
       "font": {
         "type": "string",
-        "description": "Font family (case-insensitive) or a generic name: sans-serif, serif, monospace; see `pixelox fonts list` Type: text.",
+        "description": "Font family (case-insensitive), a class such as @condensed-heavy or @didone (`pixelox fonts classes`), or a generic name: sans-serif, serif, monospace; a missing family is replaced by the closest installed face of its class (warning PXW4010) Type: text.",
         "x-pixelox-kind": "str"
       },
       "size": {
@@ -48,7 +48,7 @@
       },
       "weight": {
         "type": "string",
-        "description": "Weight 100..900 or a name (thin, light, normal, medium, semibold, bold, extrabold, black) Type: text.",
+        "description": "Weight 100..900 or a name (thin, light, normal, medium, semibold, bold, extrabold, black); default 400, or the class's own weight with --font @class Type: text.",
         "x-pixelox-kind": "str"
       },
       "style": {
@@ -60,6 +60,11 @@
         ],
         "description": "Upright or italic; a missing italic face is slanted synthetically Type: choice.",
         "x-pixelox-kind": "choice"
+      },
+      "stretch": {
+        "type": "string",
+        "description": "Width: ultra-condensed, extra-condensed, condensed, semi-condensed, normal, semi-expanded, expanded (extended), ... or 50%..200%; picks the face of that width (a weight never changes the width) or sets a variable font's wdth axis Type: text.",
+        "x-pixelox-kind": "str"
       },
       "variation": {
         "type": "string",
@@ -131,6 +136,155 @@
         ],
         "description": "metrics applies the font's kerning; none turns it off Type: choice.",
         "x-pixelox-kind": "choice"
+      },
+      "case": {
+        "type": "string",
+        "enum": [
+          "none",
+          "upper",
+          "lower",
+          "title"
+        ],
+        "description": "Set the text in upper, lower, or title case (the content keeps what was typed); none sets it as typed Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "scale_x": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Horizontal scale of the letters and their spacing (Photoshop's character scaling): 80% or 0.8; the text stays live Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "scale_y": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Vertical scale of the set text: 120% or 1.2; the text stays live Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "faux_bold": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 300.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Thicken every stem by this much, in 1/1000 em (20 is about one weight step; 0 removes it) Range: 0..300. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "fit_width": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Size the type so its visible letters span exactly this width (px, or % of the canvas width); the fit is redone when the text changes; 0 removes it Type: length.",
+        "x-pixelox-kind": "length"
+      },
+      "fit_box": {
+        "type": "string",
+        "examples": [
+          "1080x1350"
+        ],
+        "description": "Size the type as large as fits inside WxH (px or % of the canvas), measured on the visible letters; 0x0 removes it Type: WxH.",
+        "x-pixelox-kind": "size"
+      },
+      "warp": {
+        "type": "string",
+        "enum": [
+          "none",
+          "arc",
+          "arc-lower",
+          "arc-upper",
+          "arch",
+          "bulge",
+          "shell-lower",
+          "shell-upper",
+          "flag",
+          "wave",
+          "fish",
+          "rise",
+          "fisheye",
+          "inflate",
+          "squeeze",
+          "twist"
+        ],
+        "description": "Warp the glyph outlines (they stay vector and editable): arc, arc-lower, arc-upper, arch, bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist; none removes it Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "bend": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Warp strength in % (default 50; negative bends the other way) Range: -100..100. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "h_distort": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Warp horizontal distortion in %: a perspective that grows the right side (negative: the left) Range: -100..100. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "v_distort": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Warp vertical distortion in %: a perspective that grows the bottom (negative: the top) Range: -100..100. Type: number.",
+        "x-pixelox-kind": "float"
+      },
+      "orient": {
+        "type": "string",
+        "enum": [
+          "horizontal",
+          "vertical"
+        ],
+        "description": "Apply the warp along the horizontal (default) or vertical axis Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "strict_font": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Fail when the font is not installed (PX4102, or PX1540 when it can be downloaded) instead of substituting; PIXELOX_STRICT_FONTS=1 does the same Type: flag.",
+        "x-pixelox-kind": "flag"
       }
     },
     "required": [

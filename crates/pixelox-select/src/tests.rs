@@ -876,7 +876,18 @@ fn scale_layers_keep_them_live() {
     assert_eq!(spec_of(&d, "Box")["stroke_width"], json!(2.0));
     run("transform scale", &[("layer", "Placed"), ("size", "40x"), ("anchor", "tl")], &mut d).unwrap();
     assert_eq!(placed_rect(&d, "Placed").0, [50.0, 5.0, 40.0, 20.0]);
-    // a non-uniform scale cannot stay live text
+    // a non-uniform scale keeps unrotated text live: the size follows the height factor and
+    // scale_x the ratio (ADR 0015)
+    let (v, w) = run_w("transform scale", &[("layer", "Title"), ("size", "80x10")], &mut d).unwrap();
+    assert!(!w.contains(&"PXW2003".to_string()), "{w:?}");
+    let [sx, sy] = [v["scale"][0].as_f64().unwrap(), v["scale"][1].as_f64().unwrap()];
+    assert!((sx - sy).abs() > 1e-6, "{v}");
+    let t = spec_of(&d, "Title");
+    assert_eq!(t["size"], crate::engine::scale_length_value(&json!("40px"), sy));
+    assert!((t["scale_x"].as_f64().unwrap() - sx / sy).abs() < 1e-9, "{t}");
+    assert!(matches!(layer(&d, "Title").content, LayerKind::Text { .. }));
+    // text turned by an angle that is not a multiple of 90° still becomes pixels
+    run("transform rotate", &[("layer", "Title"), ("degrees", "30")], &mut d).unwrap();
     let (v, w) = run_w("transform scale", &[("layer", "Title"), ("size", "80x10")], &mut d).unwrap();
     assert!(w.contains(&"PXW2003".to_string()));
     assert_eq!(v["rasterized"], json!(["Title"]));

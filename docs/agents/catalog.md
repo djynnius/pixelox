@@ -155,6 +155,7 @@ text list: List text layers and the fonts they use
 text on-path: Flow a text layer along a path or shape
 text style: Restyle a text layer, keeping its content
 text to-path: Convert a text layer to a vector shape layer
+text warp: Warp a text layer with a preset, keeping it live
 path exclude: Exclusive-or of shape layers
 path intersect: Intersection of shape layers
 path outline-stroke: Convert a shape's stroke to a filled path
@@ -250,6 +251,8 @@ config list: List every key with its effective value
 config path: Print the config file path
 config set <key> <value>: Set a value in config.toml
 fonts add <dir>: Register a folder of fonts
+fonts classes <class>: List font classes and what each resolves to
+fonts get <family>: Download a Google Fonts family (consent: -y)
 fonts list: List installed and registered fonts
 models add: Register a custom ONNX model
 models info <name>: Show one model's task, license, and size

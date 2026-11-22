@@ -63,6 +63,28 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   one; the `@luma:<layer>` mask reference (a layer's brightness) works wherever a mask is
   taken (PX2331 when a layer would mask itself). New topic: `pixelox docs masking` explains
   every masking feature with examples.
+- Font classes (ADR 0015): `--font @condensed-heavy`, `@didone`, `@script-formal`, `@brush`,
+  `@slab`, `@stencil`, `@blackletter`, `@geometric-sans`, `@mono`, and 19 more resolve to the
+  best installed face (macOS, Windows, and Linux families first, then Google Fonts), with the
+  class's own weight. `pixelox fonts classes` shows what each resolves to; `fonts list` has a
+  class column and `--class`.
+- `pixelox fonts get <family|@class>`: downloads open-licensed Google Fonts families with
+  consent (`-y`; PX1540, exit 6, without it; MCP `consent: ["font-download"]` with
+  `mcp serve --allow-font-downloads`; `PIXELOX_OFFLINE=1` forbids it). 64 curated families
+  covering every class are pinned to one google/fonts commit with the SHA-256 of every file;
+  other families can be fetched by name. Files land in the data directory with their license
+  and are registered at once. `text add/edit/style -y` downloads a missing family first.
+- `--stretch` on `text add/edit/style` (condensed, extended, 50%..200%; sets variable `wdth`).
+- Live type settings on `text add/edit/style`: `--case upper|lower|title`,
+  `--scale-x`/`--scale-y` (character scaling), `--faux-bold` (extra stem weight in 1/1000 em),
+  `--fit-width`/`--fit-box` (size the visible letters to a width or box; refit on every edit),
+  and `--anchor-to ink` (place the visible letters, not the text box).
+- Text warp presets on the glyph outlines, live and vector: `pixelox text warp --preset arc`
+  (and `text style --warp`), with Photoshop's 15 styles (arc, arc-lower, arc-upper, arch,
+  bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist),
+  `--bend`, `--h-distort`, `--v-distort`, and `--orient`.
+- `text on-path --fit shrink` lowers the size until the text fits on the path.
+- `pixelox docs fonts` and `pixelox docs text-warp` topic pages.
 
 ### Changed
 - New layers go on top of the stack (ADR 0014). They used to land above the *active* layer,
@@ -76,6 +98,21 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   text is no longer cut off in a rectangle at the layer's edge; the result's `grown` field
   reports the growth. Layers that cover the canvas render exactly as before. An opaque
   layer smaller than the canvas now softens into transparency at its edges when blurred.
+- A font family that is not installed no longer fails (PX4102, exit 2): the closest installed
+  face of its class is used, with warning PXW4010 naming the substitute and the
+  `pixelox fonts get` command. `--strict-font` or `PIXELOX_STRICT_FONTS=1` keeps the error
+  (PX4102, or PX1540 when the family can be downloaded). Documents whose font is missing are
+  drawn with that substitute instead of Tuffy.
+- Font matching follows the CSS order (width, then style, then weight): a weight request no
+  longer swaps in a face of another width (`Helvetica Neue` 900 and `Futura` 800 drew condensed
+  faces; they now draw the normal-width Bold and warn with PXW4013). Saved documents keep the
+  face recorded with each layer.
+- `transform scale` with unequal factors keeps an unrotated (or 90°-turned) text layer live by
+  setting its size and `scale_x`, instead of rasterizing it (PXW2003).
+- `text add` records no `weight` unless `--weight` is given (default still 400; a class uses
+  its own weight).
+- `replay` and `verify --full` name the recorded fonts that are not installed and how to get
+  them (PXW4011; `replay --strict` fails with PX4112, exit 9).
 
 ### Fixed
 - Fills (`fill solid|gradient|pattern`) on a text, shape, or placed layer now fail with a
@@ -94,6 +131,8 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   halo, and the ghosts take the color's hue at their own brightness (the core stays
   white-hot). It used to multiply the lens's own colors, which barely tinted the blue movie
   streak and left warm tints looking white.
+- `text on-path` let letters run past the end of an open path, or overlap the start of a closed
+  one, silently; it now warns (PXW4012) with the count and the size that would fit.
 
 ## [0.4.1] — 2026-11-09
 

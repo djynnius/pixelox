@@ -331,9 +331,36 @@ fn replay(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         overrides: overrides(a)?,
         allow_drift: a.flag("allow-input-drift"),
     };
+    // fonts the recipe used that this machine lacks: say which and how to get them (ADR 0015)
+    let missing_fonts = pixelox_text::fonts::missing_recorded(&sc.recipe);
+    let lacking: Vec<&Value> = missing_fonts.iter().filter(|f| f["status"] == "missing").collect();
+    if a.flag("strict") && !lacking.is_empty() {
+        let gets: Vec<String> = lacking.iter().filter_map(|f| f["get"].as_str().map(String::from)).collect();
+        return Err(Error::new(
+            "PX4112",
+            format!(
+                "the recipe used {} not installed here: {}",
+                if lacking.len() == 1 { "a font" } else { "fonts" },
+                lacking.iter().filter_map(|f| f["family"].as_str()).collect::<Vec<_>>().join(", ")
+            ),
+        )
+        .with_hint(format!("{}, then replay again", gets.join("; ")))
+        .with_context("missing_fonts", &missing_fonts));
+    }
+    for f in &missing_fonts {
+        let fam = f["family"].as_str().unwrap_or("");
+        let msg = if f["status"] == "missing" {
+            format!("font '{fam}' (step {}) is not installed; the replay draws a substitute and will differ; get it with `{}`", f["step"], f["get"].as_str().unwrap_or(""))
+        } else {
+            format!("font '{fam}' is installed from a different file than the recipe recorded; the replay may differ slightly")
+        };
+        ctx.warn_ctx("PXW4011", msg, f.clone());
+    }
     let r = replay_into(ctx, &sc.recipe, &opts, &out)?;
     if ctx.dry_run() {
-        return Ok(json!({"replayed_steps": r.steps, "output": out.display().to_string(), "planned": true}));
+        return Ok(
+            json!({"replayed_steps": r.steps, "output": out.display().to_string(), "planned": true, "missing_fonts": missing_fonts}),
+        );
     }
     let sha = sha256_file(&out).unwrap_or_default();
     let identical = sha == sc.output.sha256;
@@ -367,6 +394,7 @@ fn replay(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         "identical": identical,
         "same_build": same_target,
         "ssim": ssim,
+        "missing_fonts": missing_fonts,
     }))
 }
 
@@ -407,6 +435,7 @@ fn verify(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
             overrides: BTreeMap::new(),
             allow_drift: false,
         };
+        let missing_fonts = pixelox_text::fonts::missing_recorded(&sc.recipe);
         let res = replay_into(&mut child, &sc.recipe, &opts, &target);
         let outcome = match res {
             Ok(_) => {
@@ -416,11 +445,12 @@ fn verify(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
                 let same = sc.tool.target == BUILD_TARGET && sc.tool.version == PIXELOX_VERSION;
                 let pass = identical || (!same && ssim.unwrap_or(0.0) >= 0.999);
                 ok &= pass;
-                json!({"replayed": true, "identical": identical, "ssim": ssim, "same_build": same, "pass": pass})
+                json!({"replayed": true, "identical": identical, "ssim": ssim, "same_build": same, "pass": pass,
+                       "missing_fonts": missing_fonts})
             }
             Err(e) => {
                 ok = false;
-                json!({"replayed": false, "error": e})
+                json!({"replayed": false, "error": e, "missing_fonts": missing_fonts})
             }
         };
         let _ = std::fs::remove_dir_all(&dir);
@@ -429,9 +459,29 @@ fn verify(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     if !ok {
         let drift = files.iter().any(|f| f["kind"] == "input" && f["match"] == false);
         let code = if drift { "PX1601" } else { "PX1602" };
-        return Err(Error::new(code, format!("{} does not verify", sc_path.display()))
+        let mut e = Error::new(code, format!("{} does not verify", sc_path.display()))
             .with_context("files", &files)
-            .with_context("full", &full));
+            .with_context("full", &full);
+        let gets: Vec<String> = full["missing_fonts"]
+            .as_array()
+            .map(|a| {
+                a.iter()
+                    .filter(|f| f["status"] == "missing")
+                    .filter_map(|f| f["get"].as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if !gets.is_empty() {
+            e = e.with_hint(format!(
+                "the recipe's fonts are not all installed here ({}); {}, then verify again",
+                full["missing_fonts"]
+                    .as_array()
+                    .map(|a| a.iter().filter_map(|f| f["family"].as_str()).collect::<Vec<_>>().join(", "))
+                    .unwrap_or_default(),
+                gets.join("; ")
+            ));
+        }
+        return Err(e);
     }
     Ok(json!({"verified": true, "mode": if a.flag("full") { "full" } else { "fast" }, "files": files, "full": full}))
 }

@@ -79,14 +79,18 @@ contract, so transforms keep live layers live:
 
 * text spec: `x`, `y` (numbers, the anchor point in canvas px), `anchor` (`tl`..`br`),
   `size` (length string), `rotation` (degrees about the anchor, default 0), `path`
-  (SVG path data for text on a path);
+  (SVG path data for text on a path), `scale_x`/`scale_y` (numbers, default 1: the set text
+  scales about the anchor), `box` (`[w, h]` px), and `fit_width` / `fit_box` (px; the type is
+  refit to them on every text edit). A non-uniform axis-aligned scale of unrotated text sets
+  `size` by the vertical factor and `scale_x` by the ratio (ADR 0015);
 * shape spec: `d` (transform it with `geom::transform_path_data(d, [a,b,c,d,e,f])`) and
   `stroke_width` (scale it by the uniform scale factor);
 * placed layers: `rect` `[x, y, w, h]` and `angle` (degrees about the rect center);
 * groups: recurse into children; adjustment layers have no geometry.
 
 Skew, perspective, and warp of a text, shape, or placed layer rasterize it first
-(`compose::render_layer`), with a warning. `geom::path_bbox(d)` and `geom::shift_mask` are
+(`compose::render_layer`), with a warning (a text layer's own warp presets live in its spec:
+`text warp`, `pixelox_text::warp`). `geom::path_bbox(d)` and `geom::shift_mask` are
 there too. Canvas presets (`a4`, `ig-story`, ...) live in `pixelox_core::presets`.
 `compose::decode_asset(doc, key)` decodes bytes embedded with `doc.add_asset(bytes, ext)`
 (used for pattern overlays), through the decoder `pixelox-io` installs.

@@ -471,3 +471,172 @@ fn mcp_serve_handshake() {
     drop(stdin);
     let _ = child.wait();
 }
+
+fn run_env(dir: &Path, args: &[&str], env: &[(&str, &str)]) -> (i32, Value) {
+    let mut c = Command::new(BIN);
+    c.args(args).arg("--json").current_dir(dir).env("PIXELOX_HOME", dir.join(".home")).env("PIXELOX_SYSTEM_FONTS", "0");
+    for (k, v) in env {
+        c.env(k, v);
+    }
+    let out = c.output().expect("run pixelox");
+    let v: Value = serde_json::from_slice(&out.stdout)
+        .unwrap_or_else(|e| panic!("{args:?}: not JSON ({e}): {}", String::from_utf8_lossy(&out.stdout)));
+    (out.status.code().unwrap_or(-1), v)
+}
+
+/// Font classes, live type settings (fit, case, scale, faux bold, warp, ink anchoring), a
+/// non-uniform transform that keeps text live, and a bit-identical replay of all of it.
+#[test]
+fn live_type_replays_bit_for_bit() {
+    let t = TempDir::new("cli-type");
+    let d = t.0.as_path();
+    ok(d, &["new", "-o", "t.pxo", "--size", "600x400", "--fill", "#f1ede4"]);
+    let v = ok(
+        d,
+        &[
+            "text",
+            "add",
+            "t.pxo",
+            "--in-place",
+            "--name",
+            "L1",
+            "--content",
+            "make",
+            "--case",
+            "upper",
+            "--font",
+            "@condensed-heavy",
+            "--fit-width",
+            "500",
+            "--at",
+            "50,40",
+            "--anchor-to",
+            "ink",
+            "--color",
+            "#111111",
+        ],
+    );
+    // no class member on a bare machine: a reported substitute, never an error
+    assert_eq!(v["result"]["font"]["resolved"]["class"], "@condensed-heavy");
+    assert_eq!(v["result"]["fit"]["ink"][0], 500.0);
+    assert_eq!(&v["result"]["bounds"].as_array().unwrap()[..2], &[50, 40]);
+    ok(
+        d,
+        &[
+            "text",
+            "add",
+            "t.pxo",
+            "--in-place",
+            "--name",
+            "W",
+            "--content",
+            "WARPED",
+            "--font",
+            "sans-serif",
+            "--size",
+            "60px",
+            "--at",
+            "300,250",
+            "--anchor",
+            "c",
+            "--scale-x",
+            "80%",
+            "--faux-bold",
+            "20",
+        ],
+    );
+    let v = ok(d, &["text", "warp", "t.pxo", "--in-place", "--layer", "W", "--preset", "arc", "--bend", "40"]);
+    assert_eq!(v["result"]["warp"]["preset"], "arc");
+    let v =
+        ok(d, &["transform", "scale", "t.pxo", "--in-place", "--layer", "L1", "--size", "500x200", "--anchor", "tl"]);
+    assert!(v["warnings"].as_array().unwrap().iter().all(|w| w["code"] != "PXW2003"), "{}", v["warnings"]);
+    let v = ok(d, &["layer", "list", "t.pxo"]);
+    let kinds: Vec<&str> =
+        v["result"]["layers"].as_array().unwrap().iter().map(|l| l["kind"].as_str().unwrap()).collect();
+    assert_eq!(kinds.iter().filter(|k| **k == "text").count(), 2, "{kinds:?}");
+    // the words change, the fit and warp follow
+    ok(d, &["text", "edit", "t.pxo", "--in-place", "--layer", "W", "--content", "BENT"]);
+    ok(d, &["export", "t.pxo", "-o", "t.png"]);
+    let v = ok(d, &["replay", "t.png.pixelox.json", "-o", "again.png", "--strict"]);
+    assert_eq!(v["result"]["identical"], true);
+    assert_eq!(v["result"]["missing_fonts"], serde_json::json!([]));
+    ok(d, &["verify", "t.png.pixelox.json", "--full"]);
+    // strict mode keeps the old error for a missing family
+    let (code, v) = run_env(
+        d,
+        &["text", "add", "t.pxo", "--in-place", "--content", "x", "--font", "Zzqx Gone"],
+        &[("PIXELOX_STRICT_FONTS", "1")],
+    );
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4102")));
+    let (code, v) = run_in(d, &["text", "add", "t.pxo", "--in-place", "--content", "x", "--font", "@nope"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4110")));
+}
+
+/// Serve `files` (path, bytes) over HTTP on a local port, one request per connection.
+fn serve(files: Vec<(String, Vec<u8>)>) -> String {
+    use std::io::{BufRead, BufReader, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = l.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for s in l.incoming() {
+            let Ok(mut s) = s else { break };
+            let mut reader = BufReader::new(s.try_clone().unwrap());
+            let mut first = String::new();
+            let _ = reader.read_line(&mut first);
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).unwrap_or(0) == 0 || line == "\r\n" {
+                    break;
+                }
+            }
+            let path = first.split_whitespace().nth(1).unwrap_or("").to_string();
+            match files.iter().find(|(p, _)| *p == path) {
+                Some((_, body)) => {
+                    let _ =
+                        s.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", body.len()).as_bytes());
+                    let _ = s.write_all(body);
+                }
+                None => {
+                    let _ = s.write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+                }
+            }
+        }
+    });
+    format!("http://{addr}")
+}
+
+/// `fonts get` needs consent, plans without it, refuses offline, and downloads a family of
+/// the pinned Google Fonts commit (here from a local mirror) with its license, once.
+#[test]
+fn fonts_get_consent_and_download() {
+    let t = TempDir::new("cli-fonts");
+    let d = t.0.as_path();
+    let (code, v) = run_in(d, &["fonts", "get", "Bebas Neue"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (6, Some("PX1540")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("pixelox fonts get \"Bebas Neue\" -y"));
+    let v = ok(d, &["fonts", "get", "Bebas Neue", "--dry-run"]);
+    assert_eq!(v["result"]["families"][0]["status"], "planned");
+    let (code, v) = run_env(d, &["fonts", "get", "Bebas Neue", "-y"], &[("PIXELOX_OFFLINE", "1")]);
+    assert_eq!((code, v["error"]["code"].as_str()), (1, Some("PX1504")));
+    // an uncurated family through a local mirror of the pinned commit
+    let commit = "06bfe0d62a98375cb09c942fa18e68bd32cff057";
+    let font = std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../pixelox-text/assets/Tuffy.ttf")).unwrap();
+    let meta = "name: \"Test Grotesk\"\nlicense: \"OFL\"\nfonts {\n  name: \"Test Grotesk\"\n  style: \"normal\"\n  weight: 400\n  filename: \"TestGrotesk-Regular.ttf\"\n}\n";
+    let base = serve(vec![
+        (format!("/{commit}/ofl/testgrotesk/METADATA.pb"), meta.as_bytes().to_vec()),
+        (format!("/{commit}/ofl/testgrotesk/TestGrotesk-Regular.ttf"), font.clone()),
+        (format!("/{commit}/ofl/testgrotesk/OFL.txt"), b"SIL Open Font License".to_vec()),
+    ]);
+    let env = [("PIXELOX_FONTS_URL", base.as_str())];
+    let (code, v) = run_env(d, &["fonts", "get", "Test Grotesk", "-y"], &env);
+    assert_eq!(code, 0, "{v}");
+    let fam = &v["result"]["families"][0];
+    assert_eq!(fam["status"], "downloaded");
+    assert_eq!(fam["curated"], false);
+    assert_eq!(fam["files"][0]["bytes"], font.len());
+    assert!(Path::new(fam["license_file"].as_str().unwrap()).exists());
+    let (_, v) = run_env(d, &["fonts", "get", "Test Grotesk", "-y"], &env);
+    assert_eq!(v["result"]["families"][0]["status"], "installed");
+    let (code, v) = run_env(d, &["fonts", "get", "No Such Family", "-y"], &env);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4111")));
+}

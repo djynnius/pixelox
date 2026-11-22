@@ -166,6 +166,8 @@ pub const TOPICS: &[(&str, &str)] = &[
     ("pipelines", include_str!("../topics/pipelines.md")),
     ("sidecars", include_str!("../topics/sidecars.md")),
     ("mcp", include_str!("../topics/mcp.md")),
+    ("fonts", include_str!("../topics/fonts.md")),
+    ("text-warp", include_str!("../topics/text-warp.md")),
 ];
 
 pub fn topic(name: &str) -> Option<&'static str> {
