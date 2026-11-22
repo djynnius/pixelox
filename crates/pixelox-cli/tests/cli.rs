@@ -573,6 +573,8 @@ fn live_type_replays_bit_for_bit() {
 }
 
 /// Serve `files` (path, bytes) over HTTP on a local port, one request per connection.
+/// Every response says `Connection: close`: otherwise the client keeps the socket for its next
+/// request, races the close below, and gets a reset (seen on Linux CI).
 fn serve(files: Vec<(String, Vec<u8>)>) -> String {
     use std::io::{BufRead, BufReader, Write};
     let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -592,12 +594,13 @@ fn serve(files: Vec<(String, Vec<u8>)>) -> String {
             let path = first.split_whitespace().nth(1).unwrap_or("").to_string();
             match files.iter().find(|(p, _)| *p == path) {
                 Some((_, body)) => {
-                    let _ =
-                        s.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", body.len()).as_bytes());
+                    let head =
+                        format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len());
+                    let _ = s.write_all(head.as_bytes());
                     let _ = s.write_all(body);
                 }
                 None => {
-                    let _ = s.write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+                    let _ = s.write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
                 }
             }
         }
