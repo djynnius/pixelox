@@ -157,10 +157,14 @@ path simplify: Reduce the anchor count of a shape path
 path subtract: Subtract later shape layers from the first
 path unite: Union of shape layers
 shape arrow: Add an arrow shape layer
+shape barcode: Add an EAN, UPC, or Code 128/39 barcode
 shape ellipse: Add an ellipse or circle shape layer
+shape icon <icon>: Add a Lucide icon as a shape layer
+shape icons: List or search the bundled icons
 shape line: Add a straight line shape layer
 shape path: Add a shape layer from SVG path data
 shape polygon: Add a regular polygon shape layer
+shape qr: Add a QR code as a shape layer
 shape rect: Add a rectangle shape layer (rounded via radius)
 shape set: Restyle an existing shape layer
 shape star: Add a star or burst shape layer
@@ -179,12 +183,15 @@ transform warp: Grid-mesh warp of a layer
 fx bevel: Add or replace a layer's bevel & emboss
 fx copy: Copy a layer's style stack to other layers
 fx drop-shadow: Add or replace a layer's drop shadow
+fx extrude: Add or replace a 3D extrusion (block sides)
 fx fire: Add or replace flames rising from a layer's outline
 fx inner-glow: Add or replace a layer's inner glow
 fx inner-shadow: Add or replace a layer's inner shadow
 fx list: List a layer's style effects
+fx long-shadow: Add or replace a long (flat) shadow
 fx outer-glow: Add or replace a layer's outer glow
 fx overlay: Add a color, gradient, or pattern overlay
+fx reflection: Add or replace a floor reflection
 fx rm: Remove style effects from a layer
 fx satin: Add or replace a layer's satin sheen
 fx scale: Scale all effect geometry on a layer

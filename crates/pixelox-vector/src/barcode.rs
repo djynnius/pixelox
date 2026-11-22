@@ -631,7 +631,7 @@ fn barcode(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         (c, spec::bez_to_d(&spec::rect_path(x, y, drawn.width, drawn.height, [r; 4]), PREC))
     });
     let name = prims::layer_name(a, doc, "Barcode")?;
-    let mut r = prims::add(doc, Built { name, spec: s, plate, opacity: a.f64("opacity")? as f32 }, "code");
+    let mut r = prims::add(a, doc, Built { name, spec: s, plate, opacity: a.f64("opacity")? as f32 }, "code")?;
     r["type"] = json!(kind);
     r["data"] = json!(sym.data);
     if let Some(c) = sym.check {

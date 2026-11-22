@@ -125,6 +125,11 @@ fn icon_layers_are_live_round_stroked_shapes() {
     .unwrap();
     let img = compose::composite(&d).unwrap();
     assert!(img.get(152, 155)[0] > 0.9 && img.get(152, 155)[1] < 0.1, "a solid red heart");
+    // new layers go on top, or where the placement flags say
+    assert_eq!(d.layers.last().unwrap().name, "heart");
+    run(&mut d, "shape icon", &[("icon", "star"), ("below", "calendar")]).unwrap();
+    let names: Vec<&str> = d.layers.iter().map(|l| l.name.as_str()).collect();
+    assert_eq!(names, ["Background", "star", "calendar", "heart"]);
     let e = run(&mut d, "shape icon", &[("icon", "calender")]).unwrap_err();
     assert_eq!(e.code, "PX6030");
     assert!(e.hint.unwrap().contains("calendar"));

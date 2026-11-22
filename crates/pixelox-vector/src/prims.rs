@@ -8,9 +8,9 @@ use pixelox_core::doc::LayerPath;
 use pixelox_core::op::ParamSpec;
 use pixelox_core::prelude::*;
 
-/// `--at` and `--anchor`, worded like `comp place`.
+/// `--at` and `--anchor`, worded like `comp place`, and the stack placement flags.
 pub fn place_params(what: &'static str) -> Vec<ParamSpec> {
-    vec![
+    let mut v = vec![
         param("at", ParamKind::Point).help(match what {
             "icon" => "Position X,Y of the icon's anchor point (px or %); negative counts from the right/bottom",
             _ => "Position X,Y of the code's anchor point (px or %); negative counts from the right/bottom",
@@ -18,7 +18,9 @@ pub fn place_params(what: &'static str) -> Vec<ParamSpec> {
         param("anchor", ParamKind::Choice).choices(units::ANCHORS).help(
             "Which point of the box sits at --at (default tl; alone: align to that canvas point; neither: centered)",
         ),
-    ]
+    ];
+    v.extend(common::placement());
+    v
 }
 
 /// Top-left of a `w`×`h` box from `--at`/`--anchor` (centered when neither is given),
@@ -58,11 +60,10 @@ pub fn layer_name(a: &Args, doc: &Document, default: &str) -> Result<String> {
     }
 }
 
-/// Insert a new layer above the active layer (or at the top) and make it active: the same
-/// rule as every `shape *` and `text add`.
-pub fn insert(doc: &mut Document, layer: Layer) -> LayerPath {
-    let above = doc.active.as_deref().and_then(|id| doc.find_by_id(id));
-    doc.insert_above(above.as_deref(), layer)
+/// Insert a new layer on top of the stack, or where `--above`/`--below`/`--into` say
+/// (ADR 0014), like every layer-creating command.
+pub fn insert(a: &Args, doc: &mut Document, layer: Layer) -> Result<LayerPath> {
+    pixelox_core::stack::insert_new(a, doc, layer)
 }
 
 /// A finished primitive: the shape spec of its artwork, and optionally a background plate.
@@ -76,15 +77,15 @@ pub struct Built {
 
 /// Add the primitive as one shape layer, or, with a plate, as a group named `name` holding
 /// `<name> background` and `<name> code`. Returns the result fields for the envelope.
-pub fn add(doc: &mut Document, b: Built, code_suffix: &str) -> Value {
+pub fn add(a: &Args, doc: &mut Document, b: Built, code_suffix: &str) -> Result<Value> {
     let bbox = spec::spec_bbox(&b.spec);
     match b.plate {
         None => {
             let mut l = doc.new_layer(&b.name, LayerKind::Shape { spec: b.spec.to_value() });
             l.opacity = b.opacity;
             let (id, name) = (l.id.clone(), l.name.clone());
-            insert(doc, l);
-            json!({"layer": name, "id": id, "kind": "shape", "bbox": bbox})
+            insert(a, doc, l)?;
+            Ok(json!({"layer": name, "id": id, "kind": "shape", "bbox": bbox}))
         }
         Some((color, d)) => {
             let mut plate = ShapeSpec::new(d, json!({"type": "plate"}));
@@ -97,8 +98,10 @@ pub fn add(doc: &mut Document, b: Built, code_suffix: &str) -> Value {
             let mut g = doc.new_layer(&b.name, LayerKind::Group { children: vec![bg, code] });
             g.opacity = b.opacity;
             let (id, name) = (g.id.clone(), g.name.clone());
-            insert(doc, g);
-            json!({"layer": name, "id": id, "kind": "group", "children": children, "bbox": plate_bbox, "code_bbox": bbox})
+            insert(a, doc, g)?;
+            Ok(json!({
+                "layer": name, "id": id, "kind": "group", "children": children, "bbox": plate_bbox, "code_bbox": bbox,
+            }))
         }
     }
 }

@@ -300,7 +300,7 @@ fn icon(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     s.join = "round".into();
     s.fill_rule = "evenodd".into();
     let name = prims::layer_name(a, doc, ic.name)?;
-    let mut r = prims::add(doc, Built { name, spec: s, plate: None, opacity: a.f64("opacity")? as f32 }, "icon");
+    let mut r = prims::add(a, doc, Built { name, spec: s, plate: None, opacity: a.f64("opacity")? as f32 }, "icon")?;
     r["icon"] = json!(ic.name);
     r["box"] = json!([x, y, size, size]);
     r["stroke_width"] = json!(sw);

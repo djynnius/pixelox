@@ -456,7 +456,7 @@ fn qr(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         (c, spec::bez_to_d(&spec::rect_path(x, y, size, size, [r; 4]), PREC))
     });
     let name = prims::layer_name(a, doc, "QR code")?;
-    let mut r = prims::add(doc, Built { name, spec: s, plate, opacity: a.f64("opacity")? as f32 }, "code");
+    let mut r = prims::add(a, doc, Built { name, spec: s, plate, opacity: a.f64("opacity")? as f32 }, "code")?;
     r["version"] = json!(version);
     r["ec"] = json!(ec);
     r["modules"] = json!(n);
