@@ -1,0 +1,332 @@
+{
+  "command": "filter.glitch",
+  "cli": "pixelox filter glitch",
+  "summary": "RGB split, slice shifts, scanlines",
+  "category": "filter",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/filter.glitch.params.json",
+    "title": "pixelox filter.glitch parameters",
+    "description": "RGB split, slice shifts, scanlines",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "split": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Red/cyan channel offset in px or % of the layer width Type: length.",
+        "default": "1.6%",
+        "x-pixelox-kind": "length"
+      },
+      "slices": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 200.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Number of shifted horizontal bands Range: 0..200. Type: integer.",
+        "default": "6",
+        "x-pixelox-kind": "int"
+      },
+      "slice_shift": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Largest sideways shift of a band in px or % of the layer width Type: length.",
+        "default": "6%",
+        "x-pixelox-kind": "length"
+      },
+      "scanlines": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Darkness of the scanlines in percent (0 = none) Range: 0..100. Type: number.",
+        "default": "30",
+        "x-pixelox-kind": "float"
+      },
+      "line_gap": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 2.0,
+            "maximum": 200.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Scanline spacing in px (auto: 0.4% of the shorter canvas side, at least 3) Range: 2..200. Type: number.",
+        "default": "auto",
+        "x-pixelox-kind": "float"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Target layer: name, #N (1 = top), @top, @bottom, or @active; required when the document has several layers Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "mask": {
+        "type": "string",
+        "examples": [
+          "@sel"
+        ],
+        "description": "Limit the effect to a mask: a named mask, @sel, @alpha:<layer>, @mask:<layer>, or a grayscale image path Type: mask.",
+        "x-pixelox-kind": "mask"
+      },
+      "invert_mask": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Apply outside the mask instead of inside it Type: flag.",
+        "x-pixelox-kind": "flag"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/filter.glitch.result.json",
+    "title": "pixelox filter.glitch envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "filter.glitch"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX2311",
+    "PX2312",
+    "PX2313",
+    "PX9001"
+  ]
+}

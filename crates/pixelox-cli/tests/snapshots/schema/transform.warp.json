@@ -1,7 +1,7 @@
 {
   "command": "transform.warp",
   "cli": "pixelox transform warp",
-  "summary": "Grid-mesh warp of a layer",
+  "summary": "Warp with a preset (arc, flag...) or a mesh",
   "category": "transform",
   "mode": "mutate",
   "milestone": null,
@@ -10,7 +10,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://djynnius.github.io/pixelox/schema/v1/transform.warp.params.json",
     "title": "pixelox transform.warp parameters",
-    "description": "Grid-mesh warp of a layer",
+    "description": "Warp with a preset (arc, flag...) or a mesh",
     "type": "object",
     "properties": {
       "input": {
@@ -33,16 +33,111 @@
         "description": "Layer to transform: name, #N (1 = top), @top, @bottom, @active (default: the only layer) Type: layer.",
         "x-pixelox-kind": "layer"
       },
+      "preset": {
+        "type": "string",
+        "enum": [
+          "arc",
+          "arc-lower",
+          "arc-upper",
+          "arch",
+          "bulge",
+          "shell-lower",
+          "shell-upper",
+          "flag",
+          "wave",
+          "fish",
+          "rise",
+          "fisheye",
+          "inflate",
+          "squeeze",
+          "twist"
+        ],
+        "description": "Warp style (Photoshop's list); omit to use --points Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "bend": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Preset strength and direction in percent (negative mirrors the bend) Range: -100..100. Type: number.",
+        "default": "50",
+        "x-pixelox-kind": "float"
+      },
+      "h_distort": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Preset perspective: positive shrinks the left end, negative the right end Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "v_distort": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": -100.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Preset perspective: positive shrinks the top, negative the bottom Range: -100..100. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "orient": {
+        "type": "string",
+        "enum": [
+          "horizontal",
+          "vertical"
+        ],
+        "description": "Preset orientation: horizontal, or vertical (a quarter turn: it bends toward the right) Type: choice.",
+        "default": "horizontal",
+        "x-pixelox-kind": "choice"
+      },
       "grid": {
         "type": "string",
-        "description": "Control grid COLSxROWS, each 2..16 Type: text.",
+        "description": "Control grid COLSxROWS, each 2..16 (with --points) Type: text.",
         "default": "3x3",
         "x-pixelox-kind": "str"
       },
       "points": {
         "type": "string",
-        "description": "JSON file of destination points (schema in the description) Type: path.",
+        "description": "JSON file of destination points (schema in the description); instead of --preset Type: path.",
         "x-pixelox-kind": "path"
+      },
+      "keep_bounds": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Keep the layer's pixel size and position: what the warp moves outside is clipped (used by live warps on placed layers) Type: flag.",
+        "x-pixelox-kind": "flag"
       },
       "interp": {
         "type": "string",
@@ -58,8 +153,7 @@
       }
     },
     "required": [
-      "input",
-      "points"
+      "input"
     ],
     "additionalProperties": false,
     "x-pixelox-schema-version": "1.0.0"
@@ -246,6 +340,7 @@
     "PX1003",
     "PX1004",
     "PX1010",
+    "PX1013",
     "PX1101",
     "PX1103",
     "PX1105",

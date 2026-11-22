@@ -1,0 +1,371 @@
+{
+  "command": "render.splash",
+  "cli": "pixelox render splash",
+  "summary": "Liquid splash (crown or sheet) on a new layer",
+  "category": "render",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.splash.params.json",
+    "title": "pixelox render.splash parameters",
+    "description": "Liquid splash (crown or sheet) on a new layer",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "crown",
+          "sheet"
+        ],
+        "description": "crown (a ring rising from a pool) or sheet (streams thrown from a point) Type: choice.",
+        "default": "crown",
+        "x-pixelox-kind": "choice"
+      },
+      "at": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "Crown: center of the pool; sheet: where the liquid is thrown from (X,Y, px or %) Type: X,Y.",
+        "default": "50%,70%",
+        "x-pixelox-kind": "point"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Crown width or sheet reach in px or % of the shorter canvas side Type: length.",
+        "default": "60%",
+        "x-pixelox-kind": "length"
+      },
+      "angle": {
+        "type": "string",
+        "examples": [
+          "45"
+        ],
+        "description": "Sheet: throw direction in degrees (90 = up, 45 = up and right); crown: its axis Type: degrees.",
+        "default": "90",
+        "x-pixelox-kind": "angle"
+      },
+      "spread": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 10.0,
+            "maximum": 360.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Sheet: how wide the streams fan out, in degrees Range: 10..360. Type: number.",
+        "default": "120",
+        "x-pixelox-kind": "float"
+      },
+      "part": {
+        "type": "string",
+        "enum": [
+          "all",
+          "back",
+          "front"
+        ],
+        "description": "Crown: all, back (the pool and far wall: under a product), or front (the near wall: over it) Type: choice.",
+        "default": "all",
+        "x-pixelox-kind": "choice"
+      },
+      "drops": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 2000.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Flying drops around the splash (auto: 40) Range: 0..2000. Type: integer.",
+        "default": "auto",
+        "x-pixelox-kind": "int"
+      },
+      "liquid": {
+        "type": "string",
+        "enum": [
+          "water",
+          "milk",
+          "juice",
+          "cola",
+          "coffee",
+          "wine",
+          "oil"
+        ],
+        "description": "water, milk, juice, cola, coffee, wine, or oil Type: choice.",
+        "default": "water",
+        "x-pixelox-kind": "choice"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Recolor the liquid (keeps its clarity): e.g. '#ff5a1f' for orange soda Type: color.",
+        "x-pixelox-kind": "color"
+      },
+      "highlight": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Color of the highlights and reflections Type: color.",
+        "default": "#ffffff",
+        "x-pixelox-kind": "color"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Opacity of the splash in percent Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Put the splash layer above this layer (default: above the active layer, or on top) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: Splash) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.splash.result.json",
+    "title": "pixelox render.splash envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "render.splash"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

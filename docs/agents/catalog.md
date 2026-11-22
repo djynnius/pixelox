@@ -109,10 +109,14 @@ filter charcoal: Charcoal drawing: bold smudged strokes
 filter cutout: Cutout: few flat colors, simplified shapes
 filter denoise: Edge-aware noise reduction (non-local means)
 filter despeckle: Remove speckles while keeping edges
+filter displace: Displace by an image, layer, or noise map
+filter distort: Wave, ripple, twirl, pinch, spherize, or polar
 filter dust: Dust and scratches removal
 filter emboss: Emboss into a gray relief
 filter find-edges: Highlight edges (Sobel, inverted)
 filter gaussian: Gaussian blur
+filter glitch: RGB split, slice shifts, scanlines
+filter grain: Film grain (size-aware, tone-weighted)
 filter halftone: Halftone dot screen, mono or CMYK
 filter high-pass: High-pass filter for frequency separation
 filter ink: Pen and ink: crisp lines, solid blacks
@@ -131,6 +135,7 @@ filter vignette: Add (+) or remove (−) a vignette
 filter watercolor: Watercolor: soft washes, pooled edges, grain
 fill content-aware: Fill a region from its surroundings (inpaint) (ml)
 fill gradient: Fill with a linear, radial, angular, or reflected gradient
+fill noise: Clouds, smoke, fractal or cell noise
 fill pattern: Fill with a tiled image pattern
 fill solid: Fill a layer or region with a color
 retouch blemishes: Find (and heal) blemishes: small dark or light spots
@@ -175,11 +180,12 @@ transform scale: Scale a layer
 transform skew: Skew (shear) a layer
 transform straighten: Level a tilted horizon or edges
 transform trim: Crop away a uniform or transparent border
-transform warp: Grid-mesh warp of a layer
+transform warp: Warp with a preset (arc, flag...) or a mesh
 fx bevel: Add or replace a layer's bevel & emboss
 fx copy: Copy a layer's style stack to other layers
 fx drop-shadow: Add or replace a layer's drop shadow
 fx fire: Add or replace flames rising from a layer's outline
+fx grain: Add or replace a layer's film grain
 fx inner-glow: Add or replace a layer's inner glow
 fx inner-shadow: Add or replace a layer's inner shadow
 fx list: List a layer's style effects
@@ -217,8 +223,10 @@ svg use: Instance a symbol or element with <use>
 trace: Vectorize a bitmap into an SVG
 render 3d: Render primitives, extrusions, or OBJ scenes (CPU 3D)
 render d3: Run a d3 script (d3 bundle via --lib) to SVG or PNG
+render droplets: Condensation droplets clipped to a layer
 render js: Run a sandboxed JS script that draws to canvas or SVG
 render lens-flare: Add a camera lens flare as a new screen layer
+render splash: Liquid splash (crown or sheet) on a new layer
 render three: Run a three.js script (bundle via --lib) to SVG/PNG
 frames assemble FILES..: Build an animated GIF from stills
 frames extract: Explode an animated GIF or multi-page TIFF to stills

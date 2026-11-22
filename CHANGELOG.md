@@ -17,6 +17,38 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   palettes, and 15 `render js` generators (clouds, blobs, grunge, rays, particles, brush,
   splatter, splash, torn, crack, waves, ribbons, pattern, tiles, stand-ins). No images are
   included. Every documented command is parsed by the contract test.
+- `fill noise` (ADR 0016): seeded procedural textures on a layer or, with `--as-layer`, on a
+  new layer: `clouds` (Render Clouds; `--blend difference` is Difference Clouds), `smoke`
+  (curling wisps traced along a rising flow), `turbulence`, `ridged`, `cells`, and
+  `cell-edges` (Worley), with Perlin, simplex, or value bases, `--scale`, `--octaves`,
+  `--persistence`, `--lacunarity`, `--warp`, `--stretch`/`--angle`, `--contrast`, `--bias`,
+  `--tile` (seamless), and color `--stops`.
+- `filter grain`: film grain that is size-aware (`--size`, auto from the canvas), strongest
+  in the midtones (`--tone`), monochrome or colored (`--color`), with `--roughness`;
+  `--as-layer` adds a live grain adjustment layer that grains everything below it. `fx grain`
+  is the same grain as a live layer style on any layer (text and shapes stay editable).
+- `filter distort` (wave, ripple, twirl, pinch, spherize, polar, polar-inverse),
+  `filter displace` (a map from an image, another layer, or generated noise; Photoshop's
+  red/green mode or `--mode slope` for glass and fabric), and `filter glitch` (red/cyan
+  split, shifted slices, scanlines; seeded). All work as smart filters on placed layers.
+- `transform warp --preset`: Photoshop's 15 warp styles (arc, arc-lower, arc-upper, arch,
+  bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist)
+  with `--bend`, `--h-distort`, `--v-distort`, and `--orient`; live on placed layers. The
+  preset math is shared in `pixelox_core::warp_preset`. `--points` is no longer required
+  when `--preset` is given.
+- `render splash`: a liquid crown (`--part back|front` to stand a product in it) or a thrown
+  sheet, lit like glass, for water, milk, juice, cola, coffee, wine, or oil (`--color`
+  recolors). `render droplets`: condensation beads on a product, clipped to it, each bead
+  refracting the product behind it, with running drops and mist.
+- Error codes PX3341 (empty displacement map), PX3342 (a map layer cannot drive a smart
+  filter), PX3343 (nothing to put droplets on); warning PXW3010 (`--tile` adjusted the
+  noise). Cookbook page `docs/guides/cookbook/textures-and-liquids.md`.
+
+### Fixed
+- `render lens-flare --color` recolors the whole flare: the glow, the anamorphic streak, the
+  halo, and the ghosts take the color's hue at their own brightness (the core stays
+  white-hot). It used to multiply the lens's own colors, which barely tinted the blue movie
+  streak and left warm tints looking white.
 
 ## [0.4.1] — 2026-11-09
 

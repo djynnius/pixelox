@@ -66,7 +66,7 @@
         "examples": [
           "#0ea5e9"
         ],
-        "description": "Tint the whole flare with this color (default: the lens's own colors) Type: color.",
+        "description": "Recolor the flare: glow, streak, halo, and ghosts take this hue (the core stays white-hot); default: the lens's own colors Type: color.",
         "x-pixelox-kind": "color"
       },
       "layer": {

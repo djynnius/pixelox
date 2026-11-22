@@ -60,6 +60,7 @@ doctor
 export
 fill.content-aware
 fill.gradient
+fill.noise
 fill.pattern
 fill.solid
 filter.add-noise
@@ -69,10 +70,14 @@ filter.charcoal
 filter.cutout
 filter.denoise
 filter.despeckle
+filter.displace
+filter.distort
 filter.dust
 filter.emboss
 filter.find-edges
 filter.gaussian
+filter.glitch
+filter.grain
 filter.halftone
 filter.high-pass
 filter.ink
@@ -97,6 +102,7 @@ fx.bevel
 fx.copy
 fx.drop-shadow
 fx.fire
+fx.grain
 fx.inner-glow
 fx.inner-shadow
 fx.list
@@ -174,8 +180,10 @@ pipeline.run
 pipeline.validate
 render.3d
 render.d3
+render.droplets
 render.js
 render.lens-flare
+render.splash
 render.three
 replay
 retouch.blemishes
