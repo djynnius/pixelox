@@ -41,11 +41,27 @@ pub struct LayerMask {
     /// Feather radius in px applied when rendering (0 = none).
     #[serde(default)]
     pub feather: f32,
+    /// A live mask: computed from another layer whenever this layer renders (`mask add
+    /// --from-layer`); `mask` then holds the latest snapshot for readers of the pixels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<MaskLink>,
+}
+
+/// A layer mask that follows another layer's outline or brightness (ADR 0014).
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MaskLink {
+    /// Id of the source layer.
+    pub layer: String,
+    /// `alpha` (the source's outline: its transparency) or `luma` (its brightness).
+    pub channel: String,
+    /// Hide where the source shows instead of revealing it.
+    #[serde(default)]
+    pub invert: bool,
 }
 
 impl LayerMask {
     pub fn new(mask: Mask) -> LayerMask {
-        LayerMask { mask, enabled: true, density: 100.0, feather: 0.0 }
+        LayerMask { mask, enabled: true, density: 100.0, feather: 0.0, link: None }
     }
 
     /// Effective coverage at a canvas pixel: `1 - density·(1 - m)`.
@@ -127,9 +143,9 @@ impl BlendIf {
     }
 }
 
-/// A non-destructive filter on a placed layer (Photoshop's smart filter): a `filter` or
-/// `adjust` command recorded with its params and random stream, re-run on the placed
-/// content whenever the layer renders.
+/// A non-destructive filter on a placed, text, or shape layer (Photoshop's smart filter):
+/// a `filter` or `adjust` command recorded with its params and random stream, re-run on
+/// the layer's rendered content whenever the layer renders.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SmartFilter {
     /// Command id (`filter.gaussian`, `adjust.curves`).
@@ -226,7 +242,7 @@ pub struct Layer {
     /// Blend If ranges (`layer blend-if`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blend_if: Option<BlendIf>,
-    /// Smart filters of a placed layer, applied in order before its styles.
+    /// Smart filters of a placed, text, or shape layer, applied in order before its styles.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub smart_filters: Vec<SmartFilter>,
     /// Free-form properties (imported PSD text, notes).
@@ -726,7 +742,17 @@ impl Document {
             "blend": l.blend.name(),
             "clip": l.clip,
             "depth": depth,
-            "mask": l.mask.as_ref().map(|m| json!({"enabled": m.enabled, "density": m.density, "feather": m.feather, "coverage": round3(m.mask.coverage())})),
+            "mask": l.mask.as_ref().map(|m| {
+                let mut j = json!({"enabled": m.enabled, "density": m.density, "feather": m.feather, "coverage": round3(m.mask.coverage())});
+                if let Some(k) = &m.link {
+                    j["link"] = json!({
+                        "layer": self.find_by_id(&k.layer).map(|p| json!(self.layer(&p).name)).unwrap_or(Value::Null),
+                        "channel": k.channel,
+                        "invert": k.invert,
+                    });
+                }
+                j
+            }),
             "fx": l.fx.iter().map(|f| f.kind.clone()).collect::<Vec<_>>(),
             "bounds": crate::compose::layer_bounds(self, l).ok().flatten().map(|r| r.to_json()),
         });
@@ -770,6 +796,7 @@ impl Document {
     /// a recipe produces the same bytes whether its intermediate documents were saved
     /// (CLI steps) or kept in memory (pipelines, replay).
     pub fn quantize_to_storage(&mut self) {
+        self.refresh_mask_links();
         let levels = if self.depth == 16 { 65535.0f32 } else { 255.0f32 };
         let q = |v: &mut f32| *v = (v.clamp(0.0, 1.0) * levels).round() / levels;
         fn walk(layers: &mut [Layer], q: &(dyn Fn(&mut f32) + Sync)) {
@@ -793,6 +820,24 @@ impl Document {
         }
         for m in self.masks.values_mut() {
             m.data.par_iter_mut().for_each(q);
+        }
+    }
+
+    /// Re-read every live (linked) layer mask from its source, so the stored snapshot
+    /// matches what the compositor draws. Runs after every document step (from
+    /// [`Document::quantize_to_storage`]); a source that cannot render keeps the old snapshot.
+    pub fn refresh_mask_links(&mut self) {
+        let links: Vec<(LayerPath, MaskLink)> = self
+            .walk()
+            .into_iter()
+            .filter_map(|(p, l)| l.mask.as_ref().and_then(|m| m.link.clone()).map(|k| (p, k)))
+            .collect();
+        for (p, link) in links {
+            if let Ok(Some(m)) = crate::compose::linked_mask(self, &link) {
+                if let Some(lm) = &mut self.layer_mut(&p).mask {
+                    lm.mask = m;
+                }
+            }
         }
     }
 

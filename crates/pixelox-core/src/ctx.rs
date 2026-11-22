@@ -510,6 +510,12 @@ impl<'a> OpCtx<'a> {
                     .with_context("layer", l.name.clone())),
             };
         }
+        if let Some(layer) = r.strip_prefix("@luma:") {
+            // the layer's brightness where it is opaque (white reveals, black and transparent hide)
+            let p = doc.resolve(layer)?;
+            let link = crate::doc::MaskLink { layer: doc.layer(&p).id.clone(), channel: "luma".into(), invert: false };
+            return Ok(crate::compose::linked_mask(doc, &link)?.unwrap_or_else(|| Mask::new(doc.width, doc.height)));
+        }
         if let Some(layer) = r.strip_prefix("@alpha:") {
             let p = doc.resolve(layer)?;
             let l = doc.layer(&p);

@@ -30,7 +30,7 @@
         "examples": [
           "45"
         ],
-        "description": "Direction of motion in degrees (0 = horizontal, 90 = vertical) Type: degrees.",
+        "description": "Direction of motion in degrees counter-clockwise from the right (0 = horizontal, 90 = vertical, 45 = rising to the right) Type: degrees.",
         "default": "0",
         "x-pixelox-kind": "angle"
       },

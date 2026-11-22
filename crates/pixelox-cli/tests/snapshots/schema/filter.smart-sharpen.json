@@ -86,7 +86,7 @@
         "examples": [
           "45"
         ],
-        "description": "Direction of the motion blur in degrees (with --kind motion) Type: degrees.",
+        "description": "Direction of the motion blur in degrees counter-clockwise from the right (with --kind motion) Type: degrees.",
         "default": "0",
         "x-pixelox-kind": "angle"
       },

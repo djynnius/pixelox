@@ -240,7 +240,9 @@ impl Exporter<'_> {
 
     fn image_el(&mut self, l: &Layer) -> Result<Option<XEl>> {
         if let LayerKind::Placed { asset, rect, angle, .. } = &l.content {
-            if let (Some(a), true) = (self.doc.assets.get(asset), l.fx.is_empty() && l.mask.is_none()) {
+            if let (Some(a), true) =
+                (self.doc.assets.get(asset), l.fx.is_empty() && l.mask.is_none() && l.smart_filters.is_empty())
+            {
                 if let Some(mime) = mime_of(&a.ext) {
                     let [x, y, w, h] = *rect;
                     let mut el = XEl::new("image")
@@ -289,6 +291,9 @@ impl Exporter<'_> {
     fn layer(&mut self, l: &Layer) -> Result<Option<XEl>> {
         let id = self.unique_id(&l.name);
         let vector = matches!(l.content, LayerKind::Shape { .. } | LayerKind::Text { .. });
+        if vector && l.smart_filters.iter().any(|f| f.enabled) {
+            self.note(l, "smart filters are not exported for vector layers (rasterize the layer to keep them)");
+        }
         let mut el = match &l.content {
             LayerKind::Shape { spec } => {
                 self.counts[0] += 1;
