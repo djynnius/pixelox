@@ -582,7 +582,7 @@ fn barcode(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         Some(v) => return Err(Error::new("PX1013", format!("--module must be positive, got {v}"))),
         None => {
             let w = a.px("width", doc.width as f64, doc.dpi())?;
-            if !(w > 0.0) {
+            if !w.is_finite() || w <= 0.0 {
                 return Err(
                     Error::new("PX1013", format!("--width must be positive, got {w}")).with_context("param", "width")
                 );
@@ -601,7 +601,7 @@ fn barcode(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         }
         Some(_) => a.px("height", doc.height as f64, doc.dpi())?,
     };
-    if !(bars_h > 0.0) {
+    if !bars_h.is_finite() || bars_h <= 0.0 {
         return Err(Error::new("PX1013", "--height must be positive").with_context("param", "height"));
     }
     let text = a.switch("text", true);

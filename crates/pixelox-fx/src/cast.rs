@@ -282,7 +282,7 @@ impl Frame {
         let (fw, fh) = if swap { (h, w) } else { (w, h) };
         (Frame { swap, flip, w: fw, h: fh }, s)
     }
-    fn into_frame(&self, p: &[f32], c: usize) -> Vec<f32> {
+    fn forward(&self, p: &[f32], c: usize) -> Vec<f32> {
         // original size is (h, w) when swapped
         let mut v = if self.swap { transpose(p, self.h, self.w, c) } else { p.to_vec() };
         if self.flip {
@@ -290,7 +290,7 @@ impl Frame {
         }
         v
     }
-    fn out_of_frame(&self, p: &[f32], c: usize) -> Vec<f32> {
+    fn back(&self, p: &[f32], c: usize) -> Vec<f32> {
         let mut v = if self.flip { flip_h(p, self.w, self.h, c) } else { p.to_vec() };
         if self.swap {
             v = transpose(&v, self.w, self.h, c);
@@ -426,19 +426,19 @@ fn sweep(a: &Mask, colors: Option<&Image>, angle: f64, len: f64) -> (Mask, Optio
     let (frame, s) = Frame::new(d, w, h);
     let step = (1.0 + s * s).sqrt();
     let steps = (len / step).max(0.0);
-    let alpha = frame.into_frame(&a.data, 1);
+    let alpha = frame.forward(&a.data, 1);
     let rgb: Option<Vec<f32>> = colors.map(|img| {
         let pm: Vec<f32> = img.data.chunks(4).flat_map(|p| [p[0] * p[3], p[1] * p[3], p[2] * p[3]]).collect();
-        frame.into_frame(&pm, 3)
+        frame.forward(&pm, 3)
     });
     let hits = sweep_frame(&alpha, rgb.as_deref(), frame.w, frame.h, s, steps);
     let cov: Vec<f32> = hits.iter().map(|h| h.cov).collect();
-    let mask = Mask { width: a.width, height: a.height, data: frame.out_of_frame(&cov, 1) };
+    let mask = Mask { width: a.width, height: a.height, data: frame.back(&cov, 1) };
     let extra = colors.map(|_| {
         let px: Vec<f32> = hits.iter().flat_map(|h| [h.rgb[0], h.rgb[1], h.rgb[2], 1.0]).collect();
         let dist: Vec<f32> = hits.iter().map(|h| h.dist * step as f32).collect();
-        let img = Image { width: a.width, height: a.height, data: frame.out_of_frame(&px, 4) };
-        (img, frame.out_of_frame(&dist, 1))
+        let img = Image { width: a.width, height: a.height, data: frame.back(&px, 4) };
+        (img, frame.back(&dist, 1))
     });
     (mask, extra)
 }

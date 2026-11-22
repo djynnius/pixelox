@@ -419,7 +419,7 @@ fn qr(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let size = a.px("size", short, doc.dpi())?;
     let quiet = a.usize("quiet-zone")?;
     let modules = n + 2 * quiet;
-    if !(size > 0.0) {
+    if !size.is_finite() || size <= 0.0 {
         return Err(Error::new("PX1013", format!("--size must be positive, got {size}")).with_context("param", "size"));
     }
     // whole-pixel modules (rounded down) keep the code crisp once they are 3 px or more

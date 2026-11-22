@@ -270,7 +270,7 @@ fn icon(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let want = a.str("icon").unwrap_or_default();
     let ic = find(&want).ok_or_else(|| unknown(&want))?;
     let size = a.px("size", doc.width.min(doc.height) as f64, doc.dpi())?;
-    if !(size > 0.0) {
+    if !size.is_finite() || size <= 0.0 {
         return Err(Error::new("PX1013", format!("--size must be positive, got {size}")).with_context("param", "size"));
     }
     let (x, y) = prims::place_box(a, doc, size, size)?;
