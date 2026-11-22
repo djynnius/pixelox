@@ -1,136 +1,148 @@
 # Typography for posters
 
 Type does most of the work on a poster. This file covers how pixelox sets type, which font
-to use for which look (with free look-alikes and safe fallbacks), how to pair fonts, and
-the size, spacing, and placement numbers that separate designed from default.
+class to use for which look (with free look-alikes), how to pair fonts, and the size,
+spacing, and placement numbers that separate designed from default.
 
 ## How pixelox sets type
 
 | You want | Do this |
 | --- | --- |
+| A font | `--font @condensed-heavy` (a class: the best installed face of that kind) or `--font "Bebas Neue"` (one family) |
 | A font size | `--size 12%` is 12% of the canvas **height** (best: scales with the canvas); also `64px`, `48pt` |
 | A cap height | font size = cap height / 0.72 for most faces (Impact / 0.8, Copperplate / 0.56) |
-| An exact line width | add the text at any size, then `transform scale --layer NAME --size 920x` (stays live text; with two numbers, `920x300`, it stretches and turns the text into pixels) |
-| An exact position of the visible letters | `transform move --layer NAME --to X,Y --anchor tl` (X,Y take px or %; anchor `t` centers on X) |
-| A position by text box | `--at X,Y --anchor c` on `text add`; the box includes space above the caps, so tops land 10 to 25% of the font size lower than Y |
+| An exact line width | `--fit-width 920` (px) or `--fit-width 85%` (of the canvas width) instead of `--size`; `--fit-box 920x300` for the largest size that fits a box. The fit is redone when the words change |
+| An exact position of the visible letters | add `--anchor-to ink`: `--at 80,90` then places the top-left of the letters (with `--anchor c`, their center) instead of the text box |
+| A position by text box | `--at X,Y --anchor c` alone; the box includes space above the caps, so tops land 10 to 25% of the font size lower than Y |
 | Several lines in one layer | `--content $'LINE ONE\nLINE TWO'` (the `$'...'` form; a plain "\n" in double quotes prints a backslash) |
 | A wrapped paragraph | `--box 600x400` wraps at 600 px; `--align left`, `center`, `right`, `justify` |
-| Weight | `--weight 100..900`; pixelox picks the nearest face in the family |
+| Weight | `--weight 100..900`; pixelox picks the nearest weight of the **same width** and says so (PXW4013) |
+| A narrower or wider face | `--stretch condensed` or `--stretch expanded` picks a real face of that width when the family has one |
+| Stretched letters | `--scale-x 80%` (narrower) or `150%` (wider); `--scale-y`; the text stays live |
+| A little heavier | `--faux-bold 20` (about one weight step; up to 80) |
 | Italic | `--style italic` (a missing italic is faked by slanting, warning PXW4002: avoid on display type) |
 | Letter spacing | `--tracking N` in 1/1000 em: 100 = 10% of the font size |
 | Line spacing | `--leading 95%` (percent of the font size) |
-| All caps | type the content in capitals; there is no case switch |
-| Outline, gradient, shadow | `--stroke` on the text; `fx overlay`, `fx drop-shadow`, `fx stroke` on the layer |
-| Vertical, curved | `transform rotate --degrees -90`; `text on-path` |
-| Restyle later | `text style --layer NAME --font F --tracking N`; `text edit` changes the words |
+| All caps | `--case upper` (also `lower`, `title`); the content keeps what you typed |
+| Outline, gradient, shadow | `--stroke` on the text; `fx overlay`, `fx drop-shadow`, `fx stroke`, `fx extrude`, `fx long-shadow` on the layer |
+| Arched, waving, rising | `--warp arc --bend 35`, or `pixelox text warp d.pxo --in-place --layer NAME --preset rise --bend 40` (T-warp-type) |
+| Vertical, on a circle | `transform rotate --degrees -90`; `text on-path --fit shrink` (T-arc-type) |
+| Restyle later | `text style --layer NAME --font F --tracking N --fit-width W`; `text edit` changes the words |
+
+Everything in this table keeps the layer live text. Filters (`filter gaussian`, `filter
+glitch`) are live on text as well. Only `transform skew`, `transform perspective`, and
+`transform flip` turn text into pixels (warning PXW2003): finish the wording first.
 
 Things that bite:
 
-* **A font that is not installed is an error** (PX4102, exit 2), not a silent fallback:
-  follow "Fonts on your machine" below before setting any type.
-* **The nearest weight may be a condensed face.** On macOS, `Helvetica Neue` at 900 gives
-  Condensed Black and `Futura` at 800 gives Condensed ExtraBold. Read `font.postscript` in
-  the JSON result to see what you got.
+* **A font that is not installed is replaced, not refused.** The result's `warnings` say
+  what was drawn instead (PXW4010) and how to get the real one. Read them: a substitute can
+  be wider, and a class with nothing installed (`@stencil` on most machines) falls back to
+  a different kind of face.
+* **A weight never changes the width.** `"Helvetica Neue" --weight 900` draws Bold and warns
+  (PXW4013), because the only 900 face is condensed: ask for it with `--stretch condensed`.
+* **Display classes have one weight.** Give `--weight` with the text classes
+  (`@neo-grotesque`, `@geometric-sans`, `@condensed`, `@oldstyle`, `@didone`, `@slab`,
+  `@script-formal`); leave it out with `@condensed-heavy`, `@heavy-wide`, `@rounded-heavy`,
+  `@brush`, and the other display classes, or the face is thickened artificially (PXW4002).
 * **Width differs wildly between fonts.** Never guess the size of a headline that must fit
-  a width: fit it with `transform scale` (T-fit-width).
-* Filters and `fill` need pixels: run `layer rasterize` on a text layer first, and do it
-  last, because rasterized text can no longer be edited.
+  a width: use `--fit-width` (T-fit-width).
 * Do not put a `|` character or three dots in a row in `--content`; draw a divider with
   `shape line`, and use a single ellipsis-free phrase.
-* `text on-path` silently drops letters that do not fit on the path: check `bounds` and
-  the render.
+* `text on-path` reports letters that do not fit on the path (PXW4012): add `--fit shrink`.
 
-## Fonts on your machine: do this first
+## Fonts: name the class
 
-Recipes in this skill name macOS fonts. On another machine those names fail (PX4102), so
-before you set any type:
+Recipes in this skill name most fonts by **class**: `--font @condensed-heavy` means "the
+tall, tight, loud one", and pixelox draws the best face of that kind that is installed:
+Impact on macOS and Windows, Liberation Sans Narrow Bold on Linux, Anton when it has been
+downloaded. The same command works on every machine.
 
-1. **List what is installed.** `pixelox fonts list --json` returns `result.families[]`
-   (each with `family` and `faces[].weight`). To test one name:
-   `pixelox fonts list --family "Arial Black" --json` (an empty list means missing).
-2. **Decide the class, then the font.** For each role in your design (headline, body,
-   accent), pick the font *class* you want from the table below, then take the first family
-   in that row that is installed, reading left to right: look-alike (if the user has it),
-   macOS, Windows, Linux.
-3. **Translate recipe fonts.** When a recipe names a font you do not have, look up its
-   class in "Recipe fonts and their classes" and substitute the same way. Change every
-   `--font` (and drop a `--weight` the substitute lacks; pixelox picks the nearest).
-4. **Re-fit.** Widths differ between fonts. After substituting, fit headline lines again
-   with `transform scale --size Wx` (T-fit-width) and look at the result.
-5. **Nothing installed for the class?** Three options, in order:
-   * Ask the user for the font files, or for permission to download a free look-alike
-     (all the Google Fonts named here are open-licensed), put the `.ttf` / `.otf` files in
-     a folder, and register it: `pixelox fonts add ./fonts`. The family name then works.
-   * Shape a font you do have: T-stretch-type compresses, widens, slants, or fattens;
-     T-stencil-type cuts stencil gaps.
-   * Use a generic name: `sans-serif`, `serif`, or `monospace` always resolve (to the
-     system default, and on a machine with no fonts at all to the embedded **Tuffy**, a
-     plain medium-weight sans). With Tuffy alone, build hierarchy from size, capitals,
-     tracking, color, and a same-color `fx stroke` for "bold", not from font changes.
+1. **See what you have.** `pixelox fonts classes` lists all 28 classes with the face each
+   one draws here and its status: `member` (a real face of the class), `stand-in` (close,
+   warning PXW4014), or `substitute` (nothing of the class is installed, warning PXW4010).
+   `pixelox fonts classes @didone --json` shows one class with every candidate.
+2. **Pick a class for each role** (headline, body, accent) from the table below and write
+   `--font @class`. Two classes at most per design.
+3. **A stand-in or substitute where the look matters?** The free families in the table are
+   open-licensed Google Fonts that pixelox can download. **Ask the user first**, then run
+   `pixelox fonts get @stencil -y` (the best free member of a class) or
+   `pixelox fonts get "Bebas Neue" -y` (one family). Without `-y` the command refuses
+   (PX1540, exit 6). Never add `-y` on your own. A downloaded family works at once, by
+   class and by name.
+4. **Want one exact face?** Name the family: `--font "DIN Condensed"`. Where it is not
+   installed, pixelox draws the closest face of its class and warns (PXW4010); the layer
+   keeps the name, so the document draws the real font wherever it exists.
+5. **Re-fit after any substitution.** Widths differ between fonts. Lines set with
+   `--fit-width` refit themselves; check lines set with `--size` for overflow and look at
+   the result.
+6. **Nothing installed at all?** The generic names `sans-serif`, `serif`, and `monospace`
+   always resolve (on a machine with no fonts, to the embedded **Tuffy**, a plain
+   medium-weight sans). With Tuffy alone, build hierarchy from size, capitals, tracking,
+   color, and `--faux-bold`, not from font changes, and offer the download.
 
-Record the fonts you used, and any substitution, in your delivery note.
+Record the fonts you used, and any substitution the warnings reported, in your delivery
+note. For a build that must fail instead of substituting (CI), add `--strict-font`.
 
-### Recipe fonts and their classes
+### Families that recipes name directly
 
-| Font named in recipes | Class to substitute from |
+A few recipes name a family because that exact face is the look. Elsewhere each is
+replaced from the class shown; use the class yourself when you adapt the recipe.
+
+| Family named in recipes | Its class |
 | --- | --- |
-| Impact, DIN Condensed, `Helvetica Neue` 900, Arial Narrow 700, `Futura` 800 | Ultra-condensed heavy grotesque |
-| Avenir Next Condensed | Condensed gothic (regular weights) or, at 700 to 900, ultra-condensed heavy |
-| Arial Black, `Avenir Next` 900, Gill Sans 700 | Heavy wide grotesque |
-| Helvetica Neue, Helvetica, Arial, Verdana, Trebuchet MS, DIN Alternate | Neo-grotesque |
-| Avenir Next, Avenir, Futura | Geometric sans (at 100 to 300: thin wide sans) |
-| Arial Rounded MT Bold | Heavy rounded grotesque |
-| Didot, Bodoni 72, Big Caslon | High-contrast didone |
-| Baskerville, Times New Roman, Georgia | Old-style / transitional serif |
-| Copperplate | Engraved / inscriptional caps |
-| Rockwell, Superclarendon | Slab serif (Superclarendon 900: fat display) |
-| Snell Roundhand, Zapfino, Savoye LET | Formal script (Savoye LET: hairline script) |
-| Brush Script MT, SignPainter | Brush script |
-| Marker Felt, Noteworthy, Bradley Hand | Marker and handwriting |
-| Luminari | Uncial / medieval |
-| Phosphate | Display art-deco / retro |
-| Menlo | Monospace |
+| DIN Condensed, `"Helvetica Neue" --weight 900 --stretch condensed`, Arial Narrow 700 | `@condensed-heavy` |
+| Avenir, Futura, Gill Sans, Trebuchet MS | `@geometric-sans` (Futura 700 in tracked caps: `@deco`) |
+| Verdana | `@neo-grotesque` |
+| DIN Alternate | `@techno` |
+| Bodoni 72 | `@didone` |
+| Big Caslon | `@engraved` (as a text face: `@oldstyle`) |
+| Times New Roman, Georgia | `@oldstyle` |
+| Brush Script MT | `@brush` |
+| Noteworthy, Bradley Hand | `@marker` |
+| Zapfino | `@script-formal` |
 
 ## Font classes
 
-Seen across the poster set. "Look-alike" fonts are free (Google Fonts) and are the ideal;
-the system columns are stand-ins that ship with the OS (Windows entries marked * come
-with Microsoft Office). Pick the first one that `fonts list` reports.
+Seen across the poster set. The free families are the ideal for each class (step 3 above
+gets them); the system columns are what the class draws when nothing has been
+downloaded (Windows entries marked * come with Microsoft Office).
 
-| Class | Look, where it is used | Free look-alikes | macOS | Windows | Linux |
+| Class (`--font`) | Look, where it is used | Free families | macOS | Windows | Linux |
 | --- | --- | --- | --- | --- | --- |
-| Ultra-condensed heavy grotesque | tall, tight, loud; event flyers, film titles, type blocks | Anton, League Gothic, Bebas Neue, Oswald 700 | Impact, DIN Condensed, `Helvetica Neue` 900 | Impact, Bahnschrift Condensed (700) | Liberation Sans Narrow Bold, DejaVu Sans Condensed Bold |
-| Ultra-compressed display (narrower than Impact) | skyscraper letters that fill a tall column | Six Caps, Antonio 700, Big Shoulders Display 900 | DIN Condensed plus T-stretch-type | Bahnschrift Condensed, Onyx* | Liberation Sans Narrow Bold plus T-stretch-type |
-| Condensed gothic, regular weight | sub-heads, dates, billing blocks, labels | Oswald 400, Barlow Condensed, Roboto Condensed, Antonio 300 | Avenir Next Condensed 400 to 600, Arial Narrow | Bahnschrift Condensed (400), Arial Narrow* | Liberation Sans Narrow, DejaVu Sans Condensed |
-| Hairline condensed caps | elegant tall thin titles, fashion | Antonio 100, Big Shoulders Display 100, Oswald 200 | `Avenir Next Condensed` 275 | Bahnschrift Light Condensed | Liberation Sans Narrow (no hairline: use small, tracked) |
-| Heavy wide grotesque | chunky, confident; sale, sport, protest | Archivo Black, Inter 900, Rubik 900 | Arial Black, `Avenir Next` 900 | Arial Black, Segoe UI Black | DejaVu Sans Bold, Noto Sans Black |
-| Extended grotesque, upright or italic | wide and fast: cars, sport, youth church, tech | Archivo Expanded 800, Unbounded, Krona One, Syncopate | Arial Black plus T-stretch-type (widen 1.2x, skew -12) | Arial Black plus T-stretch-type | DejaVu Sans Bold (already wide) plus skew |
-| Neo-grotesque | neutral, Swiss, corporate | Inter, Archivo, Roboto, Work Sans | Helvetica Neue, Helvetica, Arial | Arial, Segoe UI | Liberation Sans, DejaVu Sans, Noto Sans |
-| Geometric sans | round, modern, friendly tech | Montserrat, Poppins, Outfit, Jost, Mulish | Avenir Next, Futura, Avenir | Century Gothic*, Segoe UI | Noto Sans, Ubuntu, Cantarell |
-| Thin wide sans | airy, premium tech, fashion | Montserrat 200, Raleway 200, Jost 200 | `Avenir Next` 275, `Helvetica Neue` 100 | Segoe UI Light | Noto Sans Light, Ubuntu Light |
-| Thin monoline rounded sans | soft, friendly, wellness, kids tech | Quicksand, Comfortaa, Nunito 200, Varela Round | `Avenir Next` 275, Arial Rounded MT Bold (heavier) | Segoe UI Light | Ubuntu Light |
-| Heavy rounded grotesque | food, kids, playful retail, chunky statements | Fredoka 700, Nunito 900, Baloo 2 800, Lilita One, Rubik 800 | Arial Rounded MT Bold (fatten with T-stretch-type) | Arial Rounded MT Bold*, Segoe UI Black | Ubuntu Bold |
-| Squared techno sans | sci-fi, gaming, fintech, devices | Orbitron, Rajdhani, Chakra Petch, Oxanium, Michroma | DIN Alternate, Futura 700 caps tracked 60 | Bahnschrift, Agency FB* | Ubuntu Bold, DejaVu Sans Bold |
-| High-contrast didone | glamorous, editorial, mastheads | Playfair Display, Bodoni Moda, DM Serif Display, Abril Fatface | Didot, Bodoni 72 | Bodoni MT*, Georgia Bold | DejaVu Serif Bold, Noto Serif Display |
-| Condensed didone masthead | tall magazine nameplates | Bodoni Moda (condensed cut), Rozha One, Chonburi | Didot 700 plus T-stretch-type (0.8x width), Big Caslon | Bodoni MT Condensed*, Onyx* | DejaVu Serif Condensed Bold |
-| Old-style / transitional serif | literary, calm, book covers | EB Garamond, Cormorant, Libre Baskerville, Lora | Baskerville, Hoefler Text, Palatino, Georgia | Georgia, Palatino Linotype, Cambria | Liberation Serif, Noto Serif, DejaVu Serif |
-| Swash and decorative serif | fantasy and romance titles, one ornate capital | Cinzel Decorative, Cormorant Garamond Italic, IM Fell English, Playfair Display Italic | a Zapfino capital with Baskerville lowercase; Apple Chancery | Gabriola, Monotype Corsiva* | Liberation Serif Italic |
-| Engraved / inscriptional caps | film credits, luxury, ceremony | Cinzel, Marcellus, Cormorant SC | Copperplate, Optima, Big Caslon | Copperplate Gothic*, Perpetua Titling* | DejaVu Serif (caps, tracked 100) |
-| Uncial / medieval | fantasy, folklore, heritage | Uncial Antiqua, MedievalSharp, Metamorphous, New Rocker | Luminari, Herculanum | Old English Text MT*, Viner Hand ITC* | (register a font) |
-| Blackletter | gothic, metal, tradition, mastheads | UnifrakturCook, Pirata One | none close: Luminari is the nearest | Old English Text MT* | (register a font) |
-| Slab serif | sturdy, retro, western, editorial | Roboto Slab, Zilla Slab, Bitter, Arvo, Alfa Slab One | Rockwell, American Typewriter, Superclarendon | Rockwell*, Cambria Bold, Courier New Bold | DejaVu Serif Bold, Noto Serif Bold |
-| Fat display: chunky slab, cut-paper, Cooper style | 1970s warmth, food, soul and funk posters, hand-cut lettering | Ultra, Chango, Titan One, Bowlby One, Shrikhand, Rubik 900 | `Superclarendon` 900; Arial Rounded MT Bold fattened | Cooper Black*, Rockwell Extra Bold* | DejaVu Serif Bold fattened |
-| Formal script | weddings, worship, elegance | Great Vibes, Allura, Pinyon Script | Snell Roundhand, Zapfino | Segoe Script, Edwardian Script ITC* | (register a font) |
-| Hairline and signature script | thin autograph accents, fashion, beauty | Mrs Saint Delafield, Sacramento, Parisienne, Dancing Script | Savoye LET, `Snell Roundhand` 500, Bradley Hand | Lucida Handwriting, Freestyle Script* | (register a font) |
-| Brush script, also heavy script wordmarks | energy, handmade, lifestyle, retro soda marks | Yellowtail, Pacifico, Lobster, Kaushan Script | SignPainter, Brush Script MT | Brush Script MT*, Segoe Script Bold | (register a font) |
-| Marker and handwriting, dry-brush caps | notes, street, zines, shouted captions | Permanent Marker, Rock Salt, Caveat Brush, Amatic SC, Patrick Hand SC | Marker Felt, Noteworthy, Bradley Hand, Chalkduster; or Impact with T-distress-type | Ink Free, Segoe Print | (register a font) |
-| Stencil | military, street, industrial | Stardos Stencil, Allerta Stencil, Saira Stencil One | none: T-stencil-type on Impact | Stencil* | T-stencil-type on Liberation Sans Narrow Bold |
-| Monospace | code, tech, receipts, captions | JetBrains Mono, IBM Plex Mono, Space Mono | Menlo, Courier New, Monaco | Consolas, Courier New | DejaVu Sans Mono, Liberation Mono |
-| Display art-deco, unicase, retro | 1920s to 1970s posters, club nights | Limelight, Monoton, Righteous, Bungee, Fascinate | Phosphate (inline), Copperplate, Futura 700 | Broadway*, Gill Sans Ultra Bold* | (register a font) |
+| `@condensed-heavy` | tall, tight, loud; event flyers, film titles, type blocks | Anton, League Gothic, Bebas Neue, Oswald 700 | Impact, DIN Condensed, `Helvetica Neue` 900 condensed | Impact, Bahnschrift Condensed (700) | Liberation Sans Narrow Bold, DejaVu Sans Condensed Bold |
+| `@compressed` | skyscraper letters, narrower than Impact, that fill a tall column | Six Caps, Antonio 700, Big Shoulders Display 900 | DIN Condensed (stand-in; add `--scale-x 70%`) | Bahnschrift Condensed, Onyx* | Liberation Sans Narrow Bold plus `--scale-x 70%` |
+| `@condensed` | condensed gothic at regular weights: sub-heads, dates, billing blocks, labels | Oswald 400, Barlow Condensed, Roboto Condensed, Antonio 300 | Avenir Next Condensed 400 to 700, Arial Narrow | Bahnschrift Condensed (400), Arial Narrow* | Liberation Sans Narrow, DejaVu Sans Condensed |
+| `@condensed-hairline` | elegant tall thin titles, fashion | Antonio 100, Big Shoulders Display 100, Oswald 200 | Avenir Next Condensed Ultra Light | Bahnschrift Light Condensed | Liberation Sans Narrow (no hairline: use small, tracked) |
+| `@heavy-wide` | chunky, confident; sale, sport, protest | Archivo Black, Inter 900, Rubik 900 | Arial Black, `Avenir Next` 900 | Arial Black, Segoe UI Black | DejaVu Sans Bold, Noto Sans Black |
+| `@extended` | wide and fast, upright or italic: cars, sport, youth church, tech | Archivo Expanded 800, Unbounded, Krona One, Syncopate | Arial Black (stand-in; add `--scale-x 125% --style italic`) | Arial Black plus `--scale-x 125%` | DejaVu Sans Bold (already wide) |
+| `@neo-grotesque` | neutral, Swiss, corporate | Inter, Archivo, Roboto, Work Sans | Helvetica Neue, Helvetica, Arial | Arial, Segoe UI | Liberation Sans, DejaVu Sans, Noto Sans |
+| `@geometric-sans` | round, modern, friendly tech | Montserrat, Poppins, Outfit, Jost, Mulish | Avenir Next, Futura, Avenir | Century Gothic*, Segoe UI | Noto Sans, Ubuntu, Cantarell |
+| `@thin-sans` | thin and wide: airy, premium tech, fashion | Montserrat 200, Raleway 200, Jost 200 | Avenir Next Ultra Light, `Helvetica Neue` 100 | Segoe UI Light | Noto Sans Light, Ubuntu Light |
+| `@rounded-thin` | thin monoline rounded: soft, friendly, wellness, kids tech | Quicksand, Comfortaa, Nunito 200, Varela Round | Avenir Next Ultra Light (stand-in) | Segoe UI Light | Ubuntu Light |
+| `@rounded-heavy` | food, kids, playful retail, chunky statements | Fredoka 700, Nunito 900, Baloo 2 800, Lilita One, Rubik 800 | Arial Rounded MT Bold (fatten with `--faux-bold 40`) | Arial Rounded MT Bold*, Segoe UI Black | Ubuntu Bold |
+| `@techno` | squared sans: sci-fi, gaming, fintech, devices | Orbitron, Rajdhani, Chakra Petch, Oxanium, Michroma | DIN Alternate (stand-in), Futura 700 caps tracked 60 | Bahnschrift, Agency FB* | Ubuntu Bold, DejaVu Sans Bold |
+| `@didone` | high contrast: glamorous, editorial, mastheads | Playfair Display, Bodoni Moda, DM Serif Display, Abril Fatface | Didot, Bodoni 72 | Bodoni MT*, Georgia Bold | DejaVu Serif Bold, Noto Serif Display |
+| `@didone-condensed` | tall magazine nameplates | Rozha One, Bodoni Moda (condensed cut), Chonburi | Didot 700 (stand-in; add `--scale-x 80%`), Big Caslon | Bodoni MT Condensed*, Onyx* | DejaVu Serif Condensed Bold |
+| `@oldstyle` | old-style and transitional serifs: literary, calm, book covers | EB Garamond, Cormorant, Libre Baskerville, Lora | Baskerville, Hoefler Text, Palatino, Georgia | Georgia, Palatino Linotype, Cambria | Liberation Serif, Noto Serif, DejaVu Serif |
+| `@swash-serif` | fantasy and romance titles, one ornate capital | Cinzel Decorative, Cormorant Garamond Italic, IM Fell English, Playfair Display Italic | Apple Chancery; a Zapfino capital with Baskerville lowercase | Gabriola, Monotype Corsiva* | Liberation Serif Italic |
+| `@engraved` | inscriptional caps: film credits, luxury, ceremony | Cinzel, Marcellus, Cormorant SC | Copperplate, Optima, Big Caslon | Copperplate Gothic*, Perpetua Titling* | DejaVu Serif (caps, tracked 100) |
+| `@uncial` | medieval: fantasy, folklore, heritage | Uncial Antiqua, MedievalSharp, Metamorphous, New Rocker | Luminari, Herculanum | Old English Text MT*, Viner Hand ITC* | (download one) |
+| `@blackletter` | gothic, metal, tradition, mastheads | UnifrakturMaguntia, UnifrakturCook, Pirata One | Luminari (stand-in) | Old English Text MT* | (download one) |
+| `@slab` | sturdy, retro, western, editorial | Roboto Slab, Zilla Slab, Bitter, Arvo, Alfa Slab One | Rockwell, American Typewriter, Superclarendon | Rockwell*, Cambria Bold, Courier New Bold | DejaVu Serif Bold, Noto Serif Bold |
+| `@fat-display` | chunky slab, cut-paper, Cooper style: 1970s warmth, food, soul and funk posters | Ultra, Chango, Titan One, Bowlby One, Shrikhand, Rubik 900 | Superclarendon Black; Arial Rounded MT Bold fattened | Cooper Black*, Rockwell Extra Bold* | DejaVu Serif Bold fattened |
+| `@script-formal` | weddings, worship, elegance | Great Vibes, Allura, Pinyon Script | Snell Roundhand, Zapfino | Segoe Script, Edwardian Script ITC* | (download one) |
+| `@script-signature` | hairline autograph accents, fashion, beauty | Mrs Saint Delafield, Sacramento, Parisienne, Dancing Script | Savoye LET, `Snell Roundhand` 500, Bradley Hand | Lucida Handwriting, Freestyle Script* | (download one) |
+| `@brush` | brush script and heavy script wordmarks: energy, handmade, lifestyle, retro soda marks | Yellowtail, Pacifico, Lobster, Kaushan Script | SignPainter, Brush Script MT | Brush Script MT*, Segoe Script Bold | (download one) |
+| `@marker` | marker, handwriting, dry-brush caps: notes, street, zines, shouted captions | Permanent Marker, Rock Salt, Caveat Brush, Amatic SC, Patrick Hand SC | Marker Felt, Noteworthy, Bradley Hand, Chalkduster | Ink Free, Segoe Print | (download one) |
+| `@stencil` | military, street, industrial | Allerta Stencil, Stardos Stencil, Saira Stencil One | none: download one, or cut the gaps (T-stencil-type) | Stencil* | none: download one, or T-stencil-type |
+| `@mono` | code, tech, receipts, captions | JetBrains Mono, IBM Plex Mono, Space Mono | Menlo, Courier New, Monaco | Consolas, Courier New | DejaVu Sans Mono, Liberation Mono |
+| `@deco` | art-deco, unicase, retro display: 1920s to 1970s posters, club nights | Limelight, Monoton, Righteous, Bungee, Fascinate | Phosphate (inline), Copperplate, Futura 700 | Broadway*, Gill Sans Ultra Bold* | (download one) |
 
-Family quirks on macOS: DIN Condensed exists only in bold; `Avenir Next` 300 snaps to
-Ultra Light (use 400); `Baskerville` 600 is much heavier than 400; `Helvetica Neue` 900 and
-`Futura` 800 are condensed faces.
+Family quirks on macOS: DIN Condensed exists only in bold; `Avenir Next` has no Light, so
+300 draws Ultra Light (use 400) and 800 draws Heavy; `Baskerville` 600 is much heavier than
+400; the 900 face of `Helvetica Neue` and the 800 face of `Futura` are condensed, so they
+need `--stretch condensed`.
 
 ### How wide a headline will be
 
@@ -139,20 +151,21 @@ pixelox on macOS faces). Use it to predict whether a headline fits before you se
 
 | Font (weight) | Width / cap height | Cap height / font size |
 | --- | --- | --- |
-| League Gothic, Anton (look-alikes) | about 3.0 to 3.7 | 0.72 |
+| League Gothic, Anton (free `@condensed-heavy` families) | about 3.0 to 3.7 | 0.72 |
 | DIN Condensed (700) | 4.3 | 0.73 |
-| Impact | 4.8 | 0.83 |
-| Avenir Next Condensed (700) | 5.3 | 0.75 |
-| Helvetica Neue (900, condensed black), Arial Narrow (700), Futura (800) | 5.7 | 0.75 to 0.79 |
-| Helvetica Neue (300 / 700) | 6.5 / 7.0 | 0.75 |
-| Avenir Next (500 / 900), Futura (700) | 6.7 / 7.3 | 0.75 to 0.80 |
+| Impact (`@condensed-heavy` on macOS and Windows) | 4.8 | 0.83 |
+| Avenir Next Condensed (700) (`@condensed --weight 700`) | 5.3 | 0.75 |
+| Helvetica Neue (900, `--stretch condensed`), Arial Narrow (700), Futura (800, `--stretch condensed`) | 5.7 | 0.75 to 0.79 |
+| Helvetica Neue (300 / 700) (`@neo-grotesque`) | 6.5 / 7.0 | 0.75 |
+| Avenir Next (500 / 900) (`@geometric-sans`), Futura (700) | 6.7 / 7.3 | 0.75 to 0.80 |
 | Didot (700), Bodoni 72 (700), Baskerville (700), Rockwell (700) | 6.8 to 7.7 | 0.69 to 0.77 |
-| Arial Black, Gill Sans (700), Superclarendon (900) | 8.0 to 8.5 | 0.70 to 0.78 |
-| Copperplate (700) | 9.7 | 0.56 |
+| Arial Black (`@heavy-wide`), Gill Sans (700), Superclarendon (900) | 8.0 to 8.5 | 0.70 to 0.78 |
+| Copperplate (700) (`@engraved --weight 700`) | 9.7 | 0.56 |
 
 Example: a 9-letter line in Impact with a cap height of 16% H on a 1080x1350 canvas is
 `4.8 x 216 = 1037 px` wide: too wide for a canvas with 8% margins (918 px), so either the
-cap height drops to 14% or the face changes to a narrower one.
+cap height drops to 14% or the face changes to a narrower one. Or skip the arithmetic: set
+the line with `--fit-width 918` and read the height from `bounds`.
 
 ## Size scale
 
@@ -205,18 +218,18 @@ Pick one row for the format and keep the ratios.
    tech leans thin or geometric sans and mono; street and sport lean condensed heavy and
    distressed; food leans rounded and brush; fashion leans didone or wide thin sans.
 
-Proven pairs (display / text), each with system stand-ins:
+Proven pairs (display / text), as classes with a free family and a system face for each:
 
 | Mood | Display | Text |
 | --- | --- | --- |
-| Loud event | Anton (Impact) | Montserrat 500 and 800 (Avenir Next) |
-| Swiss / corporate | Inter 800 (Helvetica Neue 700) | Inter 400 (Helvetica Neue 400) |
-| Editorial / fashion | Playfair Display 700 (Didot 700) | Jost 300, tracked caps (Avenir Next 400) |
-| Elegant worship / gala | Great Vibes (Snell Roundhand 700) + Cinzel (Copperplate) | Montserrat 400 (Avenir Next 400) |
-| Tech launch | Montserrat 200, wide (Avenir Next 275) | JetBrains Mono 400 (Menlo) |
-| Retro / diner | Alfa Slab One (Rockwell 700) | Yellowtail (Brush Script MT) accent |
-| Street / grunge | League Gothic (DIN Condensed) | Space Mono (Courier New 700) |
-| Friendly food | Lilita One (Arial Rounded MT Bold) | Poppins 500 (Avenir Next 500) |
+| Loud event | `@condensed-heavy` (Anton, Impact) | `@geometric-sans` 500 and 800 (Montserrat, Avenir Next) |
+| Swiss / corporate | `@neo-grotesque` 700 or 800 (Inter, Helvetica Neue) | `@neo-grotesque` 400 |
+| Editorial / fashion | `@didone` 700 (Playfair Display, Didot) | `@geometric-sans` 300 or 400, tracked caps (Jost, Avenir Next) |
+| Elegant worship / gala | `@script-formal` (Great Vibes, Snell Roundhand) + `@engraved` (Cinzel, Copperplate) | `@geometric-sans` 400 |
+| Tech launch | `@thin-sans`, wide (Montserrat 200, Avenir Next Ultra Light) | `@mono` (JetBrains Mono, Menlo) |
+| Retro / diner | `@slab` 700 (Alfa Slab One, Rockwell) | `@brush` accent (Yellowtail, SignPainter) |
+| Street / grunge | `@condensed-heavy` (League Gothic, DIN Condensed) | `@mono` 700 (Space Mono, Courier New) |
+| Friendly food | `@rounded-heavy` (Lilita One, Arial Rounded MT Bold) | `@geometric-sans` 500 (Poppins, Avenir Next) |
 
 ## Placement
 
@@ -233,25 +246,39 @@ Proven pairs (display / text), each with system stand-ins:
 
 ## Specimen
 
-Run this to see the stand-in classes on your machine (macOS families; swap the names for
-your system first, or the first missing family stops it). It is also a quick test that the fonts you plan to use resolve.
+Run this to see what every class draws on your machine: 28 lines, one per class, each fitted
+into the same box. Any line with a PXW4010 or PXW4014 warning is a substitute or a
+stand-in; the free family for it is in the table above.
 
 ```bash
 pixelox new -o specimen.pxo --size 1080x1350 --fill '#f3efe6'
-pixelox text add specimen.pxo --in-place --name S1 --content "CONDENSED HEAVY" --font Impact --size 6% --color '#111111' --at 7%,5%
-pixelox text add specimen.pxo --in-place --name S2 --content "DIN CONDENSED" --font "DIN Condensed" --weight 700 --size 6% --color '#111111' --at 66%,5%
-pixelox text add specimen.pxo --in-place --name S3 --content "HEAVY WIDE" --font "Arial Black" --size 5% --color '#111111' --at 7%,13%
-pixelox text add specimen.pxo --in-place --name S4 --content "Neo-grotesque" --font "Helvetica Neue" --weight 700 --size 5% --color '#111111' --at 7%,21%
-pixelox text add specimen.pxo --in-place --name S5 --content "Geometric sans" --font "Avenir Next" --weight 500 --size 5% --color '#111111' --at 7%,29%
-pixelox text add specimen.pxo --in-place --name S6 --content "THIN WIDE SANS" --font "Avenir Next" --weight 275 --size 4.4% --tracking 200 --color '#111111' --at 7%,37%
-pixelox text add specimen.pxo --in-place --name S7 --content "Didone" --font Didot --weight 700 --size 6.5% --color '#111111' --at 7%,44%
-pixelox text add specimen.pxo --in-place --name S8 --content "Old-style serif" --font Baskerville --size 5% --color '#111111' --at 45%,45%
-pixelox text add specimen.pxo --in-place --name S9 --content "ENGRAVED CAPS" --font Copperplate --weight 400 --size 4.6% --tracking 120 --color '#111111' --at 7%,54%
-pixelox text add specimen.pxo --in-place --name S10 --content "Slab serif" --font Rockwell --weight 700 --size 5.4% --color '#111111' --at 7%,61%
-pixelox text add specimen.pxo --in-place --name S11 --content "Formal script" --font "Snell Roundhand" --weight 700 --size 6.5% --color '#111111' --at 7%,68%
-pixelox text add specimen.pxo --in-place --name S12 --content "Brush script" --font "Brush Script MT" --size 6.5% --color '#111111' --at 62%,68%
-pixelox text add specimen.pxo --in-place --name S13 --content "Rounded display" --font "Arial Rounded MT Bold" --size 5% --color '#111111' --at 7%,77%
-pixelox text add specimen.pxo --in-place --name S14 --content "monospace 0123" --font Menlo --size 4% --color '#111111' --at 7%,85%
-pixelox text add specimen.pxo --in-place --name S15 --content "INLINE DECO" --font Phosphate --size 5% --color '#111111' --at 7%,91%
+pixelox text add specimen.pxo --in-place --name S1 --content "CONDENSED HEAVY" --font @condensed-heavy --fit-box 440x52 --at 6%,4.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S2 --content "COMPRESSED" --font @compressed --fit-box 440x52 --at 53%,4.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S3 --content "Condensed gothic" --font @condensed --fit-box 440x52 --at 6%,10.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S4 --content "CONDENSED HAIRLINE" --font @condensed-hairline --fit-box 440x52 --at 53%,10.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S5 --content "HEAVY WIDE" --font @heavy-wide --fit-box 440x52 --at 6%,17.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S6 --content "EXTENDED" --font @extended --fit-box 440x52 --at 53%,17.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S7 --content "Neo-grotesque" --font @neo-grotesque --fit-box 440x52 --at 6%,23.8% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S8 --content "Geometric sans" --font @geometric-sans --fit-box 440x52 --at 53%,23.8% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S9 --content "THIN SANS" --font @thin-sans --fit-box 440x52 --at 6%,30.4% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S10 --content "Rounded thin" --font @rounded-thin --fit-box 440x52 --at 53%,30.4% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S11 --content "Rounded heavy" --font @rounded-heavy --fit-box 440x52 --at 6%,37.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S12 --content "TECHNO 2049" --font @techno --fit-box 440x52 --at 53%,37.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S13 --content "Didone" --font @didone --fit-box 440x52 --at 6%,43.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S14 --content "DIDONE CONDENSED" --font @didone-condensed --fit-box 440x52 --at 53%,43.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S15 --content "Old-style serif" --font @oldstyle --fit-box 440x52 --at 6%,50.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S16 --content "Swash Serif" --font @swash-serif --fit-box 440x52 --at 53%,50.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S17 --content "ENGRAVED CAPS" --font @engraved --fit-box 440x52 --at 6%,56.8% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S18 --content "Uncial" --font @uncial --fit-box 440x52 --at 53%,56.8% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S19 --content "Blackletter" --font @blackletter --fit-box 440x52 --at 6%,63.4% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S20 --content "Slab serif" --font @slab --fit-box 440x52 --at 53%,63.4% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S21 --content "Fat display" --font @fat-display --fit-box 440x52 --at 6%,70.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S22 --content "Formal script" --font @script-formal --fit-box 440x52 --at 53%,70.0% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S23 --content "Signature script" --font @script-signature --fit-box 440x52 --at 6%,76.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S24 --content "Brush script" --font @brush --fit-box 440x52 --at 53%,76.6% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S25 --content "Marker hand" --font @marker --fit-box 440x52 --at 6%,83.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S26 --content "STENCIL" --font @stencil --fit-box 440x52 --at 53%,83.2% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S27 --content "monospace 0123" --font @mono --fit-box 440x52 --at 6%,89.8% --anchor-to ink --color '#111111'
+pixelox text add specimen.pxo --in-place --name S28 --content "ART DECO" --font @deco --fit-box 440x52 --at 53%,89.8% --anchor-to ink --color '#111111'
 pixelox export specimen.pxo -o specimen.png
 ```
