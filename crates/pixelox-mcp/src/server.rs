@@ -29,6 +29,8 @@ pub struct ServerConfig {
     pub read_only: bool,
     /// First key for model downloads; the second is `"consent": ["model-download"]` on a call.
     pub allow_model_downloads: bool,
+    /// First key for Google Fonts downloads; the second is `"consent": ["font-download"]`.
+    pub allow_font_downloads: bool,
     /// Globals each call starts from (threads, memory budget, sidecar policy, seed).
     pub base_globals: Globals,
     /// NDJSON audit log, one line per `tools/call` (`None` disables it).
@@ -49,6 +51,7 @@ impl ServerConfig {
             allow: roots,
             read_only: false,
             allow_model_downloads: false,
+            allow_font_downloads: false,
             base_globals: Globals::default(),
             audit_log: Some(paths::audit_log()),
         }
@@ -259,6 +262,9 @@ impl<'a> Server<'a> {
             s.push_str(" Model downloads need consent: [\"model-download\"] on the call, after the user agrees.");
         } else {
             s.push_str(" Model downloads are disabled on this server.");
+        }
+        if self.cfg.allow_font_downloads {
+            s.push_str(" Google Fonts downloads need consent: [\"font-download\"] on the call, after the user agrees.");
         }
         s
     }
