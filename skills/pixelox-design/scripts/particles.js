@@ -2,7 +2,8 @@
 // Run:   pixelox render js scripts/particles.js -o sparks.png --size 1080x1350 --seed 5 --param shape=streak --param colors='#ffd27a,#ff8a1f'
 // Params (all optional):
 //   shape=dot       dot | glow (soft dot) | streak (motion line) | rect (confetti) | star (4-point sparkle) | ring (bubble)
-//                   | cube (ice cube, translucent with highlights) | drop (water bead with a highlight, for condensation)
+//                   | cube (a flat, drawn ice block) | drop (a drawn water bead)
+//                   For real ice and condensation use `pixelox render ice` and `pixelox render droplets`.
 //   colors=#ffffff  comma list
 //   count=250
 //   min=0.2 max=1.2 size range in % of the short side

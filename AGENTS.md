@@ -60,7 +60,7 @@ prints any command's reference page.
 11. Designing from a brief (poster, flyer, ad, cover, social post): do not start from
     commands. `skills/pixelox-design/SKILL.md` is the playbook: pick 2 to 4 of its 126
     studied designs (`references/index.md`), combine layout, palette, and one effect
-    (`references/techniques.md`, 74 tested recipes such as `T-smoke`, `T-fit-width`,
+    (`references/techniques.md`, 80 tested recipes such as `T-smoke`, `T-fit-width`,
     `T-text-behind-subject`), build, export a preview, look, fix. Name fonts by class
     (`--font @condensed-heavy`, `pixelox fonts classes`); a missing family is replaced by the
     closest installed face with warning PXW4010 (`pixelox fonts get <family> -y` with consent).

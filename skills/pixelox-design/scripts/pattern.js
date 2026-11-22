@@ -2,7 +2,8 @@
 // zigzag, scallop (fish-scale arcs), and barcode.
 // Run:   pixelox render js scripts/pattern.js -o dots.png --size 1080x1350 --param kind=dots --param fade=down
 // Params (all optional):
-//   kind=dots     dots | stripes | grid | rings | checker | zigzag | scallop | barcode (random bar widths; cell = average bar pitch)
+//   kind=dots     dots | stripes | grid | rings | checker | zigzag | scallop | barcode (random bar widths; cell = average bar pitch;
+//                 decoration only: a barcode that scans is `pixelox shape barcode`)
 //   color=#ffffff
 //   cell=28       spacing in px
 //   weight=0.35   mark size as a fraction of the cell (dot radius x2, stripe or line width)

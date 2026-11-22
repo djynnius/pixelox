@@ -11,12 +11,16 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   covers, and social posts from a brief, including vague briefs with no reference image.
   It ships text descriptions of 126 studied poster designs (grid in percent, layer stack,
   palette, type table, a tested build recipe, variations, pitfalls), an index that says which
-  to combine for which brief, 27 layout archetypes, 74 tested effect recipes with stable IDs
+  to combine for which brief, 27 layout archetypes, 80 tested effect recipes with stable IDs
   (`T-smoke`, `T-grunge`, `T-duotone`, `T-fit-width`, `T-text-behind-subject`,
-  `T-water-splash`, ...), font classes with free look-alikes and per-OS stand-ins, named
-  palettes, and 15 `render js` generators (clouds, blobs, grunge, rays, particles, brush,
-  splatter, splash, torn, crack, waves, ribbons, pattern, tiles, stand-ins). No images are
-  included. Every documented command is parsed by the contract test.
+  `T-water-splash`, `T-info-bar`, `T-qr-code`, ...), the 28 font classes with free
+  look-alikes and per-OS faces, named palettes, and 13 `render js` generators for what has no
+  native command (blobs, grunge, rays, particles, brush, splatter, torn, crack, waves,
+  ribbons, pattern, tiles, stand-ins). Its recipes use the native features listed below
+  (`--fit-width`, font classes, `fill noise`, `filter grain`, `render splash|droplets|ice`,
+  `shape icon|qr|barcode`, `fx long-shadow|extrude|reflection`, gradient masks) and need
+  this release. No images are included. Every documented command is parsed by the contract
+  test.
 - `fill noise` (ADR 0016): seeded procedural textures on a layer or, with `--as-layer`, on a
   new layer: `clouds` (Render Clouds; `--blend difference` is Difference Clouds), `smoke`
   (curling wisps traced along a rising flow), `turbulence`, `ridged`, `cells`, and
