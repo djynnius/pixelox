@@ -30,7 +30,9 @@ pixelox is installed as the `pixelox` command. It never prompts and is built for
 
 `--layer name|#N|@top|@bottom|@active`; `--mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png` with
 `--invert-mask`; geometry `X,Y,WxH` / `X,Y` / `WxH` in px, %, pt, mm, in (negative counts
-from the right/bottom, `--anchor tl..br`); colors `#rrggbb[aa]`, `rgb()`, `hsl()`, names.
+from the right/bottom, `0-80` is 80 px past the left/top edge, `--anchor tl..br`); colors
+`#rrggbb[aa]`, `rgb()`, `hsl()`, names. New layers go on top; `--above`, `--below`, `--into`
+place them. Every masking feature: `pixelox docs masking`.
 
 ## Recipes
 

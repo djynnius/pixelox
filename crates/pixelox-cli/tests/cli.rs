@@ -112,9 +112,23 @@ fn consent_gates_and_exit_codes() {
     // models that are not in this release: exit 12
     assert_eq!(run_in(&t.0, &["detect", "faces", "photo.png"]).0, 12);
     // wrong layer kind names the remedy
-    let (code, v) = run_in(&t.0, &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun"]);
+    let (code, v) =
+        run_in(&t.0, &["paint", "stroke", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--points", "1,1 9,9"]);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
     assert!(v["error"]["hint"].as_str().unwrap().contains("layer rasterize"));
+    // a fill on a live layer names the live alternative
+    let (code, v) = run_in(&t.0, &["fill", "solid", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--color", "red"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("fx overlay"), "{}", v["error"]["hint"]);
+    // a filter on a live layer is a smart filter (ADR 0014); a mask is refused with a hint
+    let (code, v) = run_in(&t.0, &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun"]);
+    assert_eq!((code, v["result"]["smart_filter"].as_str()), (0, Some("filter.gaussian")), "{v}");
+    let (code, v) = run_in(
+        &t.0,
+        &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--mask", "@alpha:Sun", "--overwrite"],
+    );
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("mask add"));
 }
 
 #[test]
@@ -268,6 +282,117 @@ fn smart_filters_on_placed_layers_replay_and_bake() {
     ok(d, &["export", "flat.pxo", "-o", "flat.png"]);
     let v = ok(d, &["analyze", "diff", "out.png", "flat.png"]);
     assert!(v["result"]["ssim"].as_f64().unwrap() > 0.999, "{}", v["result"]);
+}
+
+/// ADR 0014 end to end: blurs grow small layers, filters on live text and shapes,
+/// placement flags, true negative coordinates, and gradient and live masks, all replayed
+/// bit for bit.
+#[test]
+fn layers_bounds_and_masks_replay() {
+    let t = TempDir::new("cli-ws1");
+    let d = t.0.as_path();
+    let layer = |v: &Value, name: &str| -> Value {
+        v["result"]["layers"].as_array().unwrap().iter().find(|l| l["name"] == name).cloned().unwrap()
+    };
+    ok(d, &["new", "-o", "doc.pxo", "--size", "240x160", "--fill", "#203040"]);
+    // a rasterized shape blurred: the layer grows, so the blur is not cut off
+    ok(
+        d,
+        &["shape", "ellipse", "doc.pxo", "--in-place", "--name", "Spot", "--rect", "90,60,60x40", "--fill", "#ffcc00"],
+    );
+    ok(d, &["layer", "rasterize", "doc.pxo", "--in-place", "--layer", "Spot"]);
+    let v = ok(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Spot", "--sigma", "8"]);
+    let g = v["result"]["grown"].as_array().expect("grown").iter().map(|x| x.as_i64().unwrap()).collect::<Vec<_>>();
+    assert!(g.iter().all(|&x| x >= 15), "{g:?}");
+    // a live shape with a smart motion blur, hanging off the top-left corner (0-20)
+    let v = ok(
+        d,
+        &["shape", "rect", "doc.pxo", "--in-place", "--name", "Bar", "--rect", "0-20,0-10,80x30", "--fill", "#ff3366"],
+    );
+    assert_eq!(v["result"]["bbox"], serde_json::json!([-20.0, -10.0, 80.0, 30.0]));
+    let v = ok(
+        d,
+        &["filter", "motion-blur", "doc.pxo", "--in-place", "--layer", "Bar", "--angle", "0", "--distance", "40"],
+    );
+    assert_eq!(v["result"]["smart_filter"], "filter.motion-blur");
+    // live text with a blur stays text; new layers go on top, --below places one lower
+    ok(
+        d,
+        &[
+            "text",
+            "add",
+            "doc.pxo",
+            "--in-place",
+            "--name",
+            "Title",
+            "--content",
+            "Hi",
+            "--size",
+            "40px",
+            "--at",
+            "50%,50%",
+            "--anchor",
+            "c",
+            "--color",
+            "white",
+        ],
+    );
+    ok(d, &["layer", "dup", "doc.pxo", "--in-place", "--layer", "Title", "--name", "Glow", "--below", "Title"]);
+    ok(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Glow", "--sigma", "6"]);
+    ok(d, &["layer", "reorder", "doc.pxo", "--in-place", "--layer", "Spot", "--index", "1"]);
+    ok(d, &["layer", "add", "doc.pxo", "--in-place", "--name", "Top", "--fill", "#00000010"]);
+    let v = ok(d, &["layer", "list", "doc.pxo"]);
+    let names: Vec<&str> =
+        v["result"]["layers"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap()).collect();
+    assert_eq!(
+        names,
+        ["Top", "Spot", "Title", "Glow", "Bar", "Background"],
+        "after a reorder, a new layer still goes on top"
+    );
+    assert_eq!(layer(&v, "Glow")["kind"], "text");
+    // a gradient mask and a live mask that follows the text
+    ok(
+        d,
+        &[
+            "mask",
+            "add",
+            "doc.pxo",
+            "--in-place",
+            "--layer",
+            "Spot",
+            "--gradient",
+            "linear",
+            "--from",
+            "0,40%",
+            "--to",
+            "0,80%",
+        ],
+    );
+    ok(d, &["mask", "add", "doc.pxo", "--in-place", "--layer", "Top", "--from-layer", "Title"]);
+    let before = ok(d, &["mask", "list", "doc.pxo"]);
+    ok(d, &["text", "edit", "doc.pxo", "--in-place", "--layer", "Title", "--content", "Hello"]);
+    let after = ok(d, &["mask", "list", "doc.pxo"]);
+    let cov = |v: &Value| {
+        v["result"]["layer_masks"].as_array().unwrap().iter().find(|m| m["layer"] == "Top").unwrap()["area"]
+            .as_f64()
+            .unwrap()
+    };
+    assert!(
+        cov(&after) > cov(&before) * 1.5,
+        "the live mask follows the longer text: {} -> {}",
+        cov(&before),
+        cov(&after)
+    );
+    ok(d, &["export", "doc.pxo", "-o", "out.png"]);
+    let v = ok(d, &["replay", "out.png.pixelox.json", "-o", "again.png"]);
+    assert_eq!(v["result"]["identical"], true);
+    // flags that conflict or point at the wrong kind
+    let (code, v) = run_in(d, &["layer", "add", "doc.pxo", "-o", "x.pxo", "--into", "Title"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2330")));
+    let (code, v) = run_in(d, &["layer", "add", "doc.pxo", "-o", "x.pxo", "--above", "Title", "--below", "Spot"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1005")));
+    let (code, v) = run_in(d, &["adjust", "invert", "doc.pxo", "-o", "x.pxo", "--layer", "Spot", "--below", "Spot"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1005")));
 }
 
 /// Runs only when CI (or you) points PIXELOX_TEST_U2NETP at the 5 MB u2netp.onnx; the

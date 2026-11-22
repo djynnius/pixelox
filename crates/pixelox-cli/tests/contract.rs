@@ -132,13 +132,55 @@ fn every_command_has_a_page_and_schema() {
     }
 }
 
+/// The command with the inside of every quoted string blanked out (each character becomes
+/// as many `_` as its UTF-8 length, so byte offsets match the original): shell syntax such
+/// as `|`, `#`, or `...` counts only where the shell would see it, not inside
+/// `--content "A | B"`. Handles '...', "..." (with backslash escapes), $'...', and
+/// backslash-escaped characters outside quotes.
+fn unquoted(c: &str) -> String {
+    let mut out = String::with_capacity(c.len());
+    let mut quote: Option<char> = None;
+    let mut ansi = false;
+    let mut chars = c.chars().peekable();
+    let blank = |out: &mut String, ch: char| out.extend(std::iter::repeat_n('_', ch.len_utf8()));
+    while let Some(ch) = chars.next() {
+        match quote {
+            Some(q) if ch == q => {
+                quote = None;
+                out.push(ch);
+            }
+            Some(q) if ch == '\\' && (q == '"' || ansi) => {
+                blank(&mut out, ch);
+                if let Some(n) = chars.next() {
+                    blank(&mut out, n);
+                }
+            }
+            Some(_) => blank(&mut out, ch),
+            None if ch == '\'' || ch == '"' => {
+                ansi = ch == '\'' && out.ends_with('$');
+                quote = Some(ch);
+                out.push(ch);
+            }
+            // an escaped character outside quotes (`\|` in a synopsis) stays visible
+            None if ch == '\\' => {
+                out.push(ch);
+                if let Some(n) = chars.next() {
+                    out.push(n);
+                }
+            }
+            None => out.push(ch),
+        }
+    }
+    out
+}
+
 /// Check one example: it parses with clap and its values validate.
 fn check_example(reg: &pixelox_core::Registry, cmd: &str) -> Result<(), String> {
     let mut cmd = cmd.trim().to_string();
-    for sep in [" #", " > ", " | ", " && ", " 2>"] {
-        if let Some(i) = cmd.find(sep) {
-            cmd.truncate(i);
-        }
+    // cut at the first comment, redirection, pipe, or `&&` that is not inside quotes
+    let bare = unquoted(&cmd);
+    if let Some(i) = [" #", " > ", " | ", " && ", " 2>"].iter().filter_map(|sep| bare.find(sep)).min() {
+        cmd.truncate(i);
     }
     let argv = shell_split(&cmd).map_err(|e| format!("{cmd}\n  {}", e.message))?;
     if argv.first().map(|s| s.as_str()) != Some("pixelox") || argv.len() < 2 || argv[1].starts_with('-') {
@@ -149,18 +191,39 @@ fn check_example(reg: &pixelox_core::Registry, cmd: &str) -> Result<(), String> 
     Args::build(spec, inv.args).map(|_| ()).map_err(|e| format!("{cmd}\n  {}", e.message))
 }
 
-/// Placeholders and synopsis notation are not invocations.
+/// Placeholders and synopsis notation are not invocations. Only what the shell sees outside
+/// quotes counts: `--content "Wait... A | B"` is checked like any other command, while a
+/// quoted placeholder (`--stops '<color>@0'`) still marks a synopsis.
 fn skip(c: &str) -> bool {
+    let bare = unquoted(c);
     c.contains('<')
-        || c.contains("...")
-        || c.contains('…')
+        || bare.contains("...")
+        || bare.contains('…')
         || c.contains("$(")
         || c.contains("${")
-        || c.contains("\\|")
-        || c.contains(" [-")
-        || c.contains("--help")
-        || c.contains("--version")
-        || c.split_whitespace().any(|w| w.contains('|') && !w.starts_with('\'') && !w.starts_with('"'))
+        || bare.contains("\\|")
+        || bare.contains(" [-")
+        || bare.contains("--help")
+        || bare.contains("--version")
+        || bare.split_whitespace().any(|w| w.contains('|'))
+}
+
+#[test]
+fn quoted_text_is_not_shell_syntax() {
+    assert_eq!(
+        unquoted(r#"pixelox text add d.pxo --content "A | B..." --size 9"#),
+        r#"pixelox text add d.pxo --content "________" --size 9"#
+    );
+    assert_eq!(unquoted("a 'b c' $'x\\ny' \\| d").len(), "a 'b c' $'x\\ny' \\| d".len());
+    assert!(!skip(r#"pixelox text add d.pxo --in-place --content "Wait... A | B""#));
+    assert!(!skip("pixelox text add d.pxo --in-place --content 'one | two'"));
+    assert!(skip("pixelox filter gaussian <input> -o out.png"));
+    assert!(skip("pixelox layer list doc.pxo | jq ."));
+    assert!(skip("pixelox filter gaussian ... --sigma 2"));
+    let reg = registry();
+    assert!(check_example(&reg, r#"pixelox text add d.pxo --in-place --content "A | B # not a comment" --size 40px"#)
+        .is_ok());
+    assert!(check_example(&reg, "pixelox layer list doc.pxo --json | jq .result").is_ok());
 }
 
 #[test]
@@ -284,7 +347,7 @@ fn prd_examples_parse() {
     let mut bad = Vec::new();
     let mut n = 0;
     for c in extract(&text) {
-        if skip(&c) || c.split_whitespace().any(|w| w.contains('|') && !w.starts_with('\'') && !w.starts_with('"')) {
+        if skip(&c) {
             continue;
         }
         if PRD_DIVERGENCES.iter().any(|(k, _)| c.contains(k)) {
