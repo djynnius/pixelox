@@ -56,13 +56,16 @@ const RM_KINDS: &[&str] = &[
     "color-overlay",
     "gradient-overlay",
     "pattern-overlay",
+    "long-shadow",
+    "extrude",
+    "reflection",
 ];
 
 // ---------------------------------------------------------------------------------------
 // shared params
 
 /// `--blend`, `--opacity`, `--enabled`: common to every style.
-fn look(blend: &'static str, opacity: &'static str, blend_help: &'static str) -> Vec<ParamSpec> {
+pub(crate) fn look(blend: &'static str, opacity: &'static str, blend_help: &'static str) -> Vec<ParamSpec> {
     vec![
         param("blend", ParamKind::Choice).choices(FX_BLENDS).default(blend).help(blend_help),
         param("opacity", ParamKind::Float).range("0..100").default(opacity).help("Opacity of the effect in percent"),
@@ -221,7 +224,10 @@ pub fn ops() -> Vec<OpSpec> {
                 "Paints over the layer's pixels (clipped to them) with a color, a gradient (--stops at --angle across \
                  the layer's bounds; 0 = left to right, 90 = bottom to top), or a pattern tile (--from, embedded in \
                  the document, tiled from the canvas origin at --scale). --kind defaults to the fill you give. A layer \
-                 holds one overlay of each kind; this replaces the overlay of the same kind.",
+                 holds one overlay of each kind; this replaces the overlay of the same kind. On a shape or text layer \
+                 with a fill and a stroke in another color, the overlay recolors the fill and the layer's own stroke \
+                 stays on top (the gradient spans the fill); a stroke in the fill's color is covered with it, and \
+                 --cover-stroke paints over any stroke, as Photoshop does.",
             )
             .param(common::layer())
             .param(param("kind", ParamKind::Choice).choices(&["color", "gradient", "pattern"]).auto().default("auto").help("Overlay kind; auto picks it from --color, --stops, or --from"))
@@ -232,10 +238,13 @@ pub fn ops() -> Vec<OpSpec> {
             .param(param("reverse", ParamKind::Flag).help("Reverse the gradient"))
             .param(from_tile("Pattern tile image (kind pattern), embedded in the document"))
             .param(tile_scale())
+            .param(param("cover-stroke", ParamKind::Flag).help("Also paint over a shape or text layer's own stroke (by default the stroke stays on top)"))
             .params(look("normal", "100", "Blend mode of the overlay"))
             .example("pixelox fx overlay doc.pxo --in-place --layer Icon --kind color --color '#ffffff'", "Recolor an icon white")
             .example("pixelox fx overlay doc.pxo --in-place --layer Title --kind gradient --stops '#f97316@0,#db2777@1' --angle 90", "Gradient title")
-            .example("pixelox fx overlay doc.pxo --in-place --layer Panel --kind pattern --from tile.png --scale 50 --blend multiply --opacity 30", "Textured panel"),
+            .example("pixelox fx overlay doc.pxo --in-place --layer Panel --kind pattern --from tile.png --scale 50 --blend multiply --opacity 30", "Textured panel")
+            .example("pixelox fx overlay doc.pxo --in-place --layer Pill --stops '#ffcf56@0,#e4572e@1' --angle 0", "Gradient fill on a stroked shape; its stroke stays visible")
+            .example("pixelox fx overlay doc.pxo --in-place --layer Badge --color '#111827' --cover-stroke", "Recolor a shape together with its stroke"),
         OpSpec::doc("fx stroke", Category::Fx, "Add or replace a stroke along a layer's edges", stroke)
             .about(
                 "Outlines the layer's shape --width px wide, outside (beneath the content), inside (clipped to it), or \
@@ -395,13 +404,22 @@ fn overlay_kind(a: &Args) -> Result<&'static str> {
     }
 }
 
+/// Was this fill flag given? A replayed recipe lists every param, the default `--color`
+/// included, so a default color next to `--stops` or `--from` does not count.
+fn fill_flag(a: &Args, k: &str) -> bool {
+    a.is_explicit(k)
+        && (k != "color"
+            || a.raw("color").is_some_and(|c| !c.trim().eq_ignore_ascii_case("#000000"))
+            || !(a.is_explicit("stops") || a.is_explicit("from")))
+}
+
 /// The fill type implied by explicit `--from` / `--stops` / `--color`.
 fn fill_given(a: &Args) -> Option<&'static str> {
-    if a.is_explicit("from") {
+    if fill_flag(a, "from") {
         Some("pattern")
-    } else if a.is_explicit("stops") {
+    } else if fill_flag(a, "stops") {
         Some("gradient")
-    } else if a.is_explicit("color") {
+    } else if fill_flag(a, "color") {
         Some("color")
     } else {
         None
@@ -411,7 +429,7 @@ fn fill_given(a: &Args) -> Option<&'static str> {
 /// Fail with PX1005 when more than one of the fill flags is given.
 fn one_fill(a: &Args) -> Result<()> {
     let given: Vec<String> =
-        ["color", "stops", "from"].iter().filter(|k| a.is_explicit(k)).map(|k| format!("--{k}")).collect();
+        ["color", "stops", "from"].iter().filter(|k| fill_flag(a, k)).map(|k| format!("--{k}")).collect();
     if given.len() > 1 {
         return Err(Error::new("PX1005", format!("give only one of {}", given.join(", "))).with_context("flags", given));
     }
@@ -686,6 +704,23 @@ fn scale(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             let l = Length::parse(&old)?;
             if l.unit != Unit::Pct {
                 set(f, "height", old, fmt_len(l.scaled(k)));
+            }
+        }
+        // long shadow, extrusion, reflection: px lengths scale, % lengths are relative
+        for key in ["length", "depth"] {
+            if let Some(old) = f.params.get(key).and_then(value_str) {
+                let mut l = Length::parse(&old)?;
+                if l.unit != Unit::Pct {
+                    l.value *= k;
+                    set(f, key, old, fmt_len(l));
+                }
+            }
+        }
+        for key in ["gap", "outline"] {
+            if let Some(old) = f.params.get(key).and_then(value_str) {
+                if let Some(v) = parse_num(&old) {
+                    set(f, key, old, fmt_num(v * k));
+                }
             }
         }
         if let Some(old) = f.params.get("offset").and_then(value_str) {

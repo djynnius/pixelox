@@ -1,0 +1,234 @@
+{
+  "command": "shape.icons",
+  "cli": "pixelox shape icons",
+  "summary": "List or search the bundled icons",
+  "category": "vector",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.icons.params.json",
+    "title": "pixelox shape.icons parameters",
+    "description": "List or search the bundled icons",
+    "type": "object",
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "search": {
+        "type": "string",
+        "description": "Words to match against names, aliases, and tags Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "limit": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Most matches to return with --search (0 = all) Range: 0..10000. Type: integer.",
+        "default": "30",
+        "x-pixelox-kind": "int"
+      }
+    },
+    "required": [],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.icons.result.json",
+    "title": "pixelox shape.icons envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "shape.icons"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1013",
+    "PX1106",
+    "PX1401",
+    "PX1403",
+    "PX9001"
+  ]
+}

@@ -64,6 +64,11 @@ prints any command's reference page.
     `T-text-behind-subject`), build, export a preview, look, fix. Name fonts by class
     (`--font @condensed-heavy`, `pixelox fonts classes`); a missing family is replaced by the
     closest installed face with warning PXW4010 (`pixelox fonts get <family> -y` with consent).
+12. Icons and codes are vector shapes: `shape icon calendar --size 48` (Lucide; find names with
+    `shape icons --search WORD`), `shape qr --data URL --background-color white` (decoded back
+    before it is added), `shape barcode --type ean13 --data 12DIGITS`. Depth is live:
+    `fx long-shadow`, `fx extrude`, `fx reflection`
+    (`docs/guides/cookbook/icons-codes-and-3d-type.md`).
 
 ## Addressing
 

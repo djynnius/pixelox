@@ -10,6 +10,7 @@
 //! pattern) they were drawn with. [`install`] registers [`render`], which the compositor
 //! calls with a layer's content to draw the stack live.
 
+mod cast;
 mod commands;
 mod flame;
 mod flare;
@@ -24,6 +25,7 @@ pub use render::render;
 /// Every command this crate defines.
 pub fn ops() -> Vec<OpSpec> {
     let mut v = commands::ops();
+    v.extend(cast::ops());
     v.extend(flare::ops());
     v.extend(grain::ops());
     v

@@ -53,6 +53,7 @@ place them. Every masking feature: `pixelox docs masking`.
 | Design a poster, flyer, ad, or social post | start from a brief, not from commands: the pixelox-design skill has 126 studied layouts, 74 effect recipes (`T-smoke`, `T-duotone`, ...), fonts, and palettes |
 | Type | `pixelox text add doc.pxo --in-place --content "Hello" --font sans-serif --size 48pt --at 50%,10% --anchor t` |
 | Shapes and styles | `pixelox shape rect doc.pxo --in-place --rect 40,40,300x120 --radius 16 --fill '#0ea5e9'` · `pixelox fx drop-shadow doc.pxo --in-place --layer Title --offset 0,6 --blur 12` |
+| Icons, codes, depth | `pixelox shape icon doc.pxo map-pin --in-place --size 48 --at 10%,90%` (`shape icons --search WORD`) · `pixelox shape qr doc.pxo --in-place --data 'https://example.com' --background-color white` · `shape barcode --type ean13` · `fx long-shadow` · `fx extrude` · `fx reflection` |
 | Template | `pixelox comp template apply t.pxo --set headline="X" --set-image product=p.png -o out.pxo` |
 | Watermark many | `pixelox batch run --glob 'in/*.jpg' --pipeline watermark.yml --out-dir out/ --jobs 8` |
 | SVG | `pixelox svg rasterize logo.svg -o logo.png --scale 2` · `pixelox trace scan.png -o logo.svg --mode binary` |
