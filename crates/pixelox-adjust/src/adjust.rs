@@ -447,6 +447,12 @@ fn as_layer(op: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> 
 /// The compositor hook (`compose::set_adjuster`): render an adjustment layer's `params`
 /// (string-valued, as written by `--as-layer`) onto `img` in place.
 pub fn adjuster(op: &str, params: &Map<String, Value>, img: &mut Image) -> Result<()> {
+    if op == "grain" {
+        // the grain adjustment layer of `filter grain --as-layer` (pixelox-core's grain)
+        let short = img.width.min(img.height).max(1) as f64;
+        pixelox_core::grain::Grain::from_params(params, short)?.apply(img, (0, 0));
+        return Ok(());
+    }
     static SPECS: OnceLock<Vec<OpSpec>> = OnceLock::new();
     let specs = SPECS.get_or_init(specs);
     let full = format!("adjust {op}");
