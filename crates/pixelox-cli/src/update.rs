@@ -27,7 +27,7 @@ pub fn ops() -> Vec<OpSpec> {
              folder the install receipt names. cargo install builds, containers, and copies \
              pixelox cannot place are left alone: the result names the command (`command`) and \
              nothing changes. Never runs on its own; --check only reports. PIXELOX_OFFLINE=1 \
-             forbids it.",
+             forbids it. `pixelox --update` is the same command.",
         )
         .inputs(Inputs::NONE)
         .param(

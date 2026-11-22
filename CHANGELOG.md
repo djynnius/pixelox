@@ -4,6 +4,13 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+### Added
+- `pixelox --update` runs `pixelox update`, for people who type it as a flag like
+  `--version`; its flags follow (`pixelox --update --check`). It counts only before the
+  command word, so `pixelox info --update` is still a usage error.
+
 ## [0.5.0] — 2026-11-22
 
 ### Added
