@@ -107,10 +107,10 @@ crown as a skyline, a pipe's smoke as a river.
 * Travelers: a dashed `shape line` (bodies) and a dotted round-cap line (heads) parallel
   to the brim, 12 px above it. For real silhouettes, place tiny cutouts with `fx overlay`.
 * Cave: a dark arch `shape path` plus a small radial glow in screen mode.
-* **T-photo-fade** to the ground from 68 to 80% H, so the beard dissolves before the
-  title.
+* **T-photo-fade**: a gradient mask on the head (`mask add --gradient linear`), whole at
+  66% H and gone at 78% H, so the beard dissolves before the title.
 * **T-rules**: two dotted hairlines around the subtitle.
-* **T-paper-grain**, amount 16, soft-light 45%.
+* **T-paper-grain**: `filter grain --amount 12` as the top layer.
 * **T-shape-crop** in [techniques.md](../techniques.md) is the tested library version of the photo shown through a drawn shape (arch, panel, tiles, or letter); start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -132,8 +132,7 @@ and `photo.png` (a mountain with a bright slope) are your images here.
 pixelox new -o saga.pxo --size 1080x1620 --fill '#11070c'
 pixelox comp place saga.pxo subject.png --in-place --as Head --size x960 --at 56%,36% --anchor t
 pixelox adjust gradient-map saga.pxo --in-place --layer Head --stops '#11070c@0,#2b3a2c@0.3,#647354@0.55,#a49c71@0.78,#dec893@1'
-pixelox layer add saga.pxo --in-place --name Fade
-pixelox fill gradient saga.pxo --in-place --layer Fade --from 0,66% --to 0,78% --stops '#11070c00@0,#11070cff@1'
+pixelox mask add saga.pxo --in-place --layer Head --gradient linear --from 0,66% --to 0,78%
 pixelox shape path saga.pxo --in-place --name Hat --d 'M 176 168 L 1020 588 L 100 812 Z' --fill '#2b3a2c'
 pixelox comp place saga.pxo photo.png --in-place --as Peak --size 1080x --at 0,40
 pixelox layer clip saga.pxo --in-place --layer Peak
@@ -147,20 +146,15 @@ pixelox shape path saga.pxo --in-place --name Cave --d 'M 452 1150 C 452 1030 50
 pixelox layer add saga.pxo --in-place --name Glow
 pixelox fill gradient saga.pxo --in-place --layer Glow --kind radial --from 556,1090 --to 556,1150 --stops '#f5e7a9ff@0,#dec89380@0.4,#dec89300@1'
 pixelox layer blend saga.pxo --in-place --layer Glow --mode screen
-pixelox text add saga.pxo --in-place --name Tagline --content "ONE ROAD OVER THE HIGH PASS." --font Baskerville --weight 400 --size 1.05% --tracking 250 --color '#dec893' --at 50%,7.9% --anchor c
-pixelox text add saga.pxo --in-place --name The --content "THE" --font Baskerville --weight 400 --size 1.25% --tracking 150 --color '#f5e7a9' --at 42%,76% --anchor c
-pixelox text add saga.pxo --in-place --name Word1 --content "SONG" --font Luminari --size 6% --tracking 20 --color '#f5e7a9'
-pixelox transform move saga.pxo --in-place --layer Word1 --to 50%,76.7% --anchor t
-pixelox text add saga.pxo --in-place --name Word2 --content "PEAKS" --font Luminari --size 6.4% --tracking 20 --color '#f5e7a9'
-pixelox transform move saga.pxo --in-place --layer Word2 --to 50%,83.2% --anchor t
-pixelox text add saga.pxo --in-place --name OfThe --content "OF THE" --font Baskerville --weight 400 --size 1% --tracking 150 --color '#f5e7a9' --at 50%,82% --anchor c
+pixelox text add saga.pxo --in-place --name Tagline --content "ONE ROAD OVER THE HIGH PASS." --font @oldstyle --weight 400 --size 1.05% --tracking 250 --color '#dec893' --at 50%,7.9% --anchor c
+pixelox text add saga.pxo --in-place --name The --content "THE" --font @oldstyle --weight 400 --size 1.25% --tracking 150 --color '#f5e7a9' --at 42%,76% --anchor c
+pixelox text add saga.pxo --in-place --name Word1 --content "SONG" --font @uncial --size 6% --tracking 20 --color '#f5e7a9' --at 50%,76.7% --anchor t --anchor-to ink
+pixelox text add saga.pxo --in-place --name Word2 --content "PEAKS" --font @uncial --size 6.4% --tracking 20 --color '#f5e7a9' --at 50%,83.2% --anchor t --anchor-to ink
+pixelox text add saga.pxo --in-place --name OfThe --content "OF THE" --font @oldstyle --weight 400 --size 1% --tracking 150 --color '#f5e7a9' --at 50%,82% --anchor c
 pixelox shape line saga.pxo --in-place --name Rule --from 30%,90.5% --to 70%,90.5% --stroke '#8a8f6a' --stroke-width 2 --dash 0,7 --cap round --opacity 70
-pixelox text add saga.pxo --in-place --name Subtitle --content "PART ONE OF THE HIGH ROAD" --font Baskerville --weight 400 --size 1.5% --tracking 150 --color '#8a8f6a' --at 50%,92% --anchor c
-pixelox text add saga.pxo --in-place --name Credits --content "A STUDIO NAME PICTURE   DIRECTED BY DIRECTOR NAME   PRINT EDITION 01" --font "Avenir Next Condensed" --weight 400 --size 0.6% --tracking 50 --color '#4a4f3e' --at 50%,95.5% --anchor c
-pixelox layer add saga.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise saga.pxo --in-place --layer Grain --amount 16 --monochrome
-pixelox layer blend saga.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity saga.pxo --in-place --layer Grain --value 45
+pixelox text add saga.pxo --in-place --name Subtitle --content "PART ONE OF THE HIGH ROAD" --font @oldstyle --weight 400 --size 1.5% --tracking 150 --color '#8a8f6a' --at 50%,92% --anchor c
+pixelox text add saga.pxo --in-place --name Credits --content "A STUDIO NAME PICTURE   DIRECTED BY DIRECTOR NAME   PRINT EDITION 01" --font @condensed --weight 400 --size 0.6% --tracking 50 --color '#4a4f3e' --at 50%,95.5% --anchor c
+pixelox filter grain saga.pxo --in-place --as-layer --name Grain --amount 12
 pixelox export saga.pxo -o saga.png
 ```
 

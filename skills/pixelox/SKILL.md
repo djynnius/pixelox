@@ -30,7 +30,9 @@ pixelox is installed as the `pixelox` command. It never prompts and is built for
 
 `--layer name|#N|@top|@bottom|@active`; `--mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png` with
 `--invert-mask`; geometry `X,Y,WxH` / `X,Y` / `WxH` in px, %, pt, mm, in (negative counts
-from the right/bottom, `--anchor tl..br`); colors `#rrggbb[aa]`, `rgb()`, `hsl()`, names.
+from the right/bottom, `0-80` is 80 px past the left/top edge, `--anchor tl..br`); colors
+`#rrggbb[aa]`, `rgb()`, `hsl()`, names. New layers go on top; `--above`, `--below`, `--into`
+place them. Every masking feature: `pixelox docs masking`.
 
 ## Recipes
 
@@ -42,14 +44,16 @@ from the right/bottom, `--anchor tl..br`); colors `#rrggbb[aa]`, `rgb()`, `hsl()
 | Retouch a portrait | `pixelox select skin doc.pxo --in-place --at 1230,1590` → `pixelox retouch blemishes doc.pxo --in-place --mask @sel --min-redness 10 --heal` → `pixelox retouch frequency-split doc.pxo --in-place`; the full playbook is the pixelox-retouch skill |
 | Cut out (any backdrop, local model) | `pixelox detect subject doc.pxo --in-place --save-mask subject -y` (first use downloads 224 MB: ask the user before -y; never trace by hand instead) → `pixelox mask refine doc.pxo --in-place --mask subject --decontaminate` → `pixelox export doc.pxo -o cut.png --apply-mask subject` |
 | Effects and art | `pixelox render lens-flare doc.pxo --in-place --at 70%,20%` · `pixelox fx fire doc.pxo --in-place --layer Title` · `pixelox filter pencil photo.jpg -o sketch.png --color` (also charcoal, ink, oil-paint, watercolor, cartoon, cutout, halftone) |
+| Textures, grain, liquid | `pixelox fill noise doc.pxo --in-place --as-layer --kind smoke --stops 'transparent,#c9d2e0' --blend screen` · `pixelox filter grain doc.pxo --in-place --as-layer` · `pixelox render splash doc.pxo --in-place --at 50%,85%` (also `render droplets|ice`, `filter distort|displace|glitch`, `transform warp --preset arc`) |
 | Cut out (plain backdrop) | `pixelox select color doc.pxo --in-place --ref white --at 4,4 --contiguous --tolerance 40` → `pixelox select invert doc.pxo --in-place` → `pixelox export doc.pxo -o cut.png --apply-mask @sel` |
 | Blur the background | `pixelox filter gaussian doc.pxo --in-place --sigma 8 --mask subject --invert-mask` |
 | Replace a sky | `pixelox select sky doc.pxo --in-place --layer Hills` → `pixelox select invert doc.pxo --in-place` → `pixelox mask add doc.pxo --in-place --layer Hills --from @sel` |
 | Brush a mask or shadow | `pixelox paint stroke doc.pxo --in-place --layer Sky --target mask --points '0,70% 100%,72%' --size 400 --flow 10 --color black` |
 | Final grade | `pixelox layer stamp doc.pxo --in-place --name Grade` → `pixelox adjust clarity doc.pxo --in-place --layer Grade --amount 25` · `adjust dehaze` · `adjust texture` |
-| Design a poster, flyer, ad, or social post | start from a brief, not from commands: the pixelox-design skill has 126 studied layouts, 74 effect recipes (`T-smoke`, `T-duotone`, ...), fonts, and palettes |
+| Design a poster, flyer, ad, or social post | start from a brief, not from commands: the pixelox-design skill has 126 studied layouts, 80 effect recipes (`T-smoke`, `T-duotone`, ...), fonts, and palettes |
 | Type | `pixelox text add doc.pxo --in-place --content "Hello" --font sans-serif --size 48pt --at 50%,10% --anchor t` |
 | Shapes and styles | `pixelox shape rect doc.pxo --in-place --rect 40,40,300x120 --radius 16 --fill '#0ea5e9'` · `pixelox fx drop-shadow doc.pxo --in-place --layer Title --offset 0,6 --blur 12` |
+| Icons, codes, depth | `pixelox shape icon doc.pxo map-pin --in-place --size 48 --at 10%,90%` (`shape icons --search WORD`) · `pixelox shape qr doc.pxo --in-place --data 'https://example.com' --background-color white` · `shape barcode --type ean13` · `fx long-shadow` · `fx extrude` · `fx reflection` |
 | Template | `pixelox comp template apply t.pxo --set headline="X" --set-image product=p.png -o out.pxo` |
 | Watermark many | `pixelox batch run --glob 'in/*.jpg' --pipeline watermark.yml --out-dir out/ --jobs 8` |
 | SVG | `pixelox svg rasterize logo.svg -o logo.png --scale 2` · `pixelox trace scan.png -o logo.svg --mode binary` |

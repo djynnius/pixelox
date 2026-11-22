@@ -191,8 +191,9 @@ fn pixelate_hex(img: &Image, cell: usize, lx: i64, ly: i64) -> Image {
 fn pixelate(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let cell = a.usize("cell")?.max(1);
     let hex = a.choice("kind") == "hex";
-    let (lx, ly) = util::layer_offset(a, doc)?;
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    // a cell that the layer only touches is filled whole: room for one more cell
+    let reach = if cell <= 1 && !hex { Reach::NONE } else { Reach::uniform(cell as f64 * if hex { 1.2 } else { 1.0 }) };
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (lx, ly), _| {
         if (cell <= 1 && !hex) || img.is_empty() {
             return Ok(img.clone());
         }

@@ -65,6 +65,9 @@ pub fn ops() -> Vec<OpSpec> {
         .param(param("size", ParamKind::Size).default("1024x768").help("Output size WxH (with --as-layer: the document size unless given)"))
         .param(param("as-layer", ParamKind::Path).help("Add the render as a raster layer to this .pxo document (--in-place, or -o for a copy)"))
         .param(common::name().help("Name of the layer added with --as-layer (default: 3D render)"))
+        .param(param("above", ParamKind::Layer).help("With --as-layer: insert the layer directly above this layer (default: on top of the stack)"))
+        .param(param("below", ParamKind::Layer).help("With --as-layer: insert the layer directly below this layer"))
+        .param(param("into", ParamKind::Layer).help("With --as-layer: insert the layer on top of this group's children"))
         .param(param("color", ParamKind::Color).default("#8fa6c8").help("Surface color of the model (scene objects may set their own)"))
         .param(param("line-color", ParamKind::Color).default("#1f2937").help("Line color for wireframe, hidden-line, and --outline"))
         .param(param("bg-color", ParamKind::Color).default("transparent").help("Background color (transparent by default; a scene file may set `background`)"))
@@ -350,6 +353,10 @@ fn render_3d(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         return Err(Error::new("PX1004", "'render 3d' writes a file; say where")
             .with_hint("pass -o out.svg or -o out.png, or --as-layer doc.pxo --in-place"));
     }
+    if as_layer.is_none() && pixelox_core::stack::given(a) {
+        return Err(Error::new("PX1005", "--above, --below, and --into place the layer made by --as-layer")
+            .with_hint("add --as-layer doc.pxo, or drop the placement flag"));
+    }
     let mut doc = match &as_layer {
         Some(p) => {
             if ctx.globals.in_place && out.is_some() {
@@ -416,9 +423,10 @@ fn render_3d(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     if let (Some(mut d), Some(p)) = (doc.take(), as_layer) {
         let img = raster(&scene)?;
         let name = a.str("name").unwrap_or_else(|| "3D render".into());
+        let at = pixelox_core::stack::from_args(a, &d)?.unwrap_or(pixelox_core::stack::Placement::Top);
         let layer = d.new_layer(&name, LayerKind::Raster { image: img });
         result["layer"] = json!(layer.name);
-        d.insert_above(None, layer);
+        pixelox_core::stack::insert_at(&mut d, layer, &at);
         let mut params = a.to_json();
         for (k, v) in &ctx.resolved {
             params.insert(k.clone(), v.clone());

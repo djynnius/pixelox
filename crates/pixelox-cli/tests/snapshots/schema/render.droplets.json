@@ -1,0 +1,352 @@
+{
+  "command": "render.droplets",
+  "cli": "pixelox render droplets",
+  "summary": "Condensation droplets clipped to a layer",
+  "category": "render",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.droplets.params.json",
+    "title": "pixelox render.droplets parameters",
+    "description": "Condensation droplets clipped to a layer",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "The product layer to bead (default: the whole canvas) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "density": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "How much of the surface the beads cover, in percent of the maximum Range: 0..100. Type: number.",
+        "default": "45",
+        "x-pixelox-kind": "float"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Largest bead radius in px or % of the product width (auto: 2.4%) Type: length.",
+        "default": "auto",
+        "x-pixelox-kind": "length"
+      },
+      "trickles": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 200.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Drops running down with a trail (auto: 3) Range: 0..200. Type: integer.",
+        "default": "auto",
+        "x-pixelox-kind": "int"
+      },
+      "mist": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Fine mist of tiny beads (frosting), in percent Range: 0..100. Type: number.",
+        "default": "30",
+        "x-pixelox-kind": "float"
+      },
+      "refract": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "on: beads show the product behind them (lens); off: clear tinted beads Type: on|off.",
+        "default": "on",
+        "x-pixelox-kind": "switch"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Tint of the water (white = clear) Type: color.",
+        "default": "#ffffff",
+        "x-pixelox-kind": "color"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: Droplets) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly above this layer (default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.droplets.result.json",
+    "title": "pixelox render.droplets envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "render.droplets"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

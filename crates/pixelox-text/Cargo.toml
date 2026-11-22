@@ -21,3 +21,5 @@ tiny-skia.workspace = true
 kurbo.workspace = true
 # Pure-Rust math (sin/cos/atan2/tan) so layout is identical on every platform.
 libm = "0.2"
+# `fonts get`: Google Fonts downloads (with consent), as `pixelox update` already does
+ureq.workspace = true

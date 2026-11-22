@@ -7,7 +7,7 @@ style: [minimal, grunge, illustration]
 format: portrait-2x3
 archetype: A-centered-title
 palette: ['#f7f7f6', '#24090c', '#6b1c1f', '#a1262d', '#2b2b2b']
-techniques: [T-splatter, T-silhouette, T-grunge, T-distress-type, T-fit-width, T-paper-grain]
+techniques: [T-splatter, T-silhouette, T-grunge, T-distress-type, T-fit-width, T-paper-grain, T-texture-fill]
 needs: subject-cutout
 ---
 
@@ -91,14 +91,15 @@ figure under 55% W: the smallness is the mood.
   polygon mask (`mask add --from-path`), two splats (`dir=90` throws the main one downward
   into drips) are placed over the cut, and `layer merge` bakes the three into one layer
   named Ink.
-* Ink fill: a `clouds.js` render (`scale=6`, `warp=1.4`, `contrast=2`) in the three reds,
-  clipped to Ink with `layer clip`; a second clipped layer of `grunge.js` scratches in
-  `#c8363d` at 70% gives the lighter streaks.
-* **T-grunge**, light version: mottle in multiply at 50% and gray marks at 60% on the
-  paper only (they sit under the ink).
+* Ink fill: **T-texture-fill**, one `fill noise --as-layer` layer in the three reds
+  (`--scale 17%`, `--warp 56`, `--contrast 18`, and `--bias=-30` to keep most of it
+  dark), clipped to Ink with `layer clip`; a second clipped layer of `grunge.js`
+  scratches in `#c8363d` at 70% gives the lighter streaks.
+* **T-grunge**, light version: mottle (`fill noise --as-layer`, multiply, 50%) and gray
+  `grunge.js` marks at 60% on the paper only (they sit under the ink).
 * **T-distress-type** on the title, very sparse (`specks=2500`, paper color).
-* **T-paper-grain**, amount 10, soft-light 35%.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`).
+* **T-fit-width**: the title is fitted to 60% W (`--fit-width 650`).
 
 ## 8. Hierarchy and eye path
 
@@ -116,17 +117,13 @@ frontal). The mask polygon keeps the head, the neck, and a slanted slice of the 
 move its lower points to where your figure should start to dissolve.
 
 ```bash
-pixelox render js scripts/clouds.js -o ink.png --size 1080x1620 --seed 5 --param lo='#1e090b' --param mid='#6b1c1f' --param hi='#b3242b' --param scale=6 --param octaves=6 --param warp=1.4 --param contrast=2 --param res=2
 pixelox render js scripts/splatter.js -o splat.png --size 640x640 --seed 6 --param color='#3a0d10' --param radius=0.22 --param drops=260 --param reach=1.5 --param arms=8 --param dir=90
 pixelox render js scripts/splatter.js -o splat2.png --size 340x340 --seed 12 --param color='#3a0d10' --param radius=0.17 --param drops=120 --param reach=1.6 --param arms=4
 pixelox render js scripts/grunge.js -o marks.png --size 1080x1620 --seed 9 --param color='#8f8f8b' --param specks=6000 --param blotches=6 --param scratches=70 --param clump=0.4
 pixelox render js scripts/grunge.js -o scuffs.png --size 1080x1620 --seed 3 --param color='#c8363d' --param specks=1500 --param blotches=20 --param scratches=420 --param clump=0.2 --param size=2
 pixelox render js scripts/grunge.js -o wear.png --size 1080x1620 --seed 14 --param color='#f7f7f6' --param specks=2500 --param blotches=60 --param scratches=20 --param clump=0.3
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1620 --seed 21 --param lo='#d9d9d5' --param hi='#ffffff' --param scale=4 --param octaves=6 --param warp=0.4
 pixelox new -o cover.pxo --size 1080x1620 --fill '#f7f7f6'
-pixelox comp place cover.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend cover.pxo --in-place --layer Mottle --mode multiply
-pixelox layer opacity cover.pxo --in-place --layer Mottle --value 50
+pixelox fill noise cover.pxo --in-place --as-layer --name Mottle --seed 21 --scale 25% --warp 16 --stops '#d9d9d5,#ffffff' --blend multiply --opacity 50
 pixelox comp place cover.pxo marks.png --in-place --as Marks --fit cover
 pixelox layer opacity cover.pxo --in-place --layer Marks --value 60
 pixelox comp place cover.pxo subject.png --in-place --as Figure --size x700 --at 54%,23.8% --anchor t
@@ -134,27 +131,23 @@ pixelox mask add cover.pxo --in-place --layer Figure --from-path 'M 300 380 H 86
 pixelox comp place cover.pxo splat.png --in-place --as Splat --at 45%,61% --anchor c
 pixelox comp place cover.pxo splat2.png --in-place --as Splat2 --at 63%,65% --anchor c
 pixelox layer merge cover.pxo --in-place --layers Figure,Splat,Splat2 --name Ink
-pixelox comp place cover.pxo ink.png --in-place --as InkFill --fit cover
+pixelox fill noise cover.pxo --in-place --as-layer --name InkFill --seed 3 --scale 17% --warp 56 --contrast 18 --bias=-30 --stops '#1e090b,#6b1c1f,#b3242b'
 pixelox layer clip cover.pxo --in-place --layer InkFill
 pixelox comp place cover.pxo scuffs.png --in-place --as Scuffs --fit cover
 pixelox layer clip cover.pxo --in-place --layer Scuffs
 pixelox layer opacity cover.pxo --in-place --layer Scuffs --value 70
-pixelox text add cover.pxo --in-place --name Title --content "UNDERTOW" --font "Avenir Next" --weight 500 --size 4.2% --tracking 450 --color '#2b2b2b'
-pixelox transform scale cover.pxo --in-place --layer Title --size 650x
-pixelox transform move cover.pxo --in-place --layer Title --to 50%,19% --anchor c
+pixelox text add cover.pxo --in-place --name Title --content "UNDERTOW" --font @geometric-sans --weight 500 --fit-width 650 --tracking 450 --color '#2b2b2b' --at 50%,19% --anchor c --anchor-to ink
 pixelox comp place cover.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer clip cover.pxo --in-place --layer Wear
 pixelox text add cover.pxo --in-place --name Tagline --content $'One daughter on salt,\ndistance, and coming back' --font Futura --weight 500 --size 2.1% --tracking 100 --leading 150% --align center --color '#2b2b2b' --at 50%,84.8% --anchor c
-pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font "Avenir Next" --weight 700 --size 2.35% --tracking 500 --color '#2b2b2b' --at 50%,94.3% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 35
+pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font @geometric-sans --weight 700 --size 2.35% --tracking 500 --color '#2b2b2b' --at 50%,94.3% --anchor c
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export cover.pxo -o cover.png
 ```
 
 Change first: the cutout and its mask polygon; then the two splat positions so the stain
-hides the cut edge; then the three ink colors.
+hides the cut edge; then the three ink colors in the `InkFill` stops (change its `--seed`
+if a bright patch lands on the face).
 
 ## 10. Variations and pairings
 

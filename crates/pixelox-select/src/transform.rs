@@ -80,13 +80,23 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox transform perspective doc.pxo --layer Screen --quad '120,80 620,40 640,420 100,380' --in-place", "Put a screenshot on a tilted screen")
             .example("pixelox transform perspective poster.png -o keystone.png --quad '50,0 750,0 800,600 0,600'", "Keystone a flat image")
             .example("pixelox transform perspective doc.pxo --layer Label --quad '0,0 200,20 200,120 0,100' --interp bilinear --in-place", "Faster sampling"),
-        OpSpec::doc("transform warp", CAT, "Grid-mesh warp of a layer", warp_op)
-            .about("Bend a layer with a grid of control points spread evenly over its visible bounds; the points file gives where each node goes. JSON schema: {\"grid\": \"3x3\" (optional, else --grid), \"relative\": false, \"points\": [[x, y], ...]} or a bare array of points; cols x rows points in row-major order (top row first, left to right), canvas pixels, or offsets from each node's rest position when \"relative\" is true ({\"x\", \"y\"} objects also work). Displacements are interpolated smoothly (Catmull-Rom). Text, shape, and placed layers are rasterized first with a warning.")
+        OpSpec::doc("transform warp", CAT, "Warp with a preset (arc, flag...) or a mesh", warp_op)
+            .about("Bend a layer's visible bounds. --preset uses one of Photoshop's warp styles (arc, arc-lower, arc-upper, arch, bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist) with --bend -100..100 (strength and direction: positive arcs and arches rise in the middle), --h-distort and --v-distort -100..100 (a perspective that grows the right side or the bottom; negative: the left or the top), and --orient (vertical runs the preset along the vertical axis). The presets are the same map as `text warp` (pixelox_core::warp_preset), so a preset gives the same shape on type and on pixels; on a text layer this sets the text's own live warp (the glyph outlines bend and stay vector). On a placed or shape layer a preset warp stays live as a smart filter, re-applied whenever the layer renders (clipped to the canvas). Without --preset, a grid of control points spread evenly over the bounds is moved to the points file's positions. JSON schema: {\"grid\": \"3x3\" (optional, else --grid), \"relative\": false, \"points\": [[x, y], ...]} or a bare array of points; cols x rows points in row-major order (top row first, left to right), canvas pixels, or offsets from each node's rest position when \"relative\" is true ({\"x\", \"y\"} objects also work). Displacements are interpolated smoothly (Catmull-Rom). The points mode rasterizes text, shape, and placed layers first with a warning.")
             .param(layer_param(SCOPED))
-            .param(param("grid", ParamKind::Str).default("3x3").help("Control grid COLSxROWS, each 2..16"))
-            .param(param("points", ParamKind::Path).required().help("JSON file of destination points (schema in the description)"))
+            .param(param("preset", ParamKind::Choice).choices(pixelox_core::warp_preset::PRESETS).help("Warp style (Photoshop's list); omit to use --points"))
+            .param(param("bend", ParamKind::Float).default("50").range("-100..100").help("Preset strength and direction in percent (negative mirrors the bend)"))
+            .param(param("h-distort", ParamKind::Float).default("0").range("-100..100").help("Preset perspective: positive grows the right side, negative the left"))
+            .param(param("v-distort", ParamKind::Float).default("0").range("-100..100").help("Preset perspective: positive grows the bottom, negative the top"))
+            .param(param("orient", ParamKind::Choice).choices(&["horizontal", "vertical"]).default("horizontal").help("Preset orientation: horizontal, or vertical (the preset runs along the vertical axis)"))
+            .param(param("grid", ParamKind::Str).default("3x3").help("Control grid COLSxROWS, each 2..16 (with --points)"))
+            .param(param("points", ParamKind::Path).help("JSON file of destination points (schema in the description); instead of --preset"))
+            .param(param("keep-bounds", ParamKind::Flag).advanced().help("Keep the layer's pixel size and position: what the warp moves outside is clipped (used by live warps on placed layers)"))
             .param(interp_param())
-            .example("pixelox transform warp doc.pxo --layer Flag --grid 3x3 --points warp.json --in-place", "Bend a layer")
+            .example("pixelox transform warp doc.pxo --layer Logo --preset arc --bend 40 --in-place", "Bend a logo into an arc")
+            .example("pixelox transform warp doc.pxo --layer Banner --preset flag --bend 30 --h-distort 20 --in-place", "Wave a banner that recedes to the left")
+            .example("pixelox transform warp doc.pxo --layer Product --preset bulge --bend=-25 --in-place", "Pinch a placed product (stays live)")
+            .example("pixelox transform warp doc.pxo --layer Ribbon --preset rise --orient vertical --bend 60 --in-place", "A vertical S-bend")
+            .example("pixelox transform warp doc.pxo --layer Flag --grid 3x3 --points warp.json --in-place", "Bend a layer with a mesh")
             .example("pixelox transform warp doc.pxo --layer Label --grid 4x2 --points bulge.json --in-place", "Wrap a label")
             .example("pixelox transform warp sticker.png -o bent.png --points warp.json", "Warp a flat image"),
         OpSpec::doc("transform crop", CAT, "Crop the document", crop)
@@ -399,8 +409,97 @@ fn parse_warp_file(v: &Value) -> Result<(Vec<(f64, f64)>, bool, Option<String>)>
     Ok((pts, relative, grid))
 }
 
+/// `transform warp --preset`: Photoshop's warp styles (`pixelox_core::warp_preset`).
+fn preset_warp(a: &Args, doc: &mut Document, ctx: &mut OpCtx, p: LayerPath) -> Result<Value> {
+    use pixelox_core::warp_preset::{Preset, Warp, PRESETS};
+    let name = a.choice("preset");
+    let preset = Preset::parse(&name).ok_or_else(|| {
+        Error::new("PX1010", format!("'{name}' is not a warp preset"))
+            .with_hint(format!("use one of: {}", PRESETS.join(", ")))
+    })?;
+    let w = Warp {
+        preset,
+        bend: a.f64("bend")?,
+        h_distort: a.f64("h-distort")?,
+        v_distort: a.f64("v-distort")?,
+        vertical: a.choice("orient") == "vertical",
+    };
+    let settings = w.to_json();
+    // live text bends its glyph outlines with the same map (pixelox-text, `text warp`)
+    if let LayerKind::Text { spec: Value::Object(m) } = &mut doc.layer_mut(&p).content {
+        m.insert("warp".into(), settings.clone());
+        let mut v = layer_result(doc, &p, vec![])?;
+        v["warp"] = settings;
+        v["text_warp"] = json!(true);
+        return Ok(v);
+    }
+    if pixelox_core::region::takes_smart_filters(&doc.layer(&p).content) {
+        // live: re-applied whenever the layer renders, on its content spread onto the canvas
+        let mut params = a.to_json();
+        for k in ["layer", "points", "grid"] {
+            params.remove(k);
+        }
+        params.insert("keep_bounds".into(), json!("true"));
+        let filter =
+            SmartFilter { op: ctx.id.clone(), enabled: true, params, seed: ctx.globals.seed, op_index: ctx.op_index };
+        let mut probe = doc.layer(&p).clone();
+        probe.smart_filters.push(filter.clone());
+        compose::render_layer(doc, &probe)?;
+        let l = doc.layer_mut(&p);
+        l.smart_filters.push(filter);
+        let n = l.smart_filters.len();
+        let mut v = layer_result(doc, &p, vec![])?;
+        v["warp"] = settings;
+        v["smart_filter"] = json!(ctx.id);
+        v["smart_filters"] = json!(n);
+        return Ok(v);
+    }
+    let b = bounds_of(doc, &p)?;
+    let (bx, by, bw, bh) = (b.x as f64, b.y as f64, b.w as f64, b.h as f64);
+    let rect = [bx, by, bw, bh];
+    let field = warp::map_field((bx, by, bw, bh), |u, v| {
+        let q = w.map(rect, kurbo::Point::new(bx + u * bw, by + v * bh));
+        (q.x, q.y)
+    })?;
+    let keep = a.flag("keep-bounds").then(|| {
+        let l = doc.layer(&p);
+        let size = l.raster().map(|r| (r.width, r.height)).unwrap_or((doc.width, doc.height));
+        (l.x, l.y, size)
+    });
+    let r = engine::layer_geo(doc, ctx, &p, &Geo::Field(&field), interp(a)?, true)?;
+    if let Some((x0, y0, (kw, kh))) = keep {
+        // back into the original rectangle (what moved outside is clipped)
+        let l = doc.layer_mut(&p);
+        if let LayerKind::Raster { image } = &l.content {
+            let placed = Rendered { image: image.clone(), x: l.x - x0, y: l.y - y0 };
+            l.content = LayerKind::Raster { image: placed.to_canvas(kw, kh) };
+            l.x = x0;
+            l.y = y0;
+        }
+    }
+    let mut v = layer_result(doc, &p, r)?;
+    v["warp"] = settings;
+    Ok(v)
+}
+
 fn warp_op(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let p = resolve_layer_arg(a, doc)?;
+    match (a.has("preset"), a.has("points")) {
+        (true, true) => {
+            return Err(Error::new("PX1005", "give --preset or --points, not both")
+                .with_hint("--preset bends with a warp style; --points moves a control mesh"))
+        }
+        (true, false) => return preset_warp(a, doc, ctx, p),
+        (false, false) => {
+            return Err(Error::new("PX1003", "'transform warp' needs --preset NAME or --points FILE").with_hint(
+                format!(
+                    "pixelox transform warp <doc> --layer L --preset arc --bend 40 --in-place (presets: {})",
+                    pixelox_core::warp_preset::PRESETS.join(", ")
+                ),
+            ))
+        }
+        _ => {}
+    }
     if a.is_explicit("grid") {
         parse_grid(&a.str_or("grid", "3x3"))?;
     }

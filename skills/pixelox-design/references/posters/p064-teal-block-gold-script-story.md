@@ -7,7 +7,7 @@ style: [photo-composite, type-led]
 format: portrait-9x16
 archetype: A-top-photo-bottom-text
 palette: ['#090f0d', '#45d2b6', '#f5a81f', '#b54106', '#214b49', '#ffffff']
-techniques: [T-photo-fade, T-duotone, T-light-leak, T-fit-width, T-image-in-type, T-script-overlap, T-rules]
+techniques: [T-photo-fade, T-duotone, T-light-leak, T-fit-width, T-image-in-type, T-script-overlap, T-rules, T-texture-fill, T-icon-row]
 needs: [photo, logo]
 ---
 
@@ -41,7 +41,7 @@ white, and centered.
    stage with screens at 15 to 23% H, heads and raised hands as a dark silhouette band at
    23 to 30% H. Left third lit hot orange-red (`#b54106`, a yellow flare `#f0d557` at the
    left edge, 22% H); right two thirds lit teal (`#214b49` to `#377783`).
-3. Fade: ground color from transparent at 18% H to solid at 47% H.
+3. Fade: the photo melts into the ground color between 18% H and 47% H.
 4. Edge glows on the dark field: teal `#01211b` to `#002520` along the right edge from 75
    to 95% H; a faint brown `#16120c` at the left edge near 73% H.
 5. Logo and wordmark, white: a ring mark (8.5% W) and a thin 4-letter wordmark, left edge,
@@ -108,21 +108,27 @@ the ground (T-photo-fade). When your photo has only one color of light, map it t
 **T-duotone** (`#020807` to `#0d4a45` to `#7fd9c8`) and add the orange with a
 **T-light-leak** in the top-left corner; that is what the recipe does. The logo is a white
 one-color mark. The three feature icons are simple line icons (people, book, heart) inside
-rings: place your own SVG icons, 4% W, at the ring centers.
+rings: `shape icon`, 48 px, at the ring centers.
 
 ## 7. Effects and textures
 
-* **T-photo-fade**: ground color, ramp 18 to 47% H; the block word starts inside the ramp.
+* **T-photo-fade**: a gradient mask on the photo (`mask add --gradient linear`), whole at
+  18% H and gone at 47% H, so the ground shows through; the block word starts inside the
+  ramp.
 * **T-duotone** on the photo and **T-light-leak** (orange and yellow blobs at the top-left
   corner, teal blobs at the top-right and bottom-right edges, sigma 40, screen).
-* **T-fit-width**: block word scaled to 74.5% W.
-* **T-image-in-type**: a mint-to-teal cloud texture clipped to the block word gives the
-  watercolor wash; a second clipped gradient (transparent to `#08826e`, 36 to 49% H)
+* **T-fit-width**: block word fitted to 74.5% W (`--fit-width 805`); the script is fitted
+  to 1170 px, wider than the canvas.
+* **T-image-in-type**: a mint-to-teal cloud texture (**T-texture-fill**: `fill noise
+  --as-layer`, soft and large, `--scale 55% --octaves 4`) clipped to the block word gives
+  the watercolor wash; a second clipped gradient (transparent to `#08826e`, 36 to 49% H)
   darkens the letters' feet so the script reads on top of them.
 * **T-script-overlap**: script 1.1x the block word's font size, rotated -7 degrees,
   overlapping the bottom 35% of the block word, with a bottom-to-top orange-to-yellow
   gradient (`fx overlay`, angle 90) and a drop shadow (offset 0,8, blur 14, 55%).
 * **T-rules**: the outlined time box, the short rule, and the divider in the credit line.
+* **T-icon-row**: `users`, `book-open`, and `heart` inside the three rings, and three small
+  neutral glyphs before the handle (the bundled icons have no social-network logos).
 
 ## 8. Hierarchy and eye path
 
@@ -141,52 +147,52 @@ light one-color mark) are your images here.
 
 ```bash
 pixelox render js scripts/blobs.js -o lights.png --size 1080x1920 --param bg=transparent --param colors='#e2480a,#ffb21a,#0f8f86,#0a5a4f' --param at='0.05,0.08;0.0,0.22;0.98,0.12;1.02,0.88' --param size=0.6 --param alpha=1
-pixelox render js scripts/clouds.js -o wash.png --size 1080x1920 --seed 6 --param lo='#17a58d' --param hi='#c8f2df' --param scale=3 --param octaves=5 --param warp=1.1 --param contrast=1.5
 pixelox new -o midweek.pxo --size 1080x1920 --fill '#090f0d'
 pixelox comp place midweek.pxo photo.png --in-place --as Stage --size 1080x --at 0,0
 pixelox adjust gradient-map midweek.pxo --in-place --layer Stage --stops '#020807@0,#0d4a45@0.5,#7fd9c8@1'
-pixelox layer add midweek.pxo --in-place --name Fade
-pixelox fill gradient midweek.pxo --in-place --layer Fade --from 0,18% --to 0,47% --stops '#090f0d00@0,#090f0dff@1'
+pixelox mask add midweek.pxo --in-place --layer Stage --gradient linear --from 0,18% --to 0,47%
 pixelox comp place midweek.pxo lights.png --in-place --as Lights --fit cover
 pixelox filter gaussian midweek.pxo --in-place --layer Lights --sigma 40
 pixelox layer blend midweek.pxo --in-place --layer Lights --mode screen
 pixelox comp place midweek.pxo logo.png --in-place --as Logo --size 84x --at 5%,12% --anchor l
-pixelox text add midweek.pxo --in-place --name Wordmark --content "HOPE" --font "Avenir Next" --weight 400 --size 2.4% --tracking 60 --color '#ffffff' --at 14.5%,12% --anchor l
-pixelox text add midweek.pxo --in-place --name Handle --content "@yourhandle" --font "Avenir Next" --weight 600 --size 1.3% --color '#ffffff' --at 95%,12% --anchor r
-pixelox text add midweek.pxo --in-place --name Block --content "HOPE" --font Impact --size 20% --color '#45d2b6'
-pixelox transform scale midweek.pxo --in-place --layer Block --size 805x
-pixelox transform move midweek.pxo --in-place --layer Block --to 11.4%,28.6% --anchor tl
-pixelox comp place midweek.pxo wash.png --in-place --as Wash --fit cover
+pixelox text add midweek.pxo --in-place --name Wordmark --content "HOPE" --font @geometric-sans --weight 400 --size 2.4% --tracking 60 --color '#ffffff' --at 14.5%,12% --anchor l
+pixelox shape icon midweek.pxo globe --in-place --name Social1 --size 24 --at 73%,12% --anchor c --color '#ffffff'
+pixelox shape icon midweek.pxo message-circle --in-place --name Social2 --size 24 --at 76%,12% --anchor c --color '#ffffff'
+pixelox shape icon midweek.pxo share-2 --in-place --name Social3 --size 24 --at 79%,12% --anchor c --color '#ffffff'
+pixelox text add midweek.pxo --in-place --name Handle --content "@yourhandle" --font @geometric-sans --weight 600 --size 1.3% --color '#ffffff' --at 95%,12% --anchor r
+pixelox text add midweek.pxo --in-place --name Block --content "HOPE" --font @condensed-heavy --fit-width 805 --color '#45d2b6' --at 11.4%,28.6% --anchor-to ink
+pixelox fill noise midweek.pxo --in-place --as-layer --name Wash --seed 8 --scale 55% --octaves 4 --warp 35 --contrast 5 --stops '#17a58d,#c8f2df'
 pixelox layer clip midweek.pxo --in-place --layer Wash
 pixelox layer add midweek.pxo --in-place --name Depth
 pixelox fill gradient midweek.pxo --in-place --layer Depth --from 0,36% --to 0,49% --stops '#08826e00@0,#08826ee6@1'
 pixelox layer clip midweek.pxo --in-place --layer Depth
-pixelox text add midweek.pxo --in-place --name Script --content "Thursday" --font "Brush Script MT" --size 22% --color '#f7b21c' --at 50%,50% --anchor c
-pixelox transform scale midweek.pxo --in-place --layer Script --size 1170x
+pixelox text add midweek.pxo --in-place --name Script --content "Thursday" --font "Brush Script MT" --fit-width 1170 --color '#f7b21c' --at 50.5%,53% --anchor c --anchor-to ink
 pixelox transform rotate midweek.pxo --in-place --layer Script --degrees -7
-pixelox transform move midweek.pxo --in-place --layer Script --to 50.5%,53% --anchor c
 pixelox fx overlay midweek.pxo --in-place --layer Script --stops '#ef8a1c@0,#ffc71f@1' --angle 90
 pixelox fx drop-shadow midweek.pxo --in-place --layer Script --offset 0,8 --blur 14 --opacity 55
-pixelox text add midweek.pxo --in-place --name Tagline --content "COME HUNGRY. LEAVE FULL. BRING SOMEONE." --font "Avenir Next" --weight 600 --size 1.5% --tracking 30 --color '#e4e7e6' --at 49.5%,64.9% --anchor c
+pixelox text add midweek.pxo --in-place --name Tagline --content "COME HUNGRY. LEAVE FULL. BRING SOMEONE." --font @geometric-sans --weight 600 --size 1.5% --tracking 30 --color '#e4e7e6' --at 49.5%,64.9% --anchor c
 pixelox shape rect midweek.pxo --in-place --name TimeBox --rect 29.7%,68.3%,35.8%x6.7% --fill none --stroke '#c9cfcc' --stroke-width 2
-pixelox text add midweek.pxo --in-place --name Time --content "7PM" --font "Arial Black" --size 4.4% --color '#ffffff' --at 47.6%,71.7% --anchor c
-pixelox text add midweek.pxo --in-place --name Venue --content "AT THE MAIN AUDITORIUM" --font "Avenir Next" --weight 700 --size 2.5% --color '#ffffff' --at 49.5%,77.5% --anchor c
+pixelox text add midweek.pxo --in-place --name Time --content "7PM" --font @heavy-wide --size 4.4% --color '#ffffff' --at 47.6%,71.7% --anchor c
+pixelox text add midweek.pxo --in-place --name Venue --content "AT THE MAIN AUDITORIUM" --font @geometric-sans --weight 700 --size 2.5% --color '#ffffff' --at 49.5%,77.5% --anchor c
 pixelox shape line midweek.pxo --in-place --name Rule --from 38.5%,80.3% --to 59.7%,80.3% --stroke '#f0c9a0' --stroke-width 3
 pixelox shape ellipse midweek.pxo --in-place --name Ring1 --rect 4.2%,82.6%,8.2%x4.6% --fill none --stroke '#5d7d6b' --stroke-width 2
 pixelox shape ellipse midweek.pxo --in-place --name Ring2 --rect 35%,82.6%,8.2%x4.6% --fill none --stroke '#b0622a' --stroke-width 2
 pixelox shape ellipse midweek.pxo --in-place --name Ring3 --rect 69.8%,82.6%,8.2%x4.6% --fill none --stroke '#5d7d6b' --stroke-width 2
-pixelox text add midweek.pxo --in-place --name Item1 --content $'HEARTFELT\nPRAISE' --font "Avenir Next" --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 14.3%,84.9% --anchor l
-pixelox text add midweek.pxo --in-place --name Item2 --content $'LIVING\nWORD' --font "Avenir Next" --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 45%,84.9% --anchor l
-pixelox text add midweek.pxo --in-place --name Item3 --content $'WARM\nWELCOME' --font "Avenir Next" --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 79.8%,84.9% --anchor l
-pixelox text add midweek.pxo --in-place --name Slogan --content "EVERY WEEK. EVERYONE WELCOME." --font "Avenir Next" --weight 500 --size 1.2% --tracking 150 --color '#9aa3a0' --at 45.5%,92.2% --anchor r
+pixelox shape icon midweek.pxo users --in-place --name Icon1 --size 48 --at 8.3%,84.9% --anchor c --color '#8fc9b4' --stroke-width 3
+pixelox shape icon midweek.pxo book-open --in-place --name Icon2 --size 48 --at 39.1%,84.9% --anchor c --color '#e8853a' --stroke-width 3
+pixelox shape icon midweek.pxo heart --in-place --name Icon3 --size 48 --at 73.9%,84.9% --anchor c --color '#8fc9b4' --stroke-width 3
+pixelox text add midweek.pxo --in-place --name Item1 --content $'HEARTFELT\nPRAISE' --font @geometric-sans --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 14.3%,84.9% --anchor l
+pixelox text add midweek.pxo --in-place --name Item2 --content $'LIVING\nWORD' --font @geometric-sans --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 45%,84.9% --anchor l
+pixelox text add midweek.pxo --in-place --name Item3 --content $'WARM\nWELCOME' --font @geometric-sans --weight 600 --size 1.5% --leading 118% --color '#e4e7e6' --at 79.8%,84.9% --anchor l
+pixelox text add midweek.pxo --in-place --name Slogan --content "EVERY WEEK. ALL WELCOME." --font @geometric-sans --weight 500 --size 1.2% --tracking 150 --color '#9aa3a0' --at 45.5%,92.2% --anchor r
 pixelox shape line midweek.pxo --in-place --name Divider --from 48.8%,91.6% --to 48.8%,92.8% --stroke '#9aa3a0' --stroke-width 2
-pixelox text add midweek.pxo --in-place --name Credit --content "PASTOR FIRSTNAME LASTNAME" --font "Avenir Next" --weight 700 --size 1.2% --tracking 150 --color '#e4e7e6' --at 52.3%,92.2% --anchor l
+pixelox text add midweek.pxo --in-place --name Credit --content "PASTOR FIRSTNAME LASTNAME" --font @geometric-sans --weight 700 --size 1.2% --tracking 150 --color '#e4e7e6' --at 52.3%,92.2% --anchor l
 pixelox export midweek.pxo -o midweek.png
 ```
 
 Change first: the block word (3 to 5 letters; a longer word comes out shorter after the
 fit) and the script word, then the two light colors together with the two type colors.
-With a registered brush script that has a long crossbar (Yellowtail, Kaushan Script), the
+With an installed brush script that has a long crossbar (Yellowtail, Kaushan Script), the
 flourish to the left edge comes for free; with Brush Script MT leave it out.
 
 ## 10. Variations and pairings
@@ -199,7 +205,7 @@ flourish to the left edge comes for free; with Brush Script MT leave it out.
 * Feed 4:5 version: crop at 12 to 88% H, drop the feature row, keep the time box.
 * Concerts, club nights, conferences, launch teasers: any event with a hall photo.
 * Pairs with T-bokeh over the faded part of the photo, T-neon-glow on the time box, and
-  T-paper-grain (soft-light, 30%) to hide banding in the fade.
+  T-paper-grain (amount 10) to hide banding in the fade.
 
 ## 11. Pitfalls
 

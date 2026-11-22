@@ -25,7 +25,7 @@ pub fn ops() -> Vec<OpSpec> {
             .param(param("radius", ParamKind::Float).default("1").range("0..64").help("Size of the blur being removed, in px"))
             .param(param("reduce-noise", ParamKind::Float).default("10").range("0..100").help("Noise reduction 0..100: small differences are sharpened less"))
             .param(param("kind", ParamKind::Choice).choices(&["lens", "gaussian", "motion"]).default("lens").help("Blur to remove: lens (defocus disc), gaussian, or motion"))
-            .param(param("angle", ParamKind::Angle).default("0").help("Direction of the motion blur in degrees (with --kind motion)"))
+            .param(param("angle", ParamKind::Angle).default("0").help("Direction of the motion blur in degrees counter-clockwise from the right (with --kind motion)"))
             .params(common::region())
             .example("pixelox filter smart-sharpen photo.jpg -o crisp.jpg --amount 150 --radius 1.5", "Recover slight defocus")
             .example("pixelox filter smart-sharpen shake.jpg -o fixed.jpg --kind motion --angle 20 --radius 3", "Reduce camera-shake blur")

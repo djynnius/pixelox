@@ -7,7 +7,7 @@ style: [3d-render, minimal, photo-composite]
 format: portrait-9x16
 archetype: A-hero-object
 palette: ['#050609', '#1a1c1f', '#3e4247', '#84888e', '#ffffff']
-techniques: [T-neon-glow, T-fit-width, T-rules, T-photo-fade, T-paper-grain, T-ring-arcs, T-floor-reflection]
+techniques: [T-neon-glow, T-fit-width, T-rules, T-photo-fade, T-paper-grain, T-ring-arcs, T-floor-reflection, T-icon-row]
 needs: product-cutout
 ---
 
@@ -44,8 +44,8 @@ dark wall frame; the frame is not part of the design.
 4. Landscape: dark rock dunes in four gray tones (`#222428` to `#090a0c`) rising at the
    left (0 to 33% W, top at 57% H) and the right (67 to 100% W, top at 54% H), low in the
    middle. It hides the bottom of the ring.
-5. Floor fade: the ground color from transparent at 76% H to solid at 85% H, which makes
-   a calm black area for the specs.
+5. Floor fade: the landscape dissolves into the ground color between 76% H and 85% H,
+   which makes a calm black area for the specs.
 6. Phone: a graphite phone seen from the back, three-quarter view, upright,
    `34%,25%,33% x 55%`, bottom edge on the floor at 80% H, with a faint reflection below.
 7. Brand line: 4 letters, white, thin, cap height 2.8% H, 18% W wide, cap top at 5.3% H.
@@ -108,18 +108,21 @@ nothing in the picture has a hue.
   `#dfe6f5`), the tube-and-glow part of **T-neon-glow** without the blurred halo copy.
 * Landscape: `scripts/waves.js` with four near-black grays, `chaos=0.9`, blurred by 2 px;
   a real terrain photo or render is better when you have one.
-* **T-photo-fade** toward the bottom: ramp 76 to 85% H.
-* Reflection: a vertically flipped copy of the product below the floor line at 30%
-  opacity, placed under the floor fade so it dies out within 5% H.
+* **T-photo-fade** toward the bottom: a gradient mask on the landscape (`mask add
+  --gradient linear --from 0,76% --to 0,85%`).
+* **T-floor-reflection**: `fx reflection --layer Product --length 8% --opacity 40 --blur
+  4`, a live style that dies out within 5% H. The cutout is trimmed first (`transform
+  trim`), so the reflection touches the product's foot.
 * Mono: one `adjust bw --as-layer` above the product and below the type removes every
   hue from the product, its reflection, and the landscape at once.
 * **T-rules**: two vertical column dividers, one short divider in the memory line, one
   horizontal hairline, all white at 35 to 60% opacity.
-* **T-paper-grain**: amount 6 in soft-light at full opacity, to stop banding in the dark
+* **T-icon-row**: the three spec icons are `shape icon` drawings (`aperture`, `cpu`,
+  `battery-full`), 60 px, white, 3 px lines.
+* **T-paper-grain**: `filter grain --as-layer --amount 10`, to stop banding in the dark
   gradients.
 * **T-ring-arcs** in [techniques.md](../techniques.md) is the tested library version of the ring, halo, or arc shapes; start from it when reusing this idea.
-* **T-floor-reflection** in [techniques.md](../techniques.md) is the tested library version of the mirrored floor reflection; start from it when reusing this idea.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-fit-width**: the model name is set to an exact width with `--fit-width 500`.
 
 ## 8. Hierarchy and eye path
 
@@ -134,10 +137,12 @@ Cap-height ratio: model 6.6 : brand 2.8 : tagline 1.4 : spec 0.85, about 7.8 : 3
 
 ## 9. Build recipe
 
-`product.png` is your image here: an upright product cutout, tall and narrow. A phone is
+`product.png` is your image here: an upright product cutout, tall and narrow. The first
+line trims its transparent border, so the size and the floor line are exact. A phone is
 about half as wide as it is tall; keep `--size x1040` (54% of the canvas height).
 
 ```bash
+pixelox transform trim product.png -o tight.png
 pixelox render js scripts/waves.js -o terrain.png --size 1080x1920 --seed 5 --param colors='#222428,#191b1e,#111214,#090a0c' --param count=4 --param top=0.58 --param bottom=0.75 --param amp=0.035 --param freq=0.9 --param chaos=0.9
 pixelox new -o launch.pxo --size 1080x1920 --fill '#050609'
 pixelox shape ellipse launch.pxo --in-place --name Disc --rect 159,545,784x784 --fill '#33373d'
@@ -146,48 +151,38 @@ pixelox shape ellipse launch.pxo --in-place --name Ring --rect 159,545,784x784 -
 pixelox fx outer-glow launch.pxo --in-place --layer Ring --blur 40 --spread 10 --color '#dfe6f5' --opacity 90
 pixelox comp place launch.pxo terrain.png --in-place --as Terrain --fit cover
 pixelox filter gaussian launch.pxo --in-place --layer Terrain --sigma 2
-pixelox comp place launch.pxo product.png --in-place --as Mirror --size x1040 --at 50.5%,80% --anchor t
-pixelox transform flip launch.pxo --in-place --layer Mirror --v
-pixelox layer opacity launch.pxo --in-place --layer Mirror --value 30
-pixelox layer add launch.pxo --in-place --name FloorFade
-pixelox fill gradient launch.pxo --in-place --layer FloorFade --from 0,76% --to 0,85% --stops '#05060900@0,#050609ff@1'
-pixelox comp place launch.pxo product.png --in-place --as Product --size x1040 --at 50.5%,80% --anchor b
+pixelox mask add launch.pxo --in-place --layer Terrain --gradient linear --from 0,76% --to 0,85%
+pixelox comp place launch.pxo tight.png --in-place --as Product --size x1040 --at 50.5%,80% --anchor b
 pixelox adjust levels launch.pxo --in-place --layer Product --gamma 0.8 --out-white 190
+pixelox fx reflection launch.pxo --in-place --layer Product --length 8% --opacity 40 --blur 4
 pixelox adjust bw launch.pxo --in-place --as-layer --name Mono
-pixelox text add launch.pxo --in-place --name Brand --content "NOVA" --font Avenir --weight 300 --size 3.9% --tracking 150 --color '#ffffff'
-pixelox transform move launch.pxo --in-place --layer Brand --to 50%,5.3% --anchor t
-pixelox text add launch.pxo --in-place --name Model --content "ARC" --font Avenir --weight 300 --size 9% --tracking 400 --color '#ffffff'
-pixelox transform scale launch.pxo --in-place --layer Model --size 500x
-pixelox transform move launch.pxo --in-place --layer Model --to 50%,10.2% --anchor t
+pixelox text add launch.pxo --in-place --name Brand --content "NOVA" --font Avenir --weight 300 --size 3.9% --tracking 150 --color '#ffffff' --at 50%,5.3% --anchor t --anchor-to ink
+pixelox text add launch.pxo --in-place --name Model --content "ARC" --font Avenir --weight 300 --fit-width 500 --tracking 400 --color '#ffffff' --at 50%,10.2% --anchor t --anchor-to ink
 pixelox text add launch.pxo --in-place --name Tagline --content "QUIETLY BRILLIANT" --font Avenir --weight 400 --size 1.9% --tracking 350 --color '#ffffff' --at 50.8%,20.1% --anchor c
-pixelox shape ellipse launch.pxo --in-place --name IconLens --rect 83,1633,56x56 --fill none --stroke '#ffffff' --stroke-width 3
-pixelox shape ellipse launch.pxo --in-place --name IconLensCore --rect 100,1650,22x22 --fill none --stroke '#ffffff' --stroke-width 3
-pixelox shape rect launch.pxo --in-place --name IconChip --rect 405,1634,54x54 --radius 8 --fill none --stroke '#ffffff' --stroke-width 3
-pixelox shape rect launch.pxo --in-place --name IconChipCore --rect 421,1650,22x22 --fill '#ffffff'
-pixelox shape rect launch.pxo --in-place --name IconCell --rect 797,1636,32x54 --radius 5 --fill none --stroke '#ffffff' --stroke-width 3
-pixelox shape rect launch.pxo --in-place --name IconCellFill --rect 805,1660,16x22 --fill '#ffffff'
-pixelox text add launch.pxo --in-place --name Spec1 --content $'64MP\nNIGHT CAMERA' --font "Avenir Next" --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 15%,85.9% --anchor l
-pixelox text add launch.pxo --in-place --name Spec2 --content $'OCTA-CORE\n3NM CHIP' --font "Avenir Next" --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 45%,85.9% --anchor l
-pixelox text add launch.pxo --in-place --name Spec3 --content $'5200mAh\nBATTERY' --font "Avenir Next" --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 80%,85.9% --anchor l
-pixelox text add launch.pxo --in-place --name Note1 --content "SEE IN THE DARK" --font "Avenir Next" --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 15%,88.3% --anchor l
-pixelox text add launch.pxo --in-place --name Note2 --content "SPEED TO SPARE" --font "Avenir Next" --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 45%,88.3% --anchor l
-pixelox text add launch.pxo --in-place --name Note3 --content "TWO-DAY POWER" --font "Avenir Next" --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 80%,88.3% --anchor l
+pixelox shape icon launch.pxo aperture --in-place --name IconLens --size 60 --at 10.3%,86.5% --anchor c --color '#ffffff' --stroke-width 3
+pixelox shape icon launch.pxo cpu --in-place --name IconChip --size 60 --at 40%,86.5% --anchor c --color '#ffffff' --stroke-width 3
+pixelox shape icon launch.pxo battery-full --in-place --name IconCell --size 60 --at 75.3%,86.5% --anchor c --color '#ffffff' --stroke-width 3
+pixelox text add launch.pxo --in-place --name Spec1 --content $'64MP\nNIGHT CAMERA' --font @geometric-sans --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 15%,85.9% --anchor l
+pixelox text add launch.pxo --in-place --name Spec2 --content $'OCTA-CORE\n3NM CHIP' --font @geometric-sans --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 45%,85.9% --anchor l
+pixelox text add launch.pxo --in-place --name Spec3 --content $'5200mAh\nBATTERY' --font @geometric-sans --weight 600 --size 1.2% --tracking 40 --leading 130% --color '#ffffff' --at 80%,85.9% --anchor l
+pixelox text add launch.pxo --in-place --name Note1 --content "SEE IN THE DARK" --font @geometric-sans --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 15%,88.3% --anchor l
+pixelox text add launch.pxo --in-place --name Note2 --content "SPEED TO SPARE" --font @geometric-sans --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 45%,88.3% --anchor l
+pixelox text add launch.pxo --in-place --name Note3 --content "TWO-DAY POWER" --font @geometric-sans --weight 500 --size 0.7% --tracking 60 --color '#b9bcc2' --at 80%,88.3% --anchor l
 pixelox shape line launch.pxo --in-place --name Div1 --from 33%,84.5% --to 33%,88.5% --stroke '#ffffff' --stroke-width 1 --opacity 35
 pixelox shape line launch.pxo --in-place --name Div2 --from 67%,84.5% --to 67%,88.5% --stroke '#ffffff' --stroke-width 1 --opacity 35
-pixelox text add launch.pxo --in-place --name Memory --content "12GB RAM      256GB STORAGE" --font "Avenir Next" --weight 500 --size 1.25% --tracking 150 --color '#ffffff' --at 50%,92% --anchor c
+pixelox text add launch.pxo --in-place --name Memory --content "12GB RAM      256GB STORAGE" --font @geometric-sans --weight 500 --size 1.25% --tracking 150 --color '#ffffff' --at 50%,92% --anchor c
 pixelox shape line launch.pxo --in-place --name MemoryDiv --from 45.4%,91.4% --to 45.4%,92.6% --stroke '#ffffff' --stroke-width 2 --opacity 60
 pixelox shape line launch.pxo --in-place --name Hairline --from 24%,93.6% --to 76%,93.6% --stroke '#ffffff' --stroke-width 1 --opacity 35
 pixelox text add launch.pxo --in-place --name Web --content "NOVA.ARC" --font Avenir --weight 400 --size 1.4% --tracking 500 --color '#ffffff' --at 51%,95.5% --anchor c
-pixelox layer add launch.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise launch.pxo --in-place --layer Grain --amount 6 --monochrome
-pixelox layer blend launch.pxo --in-place --layer Grain --mode soft-light
+pixelox filter grain launch.pxo --in-place --as-layer --name Grain --amount 10
 pixelox export launch.pxo -o launch.png
 ```
 
 Change first: the brand and model strings (keep the model at 2 to 4 letters so the wide
-tracking holds), then the three specs. Move `MemoryDiv` to the gap between the two memory
-phrases after you change them. When the canvas is not 1080 px wide, scale the ring
-rectangle, the icon rectangles, and the glow blur by `width / 1080`.
+tracking holds), then the three specs and their icons
+(`pixelox shape icons --search camera` lists names). Move `MemoryDiv` to the gap between
+the two memory phrases after you change them. When the canvas is not 1080 px wide, scale
+the ring rectangle, the icon `--size`, and the glow blur by `width / 1080`.
 
 ## 10. Variations and pairings
 
@@ -214,5 +209,5 @@ rectangle, the icon rectangles, and the glow blur by `width / 1080`.
 * Specs set too large. The spec row is deliberately tiny (cap height under 1% H) and
   needs the clean black floor fade behind it to stay readable.
 * The product floating. Its bottom edge sits on the floor line at 80% H and the landscape
-  rises on both sides of it; without the flipped reflection or a contact shadow it looks
+  rises on both sides of it; without the reflection or a contact shadow it looks
   pasted on.

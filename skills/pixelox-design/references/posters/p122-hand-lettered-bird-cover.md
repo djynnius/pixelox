@@ -112,11 +112,12 @@ dark red and shifted (the shadow), once on top.
   and moved by -45,105 px.
 * **T-text-behind-subject**: lettering first, illustration after, cherries last.
 * **T-arc-type** machinery (`text on-path`) on an open wavy path gives every letter its
-  own tilt; a non-uniform `transform scale` then squeezes the letters to 60 to 70% width.
+  own tilt; `--scale-x` on `text add` squeezes the letters first (61% for the author, 81%
+  for the title). Each path is written in canvas pixels, where the baseline should run.
   A text stroke in the fill color (3 to 4% of the font size) fattens the line, and a 5 px
   white `fx outer-glow` in normal mode at 45% makes the edge fuzzy.
 * **T-grunge** specks only, in tan, very sparse (`specks=260`, `blotches=12`).
-* **T-paper-grain** amount 12, overlay 30%.
+* **T-paper-grain**: `filter grain --as-layer --amount 10`, light.
 
 ## 8. Hierarchy and eye path
 
@@ -130,8 +131,8 @@ Cap heights: title 18 and 15 : author 9 : article 5 : tagline 3.3 : note 1.3, ab
 
 ## 9. Build recipe
 
-`illustration.png` is your image here (flat, dark, on transparency). Set the words before anything else: the non-uniform scale rasterizes the two
-on-path layers (warning PXW2003), so they cannot be retyped afterward.
+`illustration.png` is your image here (flat, dark, on transparency). The lettering stays
+live text on its paths, so the words can be retyped at any time.
 
 ```bash
 pixelox render js scripts/grunge.js -o flecks.png --size 1080x1620 --seed 4 --param color='#b9824a' --param specks=260 --param blotches=12 --param scratches=0 --param clump=0.1 --param size=2
@@ -142,19 +143,13 @@ pixelox comp place cover.pxo illustration.png --in-place --as Shade --size 820x 
 pixelox transform rotate cover.pxo --in-place --layer Shade --degrees 38
 pixelox fx overlay cover.pxo --in-place --layer Shade --color '#9e3b37'
 pixelox transform move cover.pxo --in-place --layer Shade --by -45,105
-pixelox text add cover.pxo --in-place --name Author --content "RUTH VANE" --font Noteworthy --weight 700 --size 10% --tracking 60 --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 3%
-pixelox text on-path cover.pxo --in-place --layer Author --d 'M 0 220 Q 260 300 520 215 T 1060 230'
-pixelox transform scale cover.pxo --in-place --layer Author --size 560x205
-pixelox transform move cover.pxo --in-place --layer Author --to 7.5%,5.5% --anchor tl
+pixelox text add cover.pxo --in-place --name Author --content "RUTH VANE" --font Noteworthy --weight 700 --size 9.1% --scale-x 61% --tracking 60 --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 3%
+pixelox text on-path cover.pxo --in-place --layer Author --d 'M 74 254 Q 218 326 361 249 T 659 263'
 pixelox text add cover.pxo --in-place --name Blurb --content $'INTERNATIONALLY\nBESTSELLING AUTHOR\nOF THE\nHOLLOW ROAD\nSERIES' --font Noteworthy --weight 700 --size 1.9% --leading 112% --align center --color '#fcf9f6' --at 83%,12.3% --anchor c
-pixelox text add cover.pxo --in-place --name Initial --content "S" --font Noteworthy --weight 700 --size 20% --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 2.5%
-pixelox transform scale cover.pxo --in-place --layer Initial --size x300
+pixelox text add cover.pxo --in-place --name Initial --content "S" --font Noteworthy --weight 700 --size 20% --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 2.5% --at 4.6%,52% --anchor-to ink
 pixelox transform rotate cover.pxo --in-place --layer Initial --degrees -8
-pixelox transform move cover.pxo --in-place --layer Initial --to 4%,52% --anchor tl
-pixelox text add cover.pxo --in-place --name Title --content "KYLARKS" --font Noteworthy --weight 700 --size 17% --tracking 60 --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 4%
-pixelox text on-path cover.pxo --in-place --layer Title --d 'M 0 200 Q 380 500 760 370 T 1480 190'
-pixelox transform scale cover.pxo --in-place --layer Title --size 930x370
-pixelox transform move cover.pxo --in-place --layer Title --to 8.5%,71.5% --anchor tl
+pixelox text add cover.pxo --in-place --name Title --content "KYLARKS" --font Noteworthy --weight 700 --size 14.3% --scale-x 81% --tracking 60 --color '#fcf9f6' --stroke '#fcf9f6' --stroke-width 4%
+pixelox text on-path cover.pxo --in-place --layer Title --d 'M 86 1334 Q 346 1586 606 1477 T 1098 1325'
 pixelox fx outer-glow cover.pxo --in-place --layer Title --blur 5 --color '#ffffff' --blend normal --opacity 45
 pixelox fx copy cover.pxo --in-place --from Title --to Initial,Author
 pixelox text add cover.pxo --in-place --name Article --content "THE" --font Noteworthy --weight 700 --size 7% --tracking 60 --color '#b5a6a4' --stroke '#b5a6a4' --stroke-width 3% --at 35%,65.5% --anchor c
@@ -168,17 +163,15 @@ pixelox shape ellipse cover.pxo --in-place --name Cherry2 --rect 856,1299,157x15
 pixelox fx copy cover.pxo --in-place --from Cherry1 --to Cherry2
 pixelox text add cover.pxo --in-place --name Tag --content $'A\n \nN\nO\nV\nE\nL' --font Noteworthy --weight 700 --size 4.6% --leading 78% --align center --color '#111111' --stroke '#111111' --stroke-width 3% --at 91.5%,53% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Tag --degrees -4
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 30
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 10
 pixelox export cover.pxo -o cover.png
 ```
 
 Change first: the three strings (author, initial, rest of title), then the two wavy
-paths (make each path longer than the text set on it: about 110 px per letter at
-`--size 10%`, 190 px per letter at 17%), then the `transform scale` boxes that squeeze
-them into place.
+paths. Each path is the baseline, in canvas pixels; make it longer than the text set on
+it: about 62 px per letter for the author (`--size 9.1% --scale-x 61%`), 130 px per
+letter for the title (`--size 14.3% --scale-x 81%`). For longer words lower `--scale-x`
+or the size.
 
 ## 10. Variations and pairings
 
@@ -201,5 +194,5 @@ them into place.
   A, R, and S. Keep the text stroke at or under 4% of the font size.
 * The bird placed upright in the middle. The diagonal and the cropped-close wing tips are
   the composition; a centered, level illustration turns it into a field guide.
-* Too many flecks or heavy grain make the red look dirty. Under 300 specks, grain under
-  35% opacity.
+* Too many flecks or heavy grain make the red look dirty. Under 300 specks, grain
+  `--amount` 12 or less.

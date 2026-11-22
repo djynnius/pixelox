@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render, gradient-mesh]
 format: portrait-a
 archetype: A-event-stack
 palette: ['#d6d9f9', '#7a99f5', '#2e4dcd', '#0b102a', '#ffffff', '#3a3c8b']
-techniques: [T-label-box, T-pill-button, T-cutout-drop-shadow, T-geo-shapes, T-device-mockup]
+techniques: [T-label-box, T-pill-button, T-cutout-drop-shadow, T-geo-shapes, T-device-mockup, T-icon-row]
 needs: subject-cutout
 ---
 
@@ -57,12 +57,13 @@ with navy and white as the only contrast.
 8. Sticker B: a white rounded box with a blue word, rotated +8 degrees, hanging off the
    end of line 3 at 73.5 to 90% W, 28.5 to 33.5% H, with a soft shadow.
 9. Sub-copy: two centered lines of small navy text at 37.9 and 39.6% H.
-10. Social handle: two blue discs (4% W) and a handle in navy, right-aligned to 94% W at
-    7.6% H.
+10. Social handle: two blue discs (4% W), each with a small white glyph, and a handle in
+    navy, right-aligned to 94% W at 7.6% H.
 11. Button: glossy indigo pill `29%,79.5%,40% x 6.5%` with a small tap icon and a white
     bold word.
-12. Contact rows: two blue rounded squares (5.5% W) at 24% W with white text to their
-    right, at 89.5% and 94.3% H.
+12. Contact rows: two blue rounded squares (5.5% W) at 24% W, a white mail icon in the
+    first and a white phone icon in the second, with white text to their right, at 89.5%
+    and 94.3% H.
 
 ## 4. Palette
 
@@ -118,7 +119,13 @@ big, big, medium; the two stickers add two more words at 27% of the big size.
   `#24368f`, never black).
 * **T-pill-button**: filled pill, radius = half the height, left-to-right gradient
   `#2f39c4` to `#6a4fe0`, white inner glow at 35% for the glossy top.
-* **T-geo-shapes** for the icons (a four-point star and a heart outline).
+* **T-icon-row**: every small icon is one `shape icon` line from the bundled outline set:
+  `pen-tool` and `heart` on the tiles (72 px, turned with their tile by `--rotation`),
+  `at-sign` and `share-2` on the social discs (24 px, white), `pointer` on the button
+  (48 px), `mail` and `phone` on the contact squares (36 px). The set has no brand logos:
+  for a real network mark, place your own logo file on the disc.
+* **T-geo-shapes** for the discs and the rounded squares behind the icons (one `shape
+  path` each).
 * **T-device-mockup** in [techniques.md](../techniques.md) is the tested library version of the phone mockup; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -146,7 +153,7 @@ pixelox comp place promo.pxo subject.png --in-place --as Subject --size x800 --a
 pixelox shape rect promo.pxo --in-place --name PhoneBody --rect 594,651,356x672 --radius 52 --fill '#15161c'
 pixelox shape rect promo.pxo --in-place --name Screen --rect 606,663,332x648 --radius 42 --fill '#f4f5ff'
 pixelox shape rect promo.pxo --in-place --name Notch --rect 722,680,100x26 --radius 13 --fill '#15161c'
-pixelox text add promo.pxo --in-place --name ScreenHead --content $'Shaping\nCalm Products\nPeople Keep.' --font "Avenir Next" --weight 700 --style italic --size 2.2% --leading 118% --color '#0b102a' --at 632,840 --anchor l
+pixelox text add promo.pxo --in-place --name ScreenHead --content $'Shaping\nCalm Products\nPeople Keep.' --font @geometric-sans --weight 700 --style italic --size 2.2% --leading 118% --color '#0b102a' --at 632,840 --anchor l
 pixelox shape rect promo.pxo --in-place --name ScreenBtn --rect 632,920,130x38 --radius 19 --fill '#2748d8'
 pixelox layer merge promo.pxo --in-place --layers PhoneBody,Screen,Notch,ScreenHead,ScreenBtn --name Phone
 pixelox transform rotate promo.pxo --in-place --layer Phone --degrees 9
@@ -157,35 +164,41 @@ pixelox transform rotate promo.pxo --in-place --layer TileA --degrees=-10
 pixelox shape rect promo.pxo --in-place --name TileB --rect 900,940,134x134 --radius 32 --fill '#f4f5ff'
 pixelox fx copy promo.pxo --in-place --from TileA --to TileB
 pixelox transform rotate promo.pxo --in-place --layer TileB --degrees 10
-pixelox shape star promo.pxo --in-place --name IconA --center 130,803 --points 4 --outer 38 --inner 14 --fill '#2748d8'
-pixelox shape path promo.pxo --in-place --name IconB --d 'M 967 1036 C 925 1006 931 976 951 976 C 961 976 967 984 967 990 C 967 984 973 976 983 976 C 1003 976 1009 1006 967 1036 Z' --fill none --stroke '#2748d8' --stroke-width 7 --join round
-pixelox text add promo.pxo --in-place --name H1 --content "Quiet" --font "Avenir Next" --weight 700 --size 3.3% --tracking=-10 --color '#0b102a' --at 49%,12% --anchor c
-pixelox text add promo.pxo --in-place --name H2 --content "Visual" --font "Avenir Next" --weight 700 --size 9.6% --tracking=-20 --color '#0b102a' --at 52.5%,17.6% --anchor c
-pixelox text add promo.pxo --in-place --name H3 --content "Simplicity" --font "Avenir Next" --weight 700 --size 9.6% --tracking=-20 --color '#2748d8' --at 51.5%,26% --anchor c
-pixelox text add promo.pxo --in-place --name H4 --content "Sells" --font "Avenir Next" --weight 700 --size 6.1% --tracking=-10 --color '#0b102a' --at 51%,33% --anchor c
+pixelox shape icon promo.pxo pen-tool --in-place --name IconA --size 72 --at 130,803 --anchor c --rotation -10 --color '#2748d8'
+pixelox shape icon promo.pxo heart --in-place --name IconB --size 72 --at 967,1007 --anchor c --rotation 10 --color '#2748d8'
+pixelox text add promo.pxo --in-place --name H1 --content "Quiet" --font @geometric-sans --weight 700 --size 3.3% --tracking=-10 --color '#0b102a' --at 49%,12% --anchor c
+pixelox text add promo.pxo --in-place --name H2 --content "Visual" --font @geometric-sans --weight 700 --size 9.6% --tracking=-20 --color '#0b102a' --at 52.5%,17.6% --anchor c
+pixelox text add promo.pxo --in-place --name H3 --content "Simplicity" --font @geometric-sans --weight 700 --size 9.6% --tracking=-20 --color '#2748d8' --at 51.5%,26% --anchor c
+pixelox text add promo.pxo --in-place --name H4 --content "Sells" --font @geometric-sans --weight 700 --size 6.1% --tracking=-10 --color '#0b102a' --at 51%,33% --anchor c
 pixelox shape rect promo.pxo --in-place --name StickerA --rect 151,264,173x64 --radius 8 --fill '#2f55e0'
 pixelox transform rotate promo.pxo --in-place --layer StickerA --degrees=-8
-pixelox text add promo.pxo --in-place --name WordA --content "Bold" --font "Avenir Next" --weight 700 --size 2.6% --color '#ffffff' --at 238,296 --anchor c
+pixelox text add promo.pxo --in-place --name WordA --content "Bold" --font @geometric-sans --weight 700 --size 2.6% --color '#ffffff' --at 238,296 --anchor c
 pixelox transform rotate promo.pxo --in-place --layer WordA --degrees=-8
 pixelox shape rect promo.pxo --in-place --name StickerB --rect 794,438,178x70 --radius 8 --fill '#f4f5ff'
 pixelox transform rotate promo.pxo --in-place --layer StickerB --degrees 8
-pixelox text add promo.pxo --in-place --name WordB --content "More" --font "Avenir Next" --weight 700 --size 2.6% --color '#2748d8' --at 883,473 --anchor c
+pixelox text add promo.pxo --in-place --name WordB --content "More" --font @geometric-sans --weight 700 --size 2.6% --color '#2748d8' --at 883,473 --anchor c
 pixelox transform rotate promo.pxo --in-place --layer WordB --degrees 8
-pixelox text add promo.pxo --in-place --name Sub --content $'I design simple screens that\nsolve real problems for real people.' --font "Avenir Next" --weight 500 --size 1.5% --leading 150% --align center --color '#0b102a' --at 50%,38.8% --anchor c
+pixelox text add promo.pxo --in-place --name Sub --content $'I design simple screens that\nsolve real problems for real people.' --font @geometric-sans --weight 500 --size 1.5% --leading 150% --align center --color '#0b102a' --at 50%,38.8% --anchor c
 pixelox shape path promo.pxo --in-place --name Socials --d 'M 745 116 A 22 22 0 1 1 789 116 A 22 22 0 1 1 745 116 Z M 805 116 A 22 22 0 1 1 849 116 A 22 22 0 1 1 805 116 Z' --fill '#2748d8'
-pixelox text add promo.pxo --in-place --name Handle --content "@yourhandle" --font "Avenir Next" --weight 500 --size 1.4% --color '#0b102a' --at 80%,7.6% --anchor l
+pixelox shape icon promo.pxo at-sign --in-place --name SocialA --size 24 --at 767,116 --anchor c --color '#ffffff'
+pixelox shape icon promo.pxo share-2 --in-place --name SocialB --size 24 --at 827,116 --anchor c --color '#ffffff'
+pixelox text add promo.pxo --in-place --name Handle --content "@yourhandle" --font @geometric-sans --weight 500 --size 1.4% --color '#0b102a' --at 80%,7.6% --anchor l
 pixelox shape rect promo.pxo --in-place --name Button --rect 313,1215,432x99 --radius 50 --fill '#3f45d6'
 pixelox fx overlay promo.pxo --in-place --layer Button --stops '#2f39c4@0,#6a4fe0@1' --angle 0
 pixelox fx inner-glow promo.pxo --in-place --layer Button --blur 22 --color '#ffffff' --opacity 35
-pixelox text add promo.pxo --in-place --name ButtonText --content "Swipe" --font "Avenir Next" --weight 700 --size 2.7% --color '#ffffff' --at 53%,82.8% --anchor c
+pixelox shape icon promo.pxo pointer --in-place --name ButtonIcon --size 48 --at 42.5%,82.8% --anchor c --color '#ffffff'
+pixelox text add promo.pxo --in-place --name ButtonText --content "Swipe" --font @geometric-sans --weight 700 --size 2.7% --color '#ffffff' --at 53%,82.8% --anchor c
 pixelox shape path promo.pxo --in-place --name Marks --d 'M 259 1351 a 14 14 0 0 1 14 -14 h 32 a 14 14 0 0 1 14 14 v 32 a 14 14 0 0 1 -14 14 h -32 a 14 14 0 0 1 -14 -14 Z M 259 1424 a 14 14 0 0 1 14 -14 h 32 a 14 14 0 0 1 14 14 v 32 a 14 14 0 0 1 -14 14 h -32 a 14 14 0 0 1 -14 -14 Z' --fill '#2748d8'
-pixelox text add promo.pxo --in-place --name Contact --content $'hello@example.com\n000 555 0100' --font "Avenir Next" --weight 500 --size 2.1% --tracking 10 --leading 228% --color '#ffffff' --at 32%,91.9% --anchor l
+pixelox shape icon promo.pxo mail --in-place --name MailIcon --size 36 --at 289,1367 --anchor c --color '#ffffff'
+pixelox shape icon promo.pxo phone --in-place --name PhoneIcon --size 36 --at 289,1440 --anchor c --color '#ffffff'
+pixelox text add promo.pxo --in-place --name Contact --content $'hello@example.com\n000 555 0100' --font @geometric-sans --weight 500 --size 2.1% --tracking 10 --leading 228% --color '#ffffff' --at 32%,91.9% --anchor l
 pixelox export promo.pxo -o promo.png
 ```
 
 Change first: the subject photo and its size (`--size x800`), then the four headline
-words (keep line 3 the longest at 9 to 11 letters), then the two sticker words. To show a
-real screenshot, place it after the Screen shape, `layer clip` it, and add it to the merge
+words (keep line 3 the longest at 9 to 11 letters), then the two sticker words, then the
+icon names (`pixelox shape icons --search mail` lists matches). To show a real
+screenshot, place it after the Screen shape, `layer clip` it, and add it to the merge
 list.
 
 ## 10. Variations and pairings

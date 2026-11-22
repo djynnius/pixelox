@@ -142,33 +142,25 @@ pixelox shape path sale.pxo --in-place --name Arch --d 'M 588 1528 L 588 1110 A 
 pixelox comp place sale.pxo photo.png --in-place --as Photo --size x860 --at 77%,100% --anchor b
 pixelox layer clip sale.pxo --in-place --layer Photo
 pixelox shape path sale.pxo --in-place --name ArchLine --d 'M 588 1528 L 588 1110 A 422 422 0 0 1 1080 694' --fill none --stroke '#151513' --stroke-width 3
-pixelox text add sale.pxo --in-place --name Brand --content "NORTHLANE" --font "Avenir Next" --weight 700 --size 2.1% --tracking 200 --color '#f4f2ed' --at 10.2%,8.4% --anchor l
-pixelox text add sale.pxo --in-place --name H1 --content "CYBER" --font Impact --size 16% --color '#f4f2ed'
-pixelox transform scale sale.pxo --in-place --layer H1 --size 576x
-pixelox transform move sale.pxo --in-place --layer H1 --to 10.8%,14% --anchor tl
-pixelox text add sale.pxo --in-place --name H2 --content "MONDAY" --font Impact --size 16% --color '#fc1c2e'
-pixelox transform scale sale.pxo --in-place --layer H2 --size 576x
-pixelox transform move sale.pxo --in-place --layer H2 --to 10.8%,30.2% --anchor tl
+pixelox text add sale.pxo --in-place --name Brand --content "NORTHLANE" --font @geometric-sans --weight 700 --size 2.1% --tracking 200 --color '#f4f2ed' --at 10.2%,8.4% --anchor l
+pixelox text add sale.pxo --in-place --name H1 --content "CYBER" --font @condensed-heavy --fit-width 576 --color '#f4f2ed' --at 10.8%,14% --anchor-to ink
+pixelox text add sale.pxo --in-place --name H2 --content "MONDAY" --font @condensed-heavy --fit-width 576 --color '#fc1c2e' --at 10.8%,30.2% --anchor-to ink
 pixelox shape rect sale.pxo --in-place --name RedRule --rect 10.6%,45.3%,22.6%x0.45% --fill '#fc1c2e'
-pixelox text add sale.pxo --in-place --name Offer --content "70% OFF" --font Impact --size 8% --color '#f4f2ed'
-pixelox transform scale sale.pxo --in-place --layer Offer --size 432x
-pixelox transform move sale.pxo --in-place --layer Offer --to 10.2%,56% --anchor tl
-pixelox text add sale.pxo --in-place --name Item --content "Leather Tote" --font "Avenir Next" --weight 700 --size 2.8% --color '#ffffff'
-pixelox transform move sale.pxo --in-place --layer Item --to 10.2%,64.4% --anchor tl
+pixelox text add sale.pxo --in-place --name Offer --content "70% OFF" --font @condensed-heavy --fit-width 432 --color '#f4f2ed' --at 10.2%,56% --anchor-to ink
+pixelox text add sale.pxo --in-place --name Item --content "Leather Tote" --font @geometric-sans --weight 700 --size 2.8% --color '#ffffff' --at 10.2%,64.4% --anchor tl --anchor-to ink
 pixelox shape line sale.pxo --in-place --name ThinRule --from 10.2%,70% --to 37%,70% --stroke '#fc1c2e' --stroke-width 2
-pixelox text add sale.pxo --in-place --name Note --content "This weekend only" --font "Avenir Next" --weight 400 --size 2% --color '#f4f2ed' --at 10.2%,74.5% --anchor l
+pixelox text add sale.pxo --in-place --name Note --content "This weekend only" --font @geometric-sans --weight 400 --size 2% --color '#f4f2ed' --at 10.2%,74.5% --anchor l
 pixelox shape rect sale.pxo --in-place --name Pill --rect 10.2%,82.5%,30.8%x5.3% --radius 40 --fill '#fc1c2e'
-pixelox text add sale.pxo --in-place --name PillText --content "SHOP NOW" --font "Avenir Next" --weight 700 --size 2.2% --tracking 120 --color '#151513'
-pixelox transform move sale.pxo --in-place --layer PillText --to 25.8%,85.2% --anchor c
-pixelox text add sale.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 400 --size 1.95% --color '#f4f2ed' --at 10.2%,90.5% --anchor l
+pixelox text add sale.pxo --in-place --name PillText --content "SHOP NOW" --font @geometric-sans --weight 700 --size 2.2% --tracking 120 --color '#151513' --at 25.8%,85.2% --anchor c --anchor-to ink
+pixelox text add sale.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 400 --size 1.95% --color '#f4f2ed' --at 10.2%,90.5% --anchor l
 pixelox export sale.pxo -o sale.png
 ```
 
 Change first: the two headline words (4 to 6 letters each; both are fitted to 576 px, so
 a shorter word becomes taller), the offer, then the photo. Keep `Arch` and `ArchLine` on
-the same path data. Impact is wider than the ideal face, so the caps come out near 12.7%
-and 10.5% H; a registered Anton or Oswald 700 at the same widths gives the 14% and 13% of
-the description.
+the same path data. `@condensed-heavy` (Impact on macOS) is wider than the ideal face, so
+the caps come out near 12.7% and 10.5% H; a registered Anton or Oswald 700 at the same
+`--fit-width` gives the 14% and 13% of the description.
 
 ## 10. Variations and pairings
 

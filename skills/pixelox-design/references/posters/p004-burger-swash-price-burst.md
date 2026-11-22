@@ -125,12 +125,8 @@ pixelox comp place ad.pxo swash1.png --in-place --as Swash1 --at 50%,59% --ancho
 pixelox transform rotate ad.pxo --in-place --layer Swash1 --degrees -2
 pixelox comp place ad.pxo swash2.png --in-place --as Swash2 --at 52%,75% --anchor c
 pixelox transform rotate ad.pxo --in-place --layer Swash2 --degrees 2
-pixelox text add ad.pxo --in-place --name H1 --content "GIANT" --font "Arial Rounded MT Bold" --size 13% --color '#d23200'
-pixelox transform scale ad.pxo --in-place --layer H1 --size 520x
-pixelox transform move ad.pxo --in-place --layer H1 --to 50%,8.3% --anchor t
-pixelox text add ad.pxo --in-place --name H2 --content "BURGER" --font "Arial Rounded MT Bold" --size 13% --color '#d23200'
-pixelox transform scale ad.pxo --in-place --layer H2 --size 644x
-pixelox transform move ad.pxo --in-place --layer H2 --to 50%,18.4% --anchor t
+pixelox text add ad.pxo --in-place --name H1 --content "GIANT" --font @rounded-heavy --fit-width 520 --color '#d23200' --at 50%,8.3% --anchor t --anchor-to ink
+pixelox text add ad.pxo --in-place --name H2 --content "BURGER" --font @rounded-heavy --fit-width 644 --color '#d23200' --at 50%,18.4% --anchor t --anchor-to ink
 pixelox fx stroke ad.pxo --in-place --layer H1 --width 9 --color '#d23200' --position outside
 pixelox fx copy ad.pxo --in-place --from H1 --to H2
 pixelox comp place ad.pxo product.png --in-place --as Product --size x690 --at 50%,76% --anchor b
@@ -141,19 +137,15 @@ pixelox shape line ad.pxo --in-place --name Pop4 --from 12.5%,46.5% --to 14.5%,4
 pixelox shape line ad.pxo --in-place --name Pop5 --from 10.5%,52% --to 15%,49% --stroke '#ffffff' --stroke-width 30 --cap round
 pixelox shape star ad.pxo --in-place --name Burst --center 77%,70% --points 24 --outer 178 --inner 150 --fill '#d23200'
 pixelox transform rotate ad.pxo --in-place --layer Burst --degrees 8
-pixelox text add ad.pxo --in-place --name Price --content "\$4.50" --font "Arial Black" --size 6% --tracking 20 --color '#ffffff'
-pixelox transform scale ad.pxo --in-place --layer Price --size 236x
-pixelox transform move ad.pxo --in-place --layer Price --to 77%,70% --anchor c
-pixelox text add ad.pxo --in-place --name Offer --content "BUY 1 GET 1 FREE!" --font "Arial Rounded MT Bold" --size 6% --color '#d23200'
-pixelox transform scale ad.pxo --in-place --layer Offer --size 620x
-pixelox transform move ad.pxo --in-place --layer Offer --to 50%,90.4% --anchor c
+pixelox text add ad.pxo --in-place --name Price --content "\$4.50" --font @heavy-wide --fit-width 236 --tracking 20 --color '#ffffff' --at 77%,70% --anchor c --anchor-to ink
+pixelox text add ad.pxo --in-place --name Offer --content "BUY 1 GET 1 FREE!" --font @rounded-heavy --fit-width 620 --color '#d23200' --at 50%,90.4% --anchor c --anchor-to ink
 pixelox fx stroke ad.pxo --in-place --layer Offer --width 4 --color '#d23200' --position outside
 pixelox export ad.pxo -o ad.png
 ```
 
 The `fx stroke` in the letters' own color is what makes the stand-in face chunky: it
 thickens every stem by 9 px and rounds the corners. With a registered chunky face (Lilita
-One, Bowlby One) drop those two stroke lines and keep the same `transform scale` widths.
+One, Bowlby One) drop those two stroke lines and keep the same `--fit-width` values.
 
 Change first: the two headline words (keep the top line shorter than the bottom line),
 the price, then the three colors if the food is not warm-toned.

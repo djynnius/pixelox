@@ -1,0 +1,336 @@
+{
+  "command": "render.ice",
+  "cli": "pixelox render ice",
+  "summary": "Ice cubes that refract the design, on a new layer",
+  "category": "render",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.ice.params.json",
+    "title": "pixelox render.ice parameters",
+    "description": "Ice cubes that refract the design, on a new layer",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "count": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 1.0,
+            "maximum": 40.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Number of cubes Range: 1..40. Type: integer.",
+        "default": "3",
+        "x-pixelox-kind": "int"
+      },
+      "at": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "Center of the group of cubes (X,Y) Type: X,Y.",
+        "default": "50%,70%",
+        "x-pixelox-kind": "point"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Cube size (edge length) in px or % of the shorter canvas side Type: length.",
+        "default": "16%",
+        "x-pixelox-kind": "length"
+      },
+      "spread": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "How far the cubes scatter from --at, in px or % of the shorter side Type: length.",
+        "default": "22%",
+        "x-pixelox-kind": "length"
+      },
+      "frost": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Cloudy, cracked core: 0 = clear, 100 = white Range: 0..100. Type: number.",
+        "default": "55",
+        "x-pixelox-kind": "float"
+      },
+      "tint": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Color of the ice Type: color.",
+        "default": "#e4f4ff",
+        "x-pixelox-kind": "color"
+      },
+      "layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Put the ice layer directly above this layer (the same as --above; default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name for the new layer (default: Ice) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly above this layer (default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/render.ice.result.json",
+    "title": "pixelox render.ice envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "render.ice"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

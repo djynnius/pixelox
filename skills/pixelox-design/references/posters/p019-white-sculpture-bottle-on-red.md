@@ -82,9 +82,9 @@ One 3D-rendered object: a bottle rebuilt from flat triangular facets in matte wh
 glossy water droplets scattered over it and a red script mark wrapped around the middle.
 Soft frontal studio light, so the facets differ only slightly in tone. For a build from a
 photo, a product cutout is turned into "plaster" with a gradient map from mid gray to
-white, lit with a white halo (T-cutout-drop-shadow, glow variant), and mirrored for the
-floor reflection. True faceting needs a 3D model or the `filter cutout` art filter on the
-cutout.
+white, lit with a white halo (T-cutout-drop-shadow, glow variant), beaded with clear
+droplets (`render droplets`), and mirrored on the floor (`fx reflection`). True faceting
+needs a 3D model or the `filter cutout` art filter on the cutout.
 
 ## 7. Effects and textures
 
@@ -94,11 +94,14 @@ cutout.
 * Plaster treatment: `adjust bw`, then `adjust gradient-map` with stops from `#8f8d8a` to
   `#ffffff`.
 * Halo: `fx outer-glow`, blur 70, white, 50%.
-* Reflection: a flipped copy below the base at 30% opacity, sigma 5, covered by a ground-
-  color fade from 77 to 96% H.
-* **T-paper-grain**, amount 8, 25%, to hide banding in the red.
-* **T-condensation** in [techniques.md](../techniques.md) is the tested library version of the beads of condensation on the product (`particles.js` with `shape=drop`); start from it when reusing this idea.
-* **T-floor-reflection** in [techniques.md](../techniques.md) is the tested library version of the mirrored floor reflection; start from it when reusing this idea.
+* **T-floor-reflection**: `fx reflection --length 32% --opacity 30 --blur 10` on the bottle.
+  It starts at the base and fades out by 95% H on its own, so there is no flipped copy and
+  no fade layer. The cutout is trimmed first (`transform trim`) so the reflection touches
+  the base.
+* **T-condensation**: `render droplets --layer Bottle --density 40 --mist 0 --trickles 0
+  --refract off`. Clear beads without a lens effect suit a matte white object; they are
+  clipped to the bottle.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last, to hide banding in the red.
 
 ## 8. Hierarchy and eye path
 
@@ -112,7 +115,8 @@ Cap heights: bottle mark 3.5 : brand mark 2.2 : header 1.3 : fine print 0.6. The
 
 ## 9. Build recipe
 
-`product.png` is your image here: a tall product cutout, front view.
+`product.png` is your image here: a tall product cutout, front view. The `transform trim`
+line removes its transparent border and writes `tight.png`, which is the file placed.
 
 ```bash
 pixelox new -o ad.pxo --size 1080x1528 --fill '#af1012'
@@ -120,36 +124,28 @@ pixelox layer add ad.pxo --in-place --name Corners
 pixelox fill gradient ad.pxo --in-place --layer Corners --kind radial --from 52%,46% --to 52%,118% --stops '#5a020200@0.4,#5a0202b3@1'
 pixelox layer add ad.pxo --in-place --name FloorLight
 pixelox fill gradient ad.pxo --in-place --layer FloorLight --kind radial --from 50%,84% --to 50%,100% --stops '#c9706c99@0,#c9706c00@1'
-pixelox comp place ad.pxo product.png --in-place --as Reflection --size x930 --at 50%,77.3% --anchor b
-pixelox transform flip ad.pxo --in-place --layer Reflection --v
-pixelox transform move ad.pxo --in-place --layer Reflection --to 50%,74.5% --anchor t
-pixelox adjust bw ad.pxo --in-place --layer Reflection
-pixelox adjust gradient-map ad.pxo --in-place --layer Reflection --stops '#8f8d8a@0,#d6d3cf@0.5,#ffffff@1'
-pixelox filter gaussian ad.pxo --in-place --layer Reflection --sigma 5
-pixelox layer opacity ad.pxo --in-place --layer Reflection --value 30
-pixelox layer add ad.pxo --in-place --name ReflFade
-pixelox fill gradient ad.pxo --in-place --layer ReflFade --from 0,78% --to 0,96% --stops '#a8151600@0,#a81516ff@1'
-pixelox comp place ad.pxo product.png --in-place --as Bottle --size x930 --at 50%,80% --anchor b
+pixelox transform trim product.png -o tight.png
+pixelox comp place ad.pxo tight.png --in-place --as Bottle --size x846 --at 50%,77% --anchor b
 pixelox adjust bw ad.pxo --in-place --layer Bottle
 pixelox adjust gradient-map ad.pxo --in-place --layer Bottle --stops '#8f8d8a@0,#d6d3cf@0.5,#ffffff@1'
 pixelox fx outer-glow ad.pxo --in-place --layer Bottle --blur 70 --color '#ffffff' --opacity 50
-pixelox text add ad.pxo --in-place --name Mark --content "Brand" --font "Snell Roundhand" --weight 900 --size 5.4% --color '#b00f10' --at 50%,49% --anchor c
-pixelox transform scale ad.pxo --in-place --layer Mark --size 104x
-pixelox text add ad.pxo --in-place --name Header1 --content "50 YEARS SPECIAL EDITION" --font "Avenir Next" --weight 700 --size 1.8% --tracking 30 --color '#ffffff' --at 50%,12% --anchor c
-pixelox text add ad.pxo --in-place --name Header2 --content "CERAMIC BOTTLES" --font "Avenir Next" --weight 300 --size 1.5% --tracking 30 --color '#ffffff' --at 50%,14.5% --anchor c
-pixelox text add ad.pxo --in-place --name BrandMark --content "Brand" --font "Snell Roundhand" --weight 900 --size 3.4% --color '#ffffff' --at 50%,87.3% --anchor c
-pixelox text add ad.pxo --in-place --name Legal --content $'BRAND AND THE BOTTLE SHAPE ARE REGISTERED TRADEMARKS OF YOUR COMPANY NAME\nSPECIAL EDITION DESIGNED BY YOUR STUDIO NAME' --font "Avenir Next" --weight 400 --size 0.85% --tracking 40 --leading 180% --align center --color '#ffffffb3' --at 50%,92.2% --anchor c
-pixelox text add ad.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 400 --size 0.85% --tracking 40 --color '#ffffffb3' --at 50%,95.5% --anchor c
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 25
+pixelox fx reflection ad.pxo --in-place --layer Bottle --length 32% --opacity 30 --blur 10
+pixelox render droplets ad.pxo --in-place --layer Bottle --density 40 --mist 0 --trickles 0 --refract off
+pixelox text add ad.pxo --in-place --name Mark --content "Brand" --font @script-formal --weight 900 --fit-width 104 --color '#b00f10' --at 50.7%,48.7% --anchor c --anchor-to ink
+pixelox text add ad.pxo --in-place --name Header1 --content "50 YEARS SPECIAL EDITION" --font @geometric-sans --weight 700 --size 1.8% --tracking 30 --color '#ffffff' --at 50%,12% --anchor c
+pixelox text add ad.pxo --in-place --name Header2 --content "CERAMIC BOTTLES" --font @thin-sans --size 1.5% --tracking 30 --color '#ffffff' --at 50%,14.5% --anchor c
+pixelox text add ad.pxo --in-place --name BrandMark --content "Brand" --font @script-formal --weight 900 --size 3.4% --color '#ffffff' --at 50%,87.3% --anchor c
+pixelox text add ad.pxo --in-place --name Legal --content $'BRAND AND THE BOTTLE SHAPE ARE REGISTERED TRADEMARKS OF YOUR COMPANY NAME\nSPECIAL EDITION DESIGNED BY YOUR STUDIO NAME' --font @geometric-sans --weight 400 --size 0.85% --tracking 40 --leading 180% --align center --color '#ffffffb3' --at 50%,92.2% --anchor c
+pixelox text add ad.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 400 --size 0.85% --tracking 40 --color '#ffffffb3' --at 50%,95.5% --anchor c
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
-Change first: the ground red to your brand color (and the three shades derived from it:
-corner `#5a0202`, floor light `#c9706c`, fade `#a81516`), then the two header lines, then
-the width of `Mark` (104 px suits the narrow stand-in; use 75% of your product's width).
+Change first: the ground red to your brand color (and the two shades derived from it:
+corner `#5a0202`, floor light `#c9706c`), then the two header lines, then the width of
+`Mark` (104 px suits the narrow stand-in; use 75% of your product's width). The droplets
+are made for the bottle that is there when the command runs: after swapping the product,
+run the recipe again from the top.
 
 ## 10. Variations and pairings
 
@@ -171,7 +167,9 @@ the width of `Mark` (104 px suits the narrow stand-in; use 75% of your product's
 * A halo in pure white at high opacity turns into a sticker outline. Keep it wide (blur 60
   to 80) and at or below 50%.
 * The reflection as strong as the product. It must be under 35% opacity, blurred, and gone
-  before the fine print.
+  before the fine print (`--opacity 30`, `--length` about a third of the bottle).
+* A gap between the base and the reflection: the cutout still has a transparent border.
+  Keep the `transform trim` line.
 * Header set large. Past 2% H cap height it reads as a sale poster; the calm comes from
   the 40:1 ratio between object and type.
 * A ground red that is too bright (`#e61a2b`) kills the white: the studio red must be deep

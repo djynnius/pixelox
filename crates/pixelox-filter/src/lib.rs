@@ -16,13 +16,17 @@ use pixelox_core::prelude::*;
 mod art;
 mod blemish;
 mod blur;
+mod distort;
 mod fill;
 mod freqsep;
+mod grain;
 mod kern;
 mod noise;
 mod paint;
+mod procedural;
 mod retouch;
 mod sharpen;
+mod smoke;
 mod stylize;
 pub mod util;
 
@@ -39,6 +43,9 @@ pub fn ops() -> Vec<OpSpec> {
     v.extend(blemish::ops());
     v.extend(fill::ops());
     v.extend(paint::ops());
+    v.extend(procedural::ops());
+    v.extend(grain::ops());
+    v.extend(distort::ops());
     v
 }
 
@@ -92,6 +99,11 @@ mod contract {
         "fill gradient",
         "fill pattern",
         "paint stroke",
+        "fill noise",
+        "filter grain",
+        "filter distort",
+        "filter displace",
+        "filter glitch",
     ];
 
     const GLOBALS: &[&str] = &[
@@ -264,6 +276,13 @@ mod regions {
         ("fill solid", &[("color", "#ff00ff")]),
         ("fill gradient", &[("stops", "#f00@0,#00f@1")]),
         ("paint stroke", &[("points", "0,8 24,8"), ("size", "40"), ("color", "#00ff00")]),
+        ("fill noise", &[]),
+        ("fill noise", &[("kind", "smoke"), ("scale", "8")]),
+        ("filter grain", &[("amount", "80")]),
+        ("filter distort", &[("kind", "twirl"), ("angle", "180")]),
+        ("filter distort", &[("kind", "wave"), ("amplitude", "3"), ("wavelength", "7"), ("angle", "45")]),
+        ("filter displace", &[("amount", "4"), ("scale", "6")]),
+        ("filter glitch", &[("split", "3")]),
     ];
 
     fn texture(w: u32, h: u32) -> Image {
@@ -410,6 +429,13 @@ mod determinism {
             ("filter smart-sharpen", &[("radius", "3")]),
             ("filter pixelate", &[("cell", "7"), ("kind", "hex")]),
             ("fill gradient", &[("dither", "true"), ("kind", "angular")]),
+            ("fill noise", &[("kind", "ridged"), ("warp", "80"), ("stretch", "2"), ("angle", "30")]),
+            ("fill noise", &[("kind", "smoke")]),
+            ("fill noise", &[("kind", "cell-edges"), ("tile", "true")]),
+            ("filter grain", &[("size", "4"), ("color", "50")]),
+            ("filter distort", &[("kind", "spherize"), ("amount", "70")]),
+            ("filter displace", &[("mode", "slope"), ("amount", "6")]),
+            ("filter glitch", &[("slices", "9")]),
             (
                 "paint stroke",
                 &[

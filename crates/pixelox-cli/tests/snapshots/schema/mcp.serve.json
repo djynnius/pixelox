@@ -70,6 +70,24 @@
         ],
         "description": "Let calls that pass consent [\"model-download\"] download missing models Type: flag.",
         "x-pixelox-kind": "flag"
+      },
+      "allow_font_downloads": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Let calls that pass consent [\"font-download\"] download Google Fonts families (fonts get, text add/edit/style) Type: flag.",
+        "x-pixelox-kind": "flag"
       }
     },
     "required": [],

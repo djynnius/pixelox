@@ -1,11 +1,13 @@
 //! Shaping and layout: the face set (the chosen face plus the glyph-fallback chain),
 //! bidi reordering (unicode-bidi), line breaking (unicode-linebreak), shaping (rustybuzz),
-//! alignment, justification, tracking, leading, rotation, and text on a path. The result is
-//! glyph outlines in canvas pixels ([`Composed`]), which `render.rs` rasterizes or writes as
-//! SVG path data. No hinting: the same outlines on every platform.
+//! alignment, justification, tracking, leading, rotation, and text on a path; case, scale,
+//! faux bold, warps, and placement by the visible letters. The result is glyph outlines in
+//! canvas pixels ([`Composed`]), which `render.rs` rasterizes or writes as SVG path data. No
+//! hinting: the same outlines on every platform.
 
-use crate::fonts::{self, FaceChoice, FontDb, FontStyle, Request};
+use crate::fonts::{self, FaceChoice, FontDb, FontStyle, Request, Resolution};
 use crate::spec::{parse_variations, Align, Side, TextSpec};
+use crate::warp;
 use kurbo::{Affine, BezPath, PathEl, Point, Shape};
 use pixelox_core::prelude::*;
 use pixelox_core::units::Length;
@@ -42,7 +44,14 @@ fn unreadable(c: &FaceChoice) -> Error {
         .with_context("file", &c.file.key)
 }
 
-fn make_slot(choice: FaceChoice, weight: u16, style: FontStyle, user: &[(String, f32)], size_px: f64) -> Result<Slot> {
+fn make_slot(
+    choice: FaceChoice,
+    weight: u16,
+    style: FontStyle,
+    stretch: f32,
+    user: &[(String, f32)],
+    size_px: f64,
+) -> Result<Slot> {
     let face = ttf_parser::Face::parse(&choice.file.data, choice.index).map_err(|_| unreadable(&choice))?;
     let axes: Vec<ttf_parser::VariationAxis> = face.variation_axes().into_iter().collect();
     let axis = |t: &[u8; 4]| axes.iter().find(|a| a.tag == Tag::from_bytes(t)).copied();
@@ -59,6 +68,10 @@ fn make_slot(choice: FaceChoice, weight: u16, style: FontStyle, user: &[(String,
         } else if let Some(a) = axis(b"slnt") {
             vars.push(Variation { tag: a.tag, value: (-12.0f32).clamp(a.min_value, a.max_value) });
         }
+    }
+    // a requested width sets the width axis (normal leaves the font's default)
+    if let Some(a) = axis(b"wdth").filter(|_| !user_has("wdth") && (stretch - 100.0).abs() > 1e-3) {
+        vars.push(Variation { tag: a.tag, value: stretch.clamp(a.min_value, a.max_value) });
     }
     if let Some(a) = axis(b"opsz").filter(|_| !user_has("opsz")) {
         vars.push(Variation { tag: a.tag, value: (size_px as f32).clamp(a.min_value, a.max_value) });
@@ -85,6 +98,7 @@ struct FaceSet {
     chain: Option<Vec<fontdb::ID>>,
     weight: u16,
     style: FontStyle,
+    stretch: f32,
     user: Vec<(String, f32)>,
     size_px: f64,
 }
@@ -109,7 +123,7 @@ impl FaceSet {
             if self.slots.iter().any(|s| same_face(&s.choice, &ch)) {
                 continue;
             }
-            self.slots.push(make_slot(ch, self.weight, self.style, &self.user, self.size_px)?);
+            self.slots.push(make_slot(ch, self.weight, self.style, self.stretch, &self.user, self.size_px)?);
             return Ok(Some(self.slots.len() - 1));
         }
         Ok(None)
@@ -176,6 +190,8 @@ struct Shaper<'a> {
     features: &'a [Feature],
     size: f64,
     bold_extra: f64,
+    /// Faux bold (`--faux-bold`): extra advance of every glyph.
+    faux_extra: f64,
 }
 
 impl Shaper<'_> {
@@ -192,7 +208,7 @@ impl Shaper<'_> {
         buf.guess_segment_properties();
         buf.set_direction(if rtl { Direction::RightToLeft } else { Direction::LeftToRight });
         let out = rustybuzz::shape(face, self.features, buf);
-        let extra = if self.slots[slot].synthetic_bold { self.bold_extra } else { 0.0 };
+        let extra = if self.slots[slot].synthetic_bold { self.bold_extra } else { 0.0 } + self.faux_extra;
         out.glyph_infos()
             .iter()
             .zip(out.glyph_positions())
@@ -557,11 +573,14 @@ impl Polyline {
 
 /// Laid-out text: glyph outlines in canvas pixels plus what an op reports.
 pub struct Composed {
-    /// Outlines of glyphs drawn with their face as is.
+    /// Outlines of glyphs drawn with their face as is (thickened by `faux_width`).
     pub regular: BezPath,
     /// Outlines of glyphs that get synthetic bold (stroked by `bold_width` and filled).
     pub bold: BezPath,
+    /// Stroke that thickens the synthetic-bold glyphs (synthetic bold plus faux bold).
     pub bold_width: f64,
+    /// Stroke that thickens the regular glyphs (`--faux-bold`).
+    pub faux_width: f64,
     pub color: Rgba,
     pub stroke: Option<(Rgba, f64)>,
     /// The (unrotated) text box `[x, y, w, h]` on the canvas.
@@ -570,13 +589,22 @@ pub struct Composed {
     pub overflow: bool,
     pub size_px: f64,
     pub primary: FaceChoice,
-    /// The requested family was found (false: drawn with the fallback).
+    /// How the font was resolved (family, class, substitute).
+    pub resolution: Resolution,
+    /// The requested family was found (false: drawn with a substitute).
     pub found: bool,
     pub synthetic: Vec<&'static str>,
     pub fallbacks: Vec<FaceChoice>,
     pub missing: Vec<char>,
     pub glyphs: usize,
     pub path_length: Option<f64>,
+    /// Text on a path: the length of the set line, and how many glyphs did not fit.
+    pub path_text_width: Option<f64>,
+    pub overflow_glyphs: usize,
+    /// A warp was given but not applied (text on a path).
+    pub warp_ignored: bool,
+    /// The Google Fonts download made for this layer (`-y`), for the result.
+    pub downloaded: Option<Value>,
 }
 
 impl Composed {
@@ -584,20 +612,19 @@ impl Composed {
         self.regular.elements().is_empty() && self.bold.elements().is_empty()
     }
 
-    /// Bounds of the ink (outlines grown by the stroke and synthetic bold), `[x0, y0, x1, y1]`.
+    /// Bounds of the ink (outlines grown by the stroke, synthetic and faux bold), `[x0, y0, x1, y1]`.
     pub fn ink(&self) -> Option<[f64; 4]> {
         let mut r: Option<kurbo::Rect> = None;
-        for (p, grow) in [(&self.regular, 0.0), (&self.bold, self.bold_width / 2.0)] {
+        let stroke = self.stroke.map(|(_, w)| w / 2.0).unwrap_or(0.0);
+        for (p, grow) in [(&self.regular, self.faux_width / 2.0), (&self.bold, self.bold_width / 2.0)] {
             if p.elements().is_empty() {
                 continue;
             }
-            let b = p.bounding_box().inflate(grow, grow);
+            let g = grow + stroke;
+            let b = p.bounding_box().inflate(g, g);
             r = Some(r.map_or(b, |a| a.union(b)));
         }
-        let mut r = r?;
-        if let Some((_, w)) = self.stroke {
-            r = r.inflate(w / 2.0 + self.bold_width / 2.0, w / 2.0 + self.bold_width / 2.0);
-        }
+        let r = r?;
         Some([r.x0, r.y0, r.x1, r.y1])
     }
 
@@ -608,6 +635,16 @@ impl Composed {
             let (x1, y1) = (x1.ceil(), y1.ceil());
             RectI::new(x0 as i32, y0 as i32, (x1 - x0).max(0.0) as u32, (y1 - y0).max(0.0) as u32)
         })
+    }
+
+    /// Exact ink size `(w, h)` in px.
+    pub fn ink_size(&self) -> Option<(f64, f64)> {
+        self.ink().map(|[x0, y0, x1, y1]| (x1 - x0, y1 - y0))
+    }
+
+    fn apply(&mut self, m: Affine) {
+        self.regular.apply_affine(m);
+        self.bold.apply_affine(m);
     }
 }
 
@@ -648,21 +685,49 @@ fn rotation_about(deg: f64, c: Point) -> Affine {
     Affine::translate(c.to_vec2()) * Affine::new([co, s, -s, co, 0.0, 0.0]) * Affine::translate(-c.to_vec2())
 }
 
-/// Lay out a text spec on `doc`'s canvas. With `strict`, a missing `font` family fails with
-/// PX4102; otherwise it falls back to the embedded face (`found` = false).
+fn user_axes(spec: &TextSpec) -> Vec<(String, f32)> {
+    spec.variation.as_deref().and_then(|v| parse_variations(v).ok()).unwrap_or_default()
+}
+
+/// The font request a spec makes.
+pub fn request_of(spec: &TextSpec) -> Request<'_> {
+    Request {
+        family: &spec.font,
+        weight: spec.weight,
+        style: spec.style,
+        stretch: spec.stretch.map(|s| s as f32),
+        sha256: spec.font_sha256.as_deref(),
+        postscript: spec.font_face.as_ref().and_then(|f| f.get("postscript")).and_then(|p| p.as_str()),
+    }
+}
+
+/// The position of an anchor inside a rect `[x, y, w, h]`.
+fn anchor_point(a: Anchor, r: [f64; 4]) -> Point {
+    let (bx, by) = a.place(0.0, 0.0, r[2], r[3]);
+    Point::new(r[0] - bx, r[1] - by)
+}
+
+/// Lay out a text spec on `doc`'s canvas. With `strict`, a missing `font` family fails
+/// (PX4102 / PX1540); otherwise it is replaced by the closest installed face (`found` = false).
 pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed> {
     let size = spec.size_px(doc);
-    let req =
-        Request { family: &spec.font, weight: spec.weight, style: spec.style, sha256: spec.font_sha256.as_deref() };
-    let (primary, found) = if strict { (fonts::resolve_strict(&req)?, true) } else { fonts::resolve_lenient(&req)? };
-    let user: Vec<(String, f32)> = spec.variation.as_deref().and_then(|v| parse_variations(v).ok()).unwrap_or_default();
+    let res = fonts::resolve(&request_of(spec), strict)?;
+    let (weight, style, stretch) = (res.weight, res.style, res.stretch);
+    let mut primary = res.choice.clone();
+    let first = make_slot(primary.clone(), weight, style, stretch, &user_axes(spec), size)?;
+    // a variable face is drawn (and recorded) at the requested weight
+    if let Some((lo, hi)) = primary.axis("wght") {
+        primary.weight = (weight as f32).clamp(lo, hi).round() as u16;
+    }
+    let user = user_axes(spec);
     let db = fonts::db();
-    let first = make_slot(primary.clone(), spec.weight, spec.style, &user, size)?;
-    let mut set =
-        FaceSet { slots: vec![first], chain: None, db, weight: spec.weight, style: spec.style, user, size_px: size };
+    let mut set = FaceSet { slots: vec![first], chain: None, db, weight, style, stretch, user, size_px: size };
     let on_path = spec.path.is_some();
     // fonts rarely have a tab glyph: tabs become four spaces
-    let content = spec.content.replace('\t', "    ");
+    let mut content = spec.content.replace('\t', "    ");
+    if let Some(c) = spec.case {
+        content = c.apply(&content);
+    }
     let paragraphs: Vec<String> = if on_path {
         vec![content.replace("\r\n", " ").replace(['\r', '\n'], " ")]
     } else {
@@ -692,8 +757,17 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
         }
     }
     let bold_width = size * BOLD_STRENGTH;
-    let sh = Shaper { hb: &hb, slots: &set.slots, features: &features, size, bold_extra: bold_width };
+    let faux_width = (spec.faux_bold / 1000.0 * size).max(0.0);
+    let sh = Shaper {
+        hb: &hb,
+        slots: &set.slots,
+        features: &features,
+        size,
+        bold_extra: bold_width,
+        faux_extra: faux_width,
+    };
     let track = spec.tracking / 1000.0 * size;
+    let (sx, sy) = (spec.scale_x, spec.scale_y);
 
     // vertical metrics of the chosen face
     let f0 = &hb[0];
@@ -706,13 +780,13 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
     }
     let lh = spec.leading_px(size, doc.dpi()).unwrap_or(asc - desc + gap);
 
-    // shape every line in display order
+    // shape every line in display order (unscaled units: the box width is divided by scale_x)
     struct Line {
         glyphs: Vec<G>,
         width: f64,
         para_end: bool,
     }
-    let max_w = if on_path { None } else { spec.box_size.map(|b| b.0) };
+    let max_w = if on_path { None } else { spec.box_size.map(|b| b.0 / sx) };
     let mut lines: Vec<Line> = Vec::new();
     for (text, face_at) in paragraphs.iter().zip(&face_maps) {
         if text.is_empty() {
@@ -738,6 +812,7 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
     let mut regular = BezPath::new();
     let mut bold = BezPath::new();
     let mut glyph_count = 0usize;
+    let scale = Affine::scale_non_uniform(sx, sy);
     let mut outline = |g: &G, frame: Affine| {
         let slot = &set.slots[g.slot];
         let s = size / hb[g.slot].units_per_em().max(1) as f64;
@@ -745,7 +820,7 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
         let local = Affine::new([s, 0.0, s * k, -s, g.dx, -g.dy]);
         let target = if slot.synthetic_bold { &mut bold } else { &mut regular };
         let before = target.elements().len();
-        let mut sink = Sink { p: &mut *target, m: frame * local };
+        let mut sink = Sink { p: &mut *target, m: frame * scale * local };
         hb[g.slot].outline_glyph(GlyphId(g.id), &mut sink);
         if target.elements().len() > before {
             glyph_count += 1;
@@ -755,65 +830,79 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
     let content_w = lines.iter().map(|l| l.width).fold(0.0, f64::max);
     let mut overflow = false;
     let mut path_length = None;
+    let mut path_text_width = None;
+    let mut overflow_glyphs = 0usize;
     let layout_box;
+    // rotation is folded into each glyph's frame unless the outlines are post-processed
+    let post = spec.warp.as_ref().is_some_and(|w| !w.is_identity()) || spec.anchor_ink;
+    let rot = rotation_about(spec.rotation, Point::new(spec.x, spec.y));
     if let Some(d) = &spec.path {
         let poly = Polyline::from_svg(d)?.oriented(spec.path_side);
         let total = poly.length();
         path_length = Some(total);
         let off = Length::parse(&spec.path_offset).map(|l| l.to_px(total, doc.dpi())).unwrap_or(0.0);
         let line = lines.first();
-        let w = line.map(|l| l.width).unwrap_or(0.0);
+        let w = line.map(|l| l.width).unwrap_or(0.0) * sx;
+        path_text_width = Some(w);
         let mut pen = match spec.align {
             Align::Left | Align::Justify => off,
             Align::Center => off - w / 2.0,
             Align::Right => off - w,
         };
+        let pen0 = pen;
         overflow = w > total + 0.5;
         for g in line.map(|l| l.glyphs.as_slice()).unwrap_or(&[]) {
-            let mid = pen + g.adv / 2.0;
-            let h = (g.adv / 2.0).max(0.5);
+            let adv = g.adv * sx;
+            let mid = pen + adv / 2.0;
+            let lost = if poly.closed { mid - pen0 > total + 1e-6 } else { mid > total + 1e-6 || mid < -1e-6 };
+            if lost && !g.space {
+                overflow_glyphs += 1;
+            }
+            let h = (adv / 2.0).max(0.5);
             let (p0, p1) = (poly.at(mid - h), poly.at(mid + h));
             let v = p1 - p0;
             let l = v.hypot2().sqrt();
             let t = if l > 1e-12 { v / l } else { kurbo::Vec2::new(1.0, 0.0) };
-            let origin = poly.at(mid) - t * (g.adv / 2.0);
+            let origin = poly.at(mid) - t * (adv / 2.0);
             let frame = Affine::new([t.x, t.y, -t.y, t.x, origin.x, origin.y]);
+            // the glyph frame is in unscaled units along the path: scale is applied by `outline`
             outline(g, frame);
-            pen += g.adv;
+            pen += adv;
         }
         layout_box = [0.0, 0.0, 0.0, 0.0];
     } else {
-        let box_w = max_w.unwrap_or(content_w);
+        let box_w_u = max_w.unwrap_or(content_w);
         let n = lines.len();
         let text_h = if n > 0 { (n - 1) as f64 * lh + (asc - desc) } else { 0.0 };
-        let box_h = spec.box_size.and_then(|b| b.1).unwrap_or(text_h);
+        let box_h_u = spec.box_size.and_then(|b| b.1).map(|h| h / sy).unwrap_or(text_h);
         if let Some((bw, bh)) = spec.box_size {
-            overflow = lines.iter().any(|l| l.width > bw + 0.5) || bh.is_some_and(|bh| text_h > bh + 0.5);
+            overflow = lines.iter().any(|l| l.width * sx > bw + 0.5) || bh.is_some_and(|bh| text_h * sy > bh + 0.5);
         }
-        let (bx, by) = spec.anchor.place(spec.x, spec.y, box_w, box_h);
-        let rot = rotation_about(spec.rotation, Point::new(spec.x, spec.y));
+        let (bw, bhh) = (box_w_u * sx, box_h_u * sy);
+        let (bx, by) = spec.anchor.place(spec.x, spec.y, bw, bhh);
+        let frame_rot = if post { Affine::IDENTITY } else { rot };
         for (i, line) in lines.iter().enumerate() {
             let baseline = asc + i as f64 * lh;
             let x0 = match spec.align {
                 Align::Left | Align::Justify => 0.0,
-                Align::Center => (box_w - line.width) / 2.0,
-                Align::Right => box_w - line.width,
+                Align::Center => (box_w_u - line.width) / 2.0,
+                Align::Right => box_w_u - line.width,
             };
             let mut extra = 0.0;
-            if spec.align == Align::Justify && !line.para_end && box_w > line.width {
+            if spec.align == Align::Justify && !line.para_end && box_w_u > line.width {
                 let spaces = line.glyphs.iter().filter(|g| g.space).count();
                 if spaces > 0 {
-                    extra = (box_w - line.width) / spaces as f64;
+                    extra = (box_w_u - line.width) / spaces as f64;
                 }
             }
             let mut pen = x0;
             for g in &line.glyphs {
-                let frame = rot * Affine::translate((bx + pen, by + baseline));
+                let frame = frame_rot * Affine::translate((bx + pen * sx, by + baseline * sy));
                 outline(g, frame);
                 pen += g.adv + if g.space { extra } else { 0.0 };
             }
         }
-        layout_box = [bx, by, box_w, box_h];
+        layout_box = [bx, by, bw, bhh];
     }
 
     let mut used: Vec<usize> = face_maps.iter().flatten().copied().filter(|&f| f > 0).collect();
@@ -825,13 +914,15 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
         synthetic.push("bold");
     }
     if set.slots[0].synthetic_oblique {
-        synthetic.push(if spec.style == FontStyle::Italic { "italic" } else { "oblique" });
+        synthetic.push(if style == FontStyle::Italic { "italic" } else { "oblique" });
     }
     let has_bold = set.slots.iter().any(|s| s.synthetic_bold);
-    Ok(Composed {
+    let found = res.found();
+    let mut c = Composed {
         regular,
         bold,
-        bold_width: if has_bold { bold_width } else { 0.0 },
+        bold_width: if has_bold { bold_width + faux_width } else { 0.0 },
+        faux_width,
         color: spec.color,
         stroke: spec.stroke.filter(|_| spec.stroke_width > 0.0).map(|c| (c, spec.stroke_width)),
         layout_box,
@@ -839,13 +930,48 @@ pub fn compose(spec: &TextSpec, doc: &Document, strict: bool) -> Result<Composed
         overflow,
         size_px: size,
         primary,
+        resolution: res,
         found,
         synthetic,
         fallbacks,
         missing,
         glyphs: glyph_count,
         path_length,
-    })
+        path_text_width,
+        overflow_glyphs,
+        warp_ignored: on_path && spec.warp.as_ref().is_some_and(|w| !w.is_identity()),
+        downloaded: None,
+    };
+    if post && !on_path {
+        if let Some(w) = spec.warp.as_ref().filter(|w| !w.is_identity()) {
+            // warp inside the bounds of the unwarped outlines
+            let mut r: Option<kurbo::Rect> = None;
+            for p in [&c.regular, &c.bold] {
+                if !p.elements().is_empty() {
+                    let b = p.bounding_box();
+                    r = Some(r.map_or(b, |a| a.union(b)));
+                }
+            }
+            if let Some(r) = r {
+                let rect = [r.x0, r.y0, r.width(), r.height()];
+                c.regular = warp::warp_path(&c.regular, w, rect);
+                c.bold = warp::warp_path(&c.bold, w, rect);
+            }
+        }
+        if spec.anchor_ink {
+            if let Some([x0, y0, x1, y1]) = c.ink() {
+                let p = anchor_point(spec.anchor, [x0, y0, x1 - x0, y1 - y0]);
+                let shift = Affine::translate((spec.x - p.x, spec.y - p.y));
+                c.apply(shift);
+                c.layout_box[0] += spec.x - p.x;
+                c.layout_box[1] += spec.y - p.y;
+            }
+        }
+        if rot != Affine::IDENTITY {
+            c.apply(rot);
+        }
+    }
+    Ok(c)
 }
 
 #[cfg(test)]

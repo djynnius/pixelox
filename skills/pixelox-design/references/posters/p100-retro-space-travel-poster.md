@@ -7,7 +7,7 @@ style: [illustration, retro, flat]
 format: portrait-2x3
 archetype: A-scene-title
 palette: ['#030303', '#fcfdf7', '#9ea19d', '#52585a', '#fbed8d', '#dd3128']
-techniques: [T-long-shadow, T-fit-width, T-frame-border, T-geo-shapes, T-spotlight, T-outline-type]
+techniques: [T-extrude-type, T-fit-width, T-frame-border, T-geo-shapes, T-spotlight, T-outline-type]
 needs: subject-cutout
 ---
 
@@ -108,17 +108,17 @@ calmly works.
 * Sky and sun: `fx overlay` gradients on shapes (linear on the panel, `--style radial` on
   the disc), plus `fx stroke` in red on the disc (**T-spotlight** logic: the light is a
   drawn object).
-* Ground shadows: a black-and-white `clouds.js` render (`stretch=0.5`) clipped to the
-  ground rectangle, cut to pure black and white with `adjust threshold --level 118`, and
-  set to `multiply`, which leaves hard-edged black pools on the gray.
+* Ground shadows: a black-and-white `fill noise --as-layer` cloud layer (`--stretch 0.5`,
+  `multiply`), cut to pure black and white with `adjust threshold --level 118` and clipped
+  to the ground rectangle, which leaves hard-edged black pools on the gray.
 * **T-geo-shapes**: rocket, horizon ridge, and chair sling are `shape path` layers; the
   sling carries `pattern.js` stripes clipped to it.
-* **T-long-shadow**, block version, on the giant word: the word is exported as a brush
-  tip and dragged 26 px down-right in red, then placed under the yellow word.
+* **T-extrude-type** on the giant word: `fx extrude --depth 37 --angle 315` with red
+  sides (`--color '#dd3128'`), added before the word is rotated. The text stays live.
 * **T-outline-type** logic on the icy word (light fill, dark outline) plus three tapered
   `paint stroke` drips for icicles.
 * No grain: the print is clean.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-fit-width**: the giant word is set to 880 px (81.5% W) with `--fit-width`.
 
 ## 8. Hierarchy and eye path
 
@@ -133,7 +133,6 @@ calmly works.
 is drawn.
 
 ```bash
-pixelox render js scripts/clouds.js -o shadows.png --size 1080x1620 --seed 17 --param lo='#ffffff' --param hi='#000000' --param scale=3 --param octaves=3 --param warp=1.2 --param stretch=0.5 --param res=2
 pixelox render js scripts/pattern.js -o stripes.png --size 1080x1620 --param kind=stripes --param color='#18629d' --param cell=46 --param weight=0.5 --param angle=7
 pixelox new -o travel.pxo --size 1080x1620 --fill '#fcfdf7'
 pixelox shape rect travel.pxo --in-place --name Sky --rect 24,24,1032x1572 --fill '#030303'
@@ -142,10 +141,9 @@ pixelox shape ellipse travel.pxo --in-place --name Sun --rect 119,374,842x842 --
 pixelox fx overlay travel.pxo --in-place --layer Sun --style radial --stops '#ffffff@0,#fffbe6@0.45,#fed882@1'
 pixelox fx stroke travel.pxo --in-place --layer Sun --width 3 --color '#dd3128' --position outside
 pixelox shape rect travel.pxo --in-place --name Ground --rect 24,1060,1032x536 --fill '#aeb3b1'
-pixelox comp place travel.pxo shadows.png --in-place --as Shadows --fit cover
-pixelox layer clip travel.pxo --in-place --layer Shadows
+pixelox fill noise travel.pxo --in-place --as-layer --name Shadows --seed 17 --scale 33% --octaves 3 --warp 48 --stretch 0.5 --angle 90 --stops '#ffffff,#000000' --blend multiply
 pixelox adjust threshold travel.pxo --in-place --layer Shadows --level 118
-pixelox layer blend travel.pxo --in-place --layer Shadows --mode multiply
+pixelox layer clip travel.pxo --in-place --layer Shadows
 pixelox shape path travel.pxo --in-place --name Ridge --d 'M 24 1056 L 130 1048 L 210 1058 L 330 1050 L 470 1060 L 610 1052 L 700 1062 L 860 1050 L 980 1058 L 1056 1052 L 1056 1076 L 24 1080 Z' --fill '#030303'
 pixelox shape path travel.pxo --in-place --name Rocket --d 'M 775 715 C 790 800 800 900 804 1000 L 832 1085 L 800 1058 L 750 1058 L 718 1085 L 746 1000 C 750 900 760 800 775 715 Z' --fill '#030303'
 pixelox comp place travel.pxo subject.png --in-place --as Tourist --size x400 --at 38%,74% --anchor b
@@ -154,28 +152,24 @@ pixelox filter cutout travel.pxo --in-place --layer Tourist --levels 5 --simplic
 pixelox shape path travel.pxo --in-place --name Sling --d 'M 237 1010 L 520 990 L 420 1296 L 330 1304 Z' --fill '#b7ac60'
 pixelox comp place travel.pxo stripes.png --in-place --as Stripes --fit cover
 pixelox layer clip travel.pxo --in-place --layer Stripes
-pixelox text add travel.pxo --in-place --name Line1 --content "WHERE THE" --font "Arial Rounded MT Bold" --size 3.8% --tracking 60 --color '#fbed8d' --at 11.6%,7.6% --anchor l
+pixelox text add travel.pxo --in-place --name Line1 --content "WHERE THE" --font @rounded-heavy --size 3.8% --tracking 60 --color '#fbed8d' --at 11.6%,7.6% --anchor l
 pixelox transform rotate travel.pxo --in-place --layer Line1 --degrees -4
-pixelox text add travel.pxo --in-place --name Giant --content "DAYLIGHT" --font Impact --size 20% --tracking 10 --color '#fbed8d'
-pixelox transform scale travel.pxo --in-place --layer Giant --size 880x
+pixelox text add travel.pxo --in-place --name Giant --content "DAYLIGHT" --font @condensed-heavy --fit-width 880 --tracking 10 --color '#fbed8d' --at 50.9%,20.7% --anchor c --anchor-to ink
+pixelox fx extrude travel.pxo --in-place --layer Giant --depth 37 --angle 315 --color '#dd3128'
 pixelox transform rotate travel.pxo --in-place --layer Giant --degrees -6
-pixelox transform move travel.pxo --in-place --layer Giant --to 50.9%,20.7% --anchor c
-pixelox export travel.pxo -o tip.png --layer Giant
-pixelox layer add travel.pxo --in-place --name Extrusion
-pixelox paint stroke travel.pxo --in-place --layer Extrusion --tip tip.png --size 1620 --spacing 1 --color '#dd3128' --points '540,810 566,836; 541.6,811.6 566,836; 543.2,813.2 566,836; 544.8,814.8 566,836; 546.4,816.4 566,836; 548,818 566,836'
-pixelox layer reorder travel.pxo --in-place --layer Extrusion --below Giant
-pixelox text add travel.pxo --in-place --name Line3 --content "LASTS" --font "Arial Rounded MT Bold" --size 3.4% --tracking 80 --color '#fbed8d' --at 95%,30.6% --anchor r
+pixelox text add travel.pxo --in-place --name Line3 --content "LASTS" --font @rounded-heavy --size 3.4% --tracking 80 --color '#fbed8d' --at 95%,30.6% --anchor r
 pixelox transform rotate travel.pxo --in-place --layer Line3 --degrees -4
-pixelox text add travel.pxo --in-place --name Punch1 --content "BRING" --font "Arial Rounded MT Bold" --size 3.4% --tracking 60 --color '#1f5fa8' --at 51.5%,37.8% --anchor r
-pixelox text add travel.pxo --in-place --name Icy --content "ICE" --font "Arial Rounded MT Bold" --size 5.6% --tracking 40 --color '#8fd0f0' --stroke '#1f5fa8' --stroke-width 3 --at 53.5%,37.4% --anchor l
+pixelox text add travel.pxo --in-place --name Punch1 --content "BRING" --font @rounded-heavy --size 3.4% --tracking 60 --color '#1f5fa8' --at 51.5%,37.8% --anchor r
+pixelox text add travel.pxo --in-place --name Icy --content "ICE" --font @rounded-heavy --size 5.6% --tracking 40 --color '#8fd0f0' --stroke '#1f5fa8' --stroke-width 3 --at 53.5%,37.4% --anchor l
 pixelox layer add travel.pxo --in-place --name Icicles
 pixelox paint stroke travel.pxo --in-place --layer Icicles --points '598,640 598,690; 650,640 650,676; 706,640 706,698' --size 16 --hardness 90 --spacing 5 --taper 0,100% --color '#8fd0f0'
-pixelox text add travel.pxo --in-place --name Punch2 --content "AND A CHAIR!" --font "Arial Rounded MT Bold" --size 4% --tracking 60 --color '#1f5fa8' --at 59%,43.6% --anchor c
+pixelox text add travel.pxo --in-place --name Punch2 --content "AND A CHAIR!" --font @rounded-heavy --size 4% --tracking 60 --color '#1f5fa8' --at 59%,43.6% --anchor c
 pixelox export travel.pxo -o travel.png
 ```
 
 Change first: the copy (keep the giant word at 7 to 8 letters), the two type color groups
-(hot colors for the headline, cold for the punchline), then the scene shapes.
+(hot colors for the headline, cold for the punchline), then the scene shapes. Change
+`--seed` on the `fill noise` line for another pattern of ground shadows.
 
 ## 10. Variations and pairings
 

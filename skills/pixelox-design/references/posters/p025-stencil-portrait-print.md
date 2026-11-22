@@ -43,7 +43,7 @@ the design.
 4. Caption: two short words, dusty light blue `#7fa3b0`, centered, cap height 9% H,
    about 72% W wide, baseline at 95% H.
 5. Print wear: sparse cream specks and scratches over everything, 30% opacity.
-6. Paper grain: monochrome noise, overlay, 40%.
+6. Paper grain: one grain layer over everything.
 
 ## 4. Palette
 
@@ -80,8 +80,9 @@ hand and include fine hatch lines in the mid-tones; the filter version is cleane
 * **T-stencil-poster**: bands at 0 to 0.3 navy, 0.3 to 0.5 red, 0.5 to 0.72 dusty blue,
   0.72 to 1 cream; `median` radius 5.
 * **T-grunge** (dirt layer only) in cream at 30%, for scuffed ink.
-* **T-paper-grain**, amount 20, overlay 40%.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-paper-grain**: `filter grain --as-layer --amount 20`, last (visible print grain).
+* **T-fit-width**: the caption is one `text add --fit-width 780`, placed by its visible
+  letters with `--anchor b --anchor-to ink`, so its baseline sits exactly at 95% H.
 
 ## 8. Hierarchy and eye path
 
@@ -104,16 +105,11 @@ pixelox adjust levels print.pxo --in-place --layer Subject --in-black 25 --in-wh
 pixelox filter median print.pxo --in-place --layer Subject --radius 5
 pixelox adjust gradient-map print.pxo --in-place --layer Subject --stops '#0d2637@0,#0d2637@0.3,#a82c2b@0.3,#a82c2b@0.5,#6c929e@0.5,#6c929e@0.72,#e6dcc0@0.72,#e6dcc0@1'
 pixelox shape rect print.pxo --in-place --name Band --rect 0,80%,100%x20% --fill '#0d2637'
-pixelox text add print.pxo --in-place --name Caption --content "STAY SHARP" --font Impact --size 10% --color '#7fa3b0'
-pixelox transform scale print.pxo --in-place --layer Caption --size 780x
-pixelox transform move print.pxo --in-place --layer Caption --to 50%,95% --anchor b
+pixelox text add print.pxo --in-place --name Caption --content "STAY SHARP" --font @condensed-heavy --fit-width 780 --color '#7fa3b0' --at 50%,95% --anchor b --anchor-to ink
 pixelox render js scripts/grunge.js -o wear.png --size 1080x1440 --seed 5 --param color='#e6dcc0' --param specks=5000 --param blotches=40 --param scratches=30 --param clump=0.5
 pixelox comp place print.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer opacity print.pxo --in-place --layer Wear --value 30
-pixelox layer add print.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise print.pxo --in-place --layer Grain --amount 20 --monochrome
-pixelox layer blend print.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity print.pxo --in-place --layer Grain --value 40
+pixelox filter grain print.pxo --in-place --as-layer --name Grain --amount 20
 pixelox export print.pxo -o print.png
 ```
 

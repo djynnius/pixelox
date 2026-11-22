@@ -7,7 +7,7 @@ style: [photo-composite, type-led]
 format: portrait-3x4
 archetype: A-speakers-over-title
 palette: ['#1e1e23', '#323135', '#80746c', '#f49f50', '#d5aa70', '#f4f1f0']
-techniques: [T-spotlight, T-gradient-type, T-fit-width, T-pill-button, T-cutout-drop-shadow, T-pattern, T-haze-band]
+techniques: [T-spotlight, T-gradient-type, T-fit-width, T-pill-button, T-cutout-drop-shadow, T-pattern, T-haze-band, T-icon-row]
 needs: subject-cutout
 ---
 
@@ -129,7 +129,12 @@ two people are photographed in different light, grade both first with `adjust bw
 * **T-gradient-type** on headline word 2: `fx overlay` left to right, `#f97c1c` to
   `#fdc56d`. **T-fit-width** on both headline words.
 * **T-pill-button**, outlined variant with a dark fill, in gold.
-* Dust: `particles.js` dots in screen mode. Bottom shade as in T-photo-fade.
+* Dust: `particles.js` dots in screen mode. Bottom shade: a gradient layer in the ground
+  color (`Shade`, 42 to 57% H). It is a layer, not a mask, because it has to cover both
+  cutouts and the glow at once.
+* **T-icon-row**, badge variant: the social row is three gold badges with dark `shape
+  icon` glyphs: `at-sign` on a disc, the "LIVE" tag, and `play` (filled) on a rounded
+  rectangle. The set has no social-network logos; the neutral glyph stands in for one.
 * **T-haze-band** in [techniques.md](../techniques.md) is the tested library version of the glow band that hides the lower edges of the cutouts and photo seams; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -169,40 +174,39 @@ pixelox layer add speakers.pxo --in-place --name Shade
 pixelox fill gradient speakers.pxo --in-place --layer Shade --from 0,42% --to 0,57% --stops '#1e1e2300@0,#1e1e23ff@1'
 pixelox comp place speakers.pxo dust.png --in-place --as Dust --fit cover
 pixelox layer blend speakers.pxo --in-place --layer Dust --mode screen
-pixelox text add speakers.pxo --in-place --name Presenter --content "YOUR CHURCH NAME HERE" --font "Avenir Next" --weight 600 --size 1.9% --tracking 280 --color '#c9ccd0' --at 50.8%,3.7% --anchor c
+pixelox text add speakers.pxo --in-place --name Presenter --content "YOUR CHURCH NAME HERE" --font @geometric-sans --weight 600 --size 1.9% --tracking 280 --color '#c9ccd0' --at 50.8%,3.7% --anchor c
 pixelox shape ellipse speakers.pxo --in-place --name BadgeRing --rect 34,19,158x158 --fill none --stroke '#f0a030' --stroke-width 5
-pixelox text add speakers.pxo --in-place --name BadgeLabel --content "STARTS" --font "Avenir Next Condensed" --weight 600 --size 1.5% --color '#ffffff' --at 10.5%,5.3% --anchor c
-pixelox text add speakers.pxo --in-place --name BadgeTime --content "10AM" --font "Avenir Next" --weight 900 --size 2.9% --tracking -20 --color '#ffffff' --at 10.5%,7.7% --anchor c
-pixelox text add speakers.pxo --in-place --name RoleR --content "HOST" --font "Avenir Next" --weight 500 --size 0.95% --tracking 40 --color '#9a9a9a' --at 87%,27.6% --anchor c
-pixelox text add speakers.pxo --in-place --name PlateR --content $'PASTOR\n\nEXAMPLE' --font "Arial Black" --size 1.65% --tracking 20 --leading 112% --align center --color '#ffffff' --at 87%,31.2% --anchor c
-pixelox text add speakers.pxo --in-place --name FirstR --content "JOHN" --font "Arial Black" --size 1.65% --tracking 20 --color '#f0a030' --at 87%,31.2% --anchor c
-pixelox text add speakers.pxo --in-place --name RoleL --content "GUEST SPEAKER" --font "Avenir Next" --weight 500 --size 0.95% --tracking 40 --color '#9a9a9a' --at 12%,42.7% --anchor c
-pixelox text add speakers.pxo --in-place --name PlateL --content $'ELDER\n\nSAMPLE' --font "Arial Black" --size 1.65% --tracking 20 --leading 112% --align center --color '#ffffff' --at 12%,46.4% --anchor c
-pixelox text add speakers.pxo --in-place --name FirstL --content "MARY" --font "Arial Black" --size 1.65% --tracking 20 --color '#f0a030' --at 12%,46.4% --anchor c
+pixelox text add speakers.pxo --in-place --name BadgeLabel --content "STARTS" --font @condensed --weight 600 --size 1.5% --color '#ffffff' --at 10.5%,5.3% --anchor c
+pixelox text add speakers.pxo --in-place --name BadgeTime --content "10AM" --font @geometric-sans --weight 900 --size 2.9% --tracking -20 --color '#ffffff' --at 10.5%,7.7% --anchor c
+pixelox text add speakers.pxo --in-place --name RoleR --content "HOST" --font @geometric-sans --weight 500 --size 0.95% --tracking 40 --color '#9a9a9a' --at 87%,27.6% --anchor c
+pixelox text add speakers.pxo --in-place --name PlateR --content $'PASTOR\n\nEXAMPLE' --font @heavy-wide --size 1.65% --tracking 20 --leading 112% --align center --color '#ffffff' --at 87%,31.2% --anchor c
+pixelox text add speakers.pxo --in-place --name FirstR --content "JOHN" --font @heavy-wide --size 1.65% --tracking 20 --color '#f0a030' --at 87%,31.2% --anchor c
+pixelox text add speakers.pxo --in-place --name RoleL --content "GUEST SPEAKER" --font @geometric-sans --weight 500 --size 0.95% --tracking 40 --color '#9a9a9a' --at 12%,42.7% --anchor c
+pixelox text add speakers.pxo --in-place --name PlateL --content $'ELDER\n\nSAMPLE' --font @heavy-wide --size 1.65% --tracking 20 --leading 112% --align center --color '#ffffff' --at 12%,46.4% --anchor c
+pixelox text add speakers.pxo --in-place --name FirstL --content "MARY" --font @heavy-wide --size 1.65% --tracking 20 --color '#f0a030' --at 12%,46.4% --anchor c
 pixelox shape rect speakers.pxo --in-place --name Pill --rect 27.2%,58.8%,45.6%x4.4% --radius 32 --fill '#1a1712' --stroke '#f0a030' --stroke-width 3
-pixelox text add speakers.pxo --in-place --name PillText --content "JOIN US FOR" --font "Avenir Next" --weight 600 --size 2.7% --tracking 60 --color '#f3dfb0' --at 50%,61% --anchor c
-pixelox text add speakers.pxo --in-place --name Word2 --content "SERVICE" --font Impact --size 12% --color '#f97c1c'
-pixelox transform scale speakers.pxo --in-place --layer Word2 --size 795x
-pixelox transform move speakers.pxo --in-place --layer Word2 --to 50.1%,69.8% --anchor t
+pixelox text add speakers.pxo --in-place --name PillText --content "JOIN US FOR" --font @geometric-sans --weight 600 --size 2.7% --tracking 60 --color '#f3dfb0' --at 50%,61% --anchor c
+pixelox text add speakers.pxo --in-place --name Word2 --content "SERVICE" --font @condensed-heavy --fit-width 795 --color '#f97c1c' --at 50.1%,69.8% --anchor t --anchor-to ink
 pixelox fx overlay speakers.pxo --in-place --layer Word2 --stops '#f97c1c@0,#fd8f2e@0.45,#fdc56d@1' --angle 0
-pixelox text add speakers.pxo --in-place --name Word1 --content "FAMILY" --font "Arial Black" --size 8% --tracking 80 --color '#ffffff'
-pixelox transform scale speakers.pxo --in-place --layer Word1 --size 545x
-pixelox transform move speakers.pxo --in-place --layer Word1 --to 50.2%,65% --anchor t
+pixelox text add speakers.pxo --in-place --name Word1 --content "FAMILY" --font @heavy-wide --fit-width 545 --tracking 80 --color '#ffffff' --at 50.2%,65% --anchor t --anchor-to ink
 pixelox fx drop-shadow speakers.pxo --in-place --layer Word1 --offset 0,6 --blur 10 --opacity 60
-pixelox text add speakers.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR CITY, 0000" --font "Avenir Next" --weight 500 --size 1.5% --tracking 40 --color '#b9b9b9' --at 50%,87.5% --anchor c
-pixelox text add speakers.pxo --in-place --name Web --content "WWW.EXAMPLE.COM  -  HELLO@EXAMPLE.COM" --font "Avenir Next" --weight 700 --size 1.6% --tracking 250 --color '#ffffff' --at 50%,89.9% --anchor c
-pixelox shape ellipse speakers.pxo --in-place --name SocialDisc --rect 440,1326,45x45 --fill '#f0b040'
-pixelox shape rect speakers.pxo --in-place --name SocialTag --rect 500,1328,140x40 --radius 7 --fill '#f0b040'
-pixelox text add speakers.pxo --in-place --name SocialText --content "LIVE" --font "Avenir Next" --weight 900 --size 1.9% --color '#1e1e23' --at 52.8%,93.6% --anchor c
+pixelox text add speakers.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR CITY, 0000" --font @geometric-sans --weight 500 --size 1.5% --tracking 40 --color '#b9b9b9' --at 50%,87.5% --anchor c
+pixelox text add speakers.pxo --in-place --name Web --content "WWW.EXAMPLE.COM  -  HELLO@EXAMPLE.COM" --font @geometric-sans --weight 700 --size 1.6% --tracking 250 --color '#ffffff' --at 50%,89.9% --anchor c
+pixelox shape ellipse speakers.pxo --in-place --name SocialDisc --rect 407,1326,45x45 --fill '#f0b040'
+pixelox shape icon speakers.pxo at-sign --in-place --name SocialIcon --size 24 --at 429.5,1348.5 --anchor c --color '#1e1e23' --stroke-width 2.5
+pixelox shape rect speakers.pxo --in-place --name SocialTag --rect 467,1328,140x40 --radius 7 --fill '#f0b040'
+pixelox text add speakers.pxo --in-place --name SocialText --content "LIVE" --font @geometric-sans --weight 900 --size 1.9% --color '#1e1e23' --at 537,93.6% --anchor c
+pixelox shape rect speakers.pxo --in-place --name SocialPlay --rect 622,1328,52x40 --radius 7 --fill '#f0b040'
+pixelox shape icon speakers.pxo play --in-place --name PlayIcon --size 24 --at 648,1348 --anchor c --color '#1e1e23' --fill '#1e1e23'
 pixelox export speakers.pxo -o speakers.png
 ```
 
 Change first: the two headline words (upper word 5 to 6 letters, lower word 6 to 8), then
 the name plates. For one speaker, delete the Rear, RoleL, PlateL, and FirstL lines and move
-the Front figure to `--at 50%,9.9%`. The original's third social badge (a play button: a
-gold rounded rectangle with a dark triangle) is left out to keep the recipe short; add it
-with `shape rect` and `shape polygon` at 59% W. To add the ghosted crowd, place `photo.png` right
-after `new` with `--fit cover`, run `adjust bw` on it, and set `layer opacity` to 12.
+the Front figure to `--at 50%,9.9%`. Swap the glyph on the disc for another neutral one
+(`pixelox shape icons --search share` lists names). To add the ghosted crowd, place
+`photo.png` right after `new` with `--fit cover`, run `adjust bw` on it, and set
+`layer opacity` to 12.
 
 ## 10. Variations and pairings
 

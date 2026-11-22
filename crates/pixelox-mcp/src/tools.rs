@@ -32,7 +32,11 @@ pub const CLI_ONLY: &[&str] = &["mcp serve", "update", "self-update", "self-unin
 pub const NETWORK_COMMANDS: &[&str] = &["models pull"];
 
 /// The consent tokens `pixelox_run` understands.
-pub const CONSENTS: &[&str] = &["model-download"];
+pub const CONSENTS: &[&str] = &["model-download", "font-download"];
+
+/// Commands whose downloads are Google Fonts (consent "font-download", server flag
+/// --allow-font-downloads); `fonts get` reaches the network by definition.
+pub const FONT_COMMANDS: &[&str] = &["fonts get", "text add", "text edit", "text style"];
 
 /// Global flags an agent may put inside `params` (ops never declare these names).
 const GLOBAL_KEYS: &[&str] = &["overwrite", "seed", "format", "dry_run"];
@@ -130,7 +134,7 @@ fn annotations(read_only: bool, destructive: bool, open_world: bool) -> Value {
 pub(crate) fn definitions(s: &Server) -> Vec<Value> {
     let net = s.cfg.allow_model_downloads;
     let consent = json!({"type": "array", "items": {"type": "string", "enum": CONSENTS},
-        "description": "Consents for this call. \"model-download\" lets a missing model download (the server must also run with --allow-model-downloads); ask the user first."});
+        "description": "Consents for this call. \"model-download\" lets a missing model download (the server must also run with --allow-model-downloads); \"font-download\" lets fonts get and text add/edit/style download a Google Fonts family (server flag --allow-font-downloads); ask the user first."});
     let dry_run = json!({"type": "boolean", "default": false, "description": "Validate and return the plan (outputs, models, consents needed) without writing anything"});
     vec![
         json!({"name": "pixelox_describe", "title": "Agent briefing",
@@ -372,6 +376,17 @@ fn run_request(s: &Server, req: RunRequest, progress: &dyn Progress, cancel: Can
 /// Make a PX1502 (consent required) hint say which key is missing on this server.
 fn explain_consent(s: &Server, env: &mut Envelope) {
     let Some(e) = env.error.as_mut() else { return };
+    if e.code == "PX1540" {
+        if let Some(h) = e.hint.take() {
+            e.context.insert("cli_remedy".into(), Value::String(h));
+        }
+        e.hint = Some(if s.cfg.allow_font_downloads {
+            "ask the user to approve the font download, then repeat the call with consent: [\"font-download\"]".into()
+        } else {
+            "this MCP server does not download fonts: ask the user to run the `pixelox fonts get` command in context.cli_remedy, or to restart the server with --allow-font-downloads".into()
+        });
+        return;
+    }
     if e.code != "PX1502" {
         return;
     }
@@ -400,6 +415,7 @@ fn prepare(s: &Server, spec: &OpSpec, req: RunRequest) -> Result<Invocation> {
     }
     let model_consent = req.consent.iter().any(|c| c == "model-download");
     let downloads = model_consent && s.cfg.allow_model_downloads;
+    let font_downloads = req.consent.iter().any(|c| c == "font-download") && s.cfg.allow_font_downloads;
     if NETWORK_COMMANDS.contains(&spec.name) && !downloads {
         let missing = if s.cfg.allow_model_downloads {
             "consent: [\"model-download\"] on the call"
@@ -417,7 +433,7 @@ fn prepare(s: &Server, spec: &OpSpec, req: RunRequest) -> Result<Invocation> {
 
     let mut g = s.call_globals();
     g.dry_run = req.dry_run;
-    g.yes = downloads;
+    g.yes = if FONT_COMMANDS.contains(&spec.name) { font_downloads } else { downloads };
     let mut params = req.params;
     for key in GLOBAL_KEYS {
         if spec.find_param(key).is_some() {

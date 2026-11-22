@@ -53,7 +53,9 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
   never bundled: the first use downloads them with `-y` (224 MB and 5 MB), verified by
   SHA-256; results are reproducible and replay like every other step.
 * **Type and vectors**: HarfBuzz-class shaping (RTL, CJK, ligatures, variable fonts), text on
-  a path, text to outlines; rectangles, ellipses, polygons, stars, arrows, Bézier paths,
+  a path, text to outlines; font classes (`--font @condensed-heavy`) that resolve on every OS,
+  open-licensed Google Fonts downloaded with `-y`, live fit-to-width, character scaling, and
+  warp presets on the outlines; rectangles, ellipses, polygons, stars, arrows, Bézier paths,
   boolean path ops, stroke outlining.
 * **Layer styles**: drop and inner shadows, outer and inner glows, bevel & emboss, satin,
   color/gradient/pattern overlays, stroke.
@@ -83,7 +85,7 @@ claude mcp add pixelox -- pixelox mcp serve --allow ~/Pictures
 | --- | --- |
 | [`pixelox`](skills/pixelox/SKILL.md) | the CLI contract and the common one-command tasks; routes to the others |
 | [`pixelox-retouch`](skills/pixelox-retouch/SKILL.md) | portraits: skin masks, blemish removal, frequency separation, natural skin smoothing, before/after checks |
-| [`pixelox-design`](skills/pixelox-design/SKILL.md) | posters, flyers, ads, covers, and social posts from a brief: 126 studied designs to combine, 74 tested effect recipes, type and palette guides, a look-critique-fix loop |
+| [`pixelox-design`](skills/pixelox-design/SKILL.md) | posters, flyers, ads, covers, and social posts from a brief: 126 studied designs to combine, 80 tested effect recipes, type and palette guides, a look-critique-fix loop |
 
 Install them with one of:
 

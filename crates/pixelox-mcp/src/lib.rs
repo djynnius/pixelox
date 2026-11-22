@@ -46,15 +46,17 @@ pub fn ops() -> Vec<OpSpec> {
              and pixelox_docs, plus sidecars and reference pages as resources. Every path in every call must resolve, \
              symlinks resolved, inside an --allow directory (default: the current directory); commands run in-process with \
              no shell; --read-only refuses commands that write; model downloads need --allow-model-downloads and the call's \
-             consent; every tool call is appended to the audit log (mcp-audit.ndjson in the state directory).",
+             consent, Google Fonts downloads --allow-font-downloads and consent [\"font-download\"]; every tool call is appended to the audit log (mcp-audit.ndjson in the state directory).",
         )
         .inputs(Inputs::NONE)
         .param(param("allow", ParamKind::Path).repeatable().help("Directory the server may read and write (repeatable); default: the current directory"))
         .param(param("read-only", ParamKind::Flag).help("Refuse commands that write files; inspection, schemas, docs, and previews still work"))
         .param(param("allow-model-downloads", ParamKind::Flag).help("Let calls that pass consent [\"model-download\"] download missing models"))
+        .param(param("allow-font-downloads", ParamKind::Flag).help("Let calls that pass consent [\"font-download\"] download Google Fonts families (fonts get, text add/edit/style)"))
         .example("pixelox mcp serve --allow ./work", "Serve the ./work directory to an agent over stdio")
         .example("pixelox mcp serve --allow ./work --allow ./assets --read-only", "Let an agent inspect two folders without changing anything")
-        .example("pixelox mcp serve --allow photos --allow-model-downloads", "Allow consented model downloads for detect and retouch commands")]
+        .example("pixelox mcp serve --allow photos --allow-model-downloads", "Allow consented model downloads for detect and retouch commands")
+        .example("pixelox mcp serve --allow posters --allow-font-downloads", "Allow consented Google Fonts downloads for type work")]
 }
 
 /// Install renderer hooks (if any) into the compositor.
@@ -82,12 +84,14 @@ fn serve(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     let mut cfg = ServerConfig::new(&roots);
     cfg.read_only = a.flag("read-only") || ctx.globals.read_only;
     cfg.allow_model_downloads = a.flag("allow-model-downloads");
+    cfg.allow_font_downloads = a.flag("allow-font-downloads");
     cfg.base_globals = ctx.globals.clone();
     cfg.audit_log = Some(paths::audit_log());
     let summary = json!({
         "allow": cfg.allow.iter().map(|p| p.display().to_string()).collect::<Vec<_>>(),
         "read_only": cfg.read_only,
         "allow_model_downloads": cfg.allow_model_downloads,
+        "allow_font_downloads": cfg.allow_font_downloads,
         "audit_log": paths::audit_log().display().to_string(),
         "protocol_versions": PROTOCOL_VERSIONS,
         "tools": TOOL_NAMES,

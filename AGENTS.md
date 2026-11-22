@@ -53,20 +53,31 @@ prints any command's reference page.
     path), then `mask refine --mask subject --decontaminate` for hair-level edges without
     a background fringe (`docs/guides/cookbook/extract-a-subject.md`). Effects: `render
     lens-flare`, `fx fire`, `fx smoke`; art looks are `filter pencil|charcoal|ink|oil-paint|
-    watercolor|cartoon|cutout|halftone`.
+    watercolor|cartoon|cutout|halftone`. Textures and liquid are native: `fill noise`
+    (clouds, smoke, cells), `filter grain --as-layer`, `render splash|droplets|ice`,
+    `filter distort|displace|glitch`, `transform warp --preset arc`
+    (`docs/guides/cookbook/textures-and-liquids.md`).
 11. Designing from a brief (poster, flyer, ad, cover, social post): do not start from
     commands. `skills/pixelox-design/SKILL.md` is the playbook: pick 2 to 4 of its 126
     studied designs (`references/index.md`), combine layout, palette, and one effect
-    (`references/techniques.md`, 74 tested recipes such as `T-smoke`, `T-fit-width`,
-    `T-text-behind-subject`), build, export a preview, look, fix. Check installed fonts
-    first (`pixelox fonts list --json`): a missing font is an error.
+    (`references/techniques.md`, 80 tested recipes such as `T-smoke`, `T-fit-width`,
+    `T-text-behind-subject`), build, export a preview, look, fix. Name fonts by class
+    (`--font @condensed-heavy`, `pixelox fonts classes`); a missing family is replaced by the
+    closest installed face with warning PXW4010 (`pixelox fonts get <family> -y` with consent).
+12. Icons and codes are vector shapes: `shape icon calendar --size 48` (Lucide; find names with
+    `shape icons --search WORD`), `shape qr --data URL --background-color white` (decoded back
+    before it is added), `shape barcode --type ean13 --data 12DIGITS`. Depth is live:
+    `fx long-shadow`, `fx extrude`, `fx reflection`
+    (`docs/guides/cookbook/icons-codes-and-3d-type.md`).
 
 ## Addressing
 
-`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png`
+`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|@luma:LAYER|@mask:LAYER|mask.png`
 (`--invert-mask`) · geometry `X,Y,WxH`, `X,Y`, `WxH` in px, `%`, `pt`, `mm`, `in`
-(negative = from the right/bottom; `--anchor tl..br`) · colors `#rrggbb[aa]`, `rgb()`,
-`hsl()`, CSS names, `transparent`. Details: `pixelox docs addressing`.
+(negative = from the right/bottom, `0-80` = 80 px past the left/top edge; `--anchor
+tl..br`) · colors `#rrggbb[aa]`, `rgb()`, `hsl()`, CSS names, `transparent`. New layers go
+on top of the stack; `--above`, `--below`, `--into` place them elsewhere. Details:
+`pixelox docs addressing`; masks, clipping, and gradient fades: `pixelox docs masking`.
 
 ## Recipes
 

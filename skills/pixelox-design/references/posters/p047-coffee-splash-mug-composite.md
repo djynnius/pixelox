@@ -7,7 +7,7 @@ style: [photo-composite]
 format: portrait-4x5
 archetype: A-hero-object
 palette: ['#e8968c', '#571f06', '#883615', '#cc4421', '#230a02', '#f6e3c5']
-techniques: [T-cutout-drop-shadow, T-grunge, T-label-box, T-gradient-type, T-water-splash, T-floor-type]
+techniques: [T-cutout-drop-shadow, T-grunge, T-label-box, T-gradient-type, T-water-splash, T-floor-type, T-photo-fade]
 needs: product-cutout
 ---
 
@@ -100,21 +100,24 @@ powder, and beans are generated shapes (below) or your own stock cutouts.
 ## 7. Effects and textures
 
 * Air: `fill gradient`, three stops.
-* Floor: `clouds.js` in browns (scale 6, octaves 6) under a horizon fade of the air color
-  (T-photo-fade logic, 55 to 66% H), plus **T-grunge** specks in cream at low opacity as
-  powder.
+* Floor: one `fill noise --as-layer` line in three browns (`--scale 9%`) with a gradient
+  mask that fades its top edge into the air (**T-photo-fade**: `mask add --gradient linear
+  --from 0,67% --to 0,56%`), plus **T-grunge** specks in cream at low opacity as powder.
 * Beans: brown dots from `particles.js`, rendered square and placed squashed to 40% of
   their height so circles become ovals lying in perspective; `fx bevel` (size 12) gives
   each one a lit top and a dark underside, and a short drop shadow seats them.
-* **T-water-splash** (`scripts/splash.js`) in dark brown with `dir=-70` for the crown; a `shape path` ribbon for the
-  pour and a gradient-filled path for the milk.
+* **T-water-splash**: `render splash --kind sheet --liquid coffee --color '#4a1c08'`, thrown
+  up and to the right from the mug's mouth (`--angle 72 --spread 110`) and drawn before the
+  mug, so the mug covers its root. A `shape path` ribbon is the pour and a cream path the
+  milk.
 * Drops: amber dots rendered on a canvas twice as wide as the design and placed squeezed
   to half width, so each dot becomes a tall oval; `fx bevel` adds the glassy highlight.
 * **T-cutout-drop-shadow** soft variant under the mug (a blurred dark ellipse on the floor).
 * **T-label-box**, organic: a red leaf drawn with `shape path` behind one word.
-* Floor lettering: italic text, `transform skew --x -28`, squashed to 18% of its width,
-  **T-gradient-type** amber overlay and an outer glow in `screen` mode.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
+* Floor lettering: italic text sized with `--fit-width 650 --scale-x 94%`, then `transform
+  skew --x -28`, which leaves it 720 px wide and 130 px tall (18% of its width); then a
+  **T-gradient-type** amber overlay and an outer glow in `screen` mode. The skew turns the
+  text into pixels (warning PXW2003): set the word first.
 * **T-floor-type** in [techniques.md](../techniques.md) is the tested library version of the type lying in perspective on the floor; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -133,33 +136,28 @@ tagline 2.1. The mug is 46% H tall, nine times its own wordmark.
 real bean cutouts when you have them.
 
 ```bash
-pixelox render js scripts/clouds.js -o floor.png --size 1080x600 --seed 12 --param lo='#230a02' --param mid='#571f06' --param hi='#a04a18' --param scale=6 --param octaves=6 --param warp=0.5 --param contrast=1.2
 pixelox render js scripts/particles.js -o beans.png --size 1080x1080 --seed 7 --param shape=dot --param colors='#5a2c12,#7a431f,#4a2410,#8a5632' --param count=40 --param min=3 --param max=7 --param amin=1 --param amax=1 --param grow=0.9
-pixelox render js scripts/splash.js -o crown.png --size 620x620 --seed 4 --param color='#4a1c08' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=12 --param drops=150 --param dir=-70 --param arc=200
 pixelox render js scripts/particles.js -o drops.png --size 2160x1350 --seed 11 --param shape=dot --param colors='#c8501a,#e88a2a,#a83c10' --param count=14 --param min=1.6 --param max=3.4 --param amin=0.9 --param amax=1
 pixelox render js scripts/grunge.js -o powder.png --size 1080x1350 --seed 5 --param color='#e8c9a0' --param specks=6000 --param blotches=30 --param scratches=0 --param clump=0.6
 pixelox new -o ad.pxo --size 1080x1350 --fill '#e8968c'
 pixelox layer add ad.pxo --in-place --name Air
 pixelox fill gradient ad.pxo --in-place --layer Air --from 0,0 --to 0,58% --stops '#b9b5bd@0,#e8968c@0.45,#eea39e@1'
-pixelox comp place ad.pxo floor.png --in-place --as Floor --size 1080x600 --at 50%,100% --anchor b
+pixelox fill noise ad.pxo --in-place --as-layer --name Floor --seed 12 --scale 9% --warp 20 --stops '#230a02,#571f06,#a04a18'
+pixelox mask add ad.pxo --in-place --layer Floor --gradient linear --from 0,67% --to 0,56%
 pixelox comp place ad.pxo beans.png --in-place --as FloorBeans --size 1080x430 --at 50%,100% --anchor b
 pixelox fx bevel ad.pxo --in-place --layer FloorBeans --size 12 --depth 160 --soften 4 --highlight '#d9a070' --shadow '#1a0702'
 pixelox fx drop-shadow ad.pxo --in-place --layer FloorBeans --offset 0,8 --blur 14 --color '#120501' --opacity 60
-pixelox layer add ad.pxo --in-place --name Horizon
-pixelox fill gradient ad.pxo --in-place --layer Horizon --from 0,54% --to 0,67% --stops '#eea39eff@0,#eea39eff@0.15,#eea39e00@1'
 pixelox comp place ad.pxo powder.png --in-place --as Powder --fit cover
 pixelox layer opacity ad.pxo --in-place --layer Powder --value 30
 pixelox shape path ad.pxo --in-place --name Milk --d 'M 20 0 L 195 0 L 330 470 L 292 486 Z' --fill '#f6e3c5' --opacity 92
 pixelox shape path ad.pxo --in-place --name Pour --d 'M 330 0 L 632 0 C 560 130 470 250 442 430 L 336 446 C 366 300 352 130 330 0 Z' --fill '#330700'
 pixelox fx overlay ad.pxo --in-place --layer Pour --stops '#1a0500@0,#6b2a10@0.5,#2a0c03@1' --angle 0
-pixelox comp place ad.pxo crown.png --in-place --as Crown --at 41%,31% --anchor c
+pixelox render splash ad.pxo --in-place --name Crown --kind sheet --liquid coffee --color '#4a1c08' --at 38%,34.5% --angle 72 --spread 110 --size 44% --seed 4
 pixelox shape ellipse ad.pxo --in-place --name MugShadow --rect 22%,72%,50%x6% --fill '#1a0702'
-pixelox layer rasterize ad.pxo --in-place --layer MugShadow
 pixelox filter gaussian ad.pxo --in-place --layer MugShadow --sigma 24
 pixelox comp place ad.pxo product.png --in-place --as Mug --size x660 --at 43%,53% --anchor c
 pixelox transform rotate ad.pxo --in-place --layer Mug --degrees -12
-pixelox shape ellipse ad.pxo --in-place --name BeanLeft --rect 0,285,200x250 --fill '#4a2410'
-pixelox transform move ad.pxo --in-place --layer BeanLeft --by -60,0
+pixelox shape ellipse ad.pxo --in-place --name BeanLeft --rect 0-60,285,200x250 --fill '#4a2410'
 pixelox fx overlay ad.pxo --in-place --layer BeanLeft --stops '#2a1206@0,#8a5632@1' --angle 60
 pixelox shape ellipse ad.pxo --in-place --name BeanRight --rect 640,262,210x150 --fill '#4a2410'
 pixelox fx overlay ad.pxo --in-place --layer BeanRight --stops '#2a1206@0,#a0683c@1' --angle 60
@@ -171,17 +169,17 @@ pixelox shape path ad.pxo --in-place --name Leaf --d 'M 962 136 C 968 196 912 26
 pixelox text add ad.pxo --in-place --name TagLeft --content "Brew" --font Verdana --size 2.9% --color '#140a06' --at 80.5%,12.8% --anchor r
 pixelox text add ad.pxo --in-place --name TagMid --content "Your" --font Verdana --size 2.9% --color '#ffffff' --at 85.3%,12.8% --anchor c
 pixelox text add ad.pxo --in-place --name TagRight --content "Day" --font Verdana --size 2.9% --color '#140a06' --at 90%,12.8% --anchor l
-pixelox text add ad.pxo --in-place --name FloorWord --content "Branded" --font "Avenir Next" --weight 700 --style italic --size 14% --color '#dd8b1a'
+pixelox text add ad.pxo --in-place --name FloorWord --content "Branded" --font @geometric-sans --weight 700 --style italic --fit-width 650 --scale-x 94% --color '#dd8b1a' --at 50%,92.5% --anchor c --anchor-to ink
 pixelox transform skew ad.pxo --in-place --layer FloorWord --x -28
-pixelox transform scale ad.pxo --in-place --layer FloorWord --size 720x130
-pixelox transform move ad.pxo --in-place --layer FloorWord --to 50%,92.5% --anchor c
 pixelox fx overlay ad.pxo --in-place --layer FloorWord --stops '#b85a10@0,#f0a030@0.6,#ffc860@1' --angle 90
 pixelox fx outer-glow ad.pxo --in-place --layer FloorWord --blur 26 --color '#ff9a2a' --opacity 40
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the mug size and tilt so its mouth sits under the end of the `Pour` path
-(x 336 to 442, y 430 to 446), then the three brand strings, then the air colors.
+(x 336 to 442, y 430 to 446), with the splash's `--at` on the mouth; then the three brand
+strings, then the air colors. With a wide mug, a crown also works: drop `--kind sheet`
+and the mug hides the pool, leaving a ring of spikes above the rim.
 
 ## 10. Variations and pairings
 
@@ -198,7 +196,8 @@ Change first: the mug size and tilt so its mouth sits under the end of the `Pour
 ## 11. Pitfalls
 
 * Every element sharp: the scene goes flat and noisy. Blur the far third of the floor and
-  the horizon (the `Horizon` fade), keep only the mug and two or three front items sharp.
+  the horizon (the gradient mask on `Floor`), keep only the mug and two or three front
+  items sharp.
 * An upright mug with a pour that misses it. The stream must end inside the mouth; tilt the
   mug toward the stream, not away from it.
 * Cool or neutral colors in the cutouts (a gray shadow, a blue-white milk). Warm

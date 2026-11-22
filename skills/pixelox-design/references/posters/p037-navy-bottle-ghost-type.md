@@ -7,7 +7,7 @@ style: [photo-composite]
 format: portrait-3x4
 archetype: A-hero-object
 palette: ['#032765', '#15356f', '#0c0e15', '#b8c4ce', '#6e2c29', '#ffffff']
-techniques: [T-spotlight, T-vertical-type, T-cutout-drop-shadow, T-paper-grain, T-water-splash, T-ghost-type]
+techniques: [T-spotlight, T-vertical-type, T-cutout-drop-shadow, T-paper-grain, T-water-splash, T-condensation, T-ghost-type]
 needs: [product-cutout, logo]
 ---
 
@@ -102,12 +102,15 @@ have a blue rim light, which is what separates the black bottle from the navy gr
   blur.
 * **T-vertical-type**, the stacked variant: one letter per line (`$'f\nr\ne...'`), letters
   upright, instead of a rotated word.
-* **T-water-splash** (`scripts/splash.js`) recolored as water: light cyan, `dir=-110` (up and left), blurred sigma 1.2,
-  in `screen` mode at 80%; plus `particles.js` rings as drops.
+* **T-water-splash**: `render splash` tinted light cyan (`--color '#8fd0f5'`), twice. The
+  arc above the glass is `--kind sheet --angle 115 --spread 60` (thrown up and to the left).
+  The glass stands in a small crown: `--part back` before the glass and `--part front`
+  after it, with the same `--at`, `--size`, and `--seed`. `particles.js` rings add loose
+  bubbles.
+* **T-condensation**: `render droplets --layer Bottle`, run after the bottle is placed.
 * **T-cutout-drop-shadow**, glow variant: `fx outer-glow` blur 70, `#3f8ff0`, 45% on the
   bottle as the rim light.
-* **T-paper-grain**, amount 10, soft-light, 30%.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last.
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -127,44 +130,39 @@ traded against each other.
 and `logo.png` is your emblem.
 
 ```bash
-pixelox render js scripts/splash.js -o splash.png --size 700x700 --seed 6 --param color='#8fd0f5' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=16 --param drops=260 --param dir=-110 --param arc=200
 pixelox render js scripts/particles.js -o drops.png --size 1080x1440 --seed 4 --param shape=ring --param colors='#bfe6ff,#ffffff' --param count=40 --param min=0.5 --param max=1.8 --param amin=0.3 --param amax=0.8 --param focus='0.55,0.42,0.33'
 pixelox new -o ad.pxo --size 1080x1440 --fill '#032765'
 pixelox layer add ad.pxo --in-place --name Haze
 pixelox fill gradient ad.pxo --in-place --layer Haze --from 0,74% --to 0,100% --stops '#15356f00@0,#15356fff@0.5,#1a3a74ff@1'
 pixelox layer add ad.pxo --in-place --name Glow
 pixelox fill gradient ad.pxo --in-place --layer Glow --kind radial --from 59%,45% --to 59%,80% --stops '#0d4a9a99@0,#0d4a9a00@1'
-pixelox text add ad.pxo --in-place --name GhostYear --content "2031" --font "Marker Felt" --size 15% --tracking 250 --color '#0b3476'
-pixelox transform move ad.pxo --in-place --layer GhostYear --to 8%,4% --anchor tl
-pixelox text add ad.pxo --in-place --name GhostRight --content $'f\nr\ne\ns\nh\ne\nr' --font "Marker Felt" --size 5.4% --leading 140% --align center --color '#17407f'
-pixelox transform move ad.pxo --in-place --layer GhostRight --to 74.5%,20% --anchor t
-pixelox text add ad.pxo --in-place --name GhostLeft --content $'C\nO\nL\nD' --font "Marker Felt" --size 4.6% --leading 140% --align center --color '#17407f'
-pixelox transform move ad.pxo --in-place --layer GhostLeft --to 28.7%,48% --anchor t
-pixelox comp place ad.pxo splash.png --in-place --as Splash --at 36%,33% --anchor c
-pixelox filter gaussian ad.pxo --in-place --layer Splash --sigma 1.2
-pixelox layer blend ad.pxo --in-place --layer Splash --mode screen
-pixelox layer opacity ad.pxo --in-place --layer Splash --value 80
+pixelox text add ad.pxo --in-place --name GhostYear --content "2031" --font @marker --size 15% --tracking 250 --color '#0b3476' --at 8%,4% --anchor tl --anchor-to ink
+pixelox text add ad.pxo --in-place --name GhostRight --content $'f\nr\ne\ns\nh\ne\nr' --font @marker --size 5.4% --leading 140% --align center --color '#17407f' --at 74.5%,20% --anchor t --anchor-to ink
+pixelox text add ad.pxo --in-place --name GhostLeft --content $'C\nO\nL\nD' --font @marker --size 4.6% --leading 140% --align center --color '#17407f' --at 28.7%,48% --anchor t --anchor-to ink
+pixelox render splash ad.pxo --in-place --name SplashArc --kind sheet --color '#8fd0f5' --at 40%,50% --angle 115 --spread 60 --size 38% --seed 6
 pixelox comp place ad.pxo drops.png --in-place --as Drops --fit cover
+pixelox render splash ad.pxo --in-place --name SplashBack --part back --color '#8fd0f5' --at 40.5%,71.3% --size 27% --seed 3
 pixelox comp place ad.pxo product.png --in-place --as Glass --size x450 --at 40.5%,74% --anchor b
+pixelox render splash ad.pxo --in-place --name SplashFront --part front --color '#8fd0f5' --at 40.5%,71.3% --size 27% --seed 3
 pixelox comp place ad.pxo product.png --in-place --as Bottle --size x860 --at 58.8%,76% --anchor b
 pixelox fx outer-glow ad.pxo --in-place --layer Bottle --blur 70 --color '#3f8ff0' --opacity 45
+pixelox render droplets ad.pxo --in-place --layer Bottle --density 50 --trickles 4
 pixelox shape ellipse ad.pxo --in-place --name WaterLine --rect 5%,76.6%,92%x2% --fill '#021a47'
-pixelox layer rasterize ad.pxo --in-place --layer WaterLine
 pixelox filter gaussian ad.pxo --in-place --layer WaterLine --sigma 7
 pixelox text add ad.pxo --in-place --name TagLeft --content "each" --font "Bradley Hand" --weight 700 --size 2.3% --tracking 300 --color '#ffffff' --at 31%,77.2% --anchor r
-pixelox text add ad.pxo --in-place --name TagBrand --content "BRAND" --font "Avenir Next" --weight 900 --style italic --size 2.2% --color '#3f7fd6' --at 39.8%,77.2% --anchor c
+pixelox text add ad.pxo --in-place --name TagBrand --content "BRAND" --font @geometric-sans --weight 900 --style italic --size 2.2% --color '#3f7fd6' --at 39.8%,77.2% --anchor c
 pixelox text add ad.pxo --in-place --name TagRight --content "brightens the day" --font "Bradley Hand" --weight 700 --size 2.3% --tracking 300 --color '#ffffff' --at 48.5%,77.2% --anchor l
 pixelox comp place ad.pxo logo.png --in-place --as Logo --size 58x --at 91%,5.7% --anchor c
-pixelox text add ad.pxo --in-place --name LogoWord --content "BRAND" --font "Avenir Next" --weight 900 --style italic --size 2.1% --color '#3f7fd6' --at 91%,9.3% --anchor c
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox text add ad.pxo --in-place --name LogoWord --content "BRAND" --font @geometric-sans --weight 900 --style italic --size 2.1% --color '#3f7fd6' --at 91%,9.3% --anchor c
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the three ghost strings and the tagline; then the ground hue, with the ghost
-color recomputed as the ground lightened by 6 to 10%.
+color recomputed as the ground lightened by 6 to 10%. With a different glass, move the
+crown (`--at` on both `SplashBack` and `SplashFront`) so its pool sits just above the
+glass's base and stays clear of the tagline. The droplets show the bottle as it was when
+their command ran: after swapping the bottle, run the recipe again from the top.
 
 ## 10. Variations and pairings
 
@@ -187,5 +185,7 @@ color recomputed as the ground lightened by 6 to 10%.
   pool behind it.
 * The tagline tracked wide in a bold or condensed face looks broken. Wide tracking needs a
   thin, open face and lowercase.
-* Splash in gray or pure white reads as smoke or paint. Tint it cyan and keep it partly
-  transparent (`screen` mode).
+* Splash in gray or pure white reads as smoke or paint. Tint it cyan (`--color`) and keep
+  the navy ground dark enough for clear water to show.
+* A crown wider than the glass's own width times 1.5 swallows the tagline under it. Keep
+  `--size` near 27% here and the pool above the water line.

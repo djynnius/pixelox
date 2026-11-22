@@ -47,7 +47,7 @@ and the title sits on the dark chest like a name plate.
    on the crack's ledges and corners so their bodies show against the orange; two of them
    stand on top of the head and reach for each other across the gap.
 5. Paper mottle over everything: soft cloudy darkening toward `#b27847`, multiply.
-6. Stains and specks: sparse brown dirt, 35%.
+6. Stains and specks: sparse brown dirt, 28%.
 7. Edge shade: a brown vignette, strongest at the bottom corners.
 8. Credit line 1 (7 words, light, wide tracking) at 4.6% H; credit line 2 (a name, bold,
    very wide tracking) at 6.9% H; both off-white on the orange.
@@ -98,12 +98,13 @@ the head's height, which is what makes the head feel like a cliff.
 * **T-silhouette**: flat fill `#3b3a3a`, no gradient.
 * Crack: one `shape path` polygon in the ground color above the silhouette (no library ID;
   see the recipe). Figures: one compound `shape path`.
-* **T-grunge**: mottle (`clouds.js`, `lo='#b9834f'`, `hi='#ffffff'`, multiply 60%) and dirt
-  at 35%, both above the silhouette so shape and ground share one paper surface.
+* **T-grunge**: mottle (`fill noise --as-layer`, stops `#b9834f` to white, multiply 60%)
+  and `grunge.js` dirt at 28%, both above the silhouette so shape and ground share one
+  paper surface.
 * **T-vignette** in brown (`#6b3d1a`), centered on the head.
 * **T-distress-type** on the title: wear in the silhouette color clipped to the letters,
   with many scratches so the damage runs in horizontal bands.
-* **T-paper-grain**, amount 14, soft-light 40%.
+* **T-paper-grain** (`filter grain --as-layer --amount 10`).
 * **T-crack** in [techniques.md](../techniques.md) is the tested library version of the jagged crack (`scripts/crack.js` draws one from two points); start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -124,7 +125,6 @@ crack path to fit your head: start with two points on the crown, end with one po
 the chest.
 
 ```bash
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1620 --seed 21 --param lo='#b9834f' --param hi='#ffffff' --param scale=3 --param octaves=6 --param warp=0.5
 pixelox render js scripts/grunge.js -o dirt.png --size 1080x1620 --seed 9 --param color='#7a4a22' --param specks=5000 --param blotches=70 --param scratches=20
 pixelox render js scripts/grunge.js -o wear.png --size 1080x1620 --seed 14 --param color='#3b3a3a' --param specks=7000 --param blotches=120 --param scratches=260 --param clump=0.3
 pixelox new -o thriller.pxo --size 1080x1620 --fill '#e29650'
@@ -132,28 +132,19 @@ pixelox comp place thriller.pxo subject.png --in-place --as Figure --size x1560 
 pixelox fx overlay thriller.pxo --in-place --layer Figure --color '#3b3a3a'
 pixelox shape path thriller.pxo --in-place --name Crack --d 'M 520 205 L 466 308 L 533 343 L 459 433 L 540 518 L 560 616 L 547 734 L 608 839 L 594 944 L 634 1049 L 702 1199 L 655 1035 L 634 944 L 648 839 L 594 734 L 608 616 L 594 524 L 533 433 L 614 374 L 580 295 L 614 205 Z' --fill '#e29650'
 pixelox shape path thriller.pxo --in-place --name Climbers --d 'M 461 180 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 461 189 l 14 0 l 7 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 645 182 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 645 191 l 14 0 l 1 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 533 300 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 533 309 l 14 0 l 7 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 503 392 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 503 401 l 14 0 l 1 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 568 540 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 568 549 l 14 0 l 7 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 567 680 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 567 689 l 14 0 l 1 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 615 860 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 615 869 l 14 0 l 7 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z M 629 990 a 7 7 0 1 0 14 0 a 7 7 0 1 0 -14 0 Z M 629 999 l 14 0 l 1 34 l -6 0 l -4 -16 l -5 16 l -6 0 Z' --fill '#3b3a3a'
-pixelox comp place thriller.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend thriller.pxo --in-place --layer Mottle --mode multiply
-pixelox layer opacity thriller.pxo --in-place --layer Mottle --value 60
+pixelox fill noise thriller.pxo --in-place --as-layer --name Mottle --seed 21 --scale 33% --warp 20 --stops '#b9834f,#ffffff' --blend multiply --opacity 60
 pixelox comp place thriller.pxo dirt.png --in-place --as Dirt --fit cover
 pixelox layer opacity thriller.pxo --in-place --layer Dirt --value 28
 pixelox layer add thriller.pxo --in-place --name Vignette
 pixelox fill gradient thriller.pxo --in-place --layer Vignette --kind radial --from 50%,35% --to 50%,125% --stops '#6b3d1a00@0.45,#6b3d1a99@1'
-pixelox text add thriller.pxo --in-place --name Credit --content "A NEW THRILLER FROM THE WRITER AND DIRECTOR" --font "Avenir Next" --weight 500 --size 1.3% --tracking 350 --color '#f3ece2' --at 50%,4.6% --anchor c
-pixelox transform scale thriller.pxo --in-place --layer Credit --size 800x
-pixelox text add thriller.pxo --in-place --name Filmmaker --content "DIRECTOR NAME" --font "Avenir Next" --weight 700 --size 2% --tracking 950 --color '#f3ece2' --at 50%,6.9% --anchor c
-pixelox transform scale thriller.pxo --in-place --layer Filmmaker --size 860x
-pixelox text add thriller.pxo --in-place --name Tagline --content $'ONE MAN HAS\nA HOUSE FULL OF VOICES.\nTHE LAST ONE\nWANTS OUT.' --font "Avenir Next" --weight 600 --size 1.25% --tracking 60 --leading 170% --align center --color '#d9d6d1' --at 50%,80.5% --anchor c
-pixelox text add thriller.pxo --in-place --name Title --content "FAULT" --font "Arial Black" --size 10% --color '#e0deda'
-pixelox transform scale thriller.pxo --in-place --layer Title --size 470x
-pixelox transform move thriller.pxo --in-place --layer Title --to 50%,85.6% --anchor t
+pixelox text add thriller.pxo --in-place --name Credit --content "A NEW THRILLER FROM THE WRITER AND DIRECTOR" --font @geometric-sans --weight 500 --fit-width 800 --tracking 350 --color '#f3ece2' --at 50%,4.6% --anchor c --anchor-to ink
+pixelox text add thriller.pxo --in-place --name Filmmaker --content "DIRECTOR NAME" --font @geometric-sans --weight 700 --fit-width 860 --tracking 950 --color '#f3ece2' --at 50%,6.8% --anchor c --anchor-to ink
+pixelox text add thriller.pxo --in-place --name Tagline --content $'ONE MAN HAS\nA HOUSE FULL OF VOICES.\nTHE LAST ONE\nWANTS OUT.' --font @geometric-sans --weight 600 --size 1.25% --tracking 60 --leading 170% --align center --color '#d9d6d1' --at 50%,80.5% --anchor c
+pixelox text add thriller.pxo --in-place --name Title --content "FAULT" --font @heavy-wide --fit-width 470 --color '#e0deda' --at 50%,85.6% --anchor t --anchor-to ink
 pixelox comp place thriller.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer clip thriller.pxo --in-place --layer Wear
-pixelox text add thriller.pxo --in-place --name Date --content "OCTOBER 13" --font "Avenir Next" --weight 700 --size 1.55% --tracking 60 --color '#f3ece2' --at 50%,96.2% --anchor c
-pixelox layer add thriller.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise thriller.pxo --in-place --layer Grain --amount 14 --monochrome
-pixelox layer blend thriller.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity thriller.pxo --in-place --layer Grain --value 40
+pixelox text add thriller.pxo --in-place --name Date --content "OCTOBER 13" --font @geometric-sans --weight 700 --size 1.55% --tracking 60 --color '#f3ece2' --at 50%,96.2% --anchor c
+pixelox filter grain thriller.pxo --in-place --as-layer --name Grain --amount 10
 pixelox export thriller.pxo -o thriller.png
 ```
 

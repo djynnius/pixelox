@@ -46,6 +46,9 @@ fn registry(with_describe: bool) -> Registry {
         OpSpec::custom("models pull", Category::Models, "Download a model", echo)
             .inputs(Inputs::NONE)
             .param(param("text", ParamKind::Str).help("Model id")),
+        OpSpec::custom("fonts get", Category::Models, "Download a font family", echo)
+            .inputs(Inputs::NONE)
+            .param(param("text", ParamKind::Str).help("Family")),
         OpSpec::custom("jobs status", Category::Automation, "Job status", echo)
             .inputs(Inputs::NONE)
             .positional("id")
@@ -148,7 +151,10 @@ fn tools_list_has_the_eight_tools() {
     assert_eq!(detect["inputSchema"]["properties"]["kind"]["enum"], json!(["subject"]));
     let run = tools.iter().find(|t| t["name"] == "pixelox_run").unwrap();
     assert_eq!(run["inputSchema"]["required"], json!(["command"]));
-    assert_eq!(run["inputSchema"]["properties"]["consent"]["items"]["enum"], json!(["model-download"]));
+    assert_eq!(
+        run["inputSchema"]["properties"]["consent"]["items"]["enum"],
+        json!(["model-download", "font-download"])
+    );
 }
 
 #[test]
@@ -370,6 +376,26 @@ fn model_downloads_need_both_keys() {
 }
 
 #[test]
+fn font_downloads_need_both_keys_and_only_their_consent() {
+    let d = TempDir::new("mcp-font-consent");
+    let reg = registry(false);
+    let fonts = json!(["font-download"]);
+    let s = Server::new(&reg, &NoIo, config(&d));
+    let r = tool(&s, "pixelox_run", json!({"command": "fonts.get", "consent": fonts}));
+    assert_eq!(r["structuredContent"]["result"]["yes"], false, "consent alone is not enough");
+    let mut cfg = config(&d);
+    cfg.allow_font_downloads = true;
+    let s = Server::new(&reg, &NoIo, cfg);
+    let r = tool(&s, "pixelox_run", json!({"command": "fonts.get", "consent": fonts}));
+    assert_eq!(r["structuredContent"]["result"]["yes"], true);
+    // font consent never lets a model download, and model consent never a font download
+    let r = tool(&s, "pixelox_run", json!({"command": "dummy.echo", "consent": fonts}));
+    assert_eq!(r["structuredContent"]["result"]["yes"], false);
+    let r = tool(&s, "pixelox_run", json!({"command": "fonts.get", "consent": ["model-download"]}));
+    assert_eq!(r["structuredContent"]["result"]["yes"], false);
+}
+
+#[test]
 fn audit_log_gets_one_line_per_call() {
     let d = TempDir::new("mcp-audit");
     let reg = registry(false);
@@ -572,7 +598,7 @@ fn mcp_serve_spec_follows_the_authoring_contract() {
     for p in &spec.params {
         assert!(!p.help.is_empty(), "--{} needs help", p.name);
     }
-    for name in ["allow", "read-only", "allow-model-downloads"] {
+    for name in ["allow", "read-only", "allow-model-downloads", "allow-font-downloads"] {
         assert!(spec.find_param(name).is_some(), "--{name}");
     }
     let a = Args::build(

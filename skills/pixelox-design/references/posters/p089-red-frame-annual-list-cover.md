@@ -136,33 +136,29 @@ own position and size, so only the masthead ends up between them.
 ```bash
 pixelox new -o cover.pxo --size 1080x1440 --fill '#f22929'
 pixelox comp place cover.pxo photo.png --in-place --as Photo --fit cover
-pixelox text add cover.pxo --in-place --name Masthead --content "SPAN" --font "Times New Roman" --weight 700 --size 22% --tracking 20 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 734x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 50%,12.8% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "SPAN" --font "Times New Roman" --weight 700 --fit-width 734 --tracking 20 --color '#ffffff' --at 50%,12.8% --anchor t --anchor-to ink
 pixelox layer opacity cover.pxo --in-place --layer Masthead --value 62
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1210 --at 44%,97% --anchor b
 pixelox layer add cover.pxo --in-place --name Shade
 pixelox fill gradient cover.pxo --in-place --layer Shade --from 0,62% --to 0,96% --stops '#14120c00@0,#14120cb3@1'
-pixelox text add cover.pxo --in-place --name Theme --content "New Machines" --font "Times New Roman" --weight 400 --size 8% --tracking -10 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Theme --size 664x
-pixelox transform move cover.pxo --in-place --layer Theme --to 8.5%,11% --anchor bl
+pixelox text add cover.pxo --in-place --name Theme --content "New Machines" --font "Times New Roman" --weight 400 --fit-width 664 --tracking -10 --color '#ffffff' --at 8.5%,11% --anchor bl --anchor-to ink
 pixelox text add cover.pxo --in-place --name ThemeOf --content "of" --font "Times New Roman" --weight 400 --style italic --size 4.6% --color '#ffffff' --at 72%,11.4% --anchor bl
 pixelox text add cover.pxo --in-place --name ThemeYear --content "2031" --font "Times New Roman" --weight 400 --size 4.6% --color '#ffffff' --at 91.5%,11.4% --anchor br
 pixelox text add cover.pxo --in-place --name Title --content $'HELPERS\nMOVE IN' --font "Times New Roman" --weight 700 --size 4.1% --leading 88% --tracking -10 --align center --color '#ffffff' --at 69%,73.2% --anchor c
-pixelox text add cover.pxo --in-place --name Deck --content $'One young lab wants to change\nwho does the chores at home' --font "Helvetica Neue" --weight 400 --size 1.8% --leading 112% --align center --color '#ffffff' --at 69%,78.6% --anchor c
+pixelox text add cover.pxo --in-place --name Deck --content $'One young lab wants to change\nwho does the chores at home' --font @neo-grotesque --weight 400 --size 1.8% --leading 112% --align center --color '#ffffff' --at 69%,78.6% --anchor c
 pixelox shape line cover.pxo --in-place --name Dash --from 68%,82% --to 70%,82% --stroke '#e8c62a' --stroke-width 3
-pixelox text add cover.pxo --in-place --name List --content $'A fold-flat city bike\nThe first paper battery\nA rooftop rain harvester\nA pocket test for clean water' --font "Helvetica Neue" --weight 400 --size 1.8% --leading 108% --align center --color '#ffffff' --at 69%,87.4% --anchor c
-pixelox text add cover.pxo --in-place --name More --content "& 40 more" --font "Helvetica Neue" --weight 400 --style italic --size 1.7% --color '#e8c62a' --at 69%,92.6% --anchor c
+pixelox text add cover.pxo --in-place --name List --content $'A fold-flat city bike\nThe first paper battery\nA rooftop rain harvester\nA pocket test for clean water' --font @neo-grotesque --weight 400 --size 1.8% --leading 108% --align center --color '#ffffff' --at 69%,87.4% --anchor c
+pixelox text add cover.pxo --in-place --name More --content "& 40 more" --font @neo-grotesque --weight 400 --style italic --size 1.7% --color '#e8c62a' --at 69%,92.6% --anchor c
 pixelox shape path cover.pxo --in-place --name Frame --d 'M 0 0 H 1080 V 1440 H 0 Z M 48 48 H 1032 V 1392 H 48 Z' --fill-rule evenodd --fill '#f22929'
 pixelox shape rect cover.pxo --in-place --name Keyline --rect 55,55,970x1330 --fill none --stroke '#ffffff' --stroke-width 14
-pixelox text add cover.pxo --in-place --name IssueDate --content "OCT. 14, 2031" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 120 --color '#1a0505' --at 4.5%,2.3% --anchor l
-pixelox text add cover.pxo --in-place --name Site --content "example.com" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 120 --color '#1a0505' --at 94%,97.8% --anchor r
+pixelox text add cover.pxo --in-place --name IssueDate --content "OCT. 14, 2031" --font @neo-grotesque --weight 700 --size 0.85% --tracking 120 --color '#1a0505' --at 4.5%,2.3% --anchor l
+pixelox text add cover.pxo --in-place --name Site --content "example.com" --font @neo-grotesque --weight 700 --size 0.85% --tracking 120 --color '#1a0505' --at 94%,97.8% --anchor r
 pixelox export cover.pxo -o cover.png
 ```
 
-Change first: the masthead word (4 or 5 wide capitals; keep the 734 px width so the cap
+Change first: the masthead word (4 or 5 wide capitals; keep `--fit-width 734` so the cap
 height lands near 15% H), then the subject's size and position until its head covers one
-or two middle letters, then the theme line (it is fitted to 664 px, so a longer title gets
+or two middle letters, then the theme line (`--fit-width 664` makes a longer title
 smaller on its own). Drop the Shade layer if your photo is already dark where the story
 block sits.
 

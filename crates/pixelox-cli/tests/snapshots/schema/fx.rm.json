@@ -46,9 +46,13 @@
           "stroke",
           "fire",
           "smoke",
+          "grain",
           "color-overlay",
           "gradient-overlay",
-          "pattern-overlay"
+          "pattern-overlay",
+          "long-shadow",
+          "extrude",
+          "reflection"
         ],
         "description": "Effect kind to remove Type: choice.",
         "x-pixelox-kind": "choice"

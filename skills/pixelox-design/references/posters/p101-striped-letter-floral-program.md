@@ -132,20 +132,19 @@ photo; it then fills every stripe). Polygon coordinates are for 1080 x 1528.
 
 ```bash
 pixelox new -o club.pxo --size 1080x1528 --fill '#ffffff'
-pixelox text add club.pxo --in-place --name Word --content "YARD!" --font "Avenir Next" --weight 900 --size 12.9% --tracking 460 --color '#111111' --at 50%,50% --anchor c
+pixelox text add club.pxo --in-place --name Word --content "YARD!" --font @geometric-sans --weight 900 --size 12.9% --tracking 460 --color '#111111' --at 50%,50% --anchor c
 pixelox transform rotate club.pxo --in-place --layer Word --degrees -90
 pixelox transform move club.pxo --in-place --layer Word --to 74.5%,86.5% --anchor bl
 pixelox shape path club.pxo --in-place --name Stripes --d 'M 40 0 L 114 0 L 596 1021 L 1079 0 L 1153 0 L 635 1096 L 635 1528 L 562 1528 L 562 1105 Z M 184 0 L 259 0 L 633 793 L 596 872 Z M 328 0 L 403 0 L 705 640 L 667 719 Z M 473 0 L 547 0 L 777 487 L 740 566 Z M 704 1528 L 704 1096 L 1221 0 L 1295 0 L 778 1096 L 778 1528 Z M 848 1528 L 848 1096 L 1365 0 L 1439 0 L 921 1096 L 921 1528 Z M 991 1528 L 991 1096 L 1509 0 L 1582 0 L 1065 1096 L 1065 1528 Z' --fill '#e5e4e4'
 pixelox comp place club.pxo illustration.png --in-place --as Art --size x1200 --at 62%,52% --anchor c
 pixelox layer clip club.pxo --in-place --layer Art
-pixelox text add club.pxo --in-place --name Month --content $'APRIL\n2031' --font "Avenir Next" --weight 900 --size 1.15% --tracking 60 --leading 100% --color '#111111' --at 5%,55.8% --anchor tl
-pixelox text add club.pxo --in-place --name Program --content $'02 DJ FIRST NAME\n\n03 SWING NIGHT\nTHE HOUSE BAND\n+DJ SECOND\n\n04 DJ RADIO HOUR\n\n05 DJ LATE SHIFT\n\n10 OPEN STRINGS\n+DJ THIRD (GUEST SET)\n\n11 SPRING FESTIVAL\nCONCERT IN THE YARD\n+DJ FIRST NAME\n\n17 FLAMINGO PARTY\nVINTAGE MARKET\n13TH. THE HEADLINERS\n+DJ SECOND\n\n18 SPRING FESTIVAL\nTHE NEWCOMERS\n+DJ THIRD\n\n24 DJ SOUL HOUR\n\n25 SPRING FESTIVAL\nTHE LATE SHOW\n+DJ SECOND\n\n30 FIRST BIRTHDAY!\nDJ FIRST + DJ SECOND' --font "Avenir Next" --weight 700 --size 0.85% --tracking 220 --leading 104% --color '#111111' --at 4.8%,63% --anchor tl
+pixelox text add club.pxo --in-place --name Month --content $'APRIL\n2031' --font @geometric-sans --weight 900 --size 1.15% --tracking 60 --leading 100% --color '#111111' --at 5%,55.8% --anchor tl
+pixelox text add club.pxo --in-place --name Program --content $'02 DJ FIRST NAME\n\n03 SWING NIGHT\nTHE HOUSE BAND\n+DJ SECOND\n\n04 DJ RADIO HOUR\n\n05 DJ LATE SHIFT\n\n10 OPEN STRINGS\n+DJ THIRD (GUEST SET)\n\n11 SPRING FESTIVAL\nCONCERT IN THE YARD\n+DJ FIRST NAME\n\n17 FLAMINGO PARTY\nVINTAGE MARKET\n13TH. THE HEADLINERS\n+DJ SECOND\n\n18 SPRING FESTIVAL\nTHE NEWCOMERS\n+DJ THIRD\n\n24 DJ SOUL HOUR\n\n25 SPRING FESTIVAL\nTHE LATE SHOW\n+DJ SECOND\n\n30 FIRST BIRTHDAY!\nDJ FIRST + DJ SECOND' --font @geometric-sans --weight 700 --size 0.85% --tracking 220 --leading 104% --color '#111111' --at 4.8%,63% --anchor tl
 pixelox shape path club.pxo --in-place --name Rules --d 'M 52 984 H 335 M 52 1038 H 335 M 52 1065 H 335 M 52 1092 H 335 M 52 1133 H 335 M 52 1187 H 335 M 52 1254 H 335 M 52 1308 H 335 M 52 1335 H 335 M 52 1389 H 335 M 52 1430 H 335' --fill none --stroke '#111111' --stroke-width 1.5
-pixelox text add club.pxo --in-place --name Notes --content $'In Concert\n\n\nIn Concert\n\n\n\nIn Concert\n\n\n\n\nIn Concert\n\n\n\n\n\nIn Concert' --font Baskerville --style italic --size 0.85% --leading 104% --align right --color '#333333'
-pixelox transform move club.pxo --in-place --layer Notes --to 335,1101 --anchor tr
-pixelox text add club.pxo --in-place --name Footnote --content $'THURSDAYS: THROWBACK SET WITH DJ FIRST\nSUNDAYS: DJ SECOND' --font "Avenir Next" --weight 700 --size 0.8% --tracking 40 --leading 104% --color '#111111' --at 4.8%,94.3% --anchor tl
-pixelox text add club.pxo --in-place --name Street --content "12 EXAMPLE STREET" --font "Avenir Next" --weight 700 --size 1.35% --tracking 300 --color '#111111' --at 79.7%,92.6% --anchor c
-pixelox text add club.pxo --in-place --name City --content "YOUR CITY" --font "Avenir Next" --weight 700 --size 1.35% --tracking 300 --color '#111111' --at 79.9%,95% --anchor c
+pixelox text add club.pxo --in-place --name Notes --content $'In Concert\n\n\nIn Concert\n\n\n\nIn Concert\n\n\n\n\nIn Concert\n\n\n\n\n\nIn Concert' --font @oldstyle --style italic --size 0.85% --leading 104% --align right --color '#333333' --at 335,1101 --anchor tr --anchor-to ink
+pixelox text add club.pxo --in-place --name Footnote --content $'THURSDAYS: THROWBACK SET WITH DJ FIRST\nSUNDAYS: DJ SECOND' --font @geometric-sans --weight 700 --size 0.8% --tracking 40 --leading 104% --color '#111111' --at 4.8%,94.3% --anchor tl
+pixelox text add club.pxo --in-place --name Street --content "12 EXAMPLE STREET" --font @geometric-sans --weight 700 --size 1.35% --tracking 300 --color '#111111' --at 79.7%,92.6% --anchor c
+pixelox text add club.pxo --in-place --name City --content "YOUR CITY" --font @geometric-sans --weight 700 --size 1.35% --tracking 300 --color '#111111' --at 79.9%,95% --anchor c
 pixelox shape path club.pxo --in-place --name AddressRules --d 'M 713 1435 H 1015 M 810 1469 H 913' --fill none --stroke '#111111' --stroke-width 2
 pixelox export club.pxo -o club.png
 ```
@@ -173,7 +172,7 @@ Other letters: keep the module (stripe 74 px, pitch 143 px, slope 0.472) and red
 * Fewer, wider stripes (3 at 9% W) for small formats; 6 thin ones for a quieter look.
 * Suits club and venue programs, festival line-ups, garden and flower shows, spring
   sales, a monthly series where only the illustration and the list change.
-* Pairs with T-paper-grain (amount 10, opacity 30) for a risograph feel and T-pattern
+* Pairs with T-paper-grain (`--amount 10`) for a risograph feel and T-pattern
   stripes when you want a stripe field without the letter.
 
 ## 11. Pitfalls

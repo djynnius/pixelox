@@ -149,6 +149,8 @@ catalog! {
     "PX1530", Usage, "This copy is updated by another tool", "Run the update command in the hint.";
     "PX1531", Verification, "The update could not be verified", "Run the installer command in the hint.";
     "PX1532", Runtime, "Release information is unreadable", "Retry later, or open the releases page.";
+    "PX1540", ConsentRequired, "Font absent; consent required to download it", "Run the `pixelox fonts get <family> -y` command in the hint, or pass -y.";
+    "PX1541", Runtime, "Font file SHA-256 mismatch", "Retry `pixelox fonts get <family> -y`; a repeated mismatch means a corrupted mirror.";
     // PX16xx — provenance
     "PX1601", Verification, "Input hash drift on replay", "Restore the recorded input, map a new one with `--input role=path`, or pass `--allow-input-drift`.";
     "PX1602", Verification, "Output does not match its sidecar", "The file changed after it was written; re-create it with `pixelox replay`.";
@@ -165,6 +167,8 @@ catalog! {
     "PX2312", Usage, "No active selection", "Make one with `pixelox select ...` first.";
     "PX2313", Usage, "Mask size does not match the canvas", "Resize the mask image to the document size.";
     "PX2320", Usage, "Document has no layers", "Add one with `pixelox layer add` or `pixelox comp place`.";
+    "PX2330", Usage, "--into names a layer that is not a group", "Use --above or --below, or group the layers first with `pixelox layer group`.";
+    "PX2331", Usage, "A layer cannot be masked by itself or by its own group", "Pick another layer for --from-layer, or use --from @alpha:<layer> for a fixed copy.";
     // PX3xxx — op semantics
     "PX3001", Runtime, "Operation failed", "Read the message; re-run with -v.";
     "PX3101", Usage, "Unknown blend mode", "See `pixelox docs layer.blend` for the 28 modes.";
@@ -175,9 +179,16 @@ catalog! {
     "PX3310", Usage, "Curve points are not monotonic", "Give curve points with strictly increasing input values.";
     "PX3311", Usage, "Invalid LUT file", "Supply a valid .cube 3D LUT.";
     "PX3320", Usage, "Empty region", "The selection or mask covers no pixels.";
+    "PX3341", Usage, "Displacement map is empty", "Give a map image or layer with visible pixels.";
+    "PX3342", Usage, "A map layer cannot drive a smart filter", "Rasterize the placed layer first, or use the generated noise map.";
+    "PX3343", Usage, "Nothing to put droplets on", "Name a layer with opaque pixels in --layer.";
     // PX4xxx — text and fonts
     "PX4101", Runtime, "Font file unreadable", "Check the font path.";
     "PX4102", Usage, "Font family not found", "List fonts with `pixelox fonts list`, or add a folder with `pixelox fonts add <dir>`.";
+    "PX4110", Usage, "Unknown font class", "List the classes with `pixelox fonts classes`.";
+    "PX4111", Usage, "Not a Google Fonts family", "Check the name at fonts.google.com, or register the files with `pixelox fonts add <dir>`.";
+    "PX4112", Verification, "A font the recipe used is not installed", "Run the `pixelox fonts get` or `pixelox fonts add` command in the hint, then replay again.";
+    "PX4113", Usage, "The text has no visible letters to fit", "Give the layer visible content, or drop --fit-width / --fit-box.";
     // PX5xxx — ML inference
     "PX5201", Memory, "Model input too large for the memory budget", "Raise `--mem-budget` or downscale the input.";
     // PX6xxx — JS sandbox
@@ -186,6 +197,12 @@ catalog! {
     "PX6003", Sandbox, "Script memory limit exceeded", "Raise `--js-mem`.";
     "PX6010", Sandbox, "Forbidden API", "Scripts may only use the `px` API; no filesystem, network, timers, or eval.";
     "PX6020", Usage, "Script produced no output", "Call `px.output(canvasOrSvg)` exactly once.";
+    // PX603x — vector primitives: icons, QR codes, barcodes
+    "PX6030", Usage, "Unknown icon", "Search the bundled icons with `pixelox shape icons --search <word>`.";
+    "PX6031", Usage, "Data cannot be encoded in this symbology", "Use the characters and length the message names, or another --type (code128 takes any ASCII).";
+    "PX6032", Usage, "Check digit does not match", "Use the check digit in the hint, or leave it off and pixelox adds it.";
+    "PX6033", Usage, "Data too long for a QR code", "Shorten the data (a short URL), or lower --ec.";
+    "PX6034", Usage, "Logo gap too large for the error correction", "Raise --ec (h holds the largest gap) or lower --logo-gap to the value in the hint.";
     // PX7xxx — jobs, pipelines, batches
     "PX7101", Usage, "Pipeline file is invalid", "Run `pixelox pipeline validate <file>`.";
     "PX7102", Usage, "Unknown step reference", "Every `needs` entry must name an earlier step id.";
@@ -223,10 +240,19 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW2005", "searched the whole layer without a mask (features may be listed as spots)"),
     ("PXW3002", "text auto-shrink was skipped or the text still overflows its slot"),
     ("PXW3001", "a parameter was clamped to its valid range"),
+    ("PXW3010", "--tile adjusted the noise settings (basis, lacunarity, or angle) so the texture repeats"),
     ("PXW4001", "a glyph was missing from the font and drawn with a fallback"),
     ("PXW4002", "synthetic bold or italic was used because the face was not installed"),
+    ("PXW4010", "the font family is not installed; the closest installed face of its class was used"),
+    ("PXW4011", "a font the recipe used is not installed here; the replay used a substitute"),
+    ("PXW4012", "text on a path does not fit; some glyphs run past the end or overlap"),
+    ("PXW4013", "the family has no face of the requested weight or width; the nearest was used"),
+    ("PXW4014", "no member of the font class is installed; a stand-in was used"),
+    ("PXW4015", "text on a path is not warped"),
     ("PXW6001", "the script read the clock (--allow-time): output is not deterministic"),
     ("PXW6002", "canvas fillText/strokeText drew nothing (text on a JS canvas is not supported; use px.svg() text)"),
+    ("PXW6010", "a QR code or barcode may not scan: low contrast, or light modules on a dark ground"),
+    ("PXW6011", "QR modules or barcode bars are too small to scan reliably"),
 ];
 
 pub fn catalog_entry(code: &str) -> Option<&'static CatalogEntry> {

@@ -1,0 +1,399 @@
+{
+  "command": "shape.qr",
+  "cli": "pixelox shape qr",
+  "summary": "Add a QR code as a shape layer",
+  "category": "vector",
+  "mode": "mutate",
+  "milestone": null,
+  "x-pixelox-schema-version": "1.0.0",
+  "params": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.qr.params.json",
+    "title": "pixelox shape.qr parameters",
+    "description": "Add a QR code as a shape layer",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "Input file: an image, PSD, SVG, or .pxo document"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output path (-o); format from the extension"
+      },
+      "in_place": {
+        "type": "boolean",
+        "description": "Mutate the input .pxo document instead of writing -o"
+      },
+      "data": {
+        "type": "string",
+        "description": "Text or URL to encode (UTF-8) Type: text.",
+        "x-pixelox-kind": "str"
+      },
+      "ec": {
+        "type": "string",
+        "enum": [
+          "l",
+          "m",
+          "q",
+          "h"
+        ],
+        "description": "Error correction level; auto = m, or h with --logo-gap Type: choice.",
+        "default": "auto",
+        "x-pixelox-kind": "choice"
+      },
+      "size": {
+        "type": "string",
+        "examples": [
+          "12px"
+        ],
+        "description": "Side of the code including the quiet zone, in px or % of the shorter canvas side Type: length.",
+        "default": "25%",
+        "x-pixelox-kind": "length"
+      },
+      "quiet_zone": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0.0,
+            "maximum": 20.0
+          },
+          {
+            "type": "string",
+            "pattern": "^(-?[0-9]+|auto)$"
+          }
+        ],
+        "description": "Quiet zone (empty margin) in modules; 4 is the standard, 2 the practical minimum Range: 0..20. Type: integer.",
+        "default": "4",
+        "x-pixelox-kind": "int"
+      },
+      "style": {
+        "type": "string",
+        "enum": [
+          "square",
+          "rounded",
+          "dots"
+        ],
+        "description": "Module style Type: choice.",
+        "default": "square",
+        "x-pixelox-kind": "choice"
+      },
+      "color": {
+        "type": "string",
+        "examples": [
+          "#0ea5e9"
+        ],
+        "description": "Module color (keep it darker than the background) Type: color.",
+        "default": "#000000",
+        "x-pixelox-kind": "color"
+      },
+      "background_color": {
+        "type": "string",
+        "description": "Background plate color under the code and its quiet zone (CSS color), or none Type: text.",
+        "default": "none",
+        "x-pixelox-kind": "str"
+      },
+      "radius": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 10000.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Corner radius of the background plate in px Range: 0..10000. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "logo_gap": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 40.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Clear a centered square this percent of the code's width for a logo (0 = none) Range: 0..40. Type: number.",
+        "default": "0",
+        "x-pixelox-kind": "float"
+      },
+      "at": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "Position X,Y of the code's anchor point (px or %); negative counts from the right/bottom Type: X,Y.",
+        "x-pixelox-kind": "point"
+      },
+      "anchor": {
+        "type": "string",
+        "enum": [
+          "tl",
+          "t",
+          "tr",
+          "l",
+          "c",
+          "r",
+          "bl",
+          "b",
+          "br"
+        ],
+        "description": "Which point of the box sits at --at (default tl; alone: align to that canvas point; neither: centered) Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly above this layer (default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "opacity": {
+        "oneOf": [
+          {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "description": "Layer opacity 0-100 Range: 0..100. Type: number.",
+        "default": "100",
+        "x-pixelox-kind": "float"
+      },
+      "name": {
+        "type": "string",
+        "description": "Layer name (default: QR code, made unique) Type: text.",
+        "x-pixelox-kind": "str"
+      }
+    },
+    "required": [
+      "input",
+      "data"
+    ],
+    "additionalProperties": false,
+    "x-pixelox-schema-version": "1.0.0"
+  },
+  "result": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://djynnius.github.io/pixelox/schema/v1/shape.qr.result.json",
+    "title": "pixelox shape.qr envelope",
+    "type": "object",
+    "required": [
+      "tool",
+      "version",
+      "envelope",
+      "command",
+      "ok",
+      "dry_run",
+      "seed",
+      "inputs",
+      "outputs",
+      "warnings",
+      "timing_ms"
+    ],
+    "properties": {
+      "tool": {
+        "const": "pixelox"
+      },
+      "version": {
+        "type": "string"
+      },
+      "envelope": {
+        "const": 1
+      },
+      "command": {
+        "const": "shape.qr"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "dry_run": {
+        "type": "boolean"
+      },
+      "seed": {
+        "type": "integer"
+      },
+      "result": {
+        "type": "object",
+        "description": "Command-specific; doc ops include op, params, and document. Dry runs include plan."
+      },
+      "inputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "outputs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "role": {
+              "type": "string"
+            },
+            "sidecar": {
+              "type": "string"
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "format": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^PXW[0-9]{4}$"
+            },
+            "message": {
+              "type": "string"
+            },
+            "context": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "docs",
+          "exit_code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^PX[0-9]{4}$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          },
+          "docs": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          },
+          "exit_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "timing_ms": {
+        "type": "integer"
+      }
+    }
+  },
+  "errors": [
+    "PX1002",
+    "PX1003",
+    "PX1004",
+    "PX1010",
+    "PX1011",
+    "PX1012",
+    "PX1013",
+    "PX1101",
+    "PX1103",
+    "PX1105",
+    "PX1106",
+    "PX1108",
+    "PX1401",
+    "PX1403",
+    "PX2301",
+    "PX2302",
+    "PX2304",
+    "PX9001"
+  ]
+}

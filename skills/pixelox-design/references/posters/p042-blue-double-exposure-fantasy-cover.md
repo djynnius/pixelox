@@ -111,11 +111,13 @@ layer): `#0b1424` to `#233f61` to `#3b6991` to `#b6d7ec` to `#f2fbff`.
 * Door glow: small radial gradient, `#eaf7ff` to `#9fd4ff` at alpha 0, screen.
 * Branches: `paint stroke --d` with five curves, `--taper 0,90%`, so each stroke thins to
   a point; blossoms from `particles.js` (`shape=dot`, `focus` on the upper left).
+* Ground haze: one `fill noise --as-layer` line in pale blue to white, `--stretch 2
+  --angle 90` so the clouds stand upright like ghost trunks, at 45%.
 * **T-smoke** logic for the mist: pale blobs at the bottom corners, blurred 60.
 * **T-arc-type** for the curved word (`text on-path`, half circle on the right side).
 * **T-gradient-type** (silver: white to blue-gray) and the tight glow of **T-neon-glow**
   on the big word.
-* **T-paper-grain**, amount 10, soft-light 35%.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last.
 
 ## 8. Hierarchy and eye path
 
@@ -134,12 +136,10 @@ are your images here. Move the Door glow onto your scene's light, and start the 
 curves at the top of your subject's head.
 
 ```bash
-pixelox render js scripts/clouds.js -o haze.png --size 1080x1620 --seed 7 --param lo='#b6d7ec' --param hi='#ffffff' --param scale=2.5 --param warp=0.8 --param stretch=2
 pixelox render js scripts/particles.js -o blossoms.png --size 1080x1620 --seed 5 --param shape=dot --param colors='#d9ecf8,#9cc3e0,#ffffff' --param count=60 --param min=0.4 --param max=1.3 --param focus='0.3,0.16,0.3'
 pixelox render js scripts/blobs.js -o mist.png --size 1080x1620 --param bg=transparent --param colors='#eef8fd' --param at='0,0.97;1,0.92;0.04,0.72;0.98,0.72' --param size=0.4 --param alpha=0.95
 pixelox new -o cover.pxo --size 1080x1620 --fill '#dff1f9'
-pixelox comp place cover.pxo haze.png --in-place --as Haze --fit cover
-pixelox layer opacity cover.pxo --in-place --layer Haze --value 45
+pixelox fill noise cover.pxo --in-place --as-layer --name Haze --seed 7 --scale 40% --warp 32 --stretch 2 --angle 90 --stops '#b6d7ec,#ffffff' --opacity 45
 pixelox comp place cover.pxo subject.png --in-place --as Figure --size x1400 --at 50%,100% --anchor b
 pixelox adjust bw cover.pxo --in-place --layer Figure
 pixelox adjust levels cover.pxo --in-place --layer Figure --gamma 0.75 --out-white 100
@@ -156,22 +156,18 @@ pixelox comp place cover.pxo blossoms.png --in-place --as Blossoms --fit cover
 pixelox shape path cover.pxo --in-place --name Creature --d 'M 790 300 Q 850 215 912 288 Q 960 228 1012 250 Q 985 292 992 342 Q 950 300 916 320 Q 890 362 850 330 Q 822 318 790 300 Z' --fill '#3b5f8f' --opacity 85
 pixelox comp place cover.pxo mist.png --in-place --as Mist --fit cover
 pixelox filter gaussian cover.pxo --in-place --layer Mist --sigma 60
-pixelox text add cover.pxo --in-place --name SmallWords --content $'CROWNS\nOF THE' --font Baskerville --weight 700 --size 2.5% --tracking 60 --leading 150% --align right --color '#3f72b8' --at 29%,51.5% --anchor r
-pixelox text add cover.pxo --in-place --name Curved --content "SILENT" --font Baskerville --weight 400 --size 3.2% --tracking 420 --color '#3f72b8'
+pixelox text add cover.pxo --in-place --name SmallWords --content $'CROWNS\nOF THE' --font @oldstyle --weight 700 --size 2.5% --tracking 60 --leading 150% --align right --color '#3f72b8' --at 29%,51.5% --anchor r
+pixelox text add cover.pxo --in-place --name Curved --content "SILENT" --font @oldstyle --weight 400 --size 3.2% --tracking 420 --color '#3f72b8'
 pixelox text on-path cover.pxo --in-place --layer Curved --d 'M 850 700 A 130 130 0 0 1 850 960' --side outside
-pixelox text add cover.pxo --in-place --name BigWord --content "sea" --font Didot --weight 400 --size 15% --tracking 120 --color '#f2f8ff'
-pixelox transform move cover.pxo --in-place --layer BigWord --to 49%,78.5% --anchor c
+pixelox text add cover.pxo --in-place --name BigWord --content "sea" --font @didone --weight 400 --size 15% --tracking 120 --color '#f2f8ff' --at 49%,78.5% --anchor c --anchor-to ink
 pixelox fx overlay cover.pxo --in-place --layer BigWord --stops '#aebfd6@0,#f2f8ff@0.6,#ffffff@1' --angle 90
 pixelox fx outer-glow cover.pxo --in-place --layer BigWord --blur 26 --color '#bfe6ff' --opacity 70
 pixelox shape line cover.pxo --in-place --name Ornament --from 33%,85.4% --to 65%,85.4% --stroke '#cfe6f7' --stroke-width 2 --opacity 80
 pixelox shape star cover.pxo --in-place --name Star --center 49%,85.4% --points 4 --outer 26 --inner 4 --fill '#ffffff'
 pixelox fx outer-glow cover.pxo --in-place --layer Star --blur 22 --color '#bfe6ff' --opacity 90
-pixelox text add cover.pxo --in-place --name Author --content "A . AUTHOR" --font Baskerville --weight 400 --size 2.1% --tracking 250 --color '#a9c4dc' --at 49%,92% --anchor c
-pixelox text add cover.pxo --in-place --name Credit --content "COVER STUDIO" --font "Avenir Next" --weight 500 --size 1.25% --tracking 300 --color '#5f86b0' --at 49%,95% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 35
+pixelox text add cover.pxo --in-place --name Author --content "A . AUTHOR" --font @oldstyle --weight 400 --size 2.1% --tracking 250 --color '#a9c4dc' --at 49%,92% --anchor c
+pixelox text add cover.pxo --in-place --name Credit --content "COVER STUDIO" --font @geometric-sans --weight 500 --size 1.25% --tracking 300 --color '#5f86b0' --at 49%,95% --anchor c
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export cover.pxo -o cover.png
 ```
 

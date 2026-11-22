@@ -59,7 +59,7 @@ exactly where the warm and cool halves of the ground meet.
 8. Ink ribbon (upper copy): the same ribbon again at 40% opacity above the title, so the
    line seems to pass both behind and through the letters of the last title line.
 9. Tagline: small white tracked caps centered at 66%, 85.3%.
-10. Paper grain: monochrome noise, overlay, 45%.
+10. Paper grain: visible monochrome grain over everything.
 
 ## 4. Palette
 
@@ -100,15 +100,17 @@ along a curve, so the illustration itself only has to be the object.
 ## 7. Effects and textures
 
 * Ground: a 7-stop vertical `fill gradient`, then **T-gradient-mesh** blobs at fixed `at`
-  points, blurred with sigma 50, as stains; then a **T-grunge** mottle (`clouds.js`,
-  scale 4, 6 octaves) in overlay mode at 55%.
+  points, blurred with sigma 50, as stains; then the **T-grunge** mottle: one `fill noise
+  --as-layer` line (`--scale 25%`, dark brown to cream) in overlay mode at 55%.
 * **T-smoke** as a live style on the illustration: `fx smoke` with drift 235, height
   170%, density 95, color `#0f1b23`.
 * **T-text-behind-subject**, adapted: the ribbon is drawn once below the title and
-  duplicated above it at 40% opacity, which reads as weaving without any masking.
+  duplicated above it (`layer dup --above Title`) at 40% opacity, which reads as weaving
+  without any masking.
 * Title: `fx overlay` gradient `#cdd5d2` (bottom) to white, and `fx drop-shadow` offset
   2,4, blur 8, 45%.
-* **T-paper-grain**, amount 24, overlay 45%: visible grain, part of the painted look.
+* **T-paper-grain**, `filter grain --as-layer --amount 25`: visible grain, part of the
+  painted look.
 
 ## 8. Hierarchy and eye path
 
@@ -128,40 +130,30 @@ ribbon.
 
 ```bash
 pixelox render js scripts/blobs.js -o stains.png --size 1080x1620 --seed 3 --param bg=transparent --param colors='#e5772d,#e06a2c,#46a57c,#6e6837,#a2403d,#7a853e,#4a342c' --param at='0.02,0.94;0.06,0.78;0.9,0.02;0.96,0.24;0.02,0.44;0.08,0.16;0.45,0.46' --param size=0.36 --param vary=0.2 --param alpha=0.9
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1620 --seed 17 --param lo='#2c2018' --param hi='#fff4e0' --param scale=4 --param octaves=6 --param warp=0.9 --param contrast=1.5
 pixelox new -o cover.pxo --size 1080x1620 --fill '#bd302c'
 pixelox layer add cover.pxo --in-place --name Wash
 pixelox fill gradient cover.pxo --in-place --layer Wash --from 0,0 --to 0,100% --stops '#4fb48c@0,#5f9c66@0.12,#7a8048@0.27,#85553a@0.42,#ad362f@0.55,#c4282a@0.82,#cf4a2b@1'
 pixelox comp place cover.pxo stains.png --in-place --as Stains --fit cover
 pixelox filter gaussian cover.pxo --in-place --layer Stains --sigma 50
-pixelox comp place cover.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend cover.pxo --in-place --layer Mottle --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Mottle --value 55
+pixelox fill noise cover.pxo --in-place --as-layer --name Mottle --seed 17 --scale 25% --warp 36 --contrast 8 --stops '#2c2018,#fff4e0' --blend overlay --opacity 55
 pixelox layer add cover.pxo --in-place --name Trail
 pixelox paint stroke cover.pxo --in-place --layer Trail --d 'M 810 880 C 650 900 540 1000 430 1080 S 215 1180 205 1390 S 400 1470 600 1385' --size 34 --hardness 85 --spacing 4 --taper 15%,45% --color '#14222b'
 pixelox comp place cover.pxo illustration.png --in-place --as Art --size 620x --at 77%,39% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Art --degrees -24
 pixelox fx smoke cover.pxo --in-place --layer Art --height 170% --density 95 --turbulence 75 --drift 235 --color '#0f1b23' --variant 7
-pixelox text add cover.pxo --in-place --name Author --content "ELEANOR VOSS" --font Avenir --weight 300 --size 4.2% --tracking 160 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Author --size 724x
-pixelox transform move cover.pxo --in-place --layer Author --to 51%,9.5% --anchor t
-pixelox text add cover.pxo --in-place --name Title --content $'THE\nTHIN\nSILENCE' --font Avenir --weight 300 --size 13.2% --leading 104.5% --tracking 50 --align center --color '#ffffff'
-pixelox transform move cover.pxo --in-place --layer Title --to 51%,25.3% --anchor t
+pixelox text add cover.pxo --in-place --name Author --content "ELEANOR VOSS" --font Avenir --weight 300 --fit-width 724 --tracking 160 --color '#ffffff' --at 51%,9.5% --anchor t --anchor-to ink
+pixelox text add cover.pxo --in-place --name Title --content $'THE\nTHIN\nSILENCE' --font Avenir --weight 300 --size 13.2% --leading 104.5% --tracking 50 --align center --color '#ffffff' --at 51%,25.3% --anchor t --anchor-to ink
 pixelox fx overlay cover.pxo --in-place --layer Title --stops '#cdd5d2@0,#ffffff@0.55' --angle 90
 pixelox fx drop-shadow cover.pxo --in-place --layer Title --offset 2,4 --blur 8 --opacity 45
-pixelox layer dup cover.pxo --in-place --layer Trail --name TrailOver
-pixelox layer reorder cover.pxo --in-place --layer TrailOver --above Title
+pixelox layer dup cover.pxo --in-place --layer Trail --name TrailOver --above Title
 pixelox layer opacity cover.pxo --in-place --layer TrailOver --value 40
 pixelox text add cover.pxo --in-place --name Tag --content "A NOVEL" --font Avenir --weight 500 --size 1.85% --tracking 260 --color '#ffffff' --at 66%,85.3% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 24 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 45
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 25
 pixelox export cover.pxo -o cover.png
 ```
 
 Change first: the three title words (keep the last line the longest; if it is wider than
-890 px add `transform scale --size 890x` on the Title layer before the move), then the
+890 px replace `--size 13.2%` with `--fit-width 890` on the Title), then the
 start of the `paint stroke` path so the ribbon leaves from your object's lower edge, then
 the seven wash stops.
 

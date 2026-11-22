@@ -45,7 +45,7 @@ an otherwise flat, paper-cut composition.
 2. Purple disc `#722867`, green disc `#1f8f6a`, red disc `#f33c14`, in that order (the
    green overlaps the purple's lower edge; the red overlaps the green's right edge).
 3. Painted shapes (one disc, two triangles): patches of pink `#d860a0`, purple, green,
-   white, and orange with brushy edges.
+   white, and red with brushy edges.
 4. Three white capitals, each with a cap height of about 19.5% H.
 5. Heading: one word in heavy black caps at 35.8 to 87.6% W, 9.4 to 14.5% H.
 6. Date: two 2-digit numbers stacked, black, with a thick black bar between them (12.7
@@ -62,7 +62,7 @@ an otherwise flat, paper-cut composition.
 | `#ef7429` | ground | 50% |
 | `#1f8f6a` | green disc, green paint | 14% |
 | `#722867` | purple disc, purple paint | 10% |
-| `#f33c14` | red disc | 8% |
+| `#f33c14` | red disc, red paint dabs | 8% |
 | `#ffffff` | letters, statement, white paint | 10% |
 | `#020602` | heading, date, paragraph | 4% |
 | `#d860a0` | pink paint | 4% |
@@ -87,9 +87,9 @@ One family. Four sizes: letters 19.5, date 5.6 (heading 5.1), statement 1.4, par
 ## 6. Imagery
 
 No photograph. The discs are flat. The paint texture (the same as in p111) fills one
-disc and two triangles: gestural strokes in pink, purple, green, white, and orange. It is
-generated with `clouds.js` at high contrast and `filter oil-paint`, or replaced by a scan
-of real paint.
+disc and two triangles: gestural strokes in pink, purple, green, white, and red. It is
+generated with `fill noise --as-layer` (close stop positions for hard-edged patches) and
+`filter oil-paint`, or replaced by a scan of real paint.
 
 ## 7. Effects and textures
 
@@ -97,8 +97,15 @@ of real paint.
   disc and both triangles.
 * **T-image-in-type** on shapes: paint layers placed above that path and clipped with
   `layer clip` (several clipped layers in a row share the base).
-* Single letters as shapes: each capital is its own text layer, sized by height with
-  `transform scale --size x296` and placed by its top-left corner.
+* Paint: `fill noise --as-layer` with positioned `--stops` (green up to 0.40, pink from
+  0.44 to 0.58, purple from 0.62; the narrow gaps are the hard edges), then `filter
+  oil-paint` for brush direction. Two more noise layers add dabs: stops from `transparent`
+  to white (0.63 to 0.66) and to the red of the red disc (0.65 to 0.68), so only the
+  highest part of each noise shows. The dabs are white and red, not the ground orange: a
+  ground-colored dab at the rim reads as a bite out of the shape.
+* Single letters as shapes: each capital is its own text layer, sized by cap height with
+  `--fit-box 600x296` (the box is wider than any letter, so the height decides) and
+  placed by the top-left corner of its visible shape (`--anchor-to ink`).
 * **T-rules**: the thick bar between the date numbers (1.2% H tall, as wide as the
   numbers).
 * **T-fit-width** for the heading (559 px).
@@ -117,38 +124,25 @@ of real paint.
 Nothing to supply. Canvas 1080x1528.
 
 ```bash
-pixelox render js scripts/clouds.js -o paint.png --size 1080x1528 --seed 7 --param lo='#7b2a7a' --param mid='#d860a0' --param hi='#1f8f6a' --param scale=14 --param octaves=2 --param warp=1.2 --param contrast=5 --param res=1
-pixelox render js scripts/clouds.js -o dabs-white.png --size 1080x1528 --seed 19 --param lo=transparent --param hi='#ffffff' --param scale=16 --param octaves=2 --param warp=0.8 --param contrast=9 --param bias=-2.2 --param res=1
-pixelox render js scripts/clouds.js -o dabs-orange.png --size 1080x1528 --seed 23 --param lo=transparent --param hi='#f37a1f' --param scale=16 --param octaves=2 --param warp=0.8 --param contrast=9 --param bias=-2.2 --param res=1
 pixelox new -o letters.pxo --size 1080x1528 --fill '#ef7429'
 pixelox shape ellipse letters.pxo --in-place --name Purple --rect 296,250,436x436 --fill '#722867'
 pixelox shape ellipse letters.pxo --in-place --name Green --rect 156,662,514x514 --fill '#1f8f6a'
 pixelox shape ellipse letters.pxo --in-place --name Red --rect 600,678,390x390 --fill '#f33c14'
 pixelox shape path letters.pxo --in-place --name PaintShapes --d 'M 647 452 A 156 156 0 1 1 959 452 A 156 156 0 1 1 647 452 Z M 65 164 L 319 86 L 296 390 Z M 506 1044 L 912 1208 L 639 1434 Z' --fill '#7b2a7a'
-pixelox comp place letters.pxo paint.png --in-place --as Paint --fit cover
+pixelox fill noise letters.pxo --in-place --as-layer --name Paint --seed 4 --scale 22% --octaves 5 --warp 80 --stops '#1f8f6a@0.40,#d860a0@0.44,#d860a0@0.58,#7b2a7a@0.62'
 pixelox filter oil-paint letters.pxo --in-place --layer Paint --brush 5 --sharpness 90 --impasto 60
 pixelox layer clip letters.pxo --in-place --layer Paint
-pixelox comp place letters.pxo dabs-white.png --in-place --as DabsWhite --fit cover
+pixelox fill noise letters.pxo --in-place --as-layer --name DabsWhite --seed 19 --scale 12% --octaves 4 --warp 30 --stops 'transparent@0.63,#ffffff@0.66'
 pixelox layer clip letters.pxo --in-place --layer DabsWhite
-pixelox comp place letters.pxo dabs-orange.png --in-place --as DabsOrange --fit cover
-pixelox layer clip letters.pxo --in-place --layer DabsOrange
-pixelox text add letters.pxo --in-place --name L1 --content "H" --font Futura --weight 700 --size 24% --color '#ffffff'
-pixelox transform scale letters.pxo --in-place --layer L1 --size x296
-pixelox transform move letters.pxo --in-place --layer L1 --to 195,413 --anchor tl
-pixelox text add letters.pxo --in-place --name L2 --content "U" --font Futura --weight 700 --size 24% --color '#ffffff'
-pixelox transform scale letters.pxo --in-place --layer L2 --size x292
-pixelox transform move letters.pxo --in-place --layer L2 --to 343,740 --anchor tl
-pixelox text add letters.pxo --in-place --name L3 --content "E" --font Futura --weight 700 --size 24% --color '#ffffff'
-pixelox transform scale letters.pxo --in-place --layer L3 --size x299
-pixelox transform move letters.pxo --in-place --layer L3 --to 694,605 --anchor tl
-pixelox text add letters.pxo --in-place --name Heading --content "PIGMENTS" --font Futura --weight 700 --size 7% --color '#020602'
-pixelox transform scale letters.pxo --in-place --layer Heading --size 559x
-pixelox transform move letters.pxo --in-place --layer Heading --to 35.8%,9.4% --anchor tl
-pixelox text add letters.pxo --in-place --name DateTop --content "07" --font Futura --weight 700 --size 7.6% --color '#020602'
-pixelox transform move letters.pxo --in-place --layer DateTop --to 20.4%,51.5% --anchor t
+pixelox fill noise letters.pxo --in-place --as-layer --name DabsRed --seed 5 --scale 12% --octaves 4 --warp 30 --stops 'transparent@0.65,#f33c14@0.68'
+pixelox layer clip letters.pxo --in-place --layer DabsRed
+pixelox text add letters.pxo --in-place --name L1 --content "H" --font Futura --weight 700 --fit-box 600x296 --color '#ffffff' --at 195,413 --anchor-to ink
+pixelox text add letters.pxo --in-place --name L2 --content "U" --font Futura --weight 700 --fit-box 600x292 --color '#ffffff' --at 343,740 --anchor-to ink
+pixelox text add letters.pxo --in-place --name L3 --content "E" --font Futura --weight 700 --fit-box 600x299 --color '#ffffff' --at 694,605 --anchor-to ink
+pixelox text add letters.pxo --in-place --name Heading --content "PIGMENTS" --font Futura --weight 700 --fit-width 559 --color '#020602' --at 35.8%,9.4% --anchor-to ink
+pixelox text add letters.pxo --in-place --name DateTop --content "07" --font Futura --weight 700 --size 7.6% --color '#020602' --at 20.4%,51.5% --anchor t --anchor-to ink
 pixelox shape rect letters.pxo --in-place --name DateBar --rect 12.7%,59.2%,15.4%x1.2% --fill '#020602'
-pixelox text add letters.pxo --in-place --name DateBottom --content "03" --font Futura --weight 700 --size 7.6% --color '#020602'
-pixelox transform move letters.pxo --in-place --layer DateBottom --to 20.4%,62.4% --anchor t
+pixelox text add letters.pxo --in-place --name DateBottom --content "03" --font Futura --weight 700 --size 7.6% --color '#020602' --at 20.4%,62.4% --anchor t --anchor-to ink
 pixelox text add letters.pxo --in-place --name Statement --content $'THREE COLORS\nWALK INTO ONE\nROOM AND NONE\nWANTS TO SIT\nIN THE BACK' --font Futura --weight 700 --size 1.8% --tracking 10 --leading 114% --color '#ffffff' --at 70.3%,61.2% --anchor tl
 pixelox text add letters.pxo --in-place --name Para --content $'New paintings, prints, and paper\nworks from twelve studios, hung\nby color instead of by name.\nCome and argue about which\nwall is the loudest. Open daily\nfrom ten to six, late on Fridays,\nwith tours for schools on\nrequest. Entry is free.' --font Futura --weight 500 --size 1.25% --leading 124% --color '#020602' --at 15.2%,75.7% --anchor tl
 pixelox export letters.pxo -o letters.png
@@ -156,7 +150,8 @@ pixelox export letters.pxo -o letters.png
 
 Change first: the three letters and the heading word, then the three disc colors, then
 the positions: move a letter together with its disc so the letter always overlaps its
-disc by at least two thirds.
+disc by at least two thirds. A new `--seed` on `Paint` gives another pattern in the
+painted shapes.
 
 ## 10. Variations and pairings
 

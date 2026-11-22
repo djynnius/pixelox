@@ -7,7 +7,7 @@ style: [photo-composite, type-led]
 format: portrait-3x4
 archetype: A-event-stack
 palette: ['#eac077', '#f2e6cc', '#662802', '#000000', '#de8c2c', '#651209']
-techniques: [T-fit-width, T-sunburst, T-photo-fade, T-mono-on-color, T-label-box, T-paper-grain, T-warp-type]
+techniques: [T-fit-width, T-sunburst, T-photo-fade, T-mono-on-color, T-label-box, T-paper-grain, T-warp-type, T-icon-row]
 needs: [photo, logo]
 ---
 
@@ -41,7 +41,7 @@ black-and-white photo, becomes the place the eye rests.
 3. Photo: a stage photo of nine singers in a row under a ribbed metal roof, turned to warm
    sepia black-and-white, `0,56%,100% x 44%`, clipped to a polygon whose top edge runs from
    56% H (left) to 69% H (right). The central singer, one arm raised, stands on the axis.
-4. Black fade: transparent at 78% H to solid black at 90% H, over the photo's lower part.
+4. Black fade: the photo's lower part melts into solid black between 78% H and 90% H.
 5. Light shafts: three or four soft cream streaks falling from the upper right across the
    photo and the gold, screen mode.
 6. Confetti: about 150 small gold and yellow flecks (short leaf shapes, 0.5 to 1.5% W),
@@ -116,17 +116,20 @@ the roof is cut away, so the gold field itself becomes the sky; the bottom melts
   blurred, in screen mode.
 * Confetti: `particles.js` with `shape=rect`, three golds, `jitter=180`, placed above the
   photo so the flecks fly in front of the singers.
-* Slanted photo: a `shape path` polygon is drawn first and the photo is clipped to it
+* Slanted photo: a black `shape path` polygon is drawn first and the photo is clipped to it
   (`layer clip`); sepia by `adjust gradient-map`.
-* **T-photo-fade** to black, ramp 78 to 90% H.
-* Wavy headline: the original letters follow a flag wave. The recipe leans line 1 with
-  `transform skew` and squeezes line 2 into a wedge with `transform perspective`. A true
-  wave needs `transform warp` with a points file.
+* **T-photo-fade** to black: a gradient mask on the photo (`mask add --gradient linear`,
+  whole at 78% H, gone at 90% H) lets the black polygon under it show.
+* Wavy headline: **T-warp-type**. Line 1 is `--warp flag --bend=-15`, a flag wave that ends
+  high at the right. Line 2 is `--warp rise --bend 12 --h-distort=-20`, a wedge that is
+  taller at the left and rises to the right. Both lines stay live text.
 * **T-label-box** pills with a vertical gold gradient (`fx overlay`) and a pale stroke for
   the glassy look.
-* **T-paper-grain**, amount 10, soft-light 35%.
-* **T-warp-type** in [techniques.md](../techniques.md) is the tested library version of the growing, rising, or wedge-warped headline; start from it when reusing this idea.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8.
+* **T-fit-width**: both headline lines are set to exact widths with `--fit-width` (740 and
+  494 px).
+* Map pin: a contact icon from **T-icon-row**, `shape icon map-pin` with `--fill` in the
+  line color so it reads as a solid pin.
 
 ## 8. Hierarchy and eye path
 
@@ -150,51 +153,43 @@ pixelox render js scripts/particles.js -o confetti.png --size 1080x1440 --seed 1
 pixelox new -o concert.pxo --size 1080x1440 --fill '#d97f07'
 pixelox layer add concert.pxo --in-place --name Glow
 pixelox fill gradient concert.pxo --in-place --layer Glow --kind radial --from 50%,30% --to 50%,100% --stops '#fff6dcff@0,#f6cf7cff@0.42,#de8c2c00@1'
-pixelox shape path concert.pxo --in-place --name Roof --d 'M 0 806 L 1080 994 L 1080 1440 L 0 1440 Z' --fill '#1a120c'
+pixelox shape path concert.pxo --in-place --name Roof --d 'M 0 806 L 1080 994 L 1080 1440 L 0 1440 Z' --fill '#000000'
 pixelox comp place concert.pxo photo.png --in-place --as Stage --size 1080x --at 50%,100% --anchor b
 pixelox layer clip concert.pxo --in-place --layer Stage
 pixelox adjust gradient-map concert.pxo --in-place --layer Stage --stops '#120b07@0,#8c6f5c@0.5,#f6ecd9@1'
-pixelox layer add concert.pxo --in-place --name Fade
-pixelox fill gradient concert.pxo --in-place --layer Fade --from 0,78% --to 0,90% --stops '#00000000@0,#000000ff@1'
+pixelox mask add concert.pxo --in-place --layer Stage --gradient linear --from 0,78% --to 0,90%
 pixelox comp place concert.pxo shafts.png --in-place --as Shafts --fit cover
 pixelox filter gaussian concert.pxo --in-place --layer Shafts --sigma 7
 pixelox layer blend concert.pxo --in-place --layer Shafts --mode screen
 pixelox comp place concert.pxo confetti.png --in-place --as Confetti --fit cover
 pixelox comp place concert.pxo logo.png --in-place --as Logo --size 78x --at 38.5%,5% --anchor c
-pixelox text add concert.pxo --in-place --name Org --content $'Riverside Chapel\nHouse Of Grace' --font "Avenir Next" --weight 500 --size 1.7% --leading 125% --color '#ffffff' --at 44%,5% --anchor l
-pixelox text add concert.pxo --in-place --name LeadIn --content "Presents" --font "Snell Roundhand" --weight 900 --size 3.3% --color '#651209' --at 50%,14.3% --anchor c
-pixelox text add concert.pxo --in-place --name H1 --content "HARVEST" --font Impact --size 10% --tracking -10 --color '#662802'
-pixelox transform scale concert.pxo --in-place --layer H1 --size 740x
-pixelox transform move concert.pxo --in-place --layer H1 --to 49%,16.8% --anchor t
-pixelox transform skew concert.pxo --in-place --layer H1 --y -2.5
-pixelox text add concert.pxo --in-place --name H2 --content "JUBILEE" --font Impact --size 10% --tracking -10 --color '#662802'
-pixelox transform perspective concert.pxo --in-place --layer H2 --quad '178,442 672,448 672,584 178,606'
-pixelox text add concert.pxo --in-place --name Edition --content "31" --font Impact --size 13.5% --color '#9f3f04' --at 83.5%,28% --anchor tr
-pixelox text add concert.pxo --in-place --name Theme --content "Theme: A New Song Rising" --font Copperplate --weight 700 --size 2.4% --color '#651209' --at 50%,42.9% --anchor c
+pixelox text add concert.pxo --in-place --name Org --content $'Riverside Chapel\nHouse Of Grace' --font @geometric-sans --weight 500 --size 1.7% --leading 125% --color '#ffffff' --at 44%,5% --anchor l
+pixelox text add concert.pxo --in-place --name LeadIn --content "Presents" --font @script-formal --weight 900 --size 3.3% --color '#651209' --at 50%,14.3% --anchor c
+pixelox text add concert.pxo --in-place --name H1 --content "HARVEST" --font @condensed-heavy --fit-width 740 --tracking -10 --color '#662802' --at 49%,16.3% --anchor t --anchor-to ink --warp flag --bend=-15
+pixelox text add concert.pxo --in-place --name H2 --content "JUBILEE" --font @condensed-heavy --fit-width 494 --tracking -10 --color '#662802' --at 16.5%,31% --anchor tl --anchor-to ink --warp rise --bend 12 --h-distort=-20
+pixelox text add concert.pxo --in-place --name Edition --content "31" --font @condensed-heavy --size 13.5% --color '#9f3f04' --at 83.5%,28% --anchor tr
+pixelox text add concert.pxo --in-place --name Theme --content "Theme: A New Song Rising" --font @engraved --weight 700 --size 2.4% --color '#651209' --at 50%,42.9% --anchor c
 pixelox shape line concert.pxo --in-place --name Axis --from 50.8%,46% --to 50.8%,61% --stroke '#651209' --stroke-width 1
 pixelox shape rect concert.pxo --in-place --name PillL --rect 9.5%,50.6%,20%x4.8% --radius 34 --fill '#e9b64f' --stroke '#fff1c2' --stroke-width 3
 pixelox fx overlay concert.pxo --in-place --layer PillL --stops '#d38f22@0,#f7dc9a@0.55,#e2a53a@1' --angle 90
 pixelox shape rect concert.pxo --in-place --name PillR --rect 70.5%,50.6%,20%x4.8% --radius 34 --fill '#e9b64f' --stroke '#fff1c2' --stroke-width 3
 pixelox fx copy concert.pxo --in-place --from PillL --to PillR
-pixelox text add concert.pxo --in-place --name PillLText --content "SEE YOU ON" --font "Avenir Next" --weight 500 --size 2.1% --tracking 20 --color '#ffffff' --at 19.5%,53% --anchor c
-pixelox text add concert.pxo --in-place --name PillRText --content "SUNDAY" --font "Avenir Next" --weight 500 --size 2.1% --tracking 20 --color '#ffffff' --at 80.5%,53% --anchor c
-pixelox text add concert.pxo --in-place --name Date --content $'4TH\nOCT.' --font Impact --size 5% --leading 104% --align center --color '#651209' --at 38%,53.3% --anchor c
+pixelox text add concert.pxo --in-place --name PillLText --content "SEE YOU ON" --font @geometric-sans --weight 500 --size 2.1% --tracking 20 --color '#ffffff' --at 19.5%,53% --anchor c
+pixelox text add concert.pxo --in-place --name PillRText --content "SUNDAY" --font @geometric-sans --weight 500 --size 2.1% --tracking 20 --color '#ffffff' --at 80.5%,53% --anchor c
+pixelox text add concert.pxo --in-place --name Date --content $'4TH\nOCT.' --font @condensed-heavy --size 5% --leading 104% --align center --color '#651209' --at 38%,53.3% --anchor c
 pixelox shape ellipse concert.pxo --in-place --name Ring --rect 46.9%,50.1%,7.8%x5.85% --fill '#f7e3b4' --stroke '#8a1f0e' --stroke-width 2
-pixelox text add concert.pxo --in-place --name At --content "@" --font "Avenir Next" --weight 700 --size 3.2% --color '#8a1f0e' --at 50.8%,52.8% --anchor c
-pixelox text add concert.pxo --in-place --name Time --content $'9AM\nGMT' --font Impact --size 5% --leading 104% --align center --color '#8f3208' --at 63%,53.3% --anchor c
-pixelox shape path concert.pxo --in-place --name Pin --d 'M 363 1298 L 329 1247 A 40 40 0 1 1 397 1247 Z M 363 1212 A 15 15 0 1 0 363 1242 A 15 15 0 1 0 363 1212 Z' --fill '#ffffff' --fill-rule evenodd
-pixelox text add concert.pxo --in-place --name Address --content $'Church Premises\n12 Example Avenue\nEast Side, Your City' --font "Avenir Next" --weight 500 --size 2.1% --leading 118% --color '#ffffff' --at 39.2%,88.5% --anchor l
-pixelox text add concert.pxo --in-place --name Tagline --content "BRING A FRIEND AND LIFT YOUR VOICE" --font "Avenir Next" --weight 500 --size 1.8% --tracking 20 --color '#d9d9d9' --at 50%,96.8% --anchor c
-pixelox layer add concert.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise concert.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend concert.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity concert.pxo --in-place --layer Grain --value 35
+pixelox text add concert.pxo --in-place --name At --content "@" --font @geometric-sans --weight 700 --size 3.2% --color '#8a1f0e' --at 50.8%,52.8% --anchor c
+pixelox text add concert.pxo --in-place --name Time --content $'9AM\nGMT' --font @condensed-heavy --size 5% --leading 104% --align center --color '#8f3208' --at 63%,53.3% --anchor c
+pixelox shape icon concert.pxo map-pin --in-place --name Pin --size 120 --at 33.6%,87.6% --anchor c --color '#ffffff' --fill '#ffffff'
+pixelox text add concert.pxo --in-place --name Address --content $'Church Premises\n12 Example Avenue\nEast Side, Your City' --font @geometric-sans --weight 500 --size 2.1% --leading 118% --color '#ffffff' --at 39.2%,88.5% --anchor l
+pixelox text add concert.pxo --in-place --name Tagline --content "BRING A FRIEND AND LIFT YOUR VOICE" --font @geometric-sans --weight 500 --size 1.8% --tracking 20 --color '#d9d9d9' --at 50%,96.8% --anchor c
+pixelox filter grain concert.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export concert.pxo -o concert.png
 ```
 
 Change first: the two headline words (6 to 8 letters each) and the edition number; then
-the `--quad` of line 2 if your word is much longer or shorter (the four points are the
-corners of the word: top-left, top-right, bottom-right, bottom-left); then the photo.
+the `--fit-width` of line 2 if your word is much longer or shorter (the word, a gap, and
+the number together span 67% W); then the photo.
 
 ## 10. Variations and pairings
 
@@ -219,5 +214,5 @@ corners of the word: top-left, top-right, bottom-right, bottom-left); then the p
   cream glow (the middle 70% of the width) and make the glow bigger if the words are long.
 * Five items in the fact row at five different sizes. Date and time share one size; the
   two pills share one size; the ring is the only odd element.
-* Over-warping the headline until letters are hard to read. Lean or wedge a whole line by
-  2 to 4 degrees; do not distort single letters.
+* Over-warping the headline until letters are hard to read. Keep `--bend` between 10 and
+  20 and `--h-distort` under 25; warp a whole line, never single letters.

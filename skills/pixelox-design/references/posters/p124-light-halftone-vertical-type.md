@@ -116,7 +116,8 @@ frontal, upright cutout makes the layout static.
 * Color cloud (no library technique): `select path` with `--feather 22`, a top-to-bottom
   `fill gradient` through `--mask @sel` on an empty layer, then `layer blend --mode
   dissolve`. Dissolve turns the feathered edge into grain instead of a soft fade, which is
-  what makes it read as spray.
+  what makes it read as spray. The feathered selection is kept on purpose: a blurred
+  `shape path` also fades along the canvas edge, where this cloud must stay solid.
 * Disc: one `shape path` circle written with two arcs so its center can sit 111 px from the
   edge with part of it off-canvas.
 * **T-halftone-portrait**, cell 17 px on a 1080 px canvas (coarser than a portrait would
@@ -150,27 +151,26 @@ pixelox layer add art.pxo --in-place --name Spray
 pixelox fill gradient art.pxo --in-place --layer Spray --from 0,0 --to 0,39% --stops '#da2073@0,#da2073@0.3,#f0503a@0.45,#fa7a14@0.58,#fa8a14@0.8,#ffd83a@0.95' --mask @sel
 pixelox select none art.pxo --in-place
 pixelox layer blend art.pxo --in-place --layer Spray --mode dissolve
-pixelox comp place art.pxo subject.png --in-place --as Subject --size x980 --at 33%,60% --anchor c
+pixelox comp place art.pxo subject.png --in-place --as Subject --size x980 --at 33%+30,60%-150 --anchor c
 pixelox adjust bw art.pxo --in-place --layer Subject
 pixelox adjust levels art.pxo --in-place --layer Subject --in-black 20 --in-white 215
 pixelox filter halftone art.pxo --in-place --layer Subject --cell 17 --angle 45 --ink '#2b2b2b' --paper '#e4e4e4'
 pixelox fx stroke art.pxo --in-place --layer Subject --width 9 --color '#f4f4f4' --position outside
 pixelox transform rotate art.pxo --in-place --layer Subject --degrees 38
-pixelox transform move art.pxo --in-place --layer Subject --by 30,-150
-pixelox text add art.pxo --in-place --name Word1 --content "MAKERS" --font "Avenir Next" --weight 900 --size 13.4% --tracking 20 --color '#000000' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Word1 --content "MAKERS" --font @geometric-sans --weight 900 --size 13.4% --tracking 20 --color '#000000' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Word1 --degrees -90
 pixelox transform move art.pxo --in-place --layer Word1 --to 6%,73% --anchor bl
-pixelox text add art.pxo --in-place --name Word2 --content "LAB" --font "Avenir Next" --weight 900 --size 13.4% --tracking 20 --color '#000000' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Word2 --content "LAB" --font @geometric-sans --weight 900 --size 13.4% --tracking 20 --color '#000000' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Word2 --degrees -90
 pixelox transform move art.pxo --in-place --layer Word2 --to 82.5%,91.5% --anchor bl
-pixelox text add art.pxo --in-place --name Date --content "12.09.2031" --font "Avenir Next" --weight 400 --size 4% --tracking 600 --color '#ef2b47' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Date --content "12.09.2031" --font @geometric-sans --weight 400 --size 4% --tracking 600 --color '#ef2b47' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Date --degrees -90
 pixelox transform move art.pxo --in-place --layer Date --to 24.5%,92.5% --anchor bl
-pixelox text add art.pxo --in-place --name Time --content "18:00" --font "Avenir Next" --weight 400 --size 4% --tracking 600 --color '#ef2b47' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Time --content "18:00" --font @geometric-sans --weight 400 --size 4% --tracking 600 --color '#ef2b47' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Time --degrees -90
 pixelox transform move art.pxo --in-place --layer Time --to 34%,92.5% --anchor bl
-pixelox text add art.pxo --in-place --name Body --content $'AN OPEN STUDIO FOR PEOPLE WHO\nBUILD THINGS BY HAND: PRINT,\nCLAY, WOOD, AND CODE.\nBRING A PROJECT OR START ONE.\nALL TOOLS PROVIDED.' --font "Avenir Next Condensed" --weight 600 --size 1.35% --leading 106% --tracking 80 --color '#2f2f2f' --at 41%,85.5% --anchor tl
-pixelox text add art.pxo --in-place --name Side --content $'SATURDAY WORKSHOPS RUN ALL DAY,\nSIX TABLES, TWELVE SEATS EACH,\nNO BOOKING NEEDED BEFORE NOON.\nCOFFEE AND A SHARED LUNCH\nARE ON THE HOUSE.' --font "Avenir Next Condensed" --weight 600 --size 2% --leading 108% --tracking 60 --color '#2f2f2f' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Body --content $'AN OPEN STUDIO FOR PEOPLE WHO\nBUILD THINGS BY HAND: PRINT,\nCLAY, WOOD, AND CODE.\nBRING A PROJECT OR START ONE.\nALL TOOLS PROVIDED.' --font @condensed --weight 600 --size 1.35% --leading 106% --tracking 80 --color '#2f2f2f' --at 41%,85.5% --anchor tl
+pixelox text add art.pxo --in-place --name Side --content $'SATURDAY WORKSHOPS RUN ALL DAY,\nSIX TABLES, TWELVE SEATS EACH,\nNO BOOKING NEEDED BEFORE NOON.\nCOFFEE AND A SHARED LUNCH\nARE ON THE HOUSE.' --font @condensed --weight 600 --size 2% --leading 108% --tracking 60 --color '#2f2f2f' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Side --degrees -90
 pixelox transform move art.pxo --in-place --layer Side --to 81%,60% --anchor bl
 pixelox export art.pxo -o art.png
@@ -179,7 +179,7 @@ pixelox export art.pxo -o art.png
 Change first: the two words (word one 57 to 62% H long, word two under 28% H so it stays
 below the side note), then the cutout and its angle, then the cloud's four colors. The
 cloud path is in canvas pixels: its point (`612 558`) should touch the tip of the subject,
-so move the subject to it, not the reverse.
+so move the subject to it (the px offsets in its `--at 33%+30,60%-150`), not the reverse.
 
 ## 10. Variations and pairings
 
@@ -192,7 +192,7 @@ so move the subject to it, not the reverse.
 * Square post: drop the side note and the time, keep word one on the left edge and word two
   along the bottom, unrotated.
 * Suits open studios, design fairs, workshops, zine and print fairs, student shows. Pairs
-  with T-paper-grain (amount 20, overlay 40%) for a printed feel and with T-torn-collage
+  with T-paper-grain (amount 20) for a printed feel and with T-torn-collage
   when the cutout should look torn, not cut.
 
 ## 11. Pitfalls

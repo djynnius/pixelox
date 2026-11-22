@@ -7,7 +7,7 @@ style: [gradient-mesh, geometric, flat]
 format: portrait-4x5
 archetype: A-abstract-title
 palette: ['#3a1c5b', '#28c4f4', '#f6921f', '#ec2781', '#fcc02c', '#ffffff']
-techniques: [T-geo-shapes, T-rules, T-vertical-type]
+techniques: [T-geo-shapes, T-rules, T-vertical-type, T-icon-row]
 needs: nothing
 ---
 
@@ -110,11 +110,15 @@ Small satellite discs repeat the same gradients at 5 to 10% of the size.
 * **T-geo-shapes**: discs are `shape path` circles (two arcs), so their centers can lie
   off the canvas. Gradient: `fx overlay --stops ... --angle N` (0 = left to right, 90 =
   bottom to top, 45 = lower left to upper right, 315 = upper left to lower right).
-* Ground blobs: `clouds.js` with `scale=1.6`, `octaves=2`, `contrast=3.5` between the two
-  purples gives large two-tone organic shapes; blur sigma 6 to soften the edges.
+* Ground blobs: one `fill noise --as-layer` line with `--scale 62%`, `--octaves 2`,
+  `--contrast 51` between the two purples gives large two-tone organic shapes with soft
+  edges.
 * **T-rules**: two 3 px rules, one thin line after the day number, and dotted runs made
   with `shape line --dash 0,46 --cap round` (the stroke width is the dot size).
 * **T-vertical-type** for the caption on the left edge.
+* **T-icon-row**, contact variant: three 24 px white `shape icon` glyphs (`at-sign`,
+  `globe`, `message-circle`) after "MORE INFO :". The set has no social-network logos;
+  these neutral glyphs stand in for them.
 * No grain, no shadows; the gradients carry the depth.
 
 ## 8. Hierarchy and eye path
@@ -132,10 +136,8 @@ vertical caption (lower left), spreading attention along one diagonal.
 Nothing to supply. Canvas 1080x1350.
 
 ```bash
-pixelox render js scripts/clouds.js -o tone.png --size 1080x1350 --seed 5 --param lo='#3a1c5b' --param hi='#392970' --param scale=1.6 --param octaves=2 --param warp=0.8 --param contrast=3.5
 pixelox new -o night.pxo --size 1080x1350 --fill '#3a1c5b'
-pixelox comp place night.pxo tone.png --in-place --as Tone --fit cover
-pixelox filter gaussian night.pxo --in-place --layer Tone --sigma 6
+pixelox fill noise night.pxo --in-place --as-layer --name Tone --seed 5 --scale 62% --octaves 2 --warp 32 --contrast 51 --stops '#3a1c5b,#392970'
 pixelox shape path night.pxo --in-place --name DiscA --d 'M -123 90 A 270 270 0 1 1 417 90 A 270 270 0 1 1 -123 90 Z' --fill '#ec2781'
 pixelox fx overlay night.pxo --in-place --layer DiscA --stops '#ec2781@0,#ec2781@0.45,#f7a45a@0.75,#f9d884@1' --angle 315
 pixelox shape path night.pxo --in-place --name DiscB --d 'M 444 382 A 358 358 0 1 1 1160 382 A 358 358 0 1 1 444 382 Z' --fill '#28c4f4'
@@ -150,28 +152,25 @@ pixelox shape path night.pxo --in-place --name CoolDots --d 'M 1012 790 A 25 25 
 pixelox fx overlay night.pxo --in-place --layer CoolDots --stops '#8bd1d3@0,#28c4f4@0.5,#188dc4@1' --angle 45
 pixelox shape line night.pxo --in-place --name DotsV --from 92.3%,9.4% --to 92.3%,40% --stroke '#ffffff' --stroke-width 6 --dash 0,46 --cap round
 pixelox shape line night.pxo --in-place --name DotsH --from 12.9%,94.7% --to 52%,94.7% --stroke '#ffffff' --stroke-width 6 --dash 0,46 --cap round
-pixelox text add night.pxo --in-place --name Day --content "14" --font Avenir --weight 300 --size 9.3% --color '#ffffff'
-pixelox transform move night.pxo --in-place --layer Day --to 7.9%,6.1% --anchor tl
+pixelox text add night.pxo --in-place --name Day --content "14" --font Avenir --weight 300 --size 9.3% --color '#ffffff' --at 7.9%,6.1% --anchor tl --anchor-to ink
 pixelox shape line night.pxo --in-place --name DayLine --from 28.3%,8.9% --to 53.1%,8.9% --stroke '#ffffff' --stroke-width 2
-pixelox text add night.pxo --in-place --name Month --content "OCTOBER" --font "Avenir Next" --weight 700 --size 4% --color '#ffffff' --at 7.9%,17.2% --anchor l
-pixelox text add night.pxo --in-place --name DateNote --content "One night, four rooms" --font "Avenir Next" --weight 400 --size 1.4% --tracking 100 --color '#ffffff' --at 7.9%,20.6% --anchor l
-pixelox text add night.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 400 --size 1.4% --tracking 250 --color '#ffffff' --at 92.4%,5.1% --anchor r
-pixelox text add night.pxo --in-place --name DayName --content "SUNDAY" --font "Avenir Next" --weight 500 --size 4.3% --tracking 60 --color '#ffffff' --at 86%,22.4% --anchor r
-pixelox text add night.pxo --in-place --name Time --content "21.00 - 03.00" --font "Avenir Next" --weight 500 --size 2.9% --tracking 40 --color '#ffffff' --at 86%,27% --anchor r
+pixelox text add night.pxo --in-place --name Month --content "OCTOBER" --font @geometric-sans --weight 700 --size 4% --color '#ffffff' --at 7.9%,17.2% --anchor l
+pixelox text add night.pxo --in-place --name DateNote --content "One night, four rooms" --font @geometric-sans --weight 400 --size 1.4% --tracking 100 --color '#ffffff' --at 7.9%,20.6% --anchor l
+pixelox text add night.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 400 --size 1.4% --tracking 250 --color '#ffffff' --at 92.4%,5.1% --anchor r
+pixelox text add night.pxo --in-place --name DayName --content "SUNDAY" --font @geometric-sans --weight 500 --size 4.3% --tracking 60 --color '#ffffff' --at 86%,22.4% --anchor r
+pixelox text add night.pxo --in-place --name Time --content "21.00 - 03.00" --font @geometric-sans --weight 500 --size 2.9% --tracking 40 --color '#ffffff' --at 86%,27% --anchor r
 pixelox shape line night.pxo --in-place --name RuleTop --from 49.7%,32.7% --to 76.4%,32.7% --stroke '#ffffff' --stroke-width 3
-pixelox text add night.pxo --in-place --name T1 --content "SPEC" --font "Avenir Next" --weight 700 --size 14% --tracking 60 --color '#ffffff'
-pixelox transform scale night.pxo --in-place --layer T1 --size 579x
-pixelox transform move night.pxo --in-place --layer T1 --to 22.9%,36.7% --anchor tl
-pixelox text add night.pxo --in-place --name T2 --content "TRUM" --font "Avenir Next" --weight 700 --size 14% --tracking 60 --color '#ffffff'
-pixelox transform scale night.pxo --in-place --layer T2 --size 579x
-pixelox transform move night.pxo --in-place --layer T2 --to 22.9%,52% --anchor tl
+pixelox text add night.pxo --in-place --name T1 --content "SPEC" --font @geometric-sans --weight 700 --fit-width 579 --tracking 60 --color '#ffffff' --at 22.9%,36.7% --anchor-to ink
+pixelox text add night.pxo --in-place --name T2 --content "TRUM" --font @geometric-sans --weight 700 --fit-width 579 --tracking 60 --color '#ffffff' --at 22.9%,52% --anchor-to ink
 pixelox shape line night.pxo --in-place --name RuleBottom --from 23.6%,67.3% --to 50.3%,67.3% --stroke '#ffffff' --stroke-width 3
-pixelox text add night.pxo --in-place --name Para --content $'Four rooms of light, sound, and moving image,\nbuilt by local artists for a single night.\nCome early for the installations, stay late\nfor the live sets, and bring someone\nwho has never been before.' --font "Avenir Next" --weight 400 --size 1.3% --tracking 30 --leading 170% --align right --color '#ffffff' --at 84%,78.6% --anchor r
-pixelox text add night.pxo --in-place --name Caption --content "light sound image motion" --font "Avenir Next" --weight 400 --size 1.4% --tracking 250 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add night.pxo --in-place --name Para --content $'Four rooms of light, sound, and moving image,\nbuilt by local artists for a single night.\nCome early for the installations, stay late\nfor the live sets, and bring someone\nwho has never been before.' --font @geometric-sans --weight 400 --size 1.3% --tracking 30 --leading 170% --align right --color '#ffffff' --at 84%,78.6% --anchor r
+pixelox text add night.pxo --in-place --name Caption --content "light sound image motion" --font @geometric-sans --weight 400 --size 1.4% --tracking 250 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate night.pxo --in-place --layer Caption --degrees=-90
 pixelox transform move night.pxo --in-place --layer Caption --to 5.2%,82% --anchor bl
-pixelox text add night.pxo --in-place --name More --content "MORE INFO :" --font "Avenir Next" --weight 400 --size 1.4% --tracking 200 --color '#ffffff' --at 62.5%,94.4% --anchor l
-pixelox shape path night.pxo --in-place --name Icons --d 'M 854 1275 A 13 13 0 1 1 880 1275 A 13 13 0 1 1 854 1275 Z M 890 1275 A 13 13 0 1 1 916 1275 A 13 13 0 1 1 890 1275 Z M 926 1275 A 13 13 0 1 1 952 1275 A 13 13 0 1 1 926 1275 Z' --fill none --stroke '#ffffff' --stroke-width 2
+pixelox text add night.pxo --in-place --name More --content "MORE INFO :" --font @geometric-sans --weight 400 --size 1.4% --tracking 200 --color '#ffffff' --at 62.5%,94.4% --anchor l
+pixelox shape icon night.pxo at-sign --in-place --name Icon1 --size 24 --at 867,94.4% --anchor c --color '#ffffff'
+pixelox shape icon night.pxo globe --in-place --name Icon2 --size 24 --at 903,94.4% --anchor c --color '#ffffff'
+pixelox shape icon night.pxo message-circle --in-place --name Icon3 --size 24 --at 939,94.4% --anchor c --color '#ffffff'
 pixelox export night.pxo -o night.png
 ```
 

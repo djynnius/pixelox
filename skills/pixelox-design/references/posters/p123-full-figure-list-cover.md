@@ -113,6 +113,9 @@ an earth or floor tone is enough.
 * **T-rules**: two short 2 px rules (5.9% W long) bracket the kicker and the featured
   name.
 * Floor: a linear gradient from transparent at 74% H to sand `#b9976d` at 92% H.
+* Text column: each stacked block is one `text add` placed by the top-left corner of its
+  visible letters (`--at 6.6%,Y --anchor-to ink`), so every block and both rules share one
+  exact left edge.
 * Nothing else. No shadow, no grain, no gradient on type.
 
 ## 8. Hierarchy and eye path
@@ -137,35 +140,30 @@ credit) or 18 px (credit to the next name); start each line at
 pixelox new -o cover.pxo --size 1080x1440 --fill '#f1f0ec'
 pixelox layer add cover.pxo --in-place --name Floor
 pixelox fill gradient cover.pxo --in-place --layer Floor --from 0,74% --to 0,92% --stops '#b9976d00@0,#b9976dff@1'
-pixelox text add cover.pxo --in-place --name Masthead --content "LENS" --font "Times New Roman" --weight 700 --size 22% --tracking 20 --color '#d4d2ce'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 783x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 50%,9.3% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "LENS" --font "Times New Roman" --weight 700 --fit-width 783 --tracking 20 --color '#d4d2ce' --at 50%,9.3% --anchor t --anchor-to ink
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1160 --at 67%,94.4% --anchor b
 pixelox text add cover.pxo --in-place --name N1 --content "ADA OKAFOR" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 186,5.4% --anchor l
-pixelox text add cover.pxo --in-place --name B1 --content "BY LEO MARCH" --font "Avenir Next Condensed" --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 312,5.4% --anchor l
+pixelox text add cover.pxo --in-place --name B1 --content "BY LEO MARCH" --font @condensed --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 312,5.4% --anchor l
 pixelox text add cover.pxo --in-place --name N2 --content "MEI TANAKA" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 438,5.4% --anchor l
-pixelox text add cover.pxo --in-place --name B2 --content "BY SAM ORTIZ" --font "Avenir Next Condensed" --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 557,5.4% --anchor l
+pixelox text add cover.pxo --in-place --name B2 --content "BY SAM ORTIZ" --font @condensed --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 557,5.4% --anchor l
 pixelox text add cover.pxo --in-place --name N3 --content "IDRIS COLE" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 677,5.4% --anchor l
-pixelox text add cover.pxo --in-place --name B3 --content "BY NORA VALE" --font "Avenir Next Condensed" --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 789,5.4% --anchor l
+pixelox text add cover.pxo --in-place --name B3 --content "BY NORA VALE" --font @condensed --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 789,5.4% --anchor l
 pixelox text add cover.pxo --in-place --name N4 --content "PRIYA ANAND-REYES" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 184,7.3% --anchor l
-pixelox text add cover.pxo --in-place --name B4 --content "BY TOM ELLERY" --font "Avenir Next Condensed" --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 384,7.3% --anchor l
+pixelox text add cover.pxo --in-place --name B4 --content "BY TOM ELLERY" --font @condensed --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 384,7.3% --anchor l
 pixelox text add cover.pxo --in-place --name N5 --content "JONAS WEBER" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 514,7.3% --anchor l
-pixelox text add cover.pxo --in-place --name B5 --content "BY ROSA ITURBE" --font "Avenir Next Condensed" --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 655,7.3% --anchor l
+pixelox text add cover.pxo --in-place --name B5 --content "BY ROSA ITURBE" --font @condensed --weight 500 --size 1.15% --tracking 110 --color '#111111' --at 655,7.3% --anchor l
 pixelox text add cover.pxo --in-place --name More --content "+ 94 MORE" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 60 --color '#111111' --at 793,7.3% --anchor l
-pixelox text add cover.pxo --in-place --name ListGold --content $'THE\n50' --font "DIN Condensed" --weight 700 --size 6.7% --leading 84% --color '#e2a93b'
-pixelox transform move cover.pxo --in-place --layer ListGold --to 6.6%,31.1% --anchor tl
-pixelox text add cover.pxo --in-place --name ListBlack --content $'MOST\nINVENTIVE\nMAKERS' --font "DIN Condensed" --weight 700 --size 6.7% --leading 84% --color '#111111'
-pixelox transform move cover.pxo --in-place --layer ListBlack --to 6.6%,42.3% --anchor tl
+pixelox text add cover.pxo --in-place --name ListGold --content $'THE\n50' --font "DIN Condensed" --weight 700 --size 6.7% --leading 84% --color '#e2a93b' --at 6.6%,31.1% --anchor-to ink
+pixelox text add cover.pxo --in-place --name ListBlack --content $'MOST\nINVENTIVE\nMAKERS' --font "DIN Condensed" --weight 700 --size 6.7% --leading 84% --color '#111111' --at 6.6%,42.3% --anchor-to ink
 pixelox shape line cover.pxo --in-place --name Rule1 --from 6.6%,59.5% --to 12.5%,59.5% --stroke '#111111' --stroke-width 2
-pixelox text add cover.pxo --in-place --name Kicker --content "TEXTILE PIONEER" --font "Avenir Next Condensed" --weight 500 --size 1.65% --tracking 110 --color '#111111' --at 6.6%,61.6% --anchor l
-pixelox text add cover.pxo --in-place --name Name --content $'AMARA DIALLO\nBENSON' --font "DIN Condensed" --weight 700 --size 4.4% --leading 86% --color '#111111'
-pixelox transform move cover.pxo --in-place --layer Name --to 6.6%,63.2% --anchor tl
+pixelox text add cover.pxo --in-place --name Kicker --content "TEXTILE PIONEER" --font @condensed --weight 500 --size 1.65% --tracking 110 --color '#111111' --at 6.6%,61.6% --anchor l
+pixelox text add cover.pxo --in-place --name Name --content $'AMARA DIALLO\nBENSON' --font "DIN Condensed" --weight 700 --size 4.4% --leading 86% --color '#111111' --at 6.6%,63.2% --anchor-to ink
 pixelox shape line cover.pxo --in-place --name Rule2 --from 6.6%,71.3% --to 12.5%,71.3% --stroke '#111111' --stroke-width 2
-pixelox text add cover.pxo --in-place --name Byline --content "BY KOFI A. MENSAH" --font "Avenir Next Condensed" --weight 500 --size 1.5% --tracking 110 --color '#111111' --at 6.6%,73.1% --anchor l
+pixelox text add cover.pxo --in-place --name Byline --content "BY KOFI A. MENSAH" --font @condensed --weight 500 --size 1.5% --tracking 110 --color '#111111' --at 6.6%,73.1% --anchor l
 pixelox shape path cover.pxo --in-place --name Frame --d 'M 0 0 H 1080 V 1440 H 0 Z M 48 48 H 1032 V 1392 H 48 Z' --fill-rule evenodd --fill '#f22929'
-pixelox text add cover.pxo --in-place --name IssueNote --content "SPECIAL ISSUE" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 4.5%,2.4% --anchor l
-pixelox text add cover.pxo --in-place --name IssueDate --content "OCT. 6 / OCT. 13, 2031" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 95.5%,2.4% --anchor r
-pixelox text add cover.pxo --in-place --name Site --content "example.com" --font "Helvetica Neue" --weight 700 --size 0.8% --tracking 140 --color '#1a0505' --at 95.5%,97.7% --anchor r
+pixelox text add cover.pxo --in-place --name IssueNote --content "SPECIAL ISSUE" --font @neo-grotesque --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 4.5%,2.4% --anchor l
+pixelox text add cover.pxo --in-place --name IssueDate --content "OCT. 6 / OCT. 13, 2031" --font @neo-grotesque --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 95.5%,2.4% --anchor r
+pixelox text add cover.pxo --in-place --name Site --content "example.com" --font @neo-grotesque --weight 700 --size 0.8% --tracking 140 --color '#1a0505' --at 95.5%,97.7% --anchor r
 pixelox export cover.pxo -o cover.png
 ```
 

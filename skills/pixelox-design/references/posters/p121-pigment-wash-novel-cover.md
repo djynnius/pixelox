@@ -55,7 +55,7 @@ through the letters. Thin type plus heavy color is the contrast that carries it.
    soft shadow, in front of the wings.
 8. Ink ribbon, upper copy at 40% opacity, in front of the title.
 9. Tagline: white, centered at 66%, 85.3%.
-10. Grain: coarse monochrome noise in overlay mode over everything.
+10. Grain: coarse monochrome grain over everything.
 
 ## 4. Palette
 
@@ -101,15 +101,15 @@ subjects: a butterfly or moth, a small bird, a flower, a leaf, a paper boat.
 
 * **T-gradient-mesh** blobs with fixed `at` positions, blurred (sigma 50), laid over a
   7-stop linear wash: the stains.
-* **T-grunge** mottle only (no specks or scratches): `clouds.js` scale 4, octaves 6,
-  contrast 1.5, overlay at 55%.
+* **T-grunge** mottle only (no specks or scratches): one `fill noise --as-layer` line
+  (`--scale 25%`, dark violet to cream), overlay at 55%.
 * **T-smoke** as the live `fx smoke` style: drift 235 (down-left), height 170%, density
   95, a near-black tinted toward the ground's darkest hue.
 * **T-text-behind-subject** by duplication: ribbon under the title at 100%, the same
-  ribbon over the title at 40%.
+  ribbon copied over the title (`layer dup --above Title`) at 40%.
 * Title finish: bottom-to-top `fx overlay` from light gray to white, `fx drop-shadow`
   offset 2,4, blur 8, opacity 45.
-* **T-paper-grain**: amount 24, overlay, 45%.
+* **T-paper-grain**: `filter grain --as-layer --amount 25`, coarse enough to see.
 
 ## 8. Hierarchy and eye path
 
@@ -129,42 +129,33 @@ change of hue; for the green-to-red original use the stops in section 3.
 
 ```bash
 pixelox render js scripts/blobs.js -o stains.png --size 1080x1620 --seed 9 --param bg=transparent --param colors='#f08a3c,#e9703a,#2f6fb0,#3a2f7a,#8a2f6a,#4a58a8,#2a1e3c' --param at='0.03,0.95;0.08,0.8;0.92,0.03;0.97,0.26;0.02,0.46;0.1,0.14;0.44,0.47' --param size=0.36 --param vary=0.2 --param alpha=0.9
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1620 --seed 41 --param lo='#1c1830' --param hi='#fff0e6' --param scale=4 --param octaves=6 --param warp=0.9 --param contrast=1.5
 pixelox new -o cover.pxo --size 1080x1620 --fill '#b0306a'
 pixelox layer add cover.pxo --in-place --name Wash
 pixelox fill gradient cover.pxo --in-place --layer Wash --from 0,0 --to 0,100% --stops '#2c64b8@0,#3a4ea8@0.12,#51409a@0.27,#74357f@0.42,#a42f6c@0.55,#c8345a@0.82,#e0603a@1'
 pixelox comp place cover.pxo stains.png --in-place --as Stains --fit cover
 pixelox filter gaussian cover.pxo --in-place --layer Stains --sigma 50
-pixelox comp place cover.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend cover.pxo --in-place --layer Mottle --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Mottle --value 55
+pixelox fill noise cover.pxo --in-place --as-layer --name Mottle --seed 41 --scale 25% --warp 36 --contrast 8 --stops '#1c1830,#fff0e6' --blend overlay --opacity 55
 pixelox layer add cover.pxo --in-place --name Ribbon
 pixelox paint stroke cover.pxo --in-place --layer Ribbon --d 'M 800 870 C 660 880 560 1010 440 1070 S 230 1200 215 1380 S 380 1480 590 1390' --size 34 --hardness 85 --spacing 4 --taper 15%,45% --color '#15122a'
 pixelox comp place cover.pxo illustration.png --in-place --as Art --size 620x --at 77%,39% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Art --degrees -24
 pixelox fx smoke cover.pxo --in-place --layer Art --height 170% --density 95 --turbulence 75 --drift 235 --color '#120f24' --variant 11
-pixelox text add cover.pxo --in-place --name Author --content "MARGOT ELLERY" --font Avenir --weight 300 --size 4.2% --tracking 160 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Author --size 724x
-pixelox transform move cover.pxo --in-place --layer Author --to 51%,9.5% --anchor t
-pixelox text add cover.pxo --in-place --name Title --content $'ALL\nTHAT\nLINGERS' --font Avenir --weight 300 --size 13.2% --leading 104.5% --tracking 50 --align center --color '#ffffff'
-pixelox transform move cover.pxo --in-place --layer Title --to 51%,25.3% --anchor t
+pixelox text add cover.pxo --in-place --name Author --content "MARGOT ELLERY" --font Avenir --weight 300 --fit-width 724 --tracking 160 --color '#ffffff' --at 51%,9.5% --anchor t --anchor-to ink
+pixelox text add cover.pxo --in-place --name Title --content $'ALL\nTHAT\nLINGERS' --font Avenir --weight 300 --size 13.2% --leading 104.5% --tracking 50 --align center --color '#ffffff' --at 51%,25.3% --anchor t --anchor-to ink
 pixelox fx overlay cover.pxo --in-place --layer Title --stops '#d6d0e0@0,#ffffff@0.55' --angle 90
 pixelox fx drop-shadow cover.pxo --in-place --layer Title --offset 2,4 --blur 8 --opacity 45
-pixelox layer dup cover.pxo --in-place --layer Ribbon --name RibbonOver
-pixelox layer reorder cover.pxo --in-place --layer RibbonOver --above Title
+pixelox layer dup cover.pxo --in-place --layer Ribbon --name RibbonOver --above Title
 pixelox layer opacity cover.pxo --in-place --layer RibbonOver --value 40
 pixelox text add cover.pxo --in-place --name Tag --content "A NOVEL" --font Avenir --weight 500 --size 1.85% --tracking 260 --color '#ffffff' --at 66%,85.3% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 24 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 45
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 25
 pixelox export cover.pxo -o cover.png
 ```
 
 Change first: the wash stops (keep seven stops, cool at the top, hot at the bottom, the
 break between 40 and 55%), then the title words, then the ribbon path. `--size 13.2%`
 gives the 9.5% cap height in Avenir; the font's own letter widths decide the line widths,
-so check that the longest line stays under 83% W.
+so check that the longest line stays under 83% W (or replace `--size 13.2%` with
+`--fit-width 890`).
 
 ## 10. Variations and pairings
 

@@ -107,10 +107,11 @@ column works better.
 ## 7. Effects and textures
 
 * **T-mono-on-color** on black: preset `high-contrast-red`, levels 30 / 215, gamma 0.9.
-* **T-photo-fade**: ground color over the subject, alpha 0 at 58% H to 100% at 82% H.
+* **T-photo-fade**: a gradient mask on the subject (`mask add --gradient linear`), whole
+  at 58% H and gone at 82% H, so the ground shows through the legs.
 * Haze (a reduced **T-smoke**): two blurred gray blobs at the left and right edges at
-  60% opacity, with a cloud render clipped to them in multiply so the glow breaks into
-  dust.
+  60% opacity, with a `fill noise` cloud layer clipped to them in multiply so the glow
+  breaks into dust.
 * Stripes: `shape path` open lines, stroke 26 px, butt caps, miter join, starting and
   ending 20 px outside the canvas so the ends are cut by the edge.
 * **T-label-box**: two-part tag; the dark half is a path with an arrow point, laid over a
@@ -137,48 +138,40 @@ wrists, or shoes, or delete them.
 
 ```bash
 pixelox render js scripts/blobs.js -o haze.png --size 1080x1620 --param bg=transparent --param colors='#8c8c8c,#6e6e6e' --param at='0.14,0.47;0.92,0.74' --param size=0.34 --param vary=0 --param alpha=0.55
-pixelox render js scripts/clouds.js -o dust.png --size 1080x1620 --seed 8 --param lo='#000000' --param hi='#ffffff' --param scale=5 --param octaves=5 --param warp=1.2 --param contrast=1.6 --param res=2
 pixelox new -o club.pxo --size 1080x1620 --fill '#07050a'
 pixelox comp place club.pxo haze.png --in-place --as Haze --fit cover
 pixelox layer opacity club.pxo --in-place --layer Haze --value 60
-pixelox comp place club.pxo dust.png --in-place --as Dust --fit cover
+pixelox fill noise club.pxo --in-place --as-layer --name Dust --seed 8 --scale 20% --octaves 5 --warp 48 --contrast 10 --stops '#000000,#ffffff' --blend multiply
 pixelox layer clip club.pxo --in-place --layer Dust
-pixelox layer blend club.pxo --in-place --layer Dust --mode multiply
 pixelox shape path club.pxo --in-place --name Chevron --d 'M -20 653 L 228 748 L 1100 496' --fill none --stroke '#c2ea0b' --stroke-width 26
 pixelox comp place club.pxo subject.png --in-place --as Subject --size x1250 --at 79%,12.5% --anchor t
 pixelox adjust bw club.pxo --in-place --layer Subject --preset high-contrast-red
 pixelox adjust levels club.pxo --in-place --layer Subject --in-black 30 --in-white 215 --gamma 0.9
-pixelox layer add club.pxo --in-place --name Fade
-pixelox fill gradient club.pxo --in-place --layer Fade --from 0,58% --to 0,82% --stops '#07050a00@0,#07050aff@1'
+pixelox mask add club.pxo --in-place --layer Subject --gradient linear --from 0,58% --to 0,82%
 pixelox shape path club.pxo --in-place --name BandLeft --d 'M 743 1000 L 795 950 L 815 972 L 763 1022 Z' --fill '#c2ea0b'
 pixelox shape path club.pxo --in-place --name BandRight --d 'M 1040 948 L 1080 982 L 1080 1040 L 1022 970 Z' --fill '#c2ea0b'
 pixelox shape path club.pxo --in-place --name Stripe --d 'M -20 1438 L 1100 1254' --fill none --stroke '#c2ea0b' --stroke-width 26
-pixelox text add club.pxo --in-place --name ClubName --content "KINETIC RUN CLUB" --font "Avenir Next" --weight 700 --size 0.8% --tracking 60 --color '#ffffff' --at 8.2%,4.8% --anchor l
+pixelox text add club.pxo --in-place --name ClubName --content "KINETIC RUN CLUB" --font @geometric-sans --weight 700 --size 0.8% --tracking 60 --color '#ffffff' --at 8.2%,4.8% --anchor l
 pixelox shape line club.pxo --in-place --name LogoRule --from 8.2%,6.3% --to 26.2%,6.3% --stroke '#ffffff' --stroke-width 4
-pixelox text add club.pxo --in-place --name Monogram --content "KRC" --font "Avenir Next" --weight 700 --size 7% --tracking 20 --color '#ffffff'
-pixelox transform scale club.pxo --in-place --layer Monogram --size 192x
-pixelox transform move club.pxo --in-place --layer Monogram --to 8.3%,7.5% --anchor tl
+pixelox text add club.pxo --in-place --name Monogram --content "KRC" --font @geometric-sans --weight 700 --fit-width 192 --tracking 20 --color '#ffffff' --at 8.3%,7.5% --anchor-to ink
 pixelox shape path club.pxo --in-place --name LogoChevron --d 'M 89 224 L 186 262 L 283 224' --fill none --stroke '#ffffff' --stroke-width 9
-pixelox text add club.pxo --in-place --name Headline --content $'RAISING\nFASTER, CALMER,\nINJURY-PROOF\nRUNNERS' --font "Avenir Next Condensed" --weight 700 --size 5.1% --leading 100% --tracking 10 --color '#ffffff'
-pixelox transform move club.pxo --in-place --layer Headline --to 7.8%,21.2% --anchor tl
-pixelox text add club.pxo --in-place --name Body1 --content $'A first-of-its-kind membership,\nthe Kinetic Run Club brings\ntogether the people who keep\nyou moving: our in-house' --font "Avenir Next" --weight 400 --size 1.95% --leading 140% --color '#cfcfcf' --at 7.4%,50.9% --anchor tl
-pixelox text add club.pxo --in-place --name Body2 --content $'Physios, Strength Coaches\nand Recovery Therapists' --font "Avenir Next" --weight 700 --size 1.95% --leading 140% --color '#ffffff' --at 7.4%,61.9% --anchor tl
-pixelox text add club.pxo --in-place --name Body3 --content $'in one plan built around you,\nfrom your first easy mile to\nrace day, with movement, rest\nand repair in balance.' --font "Avenir Next" --weight 400 --size 1.95% --leading 140% --color '#cfcfcf' --at 7.4%,67.3% --anchor tl
+pixelox text add club.pxo --in-place --name Headline --content $'RAISING\nFASTER, CALMER,\nINJURY-PROOF\nRUNNERS' --font @condensed --weight 700 --size 5.1% --leading 100% --tracking 10 --color '#ffffff' --at 7.8%,21.2% --anchor tl --anchor-to ink
+pixelox text add club.pxo --in-place --name Body1 --content $'A first-of-its-kind membership,\nthe Kinetic Run Club brings\ntogether the people who keep\nyou moving: our in-house' --font @geometric-sans --weight 400 --size 1.95% --leading 140% --color '#cfcfcf' --at 7.4%,50.9% --anchor tl
+pixelox text add club.pxo --in-place --name Body2 --content $'Physios, Strength Coaches\nand Recovery Therapists' --font @geometric-sans --weight 700 --size 1.95% --leading 140% --color '#ffffff' --at 7.4%,61.9% --anchor tl
+pixelox text add club.pxo --in-place --name Body3 --content $'in one plan built around you,\nfrom your first easy mile to\nrace day, with movement, rest\nand repair in balance.' --font @geometric-sans --weight 400 --size 1.95% --leading 140% --color '#cfcfcf' --at 7.4%,67.3% --anchor tl
 pixelox shape rect club.pxo --in-place --name LabelLime --rect 77,1495,454x56 --fill '#c2ea0b'
 pixelox shape path club.pxo --in-place --name LabelDark --d 'M 80 1498 H 316 L 334 1523 L 316 1548 H 80 Z' --fill '#07050a'
 pixelox text add club.pxo --in-place --name LabelLeft --content "MEMBERSHIP" --font "DIN Condensed" --weight 700 --size 2.6% --tracking 40 --color '#ffffff' --at 198,1527 --anchor c
 pixelox text add club.pxo --in-place --name LabelRight --content "NOW OPEN" --font "DIN Condensed" --weight 700 --size 2.6% --tracking 40 --color '#14180a' --at 436,1527 --anchor c
-pixelox text add club.pxo --in-place --name Wordmark --content "kineticlab" --font "Avenir Next" --weight 600 --style italic --size 4% --tracking -10 --color '#ffffff'
-pixelox transform scale club.pxo --in-place --layer Wordmark --size 310x
-pixelox transform move club.pxo --in-place --layer Wordmark --to 92.7%,94% --anchor r
+pixelox text add club.pxo --in-place --name Wordmark --content "kineticlab" --font @geometric-sans --weight 600 --style italic --fit-width 310 --tracking -10 --color '#ffffff' --at 92.7%,94% --anchor r --anchor-to ink
 pixelox export club.pxo -o club.png
 ```
 
 Change first: the accent (every `#c2ea0b`), then the headline (keep the longest line
 under 16 characters so it stops before the subject), then the chevron's vertex: it should
-sit under the headline's left third and point at the paragraph. A path that starts
-off-canvas must be written as a `shape path`; a negative coordinate in `shape line`
-counts from the far edge.
+sit under the headline's left third and point at the paragraph. A `shape path` takes a
+point left of the canvas as written (`M -20 1438`); in `shape line` write it as a sum
+(`--from 0-20,1438`), because a bare negative coordinate there counts from the far edge.
 
 ## 10. Variations and pairings
 

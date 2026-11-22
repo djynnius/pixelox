@@ -83,7 +83,8 @@ without being a perfect match.
 * Dotless i: type the Unicode dotless letter (U+0131, "ı") in place of each i. Didot,
   Bodoni 72, and Big Caslon all carry the glyph; check a look-alike font before relying on
   it.
-* **T-paper-grain**: amount 12, overlay, 30%: the tooth of an uncoated cover stock.
+* **T-paper-grain**: `filter grain --as-layer --amount 10`, last: the tooth of an uncoated
+  cover stock.
 * No shadow, no gradient, no rule.
 
 ## 8. Hierarchy and eye path
@@ -103,16 +104,13 @@ recipe.
 ```bash
 pixelox new -o cover.pxo --size 1080x1620 --fill '#52433a'
 pixelox shape ellipse cover.pxo --in-place --name Dot --rect 376,184,56x56 --fill '#e6d8c0'
-pixelox text add cover.pxo --in-place --name Label --content $'LEARNING TO WAIT\nVOLUME II' --font "Avenir Next" --weight 700 --size 1.8% --tracking 150 --leading 150% --color '#decfb0' --at 45.2%,13.1% --anchor l
-pixelox text add cover.pxo --in-place --name Line1 --content "Fırst" --font Didot --weight 700 --size 15.7% --tracking -20 --color '#e6d8c0'
+pixelox text add cover.pxo --in-place --name Label --content $'LEARNING TO WAIT\nVOLUME II' --font @geometric-sans --weight 700 --size 1.8% --tracking 150 --leading 150% --color '#decfb0' --at 45.2%,13.1% --anchor l
+pixelox text add cover.pxo --in-place --name Line1 --content "Fırst" --font @didone --weight 700 --size 15.7% --tracking -20 --color '#e6d8c0'
 pixelox transform move cover.pxo --in-place --layer Line1 --to 9.3%,34.6% --anchor tl
-pixelox text add cover.pxo --in-place --name Line2 --content "Wınter" --font Didot --weight 700 --size 15.7% --tracking -20 --color '#e6d8c0'
+pixelox text add cover.pxo --in-place --name Line2 --content "Wınter" --font @didone --weight 700 --size 15.7% --tracking -20 --color '#e6d8c0'
 pixelox transform move cover.pxo --in-place --layer Line2 --to 17.8%,48.9% --anchor tl
-pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font "Avenir Next" --weight 600 --size 1.95% --tracking 400 --color '#decfb0' --at 50%,87% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 30
+pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font @geometric-sans --weight 600 --size 1.95% --tracking 400 --color '#decfb0' --at 50%,87% --anchor c
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 10
 pixelox export cover.pxo -o cover.png
 ```
 

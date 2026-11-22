@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render]
 format: portrait-4x5
 archetype: A-hero-object
 palette: ['#b31d11', '#820f06', '#f22b20', '#530604', '#e69470', '#fcecd6']
-techniques: [T-pattern, T-neon-glow, T-motion-streak, T-cutout-drop-shadow, T-vignette, T-paper-grain, T-ring-arcs]
+techniques: [T-pattern, T-neon-glow, T-motion-streak, T-cutout-drop-shadow, T-floor-reflection, T-vignette, T-paper-grain, T-ring-arcs]
 needs: product-cutout
 ---
 
@@ -90,24 +90,27 @@ information.
 A product render with theatrical lighting: the jar frontal and sharp, the light ribbon
 wrapping it in 3D (one half behind, one half in front), beans frozen at different depths.
 Motion blur on the big beans and focus blur on the sign give the still image speed and
-depth. For a build: your jar or pack cutout; the swirl from two stroked shapes with glows
-(a full ellipse under the product and its lower arc over it); beans from drawn ellipses
-with `filter motion-blur`.
+depth. For a build: your jar or pack cutout, trimmed, with `fx reflection` for its mirror
+image on the floor; the swirl from two stroked shapes with glows (a full ellipse under the
+product and its lower arc over it); beans from drawn ellipses with `filter motion-blur`.
 
 ## 7. Effects and textures
 
 * **T-pattern**: vertical stripes (`kind=stripes`, `angle=0`, cell 96 px, weight 0.5) in a
   dark red at 45% as the wall panels; a reflected side shade darkens both edges.
-* Defocused sign: a rounded rect and a text layer, each rasterized and blurred sigma 14.
+* Defocused sign: a rounded rect and a text layer, each blurred with `filter gaussian`
+  (sigma 14 and 12). The filters are live, so the word stays editable.
 * **T-neon-glow** for the swirl: near-white stroke, `fx outer-glow` in orange (blur 40,
   spread 10). The ellipse is drawn level and then rotated -28 degrees around its center;
   the front arc is the lower half of the same ellipse, rotated the same way and placed
   above the product.
 * **T-motion-streak**: the three far beans are one `shape path` (three ellipses written
-  with relative arcs), rasterized, then `filter motion-blur --angle -20 --distance 90`.
-* **T-cutout-drop-shadow**: warm outer glow on the jar (blur 40, `#ff8a4a`, 30%) and a dark
-  contact shadow on the floor.
-* **T-vignette** in maroon; **T-paper-grain** amount 10.
+  with relative arcs) with a live `filter motion-blur --angle -20 --distance 90`.
+* **T-cutout-drop-shadow**, glow variant: warm outer glow on the jar (blur 40, `#ff8a4a`,
+  30%).
+* **T-floor-reflection**: `transform trim` cuts the cutout's transparent border, then
+  `fx reflection --length 25% --opacity 45 --blur 8` mirrors the jar on the glossy floor.
+* **T-vignette** in maroon; **T-paper-grain** (`filter grain --amount 8`).
 * **T-ring-arcs** in [techniques.md](../techniques.md) is the tested library version of the ring, halo, or arc shapes; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -121,30 +124,30 @@ The jar is 61% H tall against type with cap heights under 1% H: the type is a fo
 
 ## 9. Build recipe
 
-`product.png` is your image here: a jar, tin, or bottle cutout, front view.
+`product.png` is your image here: a jar, tin, or bottle cutout, front view. The
+`transform trim` line cuts it to `jar.png` so the reflection starts at the jar's base.
 
 ```bash
 pixelox render js scripts/pattern.js -o slats.png --size 1080x1350 --param kind=stripes --param angle=0 --param cell=96 --param weight=0.5 --param color='#5a0402' --param alpha=0.45
 pixelox render js scripts/particles.js -o pile.png --size 1080x1350 --seed 6 --param shape=dot --param colors='#4a2410,#6b3a1c,#3a1a0a' --param count=26 --param min=1.4 --param max=2.6 --param amin=1 --param amax=1 --param focus='0.2,0.77,0.11'
+pixelox transform trim product.png -o jar.png
 pixelox new -o ad.pxo --size 1080x1350 --fill '#b31d11'
 pixelox comp place ad.pxo slats.png --in-place --as Slats --fit cover
 pixelox layer add ad.pxo --in-place --name SideShade
 pixelox fill gradient ad.pxo --in-place --layer SideShade --kind reflected --from 50%,0 --to 100%,0 --stops '#53060400@0.35,#530604d9@1'
 pixelox shape rect ad.pxo --in-place --name Sign --rect 23%,10%,53%x12% --radius 30 --fill '#f22b20'
-pixelox layer rasterize ad.pxo --in-place --layer Sign
 pixelox filter gaussian ad.pxo --in-place --layer Sign --sigma 14
-pixelox text add ad.pxo --in-place --name SignWord --content "BRANDED" --font "Avenir Next" --weight 800 --size 6.2% --tracking 60 --color '#ffffff' --at 50%,16% --anchor c
-pixelox layer rasterize ad.pxo --in-place --layer SignWord
+pixelox text add ad.pxo --in-place --name SignWord --content "BRANDED" --font @geometric-sans --weight 800 --size 6.2% --tracking 60 --color '#ffffff' --at 50%,16% --anchor c
 pixelox filter gaussian ad.pxo --in-place --layer SignWord --sigma 12
 pixelox shape rect ad.pxo --in-place --name Floor --rect 0,78%,100%x22% --fill '#8a0f0a'
 pixelox fx overlay ad.pxo --in-place --layer Floor --stops '#4a0503@0,#a01814@1' --angle 90
 pixelox shape path ad.pxo --in-place --name FarBeans --d 'M 108 560 a 135 88 0 1 0 270 0 a 135 88 0 1 0 -270 0 M 860 250 a 120 85 0 1 0 240 0 a 120 85 0 1 0 -240 0 M 670 898 a 150 88 0 1 0 300 0 a 150 88 0 1 0 -300 0' --fill '#7a431f'
-pixelox layer rasterize ad.pxo --in-place --layer FarBeans
 pixelox filter motion-blur ad.pxo --in-place --layer FarBeans --angle -20 --distance 90
 pixelox shape ellipse ad.pxo --in-place --name SwirlBack --rect 260,513,712x324 --fill none --stroke '#fff0d0' --stroke-width 9
 pixelox fx outer-glow ad.pxo --in-place --layer SwirlBack --blur 40 --spread 10 --color '#ff8a3a' --opacity 85
 pixelox transform rotate ad.pxo --in-place --layer SwirlBack --degrees -28 --around 616,675
-pixelox comp place ad.pxo product.png --in-place --as Jar --size x900 --at 49%,82.5% --anchor b
+pixelox comp place ad.pxo jar.png --in-place --as Jar --size x820 --at 49%,79.2% --anchor b
+pixelox fx reflection ad.pxo --in-place --layer Jar --length 25% --opacity 45 --blur 8
 pixelox fx outer-glow ad.pxo --in-place --layer Jar --blur 40 --color '#ff8a4a' --opacity 30
 pixelox shape path ad.pxo --in-place --name SwirlFront --d 'M 260 675 A 356 162 0 0 0 972 675' --fill none --stroke '#fff0d0' --stroke-width 9 --cap round
 pixelox fx outer-glow ad.pxo --in-place --layer SwirlFront --blur 40 --spread 10 --color '#ff8a3a' --opacity 85
@@ -152,19 +155,17 @@ pixelox transform rotate ad.pxo --in-place --layer SwirlFront --degrees -28 --ar
 pixelox comp place ad.pxo pile.png --in-place --as Pile --fit cover
 pixelox fx bevel ad.pxo --in-place --layer Pile --size 8 --depth 150 --soften 3 --highlight '#d9a070' --shadow '#1a0702'
 pixelox shape path ad.pxo --in-place --name Leaf --d 'M 70 1010 C 110 940 190 915 260 925 C 215 985 150 1020 70 1010 Z' --fill '#3f8a24'
-pixelox text add ad.pxo --in-place --name Story --content "BRANDED is a household name for instant coffee. It began ninety years ago as a way to keep a good harvest from going to waste, and the simple idea of coffee that only needs hot water travelled the world. Today the range runs from classic to gold blend, and every jar still starts with roasted beans and a short list of ingredients." --font "Avenir Next Condensed" --weight 400 --size 1.2% --leading 135% --align justify --box 290x260 --color '#ffffff' --at 4%,17.5%
-pixelox text add ad.pxo --in-place --name Credit --content $'DESIGNED BY\nYOUR STUDIO NAME' --font "Avenir Next" --weight 500 --size 1.25% --tracking 500 --leading 190% --align center --color '#ffffff' --at 52%,95% --anchor c
+pixelox text add ad.pxo --in-place --name Story --content "BRANDED is a household name for instant coffee. It began ninety years ago as a way to keep a good harvest from going to waste, and the simple idea of coffee that only needs hot water travelled the world. Today the range runs from classic to gold blend, and every jar still starts with roasted beans and a short list of ingredients." --font @condensed --weight 400 --size 1.2% --leading 135% --align justify --box 290x260 --color '#ffffff' --at 4%,17.5%
+pixelox text add ad.pxo --in-place --name Credit --content $'DESIGNED BY\nYOUR STUDIO NAME' --font @geometric-sans --weight 500 --size 1.25% --tracking 500 --leading 190% --align center --color '#ffffff' --at 52%,95% --anchor c
 pixelox layer add ad.pxo --in-place --name Vignette
 pixelox fill gradient ad.pxo --in-place --layer Vignette --kind radial --from 50%,48% --to 50%,125% --stops '#2a020100@0.5,#2a0201b3@1'
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the swirl (its ellipse box, the matching arc radii, and the shared rotation
-center must change together), the wall color, then the story text and the credit.
+center must change together), the wall color, then the story text and the credit. With
+your own jar, set its `--size` so it spans 19 to 79% H; the reflection follows it.
 
 ## 10. Variations and pairings
 
@@ -187,5 +188,7 @@ center must change together), the wall color, then the story text and the credit
   color.
 * Every bean sharp. The large ones need motion blur and the small pile stays sharp, or
   the depth collapses.
+* A gap between the jar and its reflection: the cutout was placed untrimmed. Place the
+  trimmed `jar.png` and stand it on the floor (base at 79% H, floor from 78% H).
 * A paragraph of tiny white text on a light red is unreadable. Keep it over the darkened
   edge, 28 to 32 characters per line, and never smaller than 0.7% H cap height.

@@ -7,7 +7,7 @@ style: [illustration, neon]
 format: portrait-2x3
 archetype: A-centered-title
 palette: ['#0f131b', '#1a5351', '#1ca489', '#29e3b9', '#b5f5ec']
-techniques: [T-smoke, T-neon-glow, T-image-in-type, T-vignette]
+techniques: [T-smoke, T-neon-glow, T-image-in-type, T-texture-fill, T-vignette]
 needs: nothing
 ---
 
@@ -36,7 +36,7 @@ the eyes, the emblem, and the title read as a single lit object in a dark room.
 
 1. Ground: blue-black `#0f131b`, full canvas.
 2. Smoke: large soft swirls from blue-black through slate `#182838` to dark teal
-   `#1a5351`, blurred; the suggestion of a face is made only by where the smoke is darker.
+   `#1a5351`; the suggestion of a face is made only by where the smoke is darker.
 3. Aura: a radial teal glow `#128882` centered at 50% W, 45% H, radius about 33% H, fading
    to nothing; it is the "light" the emblem casts on the smoke.
 4. Floor glow: teal `#1d6c5f` rising from the bottom edge, 0% at 76% H to about 65% at the
@@ -97,13 +97,14 @@ it as `illustration.png` between the aura and the smoke veil and give it the sam
 
 ## 7. Effects and textures
 
-* **T-smoke** as an opaque ground: `clouds.js` with `lo`, `mid`, `hi` set to the three
-  dark colors, `warp=1.7`, blurred with sigma 10.
+* **T-smoke** as an opaque ground: one `fill noise --as-layer` line with the three dark
+  colors as `--stops`, `--scale 60%` for large forms, and `--warp 120` for the swirls.
 * **T-neon-glow** on the emblem, the eyes, the lightning, and the title: a near-white fill
   plus `fx outer-glow` in saturated teal (blur 44 to 46 px, spread 6 to 8, opacity 95);
   the emblem also takes `fx inner-glow` so its edges tint toward teal.
-* **T-image-in-type**: a high-contrast teal cloud render clipped to the title at 28%
-  opacity gives the letters the look of veined stone.
+* **T-texture-fill**: a `fill noise --kind ridged` layer (`--warp 120`, stops `transparent`
+  to teal `#58d9c4`, 40% opacity) clipped to the title gives the letters the look of
+  veined stone. It is the same clip as **T-image-in-type**, with a generated texture.
 * **T-vignette** under the type, color `#06070c`, starting at 0.4.
 * The smoke veil in front of the emblem is a blurred dark ellipse (sigma 28).
 
@@ -124,11 +125,8 @@ it for your own story (keep it symmetric in weight, 90% W wide or more, and let 
 sit in its two openings).
 
 ```bash
-pixelox render js scripts/clouds.js -o smoke.png --size 1080x1620 --seed 12 --param lo='#0b0d15' --param mid='#141d2b' --param hi='#1c4c4f' --param scale=2.2 --param octaves=5 --param warp=1.7 --param contrast=1.5
-pixelox render js scripts/clouds.js -o marble.png --size 1080x1620 --seed 31 --param lo=transparent --param hi='#58d9c4' --param scale=7 --param octaves=5 --param warp=1.4 --param contrast=2.4 --param res=2
 pixelox new -o cover.pxo --size 1080x1620 --fill '#0b0d15'
-pixelox comp place cover.pxo smoke.png --in-place --as Smoke --fit cover
-pixelox filter gaussian cover.pxo --in-place --layer Smoke --sigma 10
+pixelox fill noise cover.pxo --in-place --as-layer --name Smoke --seed 12 --scale 60% --octaves 5 --warp 120 --contrast 15 --stops '#0b0d15,#141d2b,#1c4c4f'
 pixelox layer add cover.pxo --in-place --name Aura
 pixelox fill gradient cover.pxo --in-place --layer Aura --kind radial --from 50%,45% --to 50%,78% --stops '#14a493bf@0,#0f6f6a66@0.5,#0f6f6a00@1'
 pixelox layer add cover.pxo --in-place --name Floor
@@ -145,27 +143,23 @@ pixelox shape path cover.pxo --in-place --name Sigil --d 'M 535 267 L 610 478 L 
 pixelox fx outer-glow cover.pxo --in-place --layer Sigil --blur 44 --spread 6 --color '#22dcb6' --opacity 95
 pixelox fx inner-glow cover.pxo --in-place --layer Sigil --blur 16 --color '#5fe9d0' --opacity 55
 pixelox shape ellipse cover.pxo --in-place --name Veil --rect 40%,27.5%,54%x12% --fill '#102a33'
-pixelox layer rasterize cover.pxo --in-place --layer Veil
 pixelox filter gaussian cover.pxo --in-place --layer Veil --sigma 28
 pixelox shape path cover.pxo --in-place --name Bolts --d 'M 432 170 L 448 262 L 492 300 L 520 352 L 566 384 L 610 486 M 760 714 L 742 800 L 700 846 L 716 900 L 640 960 L 660 1010 L 580 1040' --fill none --stroke '#dcfff7' --stroke-width 3 --join miter
 pixelox fx outer-glow cover.pxo --in-place --layer Bolts --blur 14 --color '#39ecc9' --opacity 90
-pixelox text add cover.pxo --in-place --name Author --content "MARA ELLISON" --font "Big Caslon" --size 4.3% --tracking 170 --color '#f2f6f5'
-pixelox transform scale cover.pxo --in-place --layer Author --size 700x
-pixelox transform move cover.pxo --in-place --layer Author --to 50%,6% --anchor t
-pixelox text add cover.pxo --in-place --name Title --content $'THE\nSIGIL' --font "Big Caslon" --size 15% --leading 90% --align center --color '#d6fbf5'
-pixelox transform move cover.pxo --in-place --layer Title --to 50%,63.5% --anchor t
-pixelox comp place cover.pxo marble.png --in-place --as Marble --fit cover
+pixelox text add cover.pxo --in-place --name Author --content "MARA ELLISON" --font "Big Caslon" --fit-width 700 --tracking 170 --color '#f2f6f5' --at 50%,6% --anchor t --anchor-to ink
+pixelox text add cover.pxo --in-place --name Title --content $'THE\nSIGIL' --font "Big Caslon" --size 15% --leading 90% --align center --color '#d6fbf5' --at 50%,63.5% --anchor t --anchor-to ink
+pixelox fill noise cover.pxo --in-place --as-layer --name Marble --seed 31 --kind ridged --scale 30% --warp 120 --stops 'transparent,#58d9c4' --opacity 40
 pixelox layer clip cover.pxo --in-place --layer Marble
-pixelox layer opacity cover.pxo --in-place --layer Marble --value 28
 pixelox fx outer-glow cover.pxo --in-place --layer Title --blur 46 --spread 8 --color '#1fd6b2' --opacity 95
 pixelox text add cover.pxo --in-place --name Tag --content "A NOVEL" --font "Big Caslon" --size 2.5% --tracking 220 --color '#f2f6f5' --at 50%,93.7% --anchor c
 pixelox export cover.pxo -o cover.png
 ```
 
 Change first: the title words (font size 15% gives the 11% cap height; a second line with
-wide letters such as M, O, or W needs a `transform scale --size 830x` on the Title layer,
-which shrinks both lines together), then the glow hue: swap every teal and mint for one
-other hue family and leave the ground alone.
+wide letters such as M, O, or W needs `--fit-width 830` in place of `--size 15%` on the
+Title, which sizes both lines together so the wider one spans 77% W), then the glow hue:
+swap every teal and mint for one other hue family and leave the ground alone. A new
+`--seed` on `Smoke` moves the swirls.
 
 ## 10. Variations and pairings
 

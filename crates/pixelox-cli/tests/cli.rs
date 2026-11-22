@@ -112,9 +112,23 @@ fn consent_gates_and_exit_codes() {
     // models that are not in this release: exit 12
     assert_eq!(run_in(&t.0, &["detect", "faces", "photo.png"]).0, 12);
     // wrong layer kind names the remedy
-    let (code, v) = run_in(&t.0, &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun"]);
+    let (code, v) =
+        run_in(&t.0, &["paint", "stroke", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--points", "1,1 9,9"]);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
     assert!(v["error"]["hint"].as_str().unwrap().contains("layer rasterize"));
+    // a fill on a live layer names the live alternative
+    let (code, v) = run_in(&t.0, &["fill", "solid", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--color", "red"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("fx overlay"), "{}", v["error"]["hint"]);
+    // a filter on a live layer is a smart filter (ADR 0014); a mask is refused with a hint
+    let (code, v) = run_in(&t.0, &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun"]);
+    assert_eq!((code, v["result"]["smart_filter"].as_str()), (0, Some("filter.gaussian")), "{v}");
+    let (code, v) = run_in(
+        &t.0,
+        &["filter", "gaussian", "base.pxo", "-o", "x.pxo", "--layer", "Sun", "--mask", "@alpha:Sun", "--overwrite"],
+    );
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2303")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("mask add"));
 }
 
 #[test]
@@ -270,6 +284,117 @@ fn smart_filters_on_placed_layers_replay_and_bake() {
     assert!(v["result"]["ssim"].as_f64().unwrap() > 0.999, "{}", v["result"]);
 }
 
+/// ADR 0014 end to end: blurs grow small layers, filters on live text and shapes,
+/// placement flags, true negative coordinates, and gradient and live masks, all replayed
+/// bit for bit.
+#[test]
+fn layers_bounds_and_masks_replay() {
+    let t = TempDir::new("cli-ws1");
+    let d = t.0.as_path();
+    let layer = |v: &Value, name: &str| -> Value {
+        v["result"]["layers"].as_array().unwrap().iter().find(|l| l["name"] == name).cloned().unwrap()
+    };
+    ok(d, &["new", "-o", "doc.pxo", "--size", "240x160", "--fill", "#203040"]);
+    // a rasterized shape blurred: the layer grows, so the blur is not cut off
+    ok(
+        d,
+        &["shape", "ellipse", "doc.pxo", "--in-place", "--name", "Spot", "--rect", "90,60,60x40", "--fill", "#ffcc00"],
+    );
+    ok(d, &["layer", "rasterize", "doc.pxo", "--in-place", "--layer", "Spot"]);
+    let v = ok(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Spot", "--sigma", "8"]);
+    let g = v["result"]["grown"].as_array().expect("grown").iter().map(|x| x.as_i64().unwrap()).collect::<Vec<_>>();
+    assert!(g.iter().all(|&x| x >= 15), "{g:?}");
+    // a live shape with a smart motion blur, hanging off the top-left corner (0-20)
+    let v = ok(
+        d,
+        &["shape", "rect", "doc.pxo", "--in-place", "--name", "Bar", "--rect", "0-20,0-10,80x30", "--fill", "#ff3366"],
+    );
+    assert_eq!(v["result"]["bbox"], serde_json::json!([-20.0, -10.0, 80.0, 30.0]));
+    let v = ok(
+        d,
+        &["filter", "motion-blur", "doc.pxo", "--in-place", "--layer", "Bar", "--angle", "0", "--distance", "40"],
+    );
+    assert_eq!(v["result"]["smart_filter"], "filter.motion-blur");
+    // live text with a blur stays text; new layers go on top, --below places one lower
+    ok(
+        d,
+        &[
+            "text",
+            "add",
+            "doc.pxo",
+            "--in-place",
+            "--name",
+            "Title",
+            "--content",
+            "Hi",
+            "--size",
+            "40px",
+            "--at",
+            "50%,50%",
+            "--anchor",
+            "c",
+            "--color",
+            "white",
+        ],
+    );
+    ok(d, &["layer", "dup", "doc.pxo", "--in-place", "--layer", "Title", "--name", "Glow", "--below", "Title"]);
+    ok(d, &["filter", "gaussian", "doc.pxo", "--in-place", "--layer", "Glow", "--sigma", "6"]);
+    ok(d, &["layer", "reorder", "doc.pxo", "--in-place", "--layer", "Spot", "--index", "1"]);
+    ok(d, &["layer", "add", "doc.pxo", "--in-place", "--name", "Top", "--fill", "#00000010"]);
+    let v = ok(d, &["layer", "list", "doc.pxo"]);
+    let names: Vec<&str> =
+        v["result"]["layers"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap()).collect();
+    assert_eq!(
+        names,
+        ["Top", "Spot", "Title", "Glow", "Bar", "Background"],
+        "after a reorder, a new layer still goes on top"
+    );
+    assert_eq!(layer(&v, "Glow")["kind"], "text");
+    // a gradient mask and a live mask that follows the text
+    ok(
+        d,
+        &[
+            "mask",
+            "add",
+            "doc.pxo",
+            "--in-place",
+            "--layer",
+            "Spot",
+            "--gradient",
+            "linear",
+            "--from",
+            "0,40%",
+            "--to",
+            "0,80%",
+        ],
+    );
+    ok(d, &["mask", "add", "doc.pxo", "--in-place", "--layer", "Top", "--from-layer", "Title"]);
+    let before = ok(d, &["mask", "list", "doc.pxo"]);
+    ok(d, &["text", "edit", "doc.pxo", "--in-place", "--layer", "Title", "--content", "Hello"]);
+    let after = ok(d, &["mask", "list", "doc.pxo"]);
+    let cov = |v: &Value| {
+        v["result"]["layer_masks"].as_array().unwrap().iter().find(|m| m["layer"] == "Top").unwrap()["area"]
+            .as_f64()
+            .unwrap()
+    };
+    assert!(
+        cov(&after) > cov(&before) * 1.5,
+        "the live mask follows the longer text: {} -> {}",
+        cov(&before),
+        cov(&after)
+    );
+    ok(d, &["export", "doc.pxo", "-o", "out.png"]);
+    let v = ok(d, &["replay", "out.png.pixelox.json", "-o", "again.png"]);
+    assert_eq!(v["result"]["identical"], true);
+    // flags that conflict or point at the wrong kind
+    let (code, v) = run_in(d, &["layer", "add", "doc.pxo", "-o", "x.pxo", "--into", "Title"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX2330")));
+    let (code, v) = run_in(d, &["layer", "add", "doc.pxo", "-o", "x.pxo", "--above", "Title", "--below", "Spot"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1005")));
+    let (code, v) = run_in(d, &["adjust", "invert", "doc.pxo", "-o", "x.pxo", "--layer", "Spot", "--below", "Spot"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1005")));
+}
+
 /// Runs only when CI (or you) points PIXELOX_TEST_U2NETP at the 5 MB u2netp.onnx; the
 /// file is copied into a private models directory, so nothing is downloaded here.
 #[test]
@@ -345,4 +470,173 @@ fn mcp_serve_handshake() {
     assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 8);
     drop(stdin);
     let _ = child.wait();
+}
+
+fn run_env(dir: &Path, args: &[&str], env: &[(&str, &str)]) -> (i32, Value) {
+    let mut c = Command::new(BIN);
+    c.args(args).arg("--json").current_dir(dir).env("PIXELOX_HOME", dir.join(".home")).env("PIXELOX_SYSTEM_FONTS", "0");
+    for (k, v) in env {
+        c.env(k, v);
+    }
+    let out = c.output().expect("run pixelox");
+    let v: Value = serde_json::from_slice(&out.stdout)
+        .unwrap_or_else(|e| panic!("{args:?}: not JSON ({e}): {}", String::from_utf8_lossy(&out.stdout)));
+    (out.status.code().unwrap_or(-1), v)
+}
+
+/// Font classes, live type settings (fit, case, scale, faux bold, warp, ink anchoring), a
+/// non-uniform transform that keeps text live, and a bit-identical replay of all of it.
+#[test]
+fn live_type_replays_bit_for_bit() {
+    let t = TempDir::new("cli-type");
+    let d = t.0.as_path();
+    ok(d, &["new", "-o", "t.pxo", "--size", "600x400", "--fill", "#f1ede4"]);
+    let v = ok(
+        d,
+        &[
+            "text",
+            "add",
+            "t.pxo",
+            "--in-place",
+            "--name",
+            "L1",
+            "--content",
+            "make",
+            "--case",
+            "upper",
+            "--font",
+            "@condensed-heavy",
+            "--fit-width",
+            "500",
+            "--at",
+            "50,40",
+            "--anchor-to",
+            "ink",
+            "--color",
+            "#111111",
+        ],
+    );
+    // no class member on a bare machine: a reported substitute, never an error
+    assert_eq!(v["result"]["font"]["resolved"]["class"], "@condensed-heavy");
+    assert_eq!(v["result"]["fit"]["ink"][0], 500.0);
+    assert_eq!(&v["result"]["bounds"].as_array().unwrap()[..2], &[50, 40]);
+    ok(
+        d,
+        &[
+            "text",
+            "add",
+            "t.pxo",
+            "--in-place",
+            "--name",
+            "W",
+            "--content",
+            "WARPED",
+            "--font",
+            "sans-serif",
+            "--size",
+            "60px",
+            "--at",
+            "300,250",
+            "--anchor",
+            "c",
+            "--scale-x",
+            "80%",
+            "--faux-bold",
+            "20",
+        ],
+    );
+    let v = ok(d, &["text", "warp", "t.pxo", "--in-place", "--layer", "W", "--preset", "arc", "--bend", "40"]);
+    assert_eq!(v["result"]["warp"]["preset"], "arc");
+    let v =
+        ok(d, &["transform", "scale", "t.pxo", "--in-place", "--layer", "L1", "--size", "500x200", "--anchor", "tl"]);
+    assert!(v["warnings"].as_array().unwrap().iter().all(|w| w["code"] != "PXW2003"), "{}", v["warnings"]);
+    let v = ok(d, &["layer", "list", "t.pxo"]);
+    let kinds: Vec<&str> =
+        v["result"]["layers"].as_array().unwrap().iter().map(|l| l["kind"].as_str().unwrap()).collect();
+    assert_eq!(kinds.iter().filter(|k| **k == "text").count(), 2, "{kinds:?}");
+    // the words change, the fit and warp follow
+    ok(d, &["text", "edit", "t.pxo", "--in-place", "--layer", "W", "--content", "BENT"]);
+    ok(d, &["export", "t.pxo", "-o", "t.png"]);
+    let v = ok(d, &["replay", "t.png.pixelox.json", "-o", "again.png", "--strict"]);
+    assert_eq!(v["result"]["identical"], true);
+    assert_eq!(v["result"]["missing_fonts"], serde_json::json!([]));
+    ok(d, &["verify", "t.png.pixelox.json", "--full"]);
+    // strict mode keeps the old error for a missing family
+    let (code, v) = run_env(
+        d,
+        &["text", "add", "t.pxo", "--in-place", "--content", "x", "--font", "Zzqx Gone"],
+        &[("PIXELOX_STRICT_FONTS", "1")],
+    );
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4102")));
+    let (code, v) = run_in(d, &["text", "add", "t.pxo", "--in-place", "--content", "x", "--font", "@nope"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4110")));
+}
+
+/// Serve `files` (path, bytes) over HTTP on a local port, one request per connection.
+fn serve(files: Vec<(String, Vec<u8>)>) -> String {
+    use std::io::{BufRead, BufReader, Write};
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = l.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for s in l.incoming() {
+            let Ok(mut s) = s else { break };
+            let mut reader = BufReader::new(s.try_clone().unwrap());
+            let mut first = String::new();
+            let _ = reader.read_line(&mut first);
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).unwrap_or(0) == 0 || line == "\r\n" {
+                    break;
+                }
+            }
+            let path = first.split_whitespace().nth(1).unwrap_or("").to_string();
+            match files.iter().find(|(p, _)| *p == path) {
+                Some((_, body)) => {
+                    let _ =
+                        s.write_all(format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", body.len()).as_bytes());
+                    let _ = s.write_all(body);
+                }
+                None => {
+                    let _ = s.write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n");
+                }
+            }
+        }
+    });
+    format!("http://{addr}")
+}
+
+/// `fonts get` needs consent, plans without it, refuses offline, and downloads a family of
+/// the pinned Google Fonts commit (here from a local mirror) with its license, once.
+#[test]
+fn fonts_get_consent_and_download() {
+    let t = TempDir::new("cli-fonts");
+    let d = t.0.as_path();
+    let (code, v) = run_in(d, &["fonts", "get", "Bebas Neue"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (6, Some("PX1540")));
+    assert!(v["error"]["hint"].as_str().unwrap().contains("pixelox fonts get \"Bebas Neue\" -y"));
+    let v = ok(d, &["fonts", "get", "Bebas Neue", "--dry-run"]);
+    assert_eq!(v["result"]["families"][0]["status"], "planned");
+    let (code, v) = run_env(d, &["fonts", "get", "Bebas Neue", "-y"], &[("PIXELOX_OFFLINE", "1")]);
+    assert_eq!((code, v["error"]["code"].as_str()), (1, Some("PX1504")));
+    // an uncurated family through a local mirror of the pinned commit
+    let commit = "06bfe0d62a98375cb09c942fa18e68bd32cff057";
+    let font = std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../pixelox-text/assets/Tuffy.ttf")).unwrap();
+    let meta = "name: \"Test Grotesk\"\nlicense: \"OFL\"\nfonts {\n  name: \"Test Grotesk\"\n  style: \"normal\"\n  weight: 400\n  filename: \"TestGrotesk-Regular.ttf\"\n}\n";
+    let base = serve(vec![
+        (format!("/{commit}/ofl/testgrotesk/METADATA.pb"), meta.as_bytes().to_vec()),
+        (format!("/{commit}/ofl/testgrotesk/TestGrotesk-Regular.ttf"), font.clone()),
+        (format!("/{commit}/ofl/testgrotesk/OFL.txt"), b"SIL Open Font License".to_vec()),
+    ]);
+    let env = [("PIXELOX_FONTS_URL", base.as_str())];
+    let (code, v) = run_env(d, &["fonts", "get", "Test Grotesk", "-y"], &env);
+    assert_eq!(code, 0, "{v}");
+    let fam = &v["result"]["families"][0];
+    assert_eq!(fam["status"], "downloaded");
+    assert_eq!(fam["curated"], false);
+    assert_eq!(fam["files"][0]["bytes"], font.len());
+    assert!(Path::new(fam["license_file"].as_str().unwrap()).exists());
+    let (_, v) = run_env(d, &["fonts", "get", "Test Grotesk", "-y"], &env);
+    assert_eq!(v["result"]["families"][0]["status"], "installed");
+    let (code, v) = run_env(d, &["fonts", "get", "No Such Family", "-y"], &env);
+    assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX4111")));
 }

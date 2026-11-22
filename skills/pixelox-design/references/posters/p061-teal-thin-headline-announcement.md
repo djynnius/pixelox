@@ -105,7 +105,8 @@ One portrait works as well (center it at 50% W); three need a narrower headline.
 * **T-brush-swash** / **T-label-box**: the tag is a painted patch, not a rectangle; the
   recipe uses `torn.js` with all four edges torn in amber, tilted -3 degrees.
 * Ground: one linear gradient layer over a flat teal fill.
-* **T-paper-grain**, amount 12, soft-light 40%, which also hides banding in the gradient.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8, which also hides banding in the
+  gradient.
 
 ## 8. Hierarchy and eye path
 
@@ -128,34 +129,25 @@ pixelox new -o notice.pxo --size 1080x1440 --fill '#004b60'
 pixelox layer add notice.pxo --in-place --name Depth
 pixelox fill gradient notice.pxo --in-place --layer Depth --from 0,22% --to 0,100% --stops '#004b6000@0,#01334cff@0.55,#030f49ff@1'
 pixelox comp place notice.pxo logo.png --in-place --as Logo --size 140x --at 50%,10.8% --anchor c
-pixelox text add notice.pxo --in-place --name Kicker --content "SERVICE TIME CHANGE" --font "Helvetica Neue" --weight 700 --size 2.9% --color '#f5e336' --at 50%,19% --anchor c
-pixelox text add notice.pxo --in-place --name H1 --content "FAMILY" --font "Avenir Next" --weight 275 --size 14% --tracking 180 --color '#ffffff'
-pixelox transform scale notice.pxo --in-place --layer H1 --size 890x
-pixelox transform move notice.pxo --in-place --layer H1 --to 50%,22.3% --anchor t
-pixelox text add notice.pxo --in-place --name H2 --content "SERVICE" --font "Avenir Next" --weight 275 --size 14% --tracking 180 --color '#ffffff'
-pixelox transform scale notice.pxo --in-place --layer H2 --size 890x
-pixelox transform move notice.pxo --in-place --layer H2 --to 50%,34.3% --anchor t
-pixelox text add notice.pxo --in-place --name Time --content "9:30AM (GMT)" --font "Arial Black" --size 6.2% --color '#fbf62a'
-pixelox transform scale notice.pxo --in-place --layer Time --size 770x
-pixelox transform move notice.pxo --in-place --layer Time --to 11%,48.4% --anchor tl
+pixelox text add notice.pxo --in-place --name Kicker --content "SERVICE TIME CHANGE" --font @neo-grotesque --weight 700 --size 2.9% --color '#f5e336' --at 50%,19% --anchor c
+pixelox text add notice.pxo --in-place --name H1 --content "FAMILY" --font @thin-sans --fit-width 890 --tracking 180 --color '#ffffff' --at 50%,22.3% --anchor t --anchor-to ink
+pixelox text add notice.pxo --in-place --name H2 --content "SERVICE" --font @thin-sans --fit-width 890 --tracking 180 --color '#ffffff' --at 50%,34.3% --anchor t --anchor-to ink
+pixelox text add notice.pxo --in-place --name Time --content "9:30AM (GMT)" --font @heavy-wide --fit-width 770 --color '#fbf62a' --at 11%,48.4% --anchor-to ink
 pixelox fx drop-shadow notice.pxo --in-place --layer Time --offset 3,7 --blur 4 --color '#06080c' --opacity 85
-pixelox text add notice.pxo --in-place --name Where --content "IN ALL OUR CITY CAMPUSES" --font "Avenir Next" --weight 400 --size 2.35% --tracking 20 --color '#ffffff' --at 11%,55.8% --anchor l
+pixelox text add notice.pxo --in-place --name Where --content "IN ALL OUR CITY CAMPUSES" --font @geometric-sans --weight 400 --size 2.35% --tracking 20 --color '#ffffff' --at 11%,55.8% --anchor l
 pixelox comp place notice.pxo subject2.png --in-place --as Back --size x580 --at 64%,100% --anchor b
 pixelox comp place notice.pxo subject.png --in-place --as Front --size x620 --at 40%,100% --anchor b
 pixelox comp place notice.pxo tag.png --in-place --as Tag --at 22.5%,91.1% --anchor c
 pixelox transform rotate notice.pxo --in-place --layer Tag --degrees -3
-pixelox text add notice.pxo --in-place --name TagText --content $'THIS WEEK\nONE SERVICE\nONLY' --font "Helvetica Neue" --weight 700 --size 2.4% --leading 135% --color '#141414' --at 12.4%,91.2% --anchor l
-pixelox layer add notice.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise notice.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend notice.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity notice.pxo --in-place --layer Grain --value 40
+pixelox text add notice.pxo --in-place --name TagText --content $'THIS WEEK\nONE SERVICE\nONLY' --font @neo-grotesque --weight 700 --size 2.4% --leading 135% --color '#141414' --at 12.4%,91.2% --anchor l
+pixelox filter grain notice.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export notice.pxo -o notice.png
 ```
 
 Change first: the two headline words (5 to 8 letters each; they are fitted to one width,
-so a shorter word comes out taller), then the time string (it is fitted to 76% W: a short string such as "9AM" becomes very
-tall, so drop its `transform scale` line and set `--size 7%` instead), then the tag lines
-(keep each under 12 characters, or widen `tag.png`).
+so a shorter word comes out taller), then the time string (it is fitted to 71% W: a short
+string such as "9AM" becomes very tall, so replace its `--fit-width 770` with `--size 7%`),
+then the tag lines (keep each under 12 characters, or widen `tag.png`).
 
 ## 10. Variations and pairings
 

@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render]
 format: square
 archetype: A-text-behind-subject
 palette: ['#431212', '#7f1d1d', '#d23939', '#886059', '#c9968e', '#eed8d2']
-techniques: [T-text-behind-subject, T-fit-width, T-gradient-type, T-cutout-drop-shadow, T-vignette, T-water-splash]
+techniques: [T-text-behind-subject, T-fit-width, T-gradient-type, T-cutout-drop-shadow, T-vignette, T-water-splash, T-paper-grain]
 needs: product-cutout
 ---
 
@@ -77,23 +77,28 @@ No small text. The lettering on the can is part of the product.
 
 A 3D-style product render: one can in mid-air with a liquid collision behind it. The can
 is lit from the upper left with a hard highlight; the splash is a frozen sheet with a
-torn edge, larger than the can. For a build, a can cutout is rotated and laid over a
-white splash that is turned across the opposite diagonal; add loose drops on both
-sides.
+torn edge, larger than the can. For a build, a can cutout is rotated and laid over two
+rendered sheets of water thrown to the left and the right, with loose drops on both
+sides. The rendered water is clear and smooth, not the white froth of the original; for
+froth, place a splash photo in `screen` mode.
 
 ## 7. Effects and textures
 
 * **T-text-behind-subject**: word, then splash, then can. The can covers no more than the
   lower half of two letters.
-* **T-fit-width** (640 px on a 1080 px canvas) and **T-gradient-type**: `fx overlay` at 90
-  degrees from `#5a1414` at the letters' feet to `#e84848` at the top, so the word sinks
-  into the ground.
+* **T-fit-width** (`--fit-width 640` on a 1080 px canvas) and **T-gradient-type**: `fx
+  overlay` at 90 degrees from `#5a1414` at the letters' feet to `#e84848` at the top, so
+  the word sinks into the ground.
 * Echo: `layer dup`, moved to the bottom edge, opacity 40.
-* **T-water-splash** (`scripts/splash.js`) in pink-white, rotated 35 degrees,
-  `screen` mode at 90%; `particles.js` dots for spray.
+* **T-water-splash**: two `render splash --kind sheet` throws in clear water from behind
+  the can's middle, one up and to the left (`--angle 135 --spread 100 --size 100%`), one
+  to the right (`--angle 15 --spread 80 --size 85%`), so the water crosses the can's
+  axis. `--drops 260` and `160` add the flying spray. Clear water takes the ground's red
+  by itself; no blend mode is needed.
 * **T-cutout-drop-shadow**, soft: offset 20,30, blur 50, dark maroon, 60%.
 * **T-vignette** in `#1a0505`, starting at 45% of the radius.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last; it hides banding in the
+  dark gradients.
 
 ## 8. Hierarchy and eye path
 
@@ -110,38 +115,28 @@ backdrop.
 `product.png` is your image here: a can or bottle cutout.
 
 ```bash
-pixelox render js scripts/splash.js -o splash.png --size 1100x1100 --seed 7 --param color='#f2e4e0' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=20 --param drops=300 --param arc=360
-pixelox render js scripts/particles.js -o spray.png --size 1080x1080 --seed 5 --param shape=dot --param colors='#ffffff,#f2d8d2,#e0b0a8' --param count=170 --param min=0.2 --param max=1.1 --param amin=0.4 --param amax=0.95 --param focus='0.5,0.5,0.46'
 pixelox new -o post.pxo --size 1080x1080 --fill '#431212'
 pixelox layer add post.pxo --in-place --name Glow
 pixelox fill gradient post.pxo --in-place --layer Glow --kind radial --from 56%,46% --to 56%,100% --stops '#8a2020ff@0,#43121200@1'
-pixelox text add post.pxo --in-place --name Word --content "SODA" --font Impact --size 40% --color '#d23939'
-pixelox transform scale post.pxo --in-place --layer Word --size 640x
-pixelox transform move post.pxo --in-place --layer Word --to 48.5%,4% --anchor t
+pixelox text add post.pxo --in-place --name Word --content "SODA" --font @condensed-heavy --fit-width 640 --color '#d23939' --at 48.5%,4% --anchor t --anchor-to ink
 pixelox fx overlay post.pxo --in-place --layer Word --stops '#5a1414@0,#d23939@0.55,#e84848@1' --angle 90
 pixelox layer dup post.pxo --in-place --layer Word --name Echo
 pixelox transform move post.pxo --in-place --layer Echo --to 48.5%,77% --anchor t
 pixelox layer opacity post.pxo --in-place --layer Echo --value 40
-pixelox comp place post.pxo splash.png --in-place --as Splash --at 50%,48% --anchor c
-pixelox transform rotate post.pxo --in-place --layer Splash --degrees 35
-pixelox layer blend post.pxo --in-place --layer Splash --mode screen
-pixelox layer opacity post.pxo --in-place --layer Splash --value 90
-pixelox comp place post.pxo spray.png --in-place --as Spray --fit cover
-pixelox layer blend post.pxo --in-place --layer Spray --mode screen
+pixelox render splash post.pxo --in-place --name SplashLeft --kind sheet --at 50%,56% --angle 135 --spread 100 --size 100% --drops 260 --seed 7
+pixelox render splash post.pxo --in-place --name SplashRight --kind sheet --at 50%,50% --angle 15 --spread 80 --size 85% --drops 160 --seed 3
 pixelox comp place post.pxo product.png --in-place --as Can --size x800 --at 50%,52% --anchor c
 pixelox transform rotate post.pxo --in-place --layer Can --degrees -18
 pixelox fx drop-shadow post.pxo --in-place --layer Can --offset 20,30 --blur 50 --color '#1a0404' --opacity 60
 pixelox layer add post.pxo --in-place --name Vignette
 pixelox fill gradient post.pxo --in-place --layer Vignette --kind radial --from 50%,50% --to 50%,120% --stops '#1a050500@0.45,#1a0505cc@1'
-pixelox layer add post.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise post.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend post.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity post.pxo --in-place --layer Grain --value 30
+pixelox filter grain post.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export post.pxo -o post.png
 ```
 
-Change first: the word (3 to 5 letters; refit with `transform scale`), the can's angle
-(-10 to -25 degrees), then the ground and word colors as one family.
+Change first: the word (3 to 5 letters; `--fit-width 640` refits it), the can's angle
+(-10 to -25 degrees), then the ground and word colors as one family. Change a splash
+`--seed` if a stream covers too much of the word.
 
 ## 10. Variations and pairings
 
@@ -161,8 +156,8 @@ Change first: the word (3 to 5 letters; refit with `transform scale`), the can's
   water running the other way.
 * A word in a wide font cannot reach 29% H cap height at 59% W. Use a condensed heavy face
   and 3 to 5 letters.
-* Pure white water in `normal` mode looks pasted on. Tint it toward the ground and blend
-  with `screen`.
+* Opaque white liquid (`--liquid milk`) looks pasted on. Keep the default clear water: the
+  ground's red shows through it and only its edges and highlights are white.
 * The word at the same brightness top to bottom fights the can. Let it fade into the
   ground toward its feet and keep the echo under 45% opacity.
 * No shadow under the can: it sticks to the splash like a decal. Offset the shadow down

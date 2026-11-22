@@ -53,7 +53,7 @@ pub fn needs_raster(l: &Layer, geo: &Geo, force: bool) -> bool {
         return live;
     }
     match &l.content {
-        LayerKind::Text { .. } => m.similarity(SIMILAR_TOL).is_none(),
+        LayerKind::Text { spec } => m.similarity(SIMILAR_TOL).is_none() && text_axis_scale(spec, m).is_none(),
         LayerKind::Placed { angle, .. } => {
             !(m.similarity(SIMILAR_TOL).is_some() || (m.axis_scale().is_some() && angle_is_flat(*angle)))
         }
@@ -65,8 +65,18 @@ pub fn needs_raster(l: &Layer, geo: &Geo, force: bool) -> bool {
 pub fn rasterize_layer(doc: &mut Document, path: &[usize]) -> Result<()> {
     let mut c = doc.layer(path).clone();
     c.fx.clear();
+    let filtered = c.smart_filters.iter().any(|f| f.enabled);
     let r = compose::render_layer(doc, &c)?;
     let l = doc.layer_mut(path);
+    // smart filters are baked into the pixels
+    l.smart_filters.clear();
+    // smart filters render canvas-sized: keep only the visible part
+    let r = match r {
+        Some(r) if filtered => {
+            r.image.alpha_bbox(0.0).map(|b| Rendered { image: r.image.crop(b), x: r.x + b.x, y: r.y + b.y })
+        }
+        r => r,
+    };
     match r {
         Some(r) => {
             l.content = LayerKind::Raster { image: r.image };
@@ -144,7 +154,63 @@ pub fn scale_length_value(v: &Value, k: f64) -> Value {
     json!(format!("{}{}", fmt_num(l.value * k), suffix))
 }
 
+/// `(sx, sy)` along the text's own axes when `m` is a positive axis-aligned scale and the
+/// text is not rotated (or turned by a multiple of 90°): the text's `scale_x` can express it,
+/// so the layer stays live (`pixelox-text` reads `scale_x`/`scale_y`, ADR 0015).
+fn text_axis_scale(spec: &Value, m: &Affine2) -> Option<(f64, f64)> {
+    let (sx, sy) = m.axis_scale()?;
+    let r = num(spec.get("rotation")).unwrap_or(0.0).rem_euclid(180.0);
+    if r < 1e-9 || 180.0 - r < 1e-9 {
+        Some((sx, sy))
+    } else if (r - 90.0).abs() < 1e-9 {
+        Some((sy, sx))
+    } else {
+        None
+    }
+}
+
+/// A non-uniform scale of live text: the font size follows the vertical factor and
+/// `scale_x` the ratio, so the set text stretches like a transform (box and fit follow).
+fn map_text_axis(spec: &mut Value, tx: f64, ty: f64) {
+    if let Some(size) = spec.get("size").cloned() {
+        spec["size"] = scale_length_value(&size, ty);
+    }
+    let sx = num(spec.get("scale_x")).filter(|v| *v > 0.0).unwrap_or(1.0) * tx / ty;
+    spec["scale_x"] = json!(sx);
+    if let Some(Value::Array(b)) = spec.get("box").cloned() {
+        let w = b.first().and_then(|v| v.as_f64()).map(|w| json!(w * tx)).unwrap_or(Value::Null);
+        let h = b.get(1).and_then(|v| v.as_f64()).map(|h| json!(h * ty)).unwrap_or(Value::Null);
+        spec["box"] = json!([w, h]);
+    }
+    scale_fit(spec, tx, ty);
+}
+
+fn scale_fit(spec: &mut Value, tx: f64, ty: f64) {
+    if let Some(w) = num(spec.get("fit_width")) {
+        spec["fit_width"] = json!(w * tx);
+    }
+    if let Some(Value::Array(b)) = spec.get("fit_box").cloned() {
+        if let (Some(w), Some(h)) = (b.first().and_then(|v| v.as_f64()), b.get(1).and_then(|v| v.as_f64())) {
+            spec["fit_box"] = json!([w * tx, h * ty]);
+        }
+    }
+}
+
 fn map_text(spec: &mut Value, m: &Affine2) -> Result<()> {
+    if m.similarity(SIMILAR_TOL).is_none() {
+        if let Some((tx, ty)) = text_axis_scale(spec, m) {
+            let x = num(spec.get("x")).unwrap_or(0.0);
+            let y = num(spec.get("y")).unwrap_or(0.0);
+            let (nx, ny) = m.apply(x, y);
+            spec["x"] = json!(r4(nx));
+            spec["y"] = json!(r4(ny));
+            map_text_axis(spec, tx, ty);
+            if let Some(d) = spec.get("path").and_then(|v| v.as_str()).map(String::from) {
+                spec["path"] = json!(geom::transform_path_data(&d, m.coeffs())?);
+            }
+            return Ok(());
+        }
+    }
     let (s, deg) = m.similarity(SIMILAR_TOL).unwrap_or((m.uniform_scale(), m.b.atan2(m.a).to_degrees()));
     let x = num(spec.get("x")).unwrap_or(0.0);
     let y = num(spec.get("y")).unwrap_or(0.0);
@@ -155,6 +221,8 @@ fn map_text(spec: &mut Value, m: &Affine2) -> Result<()> {
         if let Some(size) = spec.get("size").cloned() {
             spec["size"] = scale_length_value(&size, s);
         }
+        // a fitted text keeps fitting its (scaled) width or box on later edits
+        scale_fit(spec, s, s);
     }
     if deg.abs() > 1e-9 || spec.get("rotation").is_some() {
         let mut r = num(spec.get("rotation")).unwrap_or(0.0) + deg;
@@ -430,6 +498,25 @@ mod tests {
         assert_eq!((spec["x"].as_f64(), spec["y"].as_f64()), (Some(0.0), Some(20.0)));
         assert_eq!(spec["size"], json!("40px"));
         assert_eq!(spec["rotation"].as_f64(), Some(90.0));
+    }
+
+    #[test]
+    fn text_follows_unequal_scale_live() {
+        let mut spec = json!({"content": "hi", "x": 10, "y": 20, "size": "20px", "box": [100, 50]});
+        let m = Affine2::scale(2.0, 0.5);
+        let l = Document::new(8, 8).new_layer("T", LayerKind::Text { spec: spec.clone() });
+        assert!(!needs_raster(&l, &Geo::Affine(m), false));
+        map_text(&mut spec, &m).unwrap();
+        assert_eq!(spec["size"], json!("10px"));
+        assert_eq!(spec["scale_x"].as_f64(), Some(4.0));
+        assert_eq!(spec["box"], json!([200.0, 25.0]));
+        assert_eq!((spec["x"].as_f64(), spec["y"].as_f64()), (Some(20.0), Some(10.0)));
+        // rotated by 90°: the factors swap; by 30°: rasterized as before
+        let r90 = json!({"content": "hi", "size": "20px", "rotation": 90});
+        assert_eq!(text_axis_scale(&r90, &m), Some((0.5, 2.0)));
+        let r30 = json!({"content": "hi", "size": "20px", "rotation": 30});
+        let l30 = Document::new(8, 8).new_layer("T", LayerKind::Text { spec: r30 });
+        assert!(needs_raster(&l30, &Geo::Affine(m), false));
     }
 
     #[test]

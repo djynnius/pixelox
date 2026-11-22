@@ -162,9 +162,12 @@ pub fn error_entry(code: &str) -> Option<String> {
 pub const TOPICS: &[(&str, &str)] = &[
     ("contract", include_str!("../topics/contract.md")),
     ("addressing", include_str!("../topics/addressing.md")),
+    ("masking", include_str!("../topics/masking.md")),
     ("pipelines", include_str!("../topics/pipelines.md")),
     ("sidecars", include_str!("../topics/sidecars.md")),
     ("mcp", include_str!("../topics/mcp.md")),
+    ("fonts", include_str!("../topics/fonts.md")),
+    ("text-warp", include_str!("../topics/text-warp.md")),
 ];
 
 pub fn topic(name: &str) -> Option<&'static str> {

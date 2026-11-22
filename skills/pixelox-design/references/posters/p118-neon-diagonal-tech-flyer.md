@@ -7,7 +7,7 @@ style: [neon, geometric, photo-composite]
 format: portrait-a
 archetype: A-split-field
 palette: ['#3e033d', '#150038', '#58074a', '#ffffff', '#ff2bd6', '#19d3ff']
-techniques: [T-neon-glow, T-fit-width, T-rules, T-cutout-drop-shadow, T-shape-crop]
+techniques: [T-neon-glow, T-fit-width, T-rules, T-cutout-drop-shadow, T-shape-crop, T-icon-row]
 needs: [product-cutout, logo]
 ---
 
@@ -114,6 +114,10 @@ layer and skip the tube and product lines.
   the circuit traces (`shape path`, stroke only, 45% opacity).
 * **T-fit-width** on the headline block (57 px short of the text column so the italic does
   not crowd the margin).
+* **T-icon-row**, small: four `shape icon` glyphs, 24 px, each centered in a 42 px ring
+  (one `shape path` of four circles, 2 px stroke), 52 px apart. The bundled icons have no
+  brand logos, so the row uses neutral ones: `at-sign`, `message-circle`, `share-2`,
+  `globe`.
 * No grain. The glow gradients are short enough not to band.
 * **T-shape-crop** in [techniques.md](../techniques.md) is the tested library version of the photo shown through a drawn shape (arch, panel, tiles, or letter); start from it when reusing this idea.
 
@@ -158,23 +162,26 @@ pixelox shape line tech.pxo --in-place --name DashAmber2 --from 378,1062 --to 23
 pixelox shape line tech.pxo --in-place --name DashBlue --from 238,1070 --to 86,1177 --stroke '#1f8fd0' --stroke-width 8 --cap round
 pixelox shape path tech.pxo --in-place --name Circuit1 --d 'M 880 0 L 880 55 L 925 100 L 925 270 M 925 150 L 990 150 L 990 215 M 925 130 L 870 130 M 960 0 L 1010 60' --fill none --stroke '#b79ad0' --stroke-width 2 --opacity 45
 pixelox shape path tech.pxo --in-place --name Circuit2 --d 'M 360 1528 L 440 1450 L 560 1450 M 475 1528 L 475 1420 L 530 1420 L 530 1470 L 610 1470' --fill none --stroke '#b79ad0' --stroke-width 2 --opacity 45
-pixelox text add tech.pxo --in-place --name Hatch1 --content "/////" --font "Avenir Next" --weight 900 --size 1.9% --color '#cbb9d6' --at 89.5%,37.6% --anchor c
-pixelox text add tech.pxo --in-place --name Hatch2 --content "/////" --font "Avenir Next" --weight 900 --size 2.1% --color '#a98bb5' --at 13%,88.3% --anchor c
+pixelox text add tech.pxo --in-place --name Hatch1 --content "/////" --font @geometric-sans --weight 900 --size 1.9% --color '#cbb9d6' --at 89.5%,37.6% --anchor c
+pixelox text add tech.pxo --in-place --name Hatch2 --content "/////" --font @geometric-sans --weight 900 --size 2.1% --color '#a98bb5' --at 13%,88.3% --anchor c
 pixelox shape polygon tech.pxo --in-place --name Tri --center 87.3%,49.8% --radius 10 --sides 3 --rotation 20 --fill '#ffffff'
-pixelox text add tech.pxo --in-place --name Cross --content "x" --font "Arial Black" --size 2.4% --color '#ffffff' --at 27.5%,83.3% --anchor c
+pixelox text add tech.pxo --in-place --name Cross --content "x" --font @heavy-wide --size 2.4% --color '#ffffff' --at 27.5%,83.3% --anchor c
 pixelox comp place tech.pxo logo.png --in-place --as Logo --size 38x --at 77%,59.2% --anchor c
-pixelox text add tech.pxo --in-place --name LogoText --content "Voltworks" --font "Avenir Next" --weight 600 --size 2.1% --color '#ffffff' --at 94.2%,59.2% --anchor r
-pixelox text add tech.pxo --in-place --name Headline --content $'SMART DEVICE\nREVOLUTION' --font "Avenir Next" --weight 900 --style italic --size 5% --leading 121% --align right --color '#ffffff'
-pixelox transform scale tech.pxo --in-place --layer Headline --size 570x
-pixelox transform move tech.pxo --in-place --layer Headline --to 94.4%,65% --anchor tr
-pixelox text add tech.pxo --in-place --name Body --content $'Say what the product does in one line,\nwho it is for in the next, and why\nit matters now. Close with the one thing\nyou want them to do.' --font "Avenir Next" --weight 500 --size 1.95% --leading 130% --align right --color '#f1e9f4' --at 94.5%,77% --anchor tr
-pixelox text add tech.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 400 --size 1.95% --color '#ffffff' --at 94.5%,91.3% --anchor r
-pixelox shape line tech.pxo --in-place --name Social --from 5.4%,96.3% --to 21%,96.3% --stroke '#e6d9ee' --stroke-width 30 --dash 0,56 --cap round
+pixelox text add tech.pxo --in-place --name LogoText --content "Voltworks" --font @geometric-sans --weight 600 --size 2.1% --color '#ffffff' --at 94.2%,59.2% --anchor r
+pixelox text add tech.pxo --in-place --name Headline --content $'SMART DEVICE\nREVOLUTION' --font @geometric-sans --weight 900 --style italic --fit-width 570 --leading 121% --align right --color '#ffffff' --at 94.4%,65% --anchor tr --anchor-to ink
+pixelox text add tech.pxo --in-place --name Body --content $'Say what the product does in one line,\nwho it is for in the next, and why\nit matters now. Close with the one thing\nyou want them to do.' --font @geometric-sans --weight 500 --size 1.95% --leading 130% --align right --color '#f1e9f4' --at 94.5%,77% --anchor tr
+pixelox text add tech.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 400 --size 1.95% --color '#ffffff' --at 94.5%,91.3% --anchor r
+pixelox shape path tech.pxo --in-place --name SocialRings --d 'M 41 1471 A 21 21 0 1 1 83 1471 A 21 21 0 1 1 41 1471 Z M 93 1471 A 21 21 0 1 1 135 1471 A 21 21 0 1 1 93 1471 Z M 145 1471 A 21 21 0 1 1 187 1471 A 21 21 0 1 1 145 1471 Z M 197 1471 A 21 21 0 1 1 239 1471 A 21 21 0 1 1 197 1471 Z' --fill none --stroke '#e6d9ee' --stroke-width 2
+pixelox shape icon tech.pxo at-sign --in-place --name Social1 --size 24 --at 62,1471 --anchor c --color '#e6d9ee'
+pixelox shape icon tech.pxo message-circle --in-place --name Social2 --size 24 --at 114,1471 --anchor c --color '#e6d9ee'
+pixelox shape icon tech.pxo share-2 --in-place --name Social3 --size 24 --at 166,1471 --anchor c --color '#e6d9ee'
+pixelox shape icon tech.pxo globe --in-place --name Social4 --size 24 --at 218,1471 --anchor c --color '#e6d9ee'
 pixelox export tech.pxo -o tech.png
 ```
 
-The Social line is a row of four dots standing in for icons: place your own icon files
-there with `comp place`. Change first: the headline (two lines of similar length, the
+The social row is four bundled icons in rings (`pixelox shape icons --search WORD` finds
+others); for a real network's logo place your own file there with `comp place`. Change
+first: the headline (two lines of similar length, the
 first slightly longer), then the product, then the three glow colors.
 
 ## 10. Variations and pairings

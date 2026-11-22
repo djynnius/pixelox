@@ -104,18 +104,14 @@ outline copy is the same size at about a third of the visual weight.
 pixelox render js scripts/waves.js -o lines.png --size 1350x1080 --seed 3 --param mode=line --param colors='#4a0808' --param count=14 --param top=0.58 --param bottom=1.03 --param amp=0.035 --param freq=1.6 --param chaos=0.25 --param width=5 --param alpha=0.9
 pixelox new -o banner.pxo --size 1350x1080 --fill '#ea0001'
 pixelox comp place banner.pxo lines.png --in-place --as Lines --fit cover
-pixelox text add banner.pxo --in-place --name Solid --content "Fizz-Club" --font SignPainter --size 30% --color '#ffffff'
-pixelox transform scale banner.pxo --in-place --layer Solid --size 1175x
-pixelox transform move banner.pxo --in-place --layer Solid --to 50%,9% --anchor t
-pixelox text add banner.pxo --in-place --name Outline --content "Fizz-Club" --font SignPainter --size 30% --color transparent --stroke '#ffffff' --stroke-width 3
-pixelox transform scale banner.pxo --in-place --layer Outline --size 1175x
-pixelox transform move banner.pxo --in-place --layer Outline --to 50%,54% --anchor t
+pixelox text add banner.pxo --in-place --name Solid --content "Fizz-Club" --font @brush --fit-width 1175 --color '#ffffff' --at 50%,9% --anchor t --anchor-to ink
+pixelox text add banner.pxo --in-place --name Outline --content "Fizz-Club" --font @brush --fit-width 1175 --color transparent --stroke '#ffffff' --stroke-width 3 --at 50%,54% --anchor t --anchor-to ink
 pixelox comp place banner.pxo product.png --in-place --as Bottle --size x1380 --at 47.5%,5% --anchor t
 pixelox fx drop-shadow banner.pxo --in-place --layer Bottle --offset 0,0 --blur 50 --color '#7a0000' --opacity 35
 pixelox export banner.pxo -o banner.png
 ```
 
-Change first: the wordmark text (two short words; the scale step refits any length to
+Change first: the wordmark text (two short words; `--fit-width 1175` refits any length to
 1175 px), then the bottle size so it covers the join between the two words and nothing
 else. A formal copperplate script (Snell Roundhand) is too thin here: at this width it is
 only 17% H tall, where a heavy brush script fills 35% H.

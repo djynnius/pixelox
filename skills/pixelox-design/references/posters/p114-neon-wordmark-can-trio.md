@@ -36,22 +36,21 @@ is black.
 ## 3. Layer stack
 
 1. Wall: black `#000000`, full canvas.
-2. Wordmark aura: a wide, soft red haze around the letters (dark red `#230002` between
+2. Floor: `0,76%,100% x 24%`, near-black `#121212`, its far edge a crisp straight line
+   against the wall. It is added before the sign so the sign's reflection falls on it.
+3. Wordmark aura: a wide, soft red haze around the letters (dark red `#230002` between
    the strokes, reaching about 5% W out).
-3. Wordmark: two-part script name, flat saturated red `#e6031c`, `7%,13%,86% x 49%`,
+4. Wordmark: two-part script name, flat saturated red `#e6031c`, `7%,13%,86% x 49%`,
    capital height about 36% H, with a tight glow of lighter red `#ff1030` about 1.6% W
    wide hugging every stroke. The letters stay red; they do not burn out to white.
-4. Floor: `0,76%,100% x 24%`, near-black `#121212`, its far edge a crisp straight line
-   against the wall.
-5. Can reflections: the three cans mirrored below their bases, 80 to 100% H, at about 40%
-   strength, smeared slightly downward, fading to nothing at the bottom edge.
-6. Floor fade: floor color from transparent at 80% H to 85% solid at the bottom.
-7. Wordmark reflection: the mirrored sign as blurred red light on the floor, strongest at
+5. Wordmark reflection: the mirrored sign as blurred red light on the floor, strongest at
    88 to 100% H between 10 to 35% W and 62 to 90% W (dark red `#510202`).
-8. Cans: two cans behind (tops at 40% H, bases at 78% H, turned outward to show the side
+6. Can reflections: each can mirrored below its own base, 78 to 100% H, at about 40%
+   strength, sharp at the base, blurring with distance, fading to nothing.
+7. Cans: two cans behind (tops at 40% H, bases at 78% H, turned outward to show the side
    label) and one in front (top 37.5% H, base 80% H, 13% W wide, facing the camera). Red
    bodies, silver rims, white script on the front can, small water drops.
-9. Fine print: two centered lines of small tracked gray caps at 95.3% and 97.2% H.
+8. Fine print: two centered lines of small tracked gray caps at 95.3% and 97.2% H.
 
 ## 4. Palette
 
@@ -90,16 +89,19 @@ with the word, not the subject, as the big element).
 ## 7. Effects and textures
 
 * **T-neon-glow**, light-box variant: the letters keep the full red (no near-white tube),
-  `fx outer-glow --blur 26 --spread 8` in `#ff1030`, plus a rasterized copy blurred with
-  sigma 36 in `screen` mode at 70% for the aura.
-* **T-fit-width**: the wordmark is scaled to 84 to 86% W.
-* Floor reflection of the product (no library technique): merge the cans, duplicate,
-  `transform flip --v`, move the copy so its top touches the bases, `filter motion-blur
-  --angle 90 --distance 18`, opacity 42, then a floor-colored gradient over the lower floor.
-* Floor reflection of the sign: duplicate the wordmark, flip it, drop it to 91% H, blur
-  with sigma 32, `screen`, 55%.
+  `fx outer-glow --blur 26 --spread 8` in `#ff1030`, plus a second copy of the text under
+  it, blurred with sigma 36 (the blur is live; the text stays editable), in `screen` mode
+  at 70% for the aura.
+* **T-fit-width**: `--fit-width 1340` sets the wordmark to 84% W.
+* **T-floor-reflection** on the product: `fx reflection --length 45% --opacity 42 --blur
+  12` on one can, then `fx copy` to the other two. Each can mirrors about its own base, so
+  the back cans (78% H) and the front can (80% H) all touch their reflections; the blur
+  grows away from the base and the image fades out by itself.
+* **T-floor-reflection** on the sign: `fx reflection` on the wordmark with `--gap 330` (the
+  mirror image starts at 89% H, low on the floor), `--length 70% --fade 50` (it stays
+  strong to the bottom edge), `--blur 64 --distance 0` (an even blur, sigma 32), `--blend
+  screen`, 70%.
 * No grain, no vignette: the black is clean, as in a studio render.
-* **T-floor-reflection** in [techniques.md](../techniques.md) is the tested library version of the mirrored floor reflection; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -117,47 +119,30 @@ side cans to 43% and 57% W so they tuck behind the front one.
 
 ```bash
 pixelox new -o hero.pxo --size 1600x900 --fill '#000000'
-pixelox text add hero.pxo --in-place --name Halo --content "Rosso" --font "Snell Roundhand" --weight 900 --size 40% --color '#e6031c'
-pixelox transform scale hero.pxo --in-place --layer Halo --size 1340x
-pixelox transform move hero.pxo --in-place --layer Halo --to 50%,13% --anchor t
-pixelox layer rasterize hero.pxo --in-place --layer Halo
+pixelox shape rect hero.pxo --in-place --name Floor --rect 0,76%,100%x24% --fill '#121212'
+pixelox text add hero.pxo --in-place --name Halo --content "Rosso" --font @script-formal --weight 900 --fit-width 1340 --color '#e6031c' --at 50%,13% --anchor t --anchor-to ink
 pixelox filter gaussian hero.pxo --in-place --layer Halo --sigma 36
 pixelox layer blend hero.pxo --in-place --layer Halo --mode screen
 pixelox layer opacity hero.pxo --in-place --layer Halo --value 70
-pixelox text add hero.pxo --in-place --name Wordmark --content "Rosso" --font "Snell Roundhand" --weight 900 --size 40% --color '#e6031c'
-pixelox transform scale hero.pxo --in-place --layer Wordmark --size 1340x
-pixelox transform move hero.pxo --in-place --layer Wordmark --to 50%,13% --anchor t
+pixelox text add hero.pxo --in-place --name Wordmark --content "Rosso" --font @script-formal --weight 900 --fit-width 1340 --color '#e6031c' --at 50%,13% --anchor t --anchor-to ink
 pixelox fx stroke hero.pxo --in-place --layer Wordmark --width 2 --color '#e6031c' --position outside
 pixelox fx outer-glow hero.pxo --in-place --layer Wordmark --blur 26 --spread 8 --color '#ff1030' --opacity 85
-pixelox shape rect hero.pxo --in-place --name Floor --rect 0,76%,100%x24% --fill '#121212'
+pixelox fx reflection hero.pxo --in-place --layer Wordmark --gap 330 --length 70% --fade 50 --blur 64 --distance 0 --blend screen --opacity 70
 pixelox comp place hero.pxo product.png --in-place --as CanLeft --size x350 --at 42.5%,78% --anchor b
 pixelox comp place hero.pxo product.png --in-place --as CanRight --size x350 --at 57.5%,78% --anchor b
 pixelox comp place hero.pxo product.png --in-place --as CanFront --size x385 --at 50%,80% --anchor b
-pixelox layer merge hero.pxo --in-place --layers CanLeft,CanRight,CanFront --name Cans
-pixelox layer dup hero.pxo --in-place --layer Cans --name CansMirror
-pixelox transform flip hero.pxo --in-place --layer CansMirror --v
-pixelox transform move hero.pxo --in-place --layer CansMirror --to 50%,79.5% --anchor t
-pixelox filter motion-blur hero.pxo --in-place --layer CansMirror --angle 90 --distance 18
-pixelox layer opacity hero.pxo --in-place --layer CansMirror --value 42
-pixelox layer add hero.pxo --in-place --name FloorFade
-pixelox fill gradient hero.pxo --in-place --layer FloorFade --from 0,80% --to 0,100% --stops '#12121200@0,#121212d9@1'
-pixelox layer dup hero.pxo --in-place --layer Wordmark --name MarkMirror
-pixelox layer reorder hero.pxo --in-place --layer MarkMirror --index 1
-pixelox transform flip hero.pxo --in-place --layer MarkMirror --v
-pixelox transform move hero.pxo --in-place --layer MarkMirror --to 50%,91% --anchor t
-pixelox filter gaussian hero.pxo --in-place --layer MarkMirror --sigma 32
-pixelox layer blend hero.pxo --in-place --layer MarkMirror --mode screen
-pixelox layer opacity hero.pxo --in-place --layer MarkMirror --value 55
-pixelox text add hero.pxo --in-place --name Fine1 --content "RENDERED ENTIRELY IN 3D. NO CAMERA WAS USED TO MAKE THIS PICTURE; EVERY SURFACE IS MODELED AND LIT BY HAND." --font "Avenir Next" --weight 400 --size 1.15% --tracking 40 --color '#8a8a8a' --at 50%,95.3% --anchor c
-pixelox text add hero.pxo --in-place --name Fine2 --content "A STUDY PIECE, MADE FOR THE LOVE OF THE CRAFT." --font "Avenir Next" --weight 400 --size 1.15% --tracking 40 --color '#8a8a8a' --at 50%,97.2% --anchor c
+pixelox fx reflection hero.pxo --in-place --layer CanLeft --length 45% --opacity 42 --blur 12
+pixelox fx copy hero.pxo --in-place --from CanLeft --to CanRight,CanFront
+pixelox text add hero.pxo --in-place --name Fine1 --content "RENDERED ENTIRELY IN 3D. NO CAMERA WAS USED TO MAKE THIS PICTURE; EVERY SURFACE IS MODELED AND LIT BY HAND." --font @geometric-sans --weight 400 --size 1.15% --tracking 40 --color '#8a8a8a' --at 50%,95.3% --anchor c
+pixelox text add hero.pxo --in-place --name Fine2 --content "A STUDY PIECE, MADE FOR THE LOVE OF THE CRAFT." --font @geometric-sans --weight 400 --size 1.15% --tracking 40 --color '#8a8a8a' --at 50%,97.2% --anchor c
 pixelox export hero.pxo -o hero.png
 ```
 
-Two things in this recipe are easy to get wrong. `layer dup` puts the copy directly above
-its source and makes it the active layer, and new layers land above the active layer: the
-`layer reorder --index 1` line lifts the mirrored wordmark to the top so that it, and the
-fine print added after it, are not buried under the floor. `transform flip` rasterizes a
-live text layer (warning PXW2003), which is fine for a reflection.
+Two things in this recipe are easy to get wrong. A reflection is part of its layer, so
+the floor must be below the wordmark and the cans: it is added first, right after the
+wall. And a reflection touches the product only if the cutout has no empty border: trim
+yours first (`pixelox transform trim product.png -o tight.png`). The reflections are live:
+edit the wordmark or move a can and they follow.
 
 Change first: the wordmark (5 to 8 letters; a real logo placed as `logo.png` and tinted
 with `fx overlay --color` replaces both text layers), then the one color.
@@ -182,8 +167,8 @@ with `fx overlay --color` replaces both text layers), then the one color.
   readable.
 * White-hot letters. With a script this heavy a near-white core turns the sign into a
   blank shape; keep the fill saturated and let only the glow be lighter.
-* A reflection that is as bright as the object. Mirror copies sit at 40 to 55% opacity,
-  are blurred, and fade out; a full-strength mirror looks like a second row of cans.
+* A reflection that is as bright as the object. Keep the cans' `--opacity` at 40 to 45,
+  blur it, and let it fade out; a full-strength mirror looks like a second row of cans.
 * A gray floor. The floor is only 7% lighter than the wall; any lighter and the picture
   splits into two bands and the sign stops lighting the room.
 * Adding a headline. The wordmark already is the headline; a second line of large type

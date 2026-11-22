@@ -34,6 +34,14 @@ fn stroked(p: &tiny_skia::Path, width: f64) -> Option<tiny_skia::Path> {
     p.stroke(&Stroke { width: width as f32, line_join: LineJoin::Round, ..Stroke::default() }, 1.0)
 }
 
+/// Faux bold keeps corners sharp (mitered, beveled past 2x) like a heavier cut would.
+fn thickened(p: &tiny_skia::Path, width: f64) -> Option<tiny_skia::Path> {
+    if width <= 0.0 {
+        return None;
+    }
+    p.stroke(&Stroke { width: width as f32, line_join: LineJoin::Miter, miter_limit: 2.0, ..Stroke::default() }, 1.0)
+}
+
 /// The filled shapes and the stroke band of laid-out text, as tiny-skia paths.
 struct Paths {
     fill: Vec<tiny_skia::Path>,
@@ -45,13 +53,16 @@ fn paths(c: &Composed) -> Paths {
     let bold = to_skia(&c.bold);
     let mut fill: Vec<tiny_skia::Path> = Vec::new();
     fill.extend(regular.clone());
+    if let Some(r) = &regular {
+        fill.extend(thickened(r, c.faux_width));
+    }
     if let Some(b) = &bold {
         fill.push(b.clone());
         fill.extend(stroked(b, c.bold_width));
     }
     let mut stroke = Vec::new();
     if let Some((_, w)) = c.stroke {
-        stroke.extend(regular.as_ref().and_then(|p| stroked(p, w)));
+        stroke.extend(regular.as_ref().and_then(|p| stroked(p, w + c.faux_width)));
         stroke.extend(bold.as_ref().and_then(|p| stroked(p, w + c.bold_width)));
     }
     Paths { fill, stroke }
@@ -180,6 +191,11 @@ pub fn svg_path_data(c: &Composed) -> String {
     let mut out = String::new();
     bez_svg(&c.regular, &mut out);
     bez_svg(&c.bold, &mut out);
+    if c.faux_width > 0.0 {
+        if let Some(r) = to_skia(&c.regular).and_then(|r| thickened(&r, c.faux_width)) {
+            skia_svg(&r, &mut out);
+        }
+    }
     if c.bold_width > 0.0 {
         if let Some(b) = to_skia(&c.bold).and_then(|b| stroked(&b, c.bold_width)) {
             skia_svg(&b, &mut out);

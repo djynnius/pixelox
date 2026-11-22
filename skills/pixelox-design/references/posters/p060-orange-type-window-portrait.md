@@ -7,7 +7,7 @@ style: [type-led, photo-composite]
 format: portrait-9x16
 archetype: A-type-block
 palette: ['#f94a07', '#080608', '#201319', '#8a2c13', '#ee2102']
-techniques: [T-fit-width, T-image-in-type, T-text-behind-subject, T-vignette, T-paper-grain]
+techniques: [T-fit-width, T-image-in-type, T-text-behind-subject, T-vignette, T-paper-grain, T-texture-fill, T-stretch-type]
 needs: subject-cutout
 ---
 
@@ -91,16 +91,17 @@ letters of line 2 (**T-image-in-type**) and once masked with a rectangle that en
 ## 7. Effects and textures
 
 * **T-fit-width**, both lines fitted to one block. With a standard condensed face the
-  lines come out too short, so the recipe sets an exact width and height with a
-  non-uniform `transform scale` (the letters are stretched tall).
-* **T-image-in-type** twice: a red mottle from `clouds.js` (`scale=20`, `stretch=0.45`,
-  `contrast=2.4`, `bias=-0.24`) clipped to each line, and the figure clipped to line 2. Several layers
-  can be clipped to the same base: each `layer clip` attaches to the nearest unclipped
-  layer below.
+  lines come out too short, so the recipe narrows the letters with `--scale-x` (52.3% and
+  48%, **T-stretch-type**) and `--fit-width` then sets them taller. The text stays live.
+* **T-image-in-type** twice: a red mottle clipped to each line, and the figure clipped to
+  line 2. The mottle is **T-texture-fill**: `fill noise --as-layer` with small, hard-edged,
+  sideways blotches (`--scale 6% --stretch 2.2 --angle 0 --contrast 35`) and a different
+  `--seed` per line. Several layers can be clipped to the same base: each `layer clip`
+  attaches to the nearest unclipped layer below.
 * Straight cut: `mask add --from-path` with a rectangle from the top edge to line 1's
   baseline on the second copy of the figure.
 * **T-vignette** in orange-red, not black: `#e5160600` to `#e51606cc`.
-* **T-paper-grain**, amount 10, soft-light 35%.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8.
 
 ## 8. Hierarchy and eye path
 
@@ -119,38 +120,28 @@ The surprise (the weave) replaces the usual levels.
 reaching sideways.
 
 ```bash
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1920 --seed 17 --param lo='#070507' --param hi='#8a1218' --param scale=20 --param octaves=3 --param warp=0.3 --param stretch=0.45 --param contrast=2.4 --param bias=-0.24 --param res=2
 pixelox new -o weave.pxo --size 1080x1920 --fill '#f94a07'
 pixelox layer add weave.pxo --in-place --name Vignette
 pixelox fill gradient weave.pxo --in-place --layer Vignette --kind radial --from 50%,48% --to 50%,112% --stops '#e5160600@0.45,#e51606cc@1'
-pixelox text add weave.pxo --in-place --name H1 --content "PRAY" --font Impact --size 20% --color '#080608'
-pixelox transform scale weave.pxo --in-place --layer H1 --size 966x760
-pixelox transform move weave.pxo --in-place --layer H1 --to 50.8%,16.2% --anchor t
-pixelox comp place weave.pxo mottle.png --in-place --as Tex1 --fit cover
+pixelox text add weave.pxo --in-place --name H1 --content "PRAY" --font @condensed-heavy --scale-x 52.3% --fit-width 966 --color '#080608' --at 50.8%,16.2% --anchor t --anchor-to ink
+pixelox fill noise weave.pxo --in-place --as-layer --name Tex1 --seed 4 --scale 6% --octaves 3 --warp 12 --stretch 2.2 --angle 0 --contrast 35 --bias=-15 --stops '#070507,#8a1218' --opacity 65
 pixelox layer clip weave.pxo --in-place --layer Tex1
-pixelox layer opacity weave.pxo --in-place --layer Tex1 --value 65
-pixelox text add weave.pxo --in-place --name H2 --content "FRIDAY" --font Impact --size 20% --color '#080608'
-pixelox transform scale weave.pxo --in-place --layer H2 --size 972x603
-pixelox transform move weave.pxo --in-place --layer H2 --to 50.5%,57.6% --anchor t
-pixelox comp place weave.pxo mottle.png --in-place --as Tex2 --fit cover
-pixelox transform flip weave.pxo --in-place --layer Tex2 --h
+pixelox text add weave.pxo --in-place --name H2 --content "FRIDAY" --font @condensed-heavy --scale-x 48.0% --fit-width 972 --color '#080608' --at 50.5%,57.6% --anchor t --anchor-to ink
+pixelox fill noise weave.pxo --in-place --as-layer --name Tex2 --seed 9 --scale 6% --octaves 3 --warp 12 --stretch 2.2 --angle 0 --contrast 35 --bias=-15 --stops '#070507,#8a1218' --opacity 65
 pixelox layer clip weave.pxo --in-place --layer Tex2
-pixelox layer opacity weave.pxo --in-place --layer Tex2 --value 65
 pixelox comp place weave.pxo subject.png --in-place --as Body --size x1300 --at 57%,92.7% --anchor b
 pixelox layer clip weave.pxo --in-place --layer Body
 pixelox comp place weave.pxo subject.png --in-place --as Bust --size x1300 --at 57%,92.7% --anchor b
 pixelox mask add weave.pxo --in-place --layer Bust --from-path 'M 0 0 H 1080 V 1071 H 0 Z'
-pixelox layer add weave.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise weave.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend weave.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity weave.pxo --in-place --layer Grain --value 35
+pixelox filter grain weave.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export weave.pxo -o weave.png
 ```
 
-Change first: the two words (3 to 5 letters on top, 5 to 7 below; the `--size` boxes stay
-the same), then the figure's `--at` so the face sits over the middle letters of line 1 and
-no letter is hidden completely. The mask's `V 1071` is line 1's baseline in pixels
-(55.8% H): change it when you move the lines.
+Change first: the two words (3 to 5 letters on top, 5 to 7 below; the `--fit-width` values
+stay the same, and a smaller `--scale-x` makes a line taller), then the figure's `--at` so
+the face sits over the middle letters of line 1 and no letter is hidden completely. The
+mask's `V 1071` is line 1's baseline in pixels (55.8% H): change it when you move the
+lines.
 
 ## 10. Variations and pairings
 

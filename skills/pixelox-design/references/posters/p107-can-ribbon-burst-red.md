@@ -98,8 +98,8 @@ way: a bottle, a jar, a gift box, a perfume, a paint tin.
 ## 7. Effects and textures
 
 * **T-spotlight**: back glow radius 45% H in `#e0655a`; the floor light and the contact
-  shadow are feathered ellipses painted on one layer through `select ellipse --feather`
-  (a blurred shape layer would be clipped at its own bounds).
+  shadow are two `shape ellipse` layers blurred with `filter gaussian` (sigma 40 and 5).
+  The blur is live and spreads past the shape's bounds.
 * **T-vignette** in dark red (`#5a0a0c` at 60% in the corners), never black.
 * Ribbons: `paint stroke` with `--d` (one SVG subpath per streamer), `--hardness 100`,
   and `--taper 55%`, so each stroke grows from a hairline at the mouth to a full round
@@ -139,12 +139,10 @@ pixelox layer add can.pxo --in-place --name Glow
 pixelox fill gradient can.pxo --in-place --layer Glow --kind radial --from 50%,47% --to 50%,92% --stops '#e97a6cff@0,#d9534a99@0.4,#b8212400@1'
 pixelox layer add can.pxo --in-place --name Corners
 pixelox fill gradient can.pxo --in-place --layer Corners --kind radial --from 50%,47% --to 50%,125% --stops '#5a0a0c00@0.5,#5a0a0c99@1'
-pixelox layer add can.pxo --in-place --name Floor
-pixelox select ellipse can.pxo --in-place --rect 22%,62%,56%x15% --feather 80
-pixelox fill solid can.pxo --in-place --layer Floor --color '#eaa692' --mask @sel
-pixelox select ellipse can.pxo --in-place --rect 33%,69.5%,34%x1.8% --feather 9
-pixelox fill solid can.pxo --in-place --layer Floor --color '#5a0c0e' --mask @sel
-pixelox select none can.pxo --in-place
+pixelox shape ellipse can.pxo --in-place --name Floor --rect 22%,62%,56%x15% --fill '#eaa692'
+pixelox filter gaussian can.pxo --in-place --layer Floor --sigma 40
+pixelox shape ellipse can.pxo --in-place --name Contact --rect 33%,69.5%,34%x1.8% --fill '#5a0c0e'
+pixelox filter gaussian can.pxo --in-place --layer Contact --sigma 5
 pixelox shape star can.pxo --in-place --name Firework1 --center 22%,4% --points 30 --outer 80 --inner 5 --fill '#ffd9d0' --opacity 55
 pixelox shape star can.pxo --in-place --name Firework2 --center 68%,11% --points 30 --outer 95 --inner 5 --fill '#ffd9d0' --opacity 55
 pixelox shape star can.pxo --in-place --name Firework3 --center 47%,17% --points 26 --outer 60 --inner 4 --fill '#ffd9d0' --opacity 55
@@ -162,9 +160,7 @@ pixelox comp place can.pxo dots.png --in-place --as Dots --fit cover
 pixelox layer blend can.pxo --in-place --layer Dots --mode screen
 pixelox comp place can.pxo stars.png --in-place --as Stars --fit cover
 pixelox layer blend can.pxo --in-place --layer Stars --mode screen
-pixelox text add can.pxo --in-place --name Wordmark --content "Your Brand" --font "Snell Roundhand" --weight 900 --size 6% --color '#ffffff'
-pixelox transform scale can.pxo --in-place --layer Wordmark --size 250x
-pixelox transform move can.pxo --in-place --layer Wordmark --to 50%,84.5% --anchor c
+pixelox text add can.pxo --in-place --name Wordmark --content "Your Brand" --font @script-formal --weight 900 --fit-width 250 --color '#ffffff' --at 50%,84.5% --anchor c --anchor-to ink
 pixelox fx stroke can.pxo --in-place --layer Wordmark --width 2 --color '#ffffff' --position outside
 pixelox export can.pxo -o can.png
 ```

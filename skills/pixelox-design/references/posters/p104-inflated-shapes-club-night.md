@@ -105,9 +105,10 @@ relatives in the corners": a mouth with drops, a hand with stars, a sun with ray
 
 ## 7. Effects and textures
 
-* Smoke ground: **T-smoke** reduced to one opaque `clouds.js` render with a dark middle
-  stop (`lo` ground, `mid='#0b0722'`, `hi='#4a36b0'`, `octaves=3`, `warp=0.9`), blurred with
-  sigma 8. The dark `mid` keeps half the sheet black; without it the violet floods.
+* Smoke ground: **T-smoke** reduced to one opaque `fill noise --as-layer` cloud layer with
+  three stops (the ground color, `#0b0722`, `#4a36b0`; `--octaves 3`, `--warp 36`,
+  `--bias=-20`). The dark middle stop keeps half the sheet black; without it the violet
+  floods.
 * Light points: **T-bokeh**, near layer only (`particles.js`, `shape=glow`, 38 dots),
   screen mode.
 * Inflated shapes (no library technique): `shape path` with `--fill none`, a stroke of 52
@@ -136,11 +137,9 @@ type area is roughly 3 : 1; the shapes are the loud part, the type is the clear 
 No images needed. Path data is in pixels for a 1080 x 1528 canvas.
 
 ```bash
-pixelox render js scripts/clouds.js -o haze.png --size 1080x1528 --seed 7 --param lo='#030206' --param mid='#0b0722' --param hi='#4a36b0' --param scale=2.4 --param octaves=3 --param warp=0.9 --param bias=-0.1 --param contrast=1.6
 pixelox render js scripts/particles.js -o stars.png --size 1080x1528 --seed 3 --param shape=glow --param colors='#8a7be0,#6a55d8,#b0a4ff' --param count=38 --param min=1.5 --param max=4.5 --param amin=0.35 --param amax=0.9
 pixelox new -o night.pxo --size 1080x1528 --fill '#030206'
-pixelox comp place night.pxo haze.png --in-place --as Haze --fit cover
-pixelox filter gaussian night.pxo --in-place --layer Haze --sigma 8
+pixelox fill noise night.pxo --in-place --as-layer --name Haze --seed 7 --scale 42% --octaves 3 --warp 36 --bias=-20 --contrast 10 --stops '#030206,#0b0722,#4a36b0'
 pixelox comp place night.pxo stars.png --in-place --as Stars --fit cover
 pixelox layer blend night.pxo --in-place --layer Stars --mode screen
 pixelox shape path night.pxo --in-place --name Ribbons --d 'M 135 -60 C 80 210 290 390 455 245 M 300 -80 L 300 95 M 100 880 C 230 950 -50 1030 50 1120 C 140 1200 -20 1250 60 1330 C 90 1370 100 1390 115 1410' --fill none --stroke '#f6d21f' --stroke-width 112 --cap round --join round
@@ -151,18 +150,12 @@ pixelox fx bevel night.pxo --in-place --layer Ribbons --style inner --depth 160 
 pixelox fx copy night.pxo --in-place --from Ribbons --to BigS,Blobs,Eye
 pixelox shape ellipse night.pxo --in-place --name Pupil --rect 422,606,216x216 --fill '#5a5a5a'
 pixelox fx overlay night.pxo --in-place --layer Pupil --style radial --stops '#e6e6e6@0,#6a6a6a@0.45,#161616@1'
-pixelox text add night.pxo --in-place --name Presenter --content "YOUR VENUE PRESENTS" --font "Helvetica Neue" --weight 700 --size 2.2% --tracking 800 --color '#ffffff' --at 51%,5.8% --anchor c
-pixelox text add night.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Helvetica Neue" --weight 400 --size 2.1% --tracking 100 --color '#9c94c4' --at 50%,9.3% --anchor c
-pixelox text add night.pxo --in-place --name Tagline --content $'THE\nSHAPE\nOF\nNOISE' --font "Helvetica Neue" --weight 300 --size 3.75% --leading 124% --tracking 90 --color '#ffffff'
-pixelox transform move night.pxo --in-place --layer Tagline --to 6.5%,12% --anchor tl
-pixelox text add night.pxo --in-place --name Date --content $'21/\n06/\n2031' --font "Helvetica Neue" --weight 300 --size 3.75% --leading 124% --tracking 90 --align right --color '#ffffff'
-pixelox transform move night.pxo --in-place --layer Date --to 94%,11% --anchor tr
-pixelox text add night.pxo --in-place --name H1 --content "DISCO" --font "Helvetica Neue" --weight 700 --size 12% --color '#ffffff'
-pixelox transform scale night.pxo --in-place --layer H1 --size 632x
-pixelox transform move night.pxo --in-place --layer H1 --to 21%,69.5% --anchor tl
-pixelox text add night.pxo --in-place --name H2 --content "NIGHT" --font "Helvetica Neue" --weight 700 --size 12% --color '#ffffff'
-pixelox transform scale night.pxo --in-place --layer H2 --size 632x
-pixelox transform move night.pxo --in-place --layer H2 --to 21%,82.5% --anchor tl
+pixelox text add night.pxo --in-place --name Presenter --content "YOUR VENUE PRESENTS" --font @neo-grotesque --weight 700 --size 2.2% --tracking 800 --color '#ffffff' --at 51%,5.8% --anchor c
+pixelox text add night.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @neo-grotesque --weight 400 --size 2.1% --tracking 100 --color '#9c94c4' --at 50%,9.3% --anchor c
+pixelox text add night.pxo --in-place --name Tagline --content $'THE\nSHAPE\nOF\nNOISE' --font @neo-grotesque --weight 300 --size 3.75% --leading 124% --tracking 90 --color '#ffffff' --at 6.5%,12% --anchor tl --anchor-to ink
+pixelox text add night.pxo --in-place --name Date --content $'21/\n06/\n2031' --font @neo-grotesque --weight 300 --size 3.75% --leading 124% --tracking 90 --align right --color '#ffffff' --at 94%,11% --anchor tr --anchor-to ink
+pixelox text add night.pxo --in-place --name H1 --content "DISCO" --font @neo-grotesque --weight 700 --fit-width 632 --color '#ffffff' --at 21%,69.5% --anchor-to ink
+pixelox text add night.pxo --in-place --name H2 --content "NIGHT" --font @neo-grotesque --weight 700 --fit-width 632 --color '#ffffff' --at 21%,82.5% --anchor-to ink
 pixelox fx drop-shadow night.pxo --in-place --layer H1 --offset 6,6 --blur 0 --color '#000000' --blend normal --opacity 100
 pixelox fx copy night.pxo --in-place --from H1 --to H2
 pixelox fx drop-shadow night.pxo --in-place --layer Tagline --offset 3,3 --blur 0 --color '#000000' --blend normal --opacity 100
@@ -172,7 +165,8 @@ pixelox export night.pxo -o night.png
 
 Change first: the two headline words (4 to 6 letters each, so the fitted lines keep a
 similar height), then the central sign (replace the `Eye` path and the pupil), then the
-two colors. To redraw a tube, write its centerline as `M` plus one or two `C` curves; the
+two colors (change `--seed` on the `fill noise` line if a bright cloud lands behind small
+text). To redraw a tube, write its centerline as `M` plus one or two `C` curves; the
 stroke width does the rest. Keep the bevel `--size` at a third to a half of the thinnest
 stroke width.
 
@@ -197,7 +191,8 @@ stroke width.
 * Too many shapes or more than two tube widths. Six shapes, two widths, one color; add a
   seventh only by removing one.
 * Violet smoke that covers everything: yellow then has no black to sit on and the sheet
-  goes flat purple. Keep a dark `mid` stop and check that about half the ground is black.
+  goes flat purple. Keep the dark middle stop and a negative `--bias`, and check that about
+  half the ground is black.
 * Thin white type on yellow without the hard shadow is unreadable. Keep the 3 px offset
   shadow, or move the small text onto dark ground.
 * Shapes that stop short of the edge. Each corner shape must run off the sheet; a shape

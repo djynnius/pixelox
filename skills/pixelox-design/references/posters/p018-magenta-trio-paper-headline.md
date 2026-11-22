@@ -124,15 +124,15 @@ top (your logo; the pennant gives any logo a clean white ground on a loud backgr
 
 * **T-spotlight** (glow layer only), placed in front of the speakers instead of behind a
   product: center 50% W, 45% H, radius 17% H, near-white to transparent white.
-* Crumpled-paper letters: a high-contrast cloud texture (white with pale gray creases)
-  clipped into each headline line, the method of **T-image-in-type**. A photo of real
-  crumpled paper clipped the same way is better.
+* Crumpled-paper letters: **T-texture-fill**, a `fill noise --kind ridged` layer (white
+  with pale gray creases: `--scale 22%`, `--warp 70`, `--bias 25`) above each headline
+  line, clipped to it. Each line gets its own crease pattern. A photo of real crumpled
+  paper clipped the same way (**T-image-in-type**) is better.
 * **T-script-overlap**: the gold script word overlaps the lower-left corner of line 1 and
   the left end of line 2.
 * **T-cutout-drop-shadow**, soft variant, on the headline only (offset 0,6, blur 18, 40%).
 * **T-rules**: the gold vertical divider and two white hairlines around the time.
 * No grain: the look is glossy and digital.
-* **T-texture-fill** in [techniques.md](../techniques.md) is the tested library version of the generated texture clipped into the type or shapes; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -151,7 +151,6 @@ print 1, about 15 : 6 : 2.5 : 2 : 1.
 job; the recipe reuses one stand-in twice), and `logo.png` is your round logo.
 
 ```bash
-pixelox render js scripts/clouds.js -o paper.png --size 1080x1528 --seed 31 --param lo='#c9c2c0' --param hi='#ffffff' --param scale=7 --param octaves=3 --param warp=1.4 --param contrast=2.6 --param bias=0.3 --param res=2
 pixelox new -o trio.pxo --size 1080x1528 --fill '#2a0c56'
 pixelox layer add trio.pxo --in-place --name Grad
 pixelox fill gradient trio.pxo --in-place --layer Grad --from 0,0 --to 0,100% --stops '#c71872@0,#9b1965@0.2,#57165a@0.5,#2a0c56@1'
@@ -162,44 +161,43 @@ pixelox layer add trio.pxo --in-place --name Glow
 pixelox fill gradient trio.pxo --in-place --layer Glow --kind radial --from 50%,45% --to 50%,62% --stops '#f6f2edff@0,#f6f2eddd@0.3,#f6dfe900@1'
 pixelox shape path trio.pxo --in-place --name Pennant --d 'M 243 0 L 351 0 L 351 115 L 297 98 L 243 115 Z' --fill '#ffffff'
 pixelox comp place trio.pxo logo.png --in-place --as Logo --size 92x --at 297,6 --anchor t
-pixelox text add trio.pxo --in-place --name Org --content "GRACE HARVEST" --font Impact --size 2.5% --color '#ffffff' --at 34%,4.3% --anchor l
-pixelox text add trio.pxo --in-place --name OrgSub --content $'FAMILY CHAPEL\nINTERNATIONAL' --font "Avenir Next" --weight 500 --size 1.4% --tracking 20 --leading 105% --color '#ffffff' --at 59.5%,4.3% --anchor l
+pixelox text add trio.pxo --in-place --name Org --content "GRACE HARVEST" --font @condensed-heavy --size 2.5% --color '#ffffff' --at 34%,4.3% --anchor l
+pixelox text add trio.pxo --in-place --name OrgSub --content $'FAMILY CHAPEL\nINTERNATIONAL' --font @geometric-sans --weight 500 --size 1.4% --tracking 20 --leading 105% --color '#ffffff' --at 59.5%,4.3% --anchor l
 pixelox text add trio.pxo --in-place --name Presents --content "presents" --font "Brush Script MT" --size 3.6% --color '#ffffff' --at 49%,9.2% --anchor c
 pixelox shape line trio.pxo --in-place --name Swash --from 41%,10.3% --to 60%,8.9% --stroke '#ffffff' --stroke-width 2
-pixelox text add trio.pxo --in-place --name Role1 --content "Guest:" --font Impact --size 1.3% --tracking 20 --color '#e3c56b' --at 18%,21.5% --anchor r
-pixelox text add trio.pxo --in-place --name Name1 --content "Rev. First Speaker" --font "Avenir Next" --weight 400 --size 1.3% --color '#ffffff' --at 18%,23.5% --anchor r
-pixelox text add trio.pxo --in-place --name Role2 --content "Senior Pastor:" --font Impact --size 1.3% --tracking 20 --color '#e3c56b' --at 96%,14.5% --anchor r
-pixelox text add trio.pxo --in-place --name Name2 --content "Dr. Second Speaker" --font "Avenir Next" --weight 400 --size 1.3% --color '#ffffff' --at 96%,16.5% --anchor r
-pixelox text add trio.pxo --in-place --name Role3 --content "Host:" --font Impact --size 1.3% --tracking 20 --color '#e3c56b' --at 64%,41% --anchor l
-pixelox text add trio.pxo --in-place --name Name3 --content "Rev. Third Speaker" --font "Avenir Next" --weight 400 --size 1.3% --color '#ffffff' --at 64%,43% --anchor l
-pixelox text add trio.pxo --in-place --name H1 --content "DAY" --font "Avenir Next" --weight 700 --size 20.8% --tracking 60 --color '#ffffff'
-pixelox transform move trio.pxo --in-place --layer H1 --to 49%,47% --anchor t
+pixelox text add trio.pxo --in-place --name Role1 --content "Guest:" --font @condensed-heavy --size 1.3% --tracking 20 --color '#e3c56b' --at 18%,21.5% --anchor r
+pixelox text add trio.pxo --in-place --name Name1 --content "Rev. First Speaker" --font @geometric-sans --weight 400 --size 1.3% --color '#ffffff' --at 18%,23.5% --anchor r
+pixelox text add trio.pxo --in-place --name Role2 --content "Senior Pastor:" --font @condensed-heavy --size 1.3% --tracking 20 --color '#e3c56b' --at 96%,14.5% --anchor r
+pixelox text add trio.pxo --in-place --name Name2 --content "Dr. Second Speaker" --font @geometric-sans --weight 400 --size 1.3% --color '#ffffff' --at 96%,16.5% --anchor r
+pixelox text add trio.pxo --in-place --name Role3 --content "Host:" --font @condensed-heavy --size 1.3% --tracking 20 --color '#e3c56b' --at 64%,41% --anchor l
+pixelox text add trio.pxo --in-place --name Name3 --content "Rev. Third Speaker" --font @geometric-sans --weight 400 --size 1.3% --color '#ffffff' --at 64%,43% --anchor l
+pixelox text add trio.pxo --in-place --name H1 --content "DAY" --font @geometric-sans --weight 700 --size 20.8% --tracking 60 --color '#ffffff' --at 49%,47% --anchor t --anchor-to ink
 pixelox fx drop-shadow trio.pxo --in-place --layer H1 --offset 0,6 --blur 18 --opacity 40
-pixelox comp place trio.pxo paper.png --in-place --as Paper1 --fit cover
+pixelox fill noise trio.pxo --in-place --as-layer --name Paper1 --kind ridged --seed 8 --scale 22% --octaves 4 --warp 70 --bias 25 --stops '#b8b0ae,#ffffff'
 pixelox layer clip trio.pxo --in-place --layer Paper1
-pixelox text add trio.pxo --in-place --name H2 --content "WONDERS" --font "Avenir Next" --weight 700 --size 8.6% --tracking 40 --color '#ffffff'
-pixelox transform move trio.pxo --in-place --layer H2 --to 24%,63.2% --anchor tl
-pixelox comp place trio.pxo paper.png --in-place --as Paper2 --fit cover
+pixelox text add trio.pxo --in-place --name H2 --content "WONDERS" --font @geometric-sans --weight 700 --size 8.6% --tracking 40 --color '#ffffff' --at 24%,63.2% --anchor tl --anchor-to ink
+pixelox fill noise trio.pxo --in-place --as-layer --name Paper2 --kind ridged --seed 8 --scale 22% --octaves 4 --warp 70 --bias 25 --stops '#b8b0ae,#ffffff'
 pixelox layer clip trio.pxo --in-place --layer Paper2
 pixelox text add trio.pxo --in-place --name Of --content "Of" --font "Brush Script MT" --size 10.5% --color '#d9b45c'
 pixelox transform rotate trio.pxo --in-place --layer Of --degrees -8
 pixelox transform move trio.pxo --in-place --layer Of --to 9.5%,61% --anchor tl
 pixelox text add trio.pxo --in-place --name Day --content "FRI 12TH" --font Futura --weight 700 --size 2.3% --color '#ffffff' --at 36%,73.2% --anchor r
 pixelox text add trio.pxo --in-place --name MonthYear --content $'JUNE\n2031' --font Futura --weight 700 --size 3.4% --leading 92% --align right --color '#ffffff' --at 36%,77.6% --anchor r
-pixelox text add trio.pxo --in-place --name Time --content "8:00pm - 5:00am" --font "Avenir Next" --weight 600 --size 1.8% --color '#ffffff' --at 36.5%,82.2% --anchor r
+pixelox text add trio.pxo --in-place --name Time --content "8:00pm - 5:00am" --font @geometric-sans --weight 600 --size 1.8% --color '#ffffff' --at 36.5%,82.2% --anchor r
 pixelox shape line trio.pxo --in-place --name TimeRule --from 20.5%,81% --to 36.5%,81% --stroke '#ffffff' --stroke-width 1 --opacity 70
 pixelox shape line trio.pxo --in-place --name Divider --from 37.6%,73% --to 37.6%,82.6% --stroke '#e3c56b' --stroke-width 3
-pixelox text add trio.pxo --in-place --name VenueHead --content "@CITY CAMPUS" --font "Avenir Next" --weight 900 --size 3.3% --tracking 20 --color '#ffffff' --at 40%,74.2% --anchor l
-pixelox text add trio.pxo --in-place --name Venue --content $'VENUE: EXAMPLE\nHALL, MAIN ROAD' --font "Avenir Next" --weight 400 --size 3.3% --leading 106% --color '#ffffff' --at 40%,79.6% --anchor l
-pixelox text add trio.pxo --in-place --name AlsoLabel --content "ALSO SPEAKING:" --font Impact --size 2.4% --color '#e3c56b' --at 43.5%,84.9% --anchor r
-pixelox text add trio.pxo --in-place --name AlsoName --content "Pastor Fourth Speaker" --font "Avenir Next" --weight 400 --size 2.6% --color '#ffffff' --at 45%,84.8% --anchor l
-pixelox text add trio.pxo --in-place --name Scripture --content "Psalm 00:00  one short verse that states the theme of the night, set small and in italics." --font "Avenir Next" --weight 400 --style italic --size 1.25% --color '#ffffff' --at 50%,89.3% --anchor c
-pixelox text add trio.pxo --in-place --name Contact --content "For more information, contact  000 000 0001,  000 000 0002,  000 000 0003" --font "Avenir Next" --weight 500 --size 1.5% --tracking 30 --color '#f3dc8a' --at 50%,95.5% --anchor c
+pixelox text add trio.pxo --in-place --name VenueHead --content "@CITY CAMPUS" --font @geometric-sans --weight 900 --size 3.3% --tracking 20 --color '#ffffff' --at 40%,74.2% --anchor l
+pixelox text add trio.pxo --in-place --name Venue --content $'VENUE: EXAMPLE\nHALL, MAIN ROAD' --font @geometric-sans --weight 400 --size 3.3% --leading 106% --color '#ffffff' --at 40%,79.6% --anchor l
+pixelox text add trio.pxo --in-place --name AlsoLabel --content "ALSO SPEAKING:" --font @condensed-heavy --size 2.4% --color '#e3c56b' --at 43.5%,84.9% --anchor r
+pixelox text add trio.pxo --in-place --name AlsoName --content "Pastor Fourth Speaker" --font @geometric-sans --weight 400 --size 2.6% --color '#ffffff' --at 45%,84.8% --anchor l
+pixelox text add trio.pxo --in-place --name Scripture --content "Psalm 00:00  one short verse that states the theme of the night, set small and in italics." --font @geometric-sans --weight 400 --style italic --size 1.25% --color '#ffffff' --at 50%,89.3% --anchor c
+pixelox text add trio.pxo --in-place --name Contact --content "For more information, contact  000 000 0001,  000 000 0002,  000 000 0003" --font @geometric-sans --weight 500 --size 1.5% --tracking 30 --color '#f3dc8a' --at 50%,95.5% --anchor c
 pixelox export trio.pxo -o trio.png
 ```
 
 Change first: the three headline strings (a 3 to 4 letter word, a 2-letter script word, a 6
-to 9 letter word), then the two ends of the gradient. With more or fewer speakers, keep
+to 9 letter word), then the two ends of the gradient. For other creases change `--seed` on
+`Paper1` or `Paper2`. With more or fewer speakers, keep
 the triangle: the tallest figure at one side, the smallest in front in the middle.
 
 ## 10. Variations and pairings

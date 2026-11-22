@@ -109,12 +109,13 @@ shot.
 * Hatch: a horizontal stripe pattern (**T-pattern**, `kind=stripes`, `angle=90`, cell 9,
   cream) masked to the dusty-blue band with `select luma` (range 0.45 to 0.62 on the
   subject layer) and `mask add`, at 55% opacity.
-* Tonal collage: a hard-edged cloud render in dark plum, multiply, 30%, plus one faded
-  ring pattern at 22% on the blue half (stand-ins for the printed fragments).
+* Tonal collage: a contrasty `fill noise` cloud layer in dark plum (`--contrast 45`,
+  `multiply`, 30%), plus one faded ring pattern at 22% on the blue half (stand-ins for the
+  printed fragments).
 * Masthead edge: `fx drop-shadow` with blur 0, offset 3,3, navy at 70%.
 * **T-label-box** (pill form): rounded rectangle with a white outline and centered text.
 * **T-frame-border**: even-odd frame path plus an inner keyline, drawn last.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-fit-width**: the masthead is set to 718 px (66.5% W) with `--fit-width`.
 
 ## 8. Hierarchy and eye path
 
@@ -131,14 +132,11 @@ Cap heights: masthead 14.5 : pill 1.5 : fine print 0.6, about 24 : 2.5 : 1. The 
 `subject.png` is your image here: a cutout portrait with strong side light.
 
 ```bash
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1440 --seed 12 --param lo=transparent --param hi='#3a1a22' --param scale=5 --param octaves=3 --param warp=0.3 --param contrast=4 --param bias=-0.08 --param res=1
 pixelox render js scripts/pattern.js -o rings.png --size 1080x1440 --param kind=rings --param color='#ffffff' --param cell=34 --param weight=0.3 --param cx=0.86 --param cy=0.74 --param fade=out --param alpha=0.5
 pixelox render js scripts/pattern.js -o hatch.png --size 1080x1440 --param kind=stripes --param angle=90 --param cell=9 --param weight=0.45 --param color='#f0e6c6'
 pixelox new -o cover.pxo --size 1080x1440 --fill '#b52a31'
 pixelox shape rect cover.pxo --in-place --name BlueHalf --rect 55.5%,0,44.5%x100% --fill '#78939b'
-pixelox comp place cover.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend cover.pxo --in-place --layer Mottle --mode multiply
-pixelox layer opacity cover.pxo --in-place --layer Mottle --value 30
+pixelox fill noise cover.pxo --in-place --as-layer --name Mottle --seed 12 --scale 32% --octaves 3 --warp 12 --contrast 45 --bias=-16 --stops 'transparent,#3a1a22' --blend multiply --opacity 30
 pixelox comp place cover.pxo rings.png --in-place --as Rings --fit cover
 pixelox layer opacity cover.pxo --in-place --layer Rings --value 22
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1800 --at 51%,1.5% --anchor t
@@ -151,17 +149,15 @@ pixelox comp place cover.pxo hatch.png --in-place --as Hatch --fit cover
 pixelox mask add cover.pxo --in-place --layer Hatch --from @sel
 pixelox select none cover.pxo --in-place
 pixelox layer opacity cover.pxo --in-place --layer Hatch --value 55
-pixelox text add cover.pxo --in-place --name Masthead --content "AXIS" --font "Times New Roman" --weight 700 --size 22% --tracking 20 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 718x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 50%,6.5% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "AXIS" --font "Times New Roman" --weight 700 --fit-width 718 --tracking 20 --color '#ffffff' --at 50%,6.5% --anchor t --anchor-to ink
 pixelox fx drop-shadow cover.pxo --in-place --layer Masthead --offset 3,3 --blur 0 --color '#192131' --blend normal --opacity 70
 pixelox shape rect cover.pxo --in-place --name Pill --rect 353,184,381x46 --radius 23 --fill '#192131' --stroke '#ffffff' --stroke-width 2
-pixelox text add cover.pxo --in-place --name PillText --content "VOICE OF THE YEAR" --font "Avenir Next" --weight 900 --size 2.1% --tracking 10 --color '#ffffff' --at 50%,207 --anchor c
+pixelox text add cover.pxo --in-place --name PillText --content "VOICE OF THE YEAR" --font @geometric-sans --weight 900 --size 2.1% --tracking 10 --color '#ffffff' --at 50%,207 --anchor c
 pixelox shape path cover.pxo --in-place --name Frame --d 'M 0 0 H 1080 V 1440 H 0 Z M 60 62 H 1020 V 1376 H 60 Z' --fill-rule evenodd --fill '#cf3630'
 pixelox shape rect cover.pxo --in-place --name Keyline --rect 62,64,956x1310 --fill none --stroke '#ffffff' --stroke-width 4
-pixelox text add cover.pxo --in-place --name IssueNote --content "SPECIAL ISSUE" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 5.6%,3.6% --anchor l
-pixelox text add cover.pxo --in-place --name IssueDate --content "DECEMBER 27, 2031 / JANUARY 3, 2032" --font "Helvetica Neue" --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 94.4%,3.6% --anchor r
-pixelox text add cover.pxo --in-place --name Site --content "www.example.com" --font "Helvetica Neue" --weight 700 --size 0.8% --tracking 140 --color '#1a0505' --at 94.4%,96.6% --anchor r
+pixelox text add cover.pxo --in-place --name IssueNote --content "SPECIAL ISSUE" --font @neo-grotesque --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 5.6%,3.6% --anchor l
+pixelox text add cover.pxo --in-place --name IssueDate --content "DECEMBER 27, 2031 / JANUARY 3, 2032" --font @neo-grotesque --weight 700 --size 0.85% --tracking 140 --color '#1a0505' --at 94.4%,3.6% --anchor r
+pixelox text add cover.pxo --in-place --name Site --content "www.example.com" --font @neo-grotesque --weight 700 --size 0.8% --tracking 140 --color '#1a0505' --at 94.4%,96.6% --anchor r
 pixelox export cover.pxo -o cover.png
 ```
 

@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render]
 format: portrait-3x4
 archetype: A-hero-object
 palette: ['#2d246f', '#100b33', '#2850b4', '#813997', '#8d88ca', '#cfd0ee']
-techniques: [T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash, T-ice-cubes, T-ghost-type]
+techniques: [T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash, T-ice-cubes, T-condensation, T-ghost-type]
 needs: product-cutout
 ---
 
@@ -84,24 +84,30 @@ opacity, partly hidden by the product.
 A rendered or composited "flavor explosion": product shot upright and frontal; fruit of
 the flavor at three depths (far and sharp, mid and sharp, near and blurred); a liquid
 splash in the flavor's color; ice for cold. All elements share the two-sided rim lighting
-of the can. For a build: your can cutout in the middle, generator splashes behind it, and
-fruit as cutouts (the recipe draws stand-in berries from beveled dots).
+of the can. For a build: your can cutout in the middle, `render splash` juice behind it and
+around its foot, rendered ice and condensation, and fruit as cutouts (the recipe draws
+stand-in berries from beveled dots).
 
 ## 7. Effects and textures
 
 * Split ground: one `fill gradient` left to right with three stops; **T-vignette** in a
   dark shade of the ground on top of it.
-* Ghost word: **T-fit-width** to 940 px, then `layer opacity` 22.
-* **T-water-splash** (`scripts/splash.js`) twice in purple (`dir=-25` to the right, `dir=200` to the left; `arc=200`,
-  centers hidden behind the can so mostly tongues and drops show), opacity
-  85, under the can; fine purple dots from `particles.js` as spray.
+* Ghost word: **T-fit-width** (`--fit-width 940`), then `layer opacity` 22.
+* **T-water-splash** as purple juice (`render splash --liquid juice --color '#a548dc'`),
+  three parts. Two `--kind sheet` throws start behind the can: the larger up and to the
+  right (`--angle 65 --spread 100 --size 110%`), the smaller up and to the left (`--angle
+  130 --size 80%`). A crown stands at the can's foot: its back half is drawn before the
+  can and its front half after it, with the same `--at`, `--size`, and `--seed`. `--drops`
+  adds the flying spray.
 * Fruit: `particles.js` dots in navy with `fx bevel` (size 26, soften 10, pale lilac
   highlight) and a drop shadow; a second, larger set blurred sigma 7 for the near plane.
-* Ice: translucent `rect` shards rendered on a short strip and placed along the bottom.
+* **T-condensation**: `render droplets --layer Can`, run right after the can is placed and
+  before its glow, so no bead lands on the glow.
+* **T-ice-cubes**: `render ice`, two groups in the bottom corners, added after the can and
+  the splash so the cubes refract them; tinted pale blue on the left and pale purple on
+  the right to follow the ground.
 * **T-cutout-drop-shadow**, glow variant: `fx outer-glow` blur 60, `#6f8cff`, 50% on the can.
-* **T-paper-grain**, amount 10, soft-light, 30%.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
-* **T-ice-cubes** in [techniques.md](../techniques.md) is the tested library version of the ice cubes (`particles.js` with `shape=cube` draws fuller cubes than the shards here); start from it when reusing this idea.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last.
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -118,44 +124,39 @@ The can is 63% H tall; the ghost word's letters are 16% H. There is no small tex
 berries for real fruit cutouts when you have them.
 
 ```bash
-pixelox render js scripts/splash.js -o juice1.png --size 900x900 --seed 4 --param color='#a548dc' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=18 --param drops=260 --param dir=-25 --param arc=200
-pixelox render js scripts/splash.js -o juice2.png --size 760x760 --seed 8 --param color='#8a45d0' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=16 --param drops=230 --param dir=200 --param arc=200
-pixelox render js scripts/particles.js -o spray.png --size 1080x1440 --seed 6 --param shape=dot --param colors='#c869ea,#e0a0ff,#7a3fc0' --param count=160 --param min=0.2 --param max=0.9 --param amin=0.5 --param amax=1 --param focus='0.52,0.5,0.5'
 pixelox render js scripts/particles.js -o berries.png --size 1080x1440 --seed 21 --param shape=dot --param colors='#1f2a6b,#2b3a8c,#16204f,#34409a' --param count=13 --param min=5 --param max=9 --param amin=1 --param amax=1
 pixelox render js scripts/particles.js -o near.png --size 1080x420 --seed 3 --param shape=dot --param colors='#1a2460,#2b3a8c,#141a48' --param count=5 --param min=15 --param max=22 --param amin=1 --param amax=1
-pixelox render js scripts/particles.js -o ice.png --size 1080x300 --seed 3 --param shape=rect --param colors='#ffffff,#cfd0ee,#9fa8e0' --param count=36 --param min=14 --param max=26 --param jitter=180 --param amin=0.35 --param amax=0.8
 pixelox new -o ad.pxo --size 1080x1440 --fill '#0b0a2e'
 pixelox layer add ad.pxo --in-place --name Split
 pixelox fill gradient ad.pxo --in-place --layer Split --from 0,0 --to 100%,0 --stops '#0341bf@0,#2a2aa0@0.5,#6a1594@1'
 pixelox layer add ad.pxo --in-place --name Shade
 pixelox fill gradient ad.pxo --in-place --layer Shade --kind radial --from 50%,46% --to 50%,112% --stops '#05041a00@0.4,#05041ae6@1'
-pixelox text add ad.pxo --in-place --name Ghost --content "brand" --font "Avenir Next" --weight 500 --size 20% --tracking -20 --color '#ffffff'
-pixelox transform scale ad.pxo --in-place --layer Ghost --size 940x
-pixelox transform move ad.pxo --in-place --layer Ghost --to 51.5%,6% --anchor t
+pixelox text add ad.pxo --in-place --name Ghost --content "brand" --font @geometric-sans --weight 500 --fit-width 940 --tracking -20 --color '#ffffff' --at 51.5%,6% --anchor t --anchor-to ink
 pixelox layer opacity ad.pxo --in-place --layer Ghost --value 22
-pixelox comp place ad.pxo juice1.png --in-place --as JuiceRight --at 70%,48% --anchor c
-pixelox layer opacity ad.pxo --in-place --layer JuiceRight --value 85
-pixelox comp place ad.pxo juice2.png --in-place --as JuiceLeft --at 30%,56% --anchor c
-pixelox layer opacity ad.pxo --in-place --layer JuiceLeft --value 85
-pixelox comp place ad.pxo spray.png --in-place --as Spray --fit cover
+pixelox render splash ad.pxo --in-place --name JuiceRight --kind sheet --liquid juice --color '#a548dc' --at 55%,72% --angle 65 --spread 100 --size 110% --drops 120 --seed 4
+pixelox render splash ad.pxo --in-place --name JuiceLeft --kind sheet --liquid juice --color '#8a45d0' --at 47%,74% --angle 130 --spread 80 --size 80% --drops 80 --seed 8
 pixelox comp place ad.pxo berries.png --in-place --as Berries --fit cover
 pixelox fx bevel ad.pxo --in-place --layer Berries --size 26 --depth 130 --soften 10 --highlight '#aebcf5' --shadow '#070a2a'
 pixelox fx drop-shadow ad.pxo --in-place --layer Berries --offset 0,10 --blur 20 --color '#05041a' --opacity 55
-pixelox comp place ad.pxo ice.png --in-place --as Ice --at 50%,100% --anchor b
+pixelox render splash ad.pxo --in-place --name CrownBack --part back --liquid juice --color '#a548dc' --at 51.8%,83% --size 60% --seed 5
 pixelox comp place ad.pxo product.png --in-place --as Can --size x1000 --at 51.8%,85.5% --anchor b
+pixelox render droplets ad.pxo --in-place --layer Can --density 60 --trickles 3
 pixelox fx outer-glow ad.pxo --in-place --layer Can --blur 60 --color '#6f8cff' --opacity 50
+pixelox render splash ad.pxo --in-place --name CrownFront --part front --liquid juice --color '#a548dc' --at 51.8%,83% --size 60% --seed 5
+pixelox render ice ad.pxo --in-place --name IceLeft --at 14%,90% --count 4 --size 13% --spread 16% --tint '#b9c4ff' --frost 35 --seed 3
+pixelox render ice ad.pxo --in-place --name IceRight --at 88%,92% --count 3 --size 13% --spread 12% --tint '#d6b9ff' --frost 35 --seed 9
 pixelox comp place ad.pxo near.png --in-place --as NearBerries --at 50%,100% --anchor b
 pixelox fx bevel ad.pxo --in-place --layer NearBerries --size 40 --depth 130 --soften 12 --highlight '#aebcf5' --shadow '#070a2a'
 pixelox filter gaussian ad.pxo --in-place --layer NearBerries --sigma 7
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
-Change first: the right-hand ground color and the splash color (both are the flavor),
-then the fruit colors, then the ghost word.
+Change first: the right-hand ground color and the splash `--color` (both are the flavor;
+`--liquid juice` keeps it opaque, `--liquid water` makes it clear), then the fruit colors,
+then the ghost word. Ice and droplets show what is behind them when their command runs:
+after swapping the can, run the recipe again from the top. If the splash covers the
+label, change `--seed` or lower the crown's `--size`.
 
 ## 10. Variations and pairings
 

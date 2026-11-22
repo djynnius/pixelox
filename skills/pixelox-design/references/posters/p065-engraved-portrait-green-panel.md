@@ -7,7 +7,7 @@ style: [illustration, halftone, retro]
 format: portrait-4x5
 archetype: A-photo-panel
 palette: ['#fdf6da', '#065d16', '#361d05', '#ab9471', '#2f8f40']
-techniques: [T-halftone-portrait, T-script-overlap, T-vertical-type, T-rules, T-long-shadow, T-stretch-type]
+techniques: [T-halftone-portrait, T-script-overlap, T-vertical-type, T-rules, T-pattern, T-stretch-type]
 needs: [subject-cutout, logo]
 ---
 
@@ -103,16 +103,19 @@ hand engraving needs an illustrator. The logo is a one-color line mark in a ring
 * **T-halftone-portrait**, line-screen variant: black and white, levels 15 to 225, then
   `filter halftone --shape line --cell 4 --angle 30` with brown ink and cream paper. The
   result is clipped to the panel so the panel's bottom edge crops the figure.
-* Micro-type weave: one row of text is exported alone and used as a brush tip, then
-  stamped down the panel with `paint stroke` at a spacing of one row. This is the stamping
-  trick of **T-long-shadow** pointed straight down with wide spacing instead of 1 px steps.
+* Micro-type weave: one row of text is set on its own transparent strip, as wide as the
+  canvas and as tall as one row (1080 x 17 px), exported, and tiled down the panel as a
+  pattern overlay (`fx overlay --kind pattern`). The tile repeats from the canvas origin,
+  so the strip's height is the row pitch. It is a repeat pattern in the sense of
+  **T-pattern**, made of type.
+* Block word: **T-stretch-type**, widened a little and fitted to its width (`--scale-x
+  102.7% --fit-width 616`); it stays live text.
 * **T-script-overlap**, quiet version: the script sits in front of the block word's lower
   third with no rotation, no shadow, and no accent color; the dark brown on green carries
   the overlap by itself.
 * **T-vertical-type** for the margin line; **T-rules** for the two hairlines around the
   venue.
 * No gradients, no shadows, no grain: flat inks only.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -131,49 +134,41 @@ weave 0.5, about 11 : 2.3 : 1.6 : 1 : 0.5.
 (a dark one-color round mark) are your images here.
 
 ```bash
+pixelox new -o row.pxo --size 1080x17 --fill transparent
+pixelox text add row.pxo --in-place --name Line --content "GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE +" --font @geometric-sans --weight 600 --fit-width 890 --tracking 120 --color '#2f8f40' --at 95,3 --anchor-to ink
+pixelox export row.pxo -o row.png
 pixelox new -o sunday.pxo --size 1080x1350 --fill '#fdf6da'
 pixelox shape rect sunday.pxo --in-place --name Panel --rect 7.9%,4.5%,84.2%x58.7% --fill '#065d16'
-pixelox text add sunday.pxo --in-place --name Line --content "GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE + GROWINGINGRACE +" --font "Avenir Next" --weight 600 --size 0.72% --tracking 120 --color '#2f8f40'
-pixelox transform scale sunday.pxo --in-place --layer Line --size 890x
-pixelox transform move sunday.pxo --in-place --layer Line --to 8.8%,5.2% --anchor tl
-pixelox export sunday.pxo -o tip.png --layer Line
-pixelox layer rm sunday.pxo --in-place --layer Line
-pixelox layer add sunday.pxo --in-place --name Weave
-pixelox paint stroke sunday.pxo --in-place --layer Weave --tip tip.png --size 1350 --spacing 1.25 --color '#2f8f40' --points '540,675 540,1445'
-pixelox layer clip sunday.pxo --in-place --layer Weave
+pixelox fx overlay sunday.pxo --in-place --layer Panel --kind pattern --from row.png
 pixelox comp place sunday.pxo subject.png --in-place --as Portrait --size x930 --at 50%,63.2% --anchor b
 pixelox adjust bw sunday.pxo --in-place --layer Portrait
 pixelox adjust levels sunday.pxo --in-place --layer Portrait --in-black 15 --in-white 225
 pixelox filter halftone sunday.pxo --in-place --layer Portrait --cell 4 --shape line --angle 30 --ink '#361d05' --paper '#f3e2bd'
 pixelox layer clip sunday.pxo --in-place --layer Portrait
-pixelox text add sunday.pxo --in-place --name Margin --content "Streaming live on @yourchannel  /  Also on the church app" --font "Avenir Next" --weight 500 --size 1.15% --color '#4a3320' --at 50%,50% --anchor c
+pixelox text add sunday.pxo --in-place --name Margin --content "Streaming live on @yourchannel  /  Also on the church app" --font @geometric-sans --weight 500 --size 1.15% --color '#4a3320' --at 50%,50% --anchor c
 pixelox transform rotate sunday.pxo --in-place --layer Margin --degrees -90
 pixelox transform move sunday.pxo --in-place --layer Margin --to 6%,61% --anchor b
-pixelox text add sunday.pxo --in-place --name Block --content "HOPE" --font "Arial Black" --size 10% --color '#05510d'
-pixelox transform scale sunday.pxo --in-place --layer Block --size 616x150
-pixelox transform move sunday.pxo --in-place --layer Block --to 7.4%,65.6% --anchor tl
-pixelox text add sunday.pxo --in-place --name Script --content "Sunday" --font "SignPainter" --size 20% --color '#361d05'
-pixelox transform scale sunday.pxo --in-place --layer Script --size 590x
-pixelox transform move sunday.pxo --in-place --layer Script --to 6.7%,72.5% --anchor tl
+pixelox text add sunday.pxo --in-place --name Block --content "HOPE" --font @heavy-wide --scale-x 102.7% --fit-width 616 --color '#05510d' --at 7.4%,65.6% --anchor-to ink
+pixelox text add sunday.pxo --in-place --name Script --content "Sunday" --font @brush --fit-width 590 --color '#361d05' --at 6.7%,72.5% --anchor-to ink
 pixelox fx stroke sunday.pxo --in-place --layer Script --width 3 --color '#361d05' --position outside
 pixelox comp place sunday.pxo logo.png --in-place --as Logo --size 100x --at 80.3%,77.3% --anchor c
-pixelox text add sunday.pxo --in-place --name Time --content "8AM" --font "Arial Black" --size 3.1% --color '#361d05' --at 11.8%,93.4% --anchor c
-pixelox text add sunday.pxo --in-place --name Zone --content "(GMT)" --font "Avenir Next" --weight 500 --size 1.35% --color '#361d05' --at 11.8%,95.7% --anchor c
+pixelox text add sunday.pxo --in-place --name Time --content "8AM" --font @heavy-wide --size 3.1% --color '#361d05' --at 11.8%,93.4% --anchor c
+pixelox text add sunday.pxo --in-place --name Zone --content "(GMT)" --font @geometric-sans --weight 500 --size 1.35% --color '#361d05' --at 11.8%,95.7% --anchor c
 pixelox shape line sunday.pxo --in-place --name RuleTop --from 23.5%,91% --to 73%,91% --stroke '#b9ad90' --stroke-width 1
 pixelox shape line sunday.pxo --in-place --name RuleBottom --from 23.5%,96.6% --to 73%,96.6% --stroke '#b9ad90' --stroke-width 1
-pixelox text add sunday.pxo --in-place --name Venue --content "MAIN AUDITORIUM" --font "Avenir Next" --weight 700 --size 2.2% --tracking 20 --color '#361d05' --at 48.3%,93.2% --anchor c
-pixelox text add sunday.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR DISTRICT, YOUR CITY" --font "Avenir Next" --weight 600 --size 1.5% --tracking 150 --color '#0d6c21' --at 48.3%,95.2% --anchor c
-pixelox text add sunday.pxo --in-place --name Note1 --content "& ACROSS ALL" --font "Avenir Next" --weight 500 --size 1.4% --color '#361d05' --at 87%,91.7% --anchor c
-pixelox text add sunday.pxo --in-place --name Note2 --content "HOPE" --font "Arial Black" --size 3.1% --color '#05510d' --at 87%,93.8% --anchor c
-pixelox text add sunday.pxo --in-place --name Note3 --content "LOCATIONS" --font "Avenir Next" --weight 500 --size 1.6% --color '#361d05' --at 87%,96% --anchor c
+pixelox text add sunday.pxo --in-place --name Venue --content "MAIN AUDITORIUM" --font @geometric-sans --weight 700 --size 2.2% --tracking 20 --color '#361d05' --at 48.3%,93.2% --anchor c
+pixelox text add sunday.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR DISTRICT, YOUR CITY" --font @geometric-sans --weight 600 --size 1.5% --tracking 150 --color '#0d6c21' --at 48.3%,95.2% --anchor c
+pixelox text add sunday.pxo --in-place --name Note1 --content "& ACROSS ALL" --font @geometric-sans --weight 500 --size 1.4% --color '#361d05' --at 87%,91.7% --anchor c
+pixelox text add sunday.pxo --in-place --name Note2 --content "HOPE" --font @heavy-wide --size 3.1% --color '#05510d' --at 87%,93.8% --anchor c
+pixelox text add sunday.pxo --in-place --name Note3 --content "LOCATIONS" --font @geometric-sans --weight 500 --size 1.6% --color '#361d05' --at 87%,96% --anchor c
 pixelox export sunday.pxo -o sunday.png
 ```
 
 Change first: the phrase in the weave (keep it short, without spaces, 8 repeats to fill
-the row), the block word, and the script word. The stroke end point `540,1445` is the
-canvas center plus the panel height minus one row; change it with the panel. The block
-word is stretched with an unequal `transform scale` (616 x 150), which rasterizes it
-(warning PXW2003): set its text before that step.
+the row), the block word, and the script word. The strip height in `--size 1080x17` is the
+row pitch: a taller strip spaces the rows out. The `3` in `--at 95,3` slides all rows up
+or down: with another panel, change it until no row is cut by the panel's top or bottom
+edge.
 
 ## 10. Variations and pairings
 
@@ -186,7 +181,7 @@ word is stretched with an unequal `transform scale` (616 x 150), which rasterize
   then break out over the panel's top edge.
 * Speaker announcements, podcast covers, author events, coffee and craft labels,
   anniversary portraits. Square post: panel 5 to 62% H, title only, no info row.
-* Pairs with T-paper-grain (amount 18, multiply-like overlay 30%) for a printed feel,
+* Pairs with T-paper-grain (amount 18) for a printed feel,
   T-stencil-poster instead of the line screen for a bolder portrait, and T-arc-type around
   the logo ring.
 

@@ -135,9 +135,7 @@ pixelox render js scripts/pattern.js -o cuts.png --size 1080x1440 --param kind=g
 pixelox new -o cover.pxo --size 1080x1440 --fill '#c4c3c0'
 pixelox layer add cover.pxo --in-place --name Light
 pixelox fill gradient cover.pxo --in-place --layer Light --kind radial --from 55%,55% --to 55%,120% --stops '#e4e3e0ff@0,#e4e3e000@1'
-pixelox text add cover.pxo --in-place --name Masthead --content "MONTAGE" --font "Avenir Next" --weight 900 --size 18% --tracking -50 --color '#f4f3f0'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 1000x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 50%,4.6% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "MONTAGE" --font @geometric-sans --weight 900 --fit-width 1000 --tracking -50 --color '#f4f3f0' --at 50%,4.6% --anchor t --anchor-to ink
 pixelox fx stroke cover.pxo --in-place --layer Masthead --width 5 --color '#f4f3f0' --position outside
 pixelox fx drop-shadow cover.pxo --in-place --layer Masthead --offset 0,6 --blur 18 --opacity 30
 pixelox comp place cover.pxo photo.png --in-place --as Face --size x1300 --at 50%,58% --anchor c
@@ -162,17 +160,14 @@ pixelox transform rotate cover.pxo --in-place --layer Loose2 --degrees 70
 pixelox layer dup cover.pxo --in-place --layer Loose1 --name Loose3
 pixelox transform move cover.pxo --in-place --layer Loose3 --to 92%,40% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Loose3 --degrees -40
-pixelox layer reorder cover.pxo --in-place --layer Loose3 --index 1
 pixelox comp place cover.pxo subject.png --in-place --as Builder --size x430 --at 74%,100% --anchor b
 pixelox fx drop-shadow cover.pxo --in-place --layer Builder --offset 8,12 --blur 24 --opacity 40
-pixelox text add cover.pxo --in-place --name Credit --content "THE EDITORS'" --font "Avenir Next" --weight 700 --size 1.2% --color '#f4f3f0' --at 5.1%,3% --anchor l
+pixelox text add cover.pxo --in-place --name Credit --content "THE EDITORS'" --font @geometric-sans --weight 700 --size 1.2% --color '#f4f3f0' --at 5.1%,3% --anchor l
 pixelox shape line cover.pxo --in-place --name RuleL1 --from 3.5%,20.9% --to 17%,20.9% --stroke '#f4f3f0' --stroke-width 2
-pixelox text add cover.pxo --in-place --name StarName --content $'ARLO\nVANCE' --font "Avenir Next Condensed" --weight 300 --size 5.5% --leading 84% --color '#f4f3f0'
-pixelox transform move cover.pxo --in-place --layer StarName --to 3.5%,21.9% --anchor tl
+pixelox text add cover.pxo --in-place --name StarName --content $'ARLO\nVANCE' --font @condensed-hairline --size 5.5% --leading 84% --color '#f4f3f0' --at 3.5%,21.9% --anchor tl --anchor-to ink
 pixelox shape line cover.pxo --in-place --name RuleL2 --from 3.5%,31.9% --to 17%,31.9% --stroke '#f4f3f0' --stroke-width 2
 pixelox shape line cover.pxo --in-place --name RuleR1 --from 81%,20.9% --to 97.3%,20.9% --stroke '#f4f3f0' --stroke-width 2
-pixelox text add cover.pxo --in-place --name Hook --content $'FINDING\nTHE LAST\nFEW PARTS' --font "Avenir Next Condensed" --weight 300 --size 3.3% --leading 92% --align right --color '#f4f3f0'
-pixelox transform move cover.pxo --in-place --layer Hook --to 97.2%,21.9% --anchor tr
+pixelox text add cover.pxo --in-place --name Hook --content $'FINDING\nTHE LAST\nFEW PARTS' --font @condensed-hairline --size 3.3% --leading 92% --align right --color '#f4f3f0' --at 97.2%,21.9% --anchor tr --anchor-to ink
 pixelox shape line cover.pxo --in-place --name RuleR2 --from 81%,31.9% --to 97.3%,31.9% --stroke '#f4f3f0' --stroke-width 2
 pixelox export cover.pxo -o cover.png
 ```
@@ -180,9 +175,9 @@ pixelox export cover.pxo -o cover.png
 How the piece path works: a 120 px square drawn clockwise; on the top and right edges
 an arc with flags `1 1` bulges out as a knob, on the bottom and left edges an arc with
 flags `1 0` cuts in as a socket (radius 22, neck 32 px wide). To make a piece elsewhere,
-add the same offset to every x or every y. `layer dup` leaves the copy active directly
-above its source; the last `layer reorder --index 1` puts the final loose piece back on
-top so the figure and the text that follow land above it.
+add the same offset to every x or every y. `layer dup` puts each copy directly above its
+source; the figure and the text that follow are new layers, so they land on top of the
+stack, above every piece.
 
 Change first: the photo and its position inside the window, then which cell is the hole
 (shift the Hole path by multiples of 120), then the masthead word.

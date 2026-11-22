@@ -7,7 +7,7 @@ style: [photo-composite, type-led]
 format: portrait-4x5
 archetype: A-side-subject-column
 palette: ['#f2efea', '#e4d9cf', '#150201', '#370f06', '#a8562a', '#c7a586']
-techniques: [T-fit-width, T-gradient-mesh, T-label-box, T-info-bar, T-photo-fade, T-sliced-type]
+techniques: [T-fit-width, T-gradient-mesh, T-label-box, T-info-bar, T-photo-fade, T-sliced-type, T-icon-row]
 needs: [subject-cutout, logo]
 ---
 
@@ -127,7 +127,13 @@ the lower third of the figure needs no clean crop: it is faded into the cream
   left-to-right gradients (`fx overlay`), darker where two segments meet, which is what
   makes the joins look like folds. The bars follow **T-info-bar** and the date box
   **T-label-box**.
-* **T-photo-fade** at the bottom, ground cream, 88 to 98% H.
+* **T-photo-fade** at the bottom, ground cream, 88 to 98% H. It is the gradient-layer
+  form, not a mask on the cutout, because the same layer also tints the bottom strip of
+  the ground cream.
+* Footer icon: `shape icon circle-play` in red (**T-icon-row**). The bundled icons have no
+  brand logos; a neutral play symbol stands in.
+* The bar note is placed by its center (`--anchor c --anchor-to ink`) and then rotated -13
+  degrees about that center.
 * No grain, no drop shadows on the type.
 * **T-sliced-type** in [techniques.md](../techniques.md) is the tested library version of the cut-and-shifted headline; start from it when reusing this idea.
 
@@ -156,26 +162,18 @@ pixelox filter gaussian sermon.pxo --in-place --layer Wash --sigma 50
 pixelox comp place sermon.pxo logo.png --in-place --as Logo --size 80x --at 13.8%,9.2% --anchor c
 pixelox shape path sermon.pxo --in-place --name Tail --d 'M 0 627 L 292 800 L 265 936 L 0 844 Z' --fill '#380902'
 pixelox fx overlay sermon.pxo --in-place --layer Tail --stops '#5a1c0a@0,#2a0501@1' --angle 0
-pixelox text add sermon.pxo --in-place --name H1 --content "TRUST" --font Impact --size 10% --color '#020101'
-pixelox transform scale sermon.pxo --in-place --layer H1 --size 303x
-pixelox transform move sermon.pxo --in-place --layer H1 --to 10.5%,15.3% --anchor tl
-pixelox text add sermon.pxo --in-place --name Side --content $'DISCIPLINES\nTHAT OPEN' --font Impact --size 3.75% --leading 115% --color '#020101'
-pixelox transform move sermon.pxo --in-place --layer Side --to 40.8%,15.5% --anchor tl
-pixelox text add sermon.pxo --in-place --name H2 --content "THE DOORS OF" --font Impact --size 10% --color '#2a0602'
-pixelox transform scale sermon.pxo --in-place --layer H2 --size 588x
-pixelox transform move sermon.pxo --in-place --layer H2 --to 10.5%,25.2% --anchor tl
-pixelox text add sermon.pxo --in-place --name H3 --content "JOY" --font "Arial Black" --size 10% --tracking -20 --color '#150201'
-pixelox transform scale sermon.pxo --in-place --layer H3 --size 590x
-pixelox transform move sermon.pxo --in-place --layer H3 --to 9.6%,34.6% --anchor tl
+pixelox text add sermon.pxo --in-place --name H1 --content "TRUST" --font @condensed-heavy --fit-width 303 --color '#020101' --at 10.5%,15.3% --anchor-to ink
+pixelox text add sermon.pxo --in-place --name Side --content $'DISCIPLINES\nTHAT OPEN' --font @condensed-heavy --size 3.75% --leading 115% --color '#020101' --at 40.8%,15.5% --anchor tl --anchor-to ink
+pixelox text add sermon.pxo --in-place --name H2 --content "THE DOORS OF" --font @condensed-heavy --fit-width 588 --color '#2a0602' --at 10.5%,25.2% --anchor-to ink
+pixelox text add sermon.pxo --in-place --name H3 --content "JOY" --font @heavy-wide --fit-width 590 --tracking -20 --color '#150201' --at 9.6%,34.6% --anchor-to ink
 pixelox fx stroke sermon.pxo --in-place --layer H3 --width 7 --color '#150201' --position outside
 pixelox shape line sermon.pxo --in-place --name Cut1 --from 330,312 --to 400,205 --stroke '#f4f2ef' --stroke-width 3
 pixelox shape line sermon.pxo --in-place --name Cut2 --from 308,436 --to 406,336 --stroke '#f4f2ef' --stroke-width 3
 pixelox shape line sermon.pxo --in-place --name Cut3 --from 560,330 --to 702,236 --stroke '#f4f2ef' --stroke-width 3
 pixelox shape path sermon.pxo --in-place --name Label --d 'M 292 800 L 676 800 L 676 936 L 265 936 Z' --fill '#2a0602'
-pixelox text add sermon.pxo --in-place --name Invite --content "JOIN US THIS SUNDAY" --font "Avenir Next" --weight 500 --size 1.7% --tracking 20 --color '#f1e9e1' --at 43.5%,62.4% --anchor c
-pixelox text add sermon.pxo --in-place --name Date --content "14TH MAY, 2031" --font Impact --size 3.5% --color '#ffffff' --at 43.5%,65.8% --anchor c
-pixelox comp place sermon.pxo subject.png --in-place --as Speaker --size x1180 --at 100%,100% --anchor br
-pixelox transform move sermon.pxo --in-place --layer Speaker --by 290,0
+pixelox text add sermon.pxo --in-place --name Invite --content "JOIN US THIS SUNDAY" --font @geometric-sans --weight 500 --size 1.7% --tracking 20 --color '#f1e9e1' --at 43.5%,62.4% --anchor c
+pixelox text add sermon.pxo --in-place --name Date --content "14TH MAY, 2031" --font @condensed-heavy --size 3.5% --color '#ffffff' --at 43.5%,65.8% --anchor c
+pixelox comp place sermon.pxo subject.png --in-place --as Speaker --size x1180 --at 100%+290,100% --anchor br
 pixelox layer add sermon.pxo --in-place --name Fade
 pixelox fill gradient sermon.pxo --in-place --layer Fade --from 0,88% --to 0,98% --stops '#e9e1d600@0,#e9e1d6ff@1'
 pixelox shape path sermon.pxo --in-place --name BarLeft --d 'M 0 1034 L 302 1023 L 302 1152 L 0 1174 Z' --fill '#5a210b'
@@ -183,23 +181,23 @@ pixelox fx overlay sermon.pxo --in-place --layer BarLeft --stops '#5a210b@0,#120
 pixelox shape path sermon.pxo --in-place --name BarMid --d 'M 302 1021 L 806 1029 L 806 1164 L 302 1152 Z' --fill '#3a0b02'
 pixelox shape path sermon.pxo --in-place --name BarRight --d 'M 804 1029 L 1080 965 L 1080 1114 L 804 1164 Z' --fill '#a8562a'
 pixelox fx overlay sermon.pxo --in-place --layer BarRight --stops '#3a140a@0,#b0572a@1' --angle 90
-pixelox text add sermon.pxo --in-place --name Time --content "8AM" --font Impact --size 4.2% --color '#ffffff' --at 14.5%,80.6% --anchor c
+pixelox text add sermon.pxo --in-place --name Time --content "8AM" --font @condensed-heavy --size 4.2% --color '#ffffff' --at 14.5%,80.6% --anchor c
 pixelox text add sermon.pxo --in-place --name Venue --content "MAIN AUDITORIUM" --font "DIN Condensed" --weight 700 --size 3.4% --color '#ffffff' --at 51.2%,80.4% --anchor c
-pixelox text add sermon.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR DISTRICT, YOUR CITY" --font "Avenir Next Condensed" --weight 500 --size 1.9% --color '#dccbc0' --at 51.2%,83% --anchor c
-pixelox text add sermon.pxo --in-place --name Note --content $'& ACROSS ALL\nOUR LOCATIONS' --font "Avenir Next Condensed" --weight 700 --size 2.5% --leading 105% --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add sermon.pxo --in-place --name Address --content "12 EXAMPLE ROAD, YOUR DISTRICT, YOUR CITY" --font @condensed --weight 500 --size 1.9% --color '#dccbc0' --at 51.2%,83% --anchor c
+pixelox text add sermon.pxo --in-place --name Note --content $'& ACROSS ALL\nOUR LOCATIONS' --font @condensed --weight 700 --size 2.5% --leading 105% --color '#ffffff' --at 86.5%,79.4% --anchor c --anchor-to ink
 pixelox transform rotate sermon.pxo --in-place --layer Note --degrees -13
-pixelox transform move sermon.pxo --in-place --layer Note --to 86.5%,79.4% --anchor c
-pixelox text add sermon.pxo --in-place --name Stream --content "Streaming live on" --font "Avenir Next" --weight 500 --size 1.5% --color '#2a1a15' --at 8.7%,91.7% --anchor l
-pixelox shape rect sermon.pxo --in-place --name PlayBox --rect 24.2%,90.9%,3.4%x1.6% --radius 6 --fill '#d21f1f'
-pixelox text add sermon.pxo --in-place --name Handle --content "@yourchannel" --font "Avenir Next" --weight 700 --size 1.5% --color '#2a1a15' --at 28.6%,91.7% --anchor l
-pixelox text add sermon.pxo --in-place --name Stream2 --content "Also on the church app and satellite TV" --font "Avenir Next" --weight 500 --size 1.4% --color '#2a1a15' --at 8.7%,93.9% --anchor l
+pixelox text add sermon.pxo --in-place --name Stream --content "Streaming live on" --font @geometric-sans --weight 500 --size 1.5% --color '#2a1a15' --at 8.7%,91.7% --anchor l
+pixelox shape icon sermon.pxo circle-play --in-place --name PlayIcon --size 30 --at 25.9%,91.7% --anchor c --color '#d21f1f' --stroke-width 3
+pixelox text add sermon.pxo --in-place --name Handle --content "@yourchannel" --font @geometric-sans --weight 700 --size 1.5% --color '#2a1a15' --at 28.6%,91.7% --anchor l
+pixelox text add sermon.pxo --in-place --name Stream2 --content "Also on the church app and satellite TV" --font @geometric-sans --weight 500 --size 1.4% --color '#2a1a15' --at 8.7%,93.9% --anchor l
 pixelox export sermon.pxo -o sermon.png
 ```
 
 Change first: the four headline strings. Keep line 1 at 4 to 6 letters, line 2 at 10 to 12
 characters, and line 3 at 3 or 4 letters with round or wide shapes (O, D, G, M, W); then
 re-check that all three still end at 65% W. Size the cutout so the head top lands at
-26% H and the face stays right of 70% W.
+26% H and the face stays right of 70% W; `--at 100%+290,100%` puts its right edge 290 px
+past the canvas edge, so change the `+290` to slide it.
 
 ## 10. Variations and pairings
 

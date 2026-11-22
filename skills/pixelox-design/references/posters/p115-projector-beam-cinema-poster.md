@@ -121,7 +121,7 @@ flattened with **T-silhouette** to white at 15 to 25% opacity or to the ground c
 * Specks: `particles.js` (`shape=dot`) in the beam's three colors.
 * **T-vertical-type** for the side words; **T-fit-width** for title line 1; **T-rules**
   for the hairline above the logos.
-* **T-paper-grain**, amount 10, soft-light 30%.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added last.
 
 ## 8. Hierarchy and eye path
 
@@ -157,29 +157,23 @@ pixelox comp place season.pxo stroke.png --in-place --as StrokeR --at 76%,27% --
 pixelox transform rotate season.pxo --in-place --layer StrokeR --degrees -28
 pixelox shape path season.pxo --in-place --name Projector --d 'M 427 1184 L 545 1151 L 664 1184 L 545 1216 Z' --fill '#f2eed9'
 pixelox shape path season.pxo --in-place --name Pedestal --d 'M 495 1232 H 595 M 501 1246 H 589 M 507 1260 H 583 M 513 1274 H 577 M 519 1288 H 571' --fill none --stroke '#b5651d' --stroke-width 5
-pixelox text add season.pxo --in-place --name Dates --content "DEC 2031 - MAR 2032" --font "Avenir Next" --weight 700 --size 1.4% --tracking 200 --color '#ffffff' --at 50.5%,4.7% --anchor c
-pixelox text add season.pxo --in-place --name Title --content "MOONLIT" --font "Avenir Next" --weight 700 --size 6.8% --tracking 20 --color '#fbf3e8'
-pixelox transform scale season.pxo --in-place --layer Title --size 594x
-pixelox transform move season.pxo --in-place --layer Title --to 50.3%,44.4% --anchor t
-pixelox text add season.pxo --in-place --name Title2 --content "CINEMA" --font "Avenir Next" --weight 700 --size 3.6% --tracking 40 --color '#fbe5d4'
-pixelox transform move season.pxo --in-place --layer Title2 --to 50.5%,51% --anchor t
-pixelox text add season.pxo --in-place --name SideL --content "VENUE HOUSE" --font "Avenir Next" --weight 700 --size 1.1% --tracking 700 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add season.pxo --in-place --name Dates --content "DEC 2031 - MAR 2032" --font @geometric-sans --weight 700 --size 1.4% --tracking 200 --color '#ffffff' --at 50.5%,4.7% --anchor c
+pixelox text add season.pxo --in-place --name Title --content "MOONLIT" --font @geometric-sans --weight 700 --fit-width 594 --tracking 20 --color '#fbf3e8' --at 50.3%,44.4% --anchor t --anchor-to ink
+pixelox text add season.pxo --in-place --name Title2 --content "CINEMA" --font @geometric-sans --weight 700 --size 3.6% --tracking 40 --color '#fbe5d4' --at 50.5%,51% --anchor t --anchor-to ink
+pixelox text add season.pxo --in-place --name SideL --content "VENUE HOUSE" --font @geometric-sans --weight 700 --size 1.1% --tracking 700 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate season.pxo --in-place --layer SideL --degrees 90
 pixelox transform move season.pxo --in-place --layer SideL --to 9%,46.8% --anchor c
-pixelox text add season.pxo --in-place --name SideR --content "YOUR CITY" --font "Avenir Next" --weight 700 --size 1.1% --tracking 700 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add season.pxo --in-place --name SideR --content "YOUR CITY" --font @geometric-sans --weight 700 --size 1.1% --tracking 700 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate season.pxo --in-place --layer SideR --degrees 90
 pixelox transform move season.pxo --in-place --layer SideR --to 93.7%,46.8% --anchor c
-pixelox text add season.pxo --in-place --name Tickets --content $'TICKETS\n\nAdult: 20 plus\nbooking fee\n\nBuy in advance online\nor at the box office' --font "Avenir Next" --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 21.7%,73% --anchor t
-pixelox text add season.pxo --in-place --name Times --content $'TIMES\n\nDoors: 8.30pm\nScreening: around 9.30pm\nBox office: Tue to Thu\nfrom 5 to 9.30pm' --font "Avenir Next" --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 79%,73% --anchor t
-pixelox text add season.pxo --in-place --name Info --content $'INFO\n\nwww.example.com\nPh. 00 0000 0000' --font "Avenir Next" --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 21.7%,84.2% --anchor t
-pixelox text add season.pxo --in-place --name Where --content $'WHERE\n\nLevel 6, Venue House\n12 Example Street' --font "Avenir Next" --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 79%,84.2% --anchor t
-pixelox text add season.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Avenir Next" --weight 700 --size 1.2% --tracking 250 --color '#ffffff' --at 50.5%,90.7% --anchor c
+pixelox text add season.pxo --in-place --name Tickets --content $'TICKETS\n\nAdult: 20 plus\nbooking fee\n\nBuy in advance online\nor at the box office' --font @geometric-sans --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 21.7%,73% --anchor t
+pixelox text add season.pxo --in-place --name Times --content $'TIMES\n\nDoors: 8.30pm\nScreening: around 9.30pm\nBox office: Tue to Thu\nfrom 5 to 9.30pm' --font @geometric-sans --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 79%,73% --anchor t
+pixelox text add season.pxo --in-place --name Info --content $'INFO\n\nwww.example.com\nPh. 00 0000 0000' --font @geometric-sans --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 21.7%,84.2% --anchor t
+pixelox text add season.pxo --in-place --name Where --content $'WHERE\n\nLevel 6, Venue House\n12 Example Street' --font @geometric-sans --weight 700 --size 0.72% --tracking 120 --leading 150% --align center --color '#ffffff' --at 79%,84.2% --anchor t
+pixelox text add season.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @geometric-sans --weight 700 --size 1.2% --tracking 250 --color '#ffffff' --at 50.5%,90.7% --anchor c
 pixelox shape line season.pxo --in-place --name Rule --from 9%,93.5% --to 89%,93.5% --stroke '#8a8486' --stroke-width 1
-pixelox text add season.pxo --in-place --name Partners --content "PARTNER ONE     PARTNER TWO     PARTNER THREE     PARTNER FOUR     PARTNER FIVE" --font "Avenir Next" --weight 600 --size 0.8% --tracking 100 --color '#b9b3b5' --at 50%,95.3% --anchor c
-pixelox layer add season.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise season.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend season.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity season.pxo --in-place --layer Grain --value 30
+pixelox text add season.pxo --in-place --name Partners --content "PARTNER ONE     PARTNER TWO     PARTNER THREE     PARTNER FOUR     PARTNER FIVE" --font @geometric-sans --weight 600 --size 0.8% --tracking 100 --color '#b9b3b5' --at 50%,95.3% --anchor c
+pixelox filter grain season.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export season.pxo -o season.png
 ```
 

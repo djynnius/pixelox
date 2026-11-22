@@ -7,7 +7,7 @@ style: [photo-composite, editorial]
 format: portrait-a
 archetype: A-photo-panel
 palette: ['#b8b6b5', '#444444', '#8f1a20', '#ffffff', '#5d1919']
-techniques: [T-frame-border, T-shape-crop]
+techniques: [T-frame-border, T-shape-crop, T-icon-row]
 needs: subject-cutout
 ---
 
@@ -112,6 +112,12 @@ works; the outfit should be the only strong color in the shot.
   four-stop vertical gray gradient that fakes the wall and floor.
 * Panel backdrop: `fx overlay` at 90 degrees with a hard step (stops at 0.16 and 0.2) for
   the floor line.
+* **T-icon-row**, contact form: three `shape icon` outlines (`at-sign`, `map-pin`,
+  `phone`) at 28 px with `--stroke-width 3` to match the bold text, each anchored by its
+  right side 10 px left of its line. The lines are right-aligned, so every icon has its
+  own X.
+* Title lines: `text add --at 47.4%,Y --anchor tr --anchor-to ink` puts the top-right of
+  the letters exactly on the shared right edge.
 * No grain, no shadows on type.
 * **T-shape-crop** in [techniques.md](../techniques.md) is the tested library version of the photo shown through a drawn shape (arch, panel, tiles, or letter); start from it when reusing this idea.
 
@@ -145,23 +151,24 @@ pixelox fx overlay flyer.pxo --in-place --layer Panel --stops '#cdbfb2@0,#c1af9e
 pixelox comp place flyer.pxo subject.png --in-place --as Subject --size x840 --at 66%,86% --anchor b
 pixelox mask add flyer.pxo --in-place --layer Subject --from-path 'M 543 0 H 1080 V 1528 H 543 Z'
 pixelox shape rect flyer.pxo --in-place --name Keyline --rect 50.3%,6.5%,27.7%x85.5% --fill none --stroke '#ffffff' --stroke-width 4
-pixelox text add flyer.pxo --in-place --name Title1 --content "NEW" --font Impact --size 15.3% --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer Title1 --to 47.4%,15.5% --anchor tr
-pixelox text add flyer.pxo --in-place --name Title2 --content "FORM" --font Impact --size 15.3% --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer Title2 --to 47.4%,30.7% --anchor tr
-pixelox text add flyer.pxo --in-place --name Role --content "STYLE DIRECTOR" --font "Arial Black" --size 1.3% --color '#ffffff' --at 4.6%,46.1% --anchor l
-pixelox text add flyer.pxo --in-place --name Date --content "14.03.31" --font "Arial Black" --size 1.3% --color '#ffffff' --at 47.4%,46.1% --anchor r
-pixelox text add flyer.pxo --in-place --name Body --content $'Meet a new season of tailoring made for\nlong days and late evenings. Soft shoulders,\nwide legs, one deep color from head to toe.\nEvery piece is cut to order in our studio\nand fitted in person, so it moves the way\nyou do. Book a session, bring a mood,\nand leave with a wardrobe that\nfeels like you on your best day.' --font "Avenir Next" --weight 700 --size 1.2% --leading 150% --align right --color '#ffffff' --at 47.4%,54.4% --anchor tr
-pixelox text add flyer.pxo --in-place --name Contact --content $'@YOURHANDLE\nYOUR CITY\n+00 000 000 000' --font "Avenir Next" --weight 800 --size 1.45% --leading 165% --align right --color '#ffffff' --at 47%,75.3% --anchor tr
-pixelox shape ellipse flyer.pxo --in-place --name PhoneDot --rect 24.4%,79.7%,2.7%x1.9% --fill '#ffffff'
+pixelox text add flyer.pxo --in-place --name Title1 --content "NEW" --font @condensed-heavy --size 15.3% --color '#ffffff' --at 47.4%,15.5% --anchor tr --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Title2 --content "FORM" --font @condensed-heavy --size 15.3% --color '#ffffff' --at 47.4%,30.7% --anchor tr --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Role --content "STYLE DIRECTOR" --font @heavy-wide --size 1.3% --color '#ffffff' --at 4.6%,46.1% --anchor l
+pixelox text add flyer.pxo --in-place --name Date --content "14.03.31" --font @heavy-wide --size 1.3% --color '#ffffff' --at 47.4%,46.1% --anchor r
+pixelox text add flyer.pxo --in-place --name Body --content $'Meet a new season of tailoring made for\nlong days and late evenings. Soft shoulders,\nwide legs, one deep color from head to toe.\nEvery piece is cut to order in our studio\nand fitted in person, so it moves the way\nyou do. Book a session, bring a mood,\nand leave with a wardrobe that\nfeels like you on your best day.' --font @geometric-sans --weight 700 --size 1.2% --leading 150% --align right --color '#ffffff' --at 47.4%,54.4% --anchor tr
+pixelox text add flyer.pxo --in-place --name Contact --content $'YOURHANDLE\nYOUR CITY\n+00 000 000 000' --font @geometric-sans --weight 800 --size 1.45% --leading 165% --align right --color '#ffffff' --at 47%,75.3% --anchor tr
+pixelox shape icon flyer.pxo at-sign --in-place --name IconHandle --size 28 --at 30.9%,76.2% --anchor r --color '#ffffff' --stroke-width 3
+pixelox shape icon flyer.pxo map-pin --in-place --name IconCity --size 28 --at 34.4%,78.6% --anchor r --color '#ffffff' --stroke-width 3
+pixelox shape icon flyer.pxo phone --in-place --name IconPhone --size 28 --at 27.5%,81% --anchor r --color '#ffffff' --stroke-width 3
 pixelox export flyer.pxo -o flyer.png
 ```
 
 Both title lines share one font size, so the longer word sets it: lower `--size 15.3%`
 until the longer line starts at or right of 4.6% W. Change first: the two title words,
 the panel's red (take it from the outfit), then the body copy (break lines by hand, 35 to
-45 characters). To add the mat, start from a 1300 px wide `#5d1919` canvas and place the
-exported flyer in its center.
+45 characters). When a contact line changes length, move its icon: the icon's `--at` X
+is the line's left end minus 10 px. To add the mat, start from a 1300 px wide `#5d1919`
+canvas and place the exported flyer in its center.
 
 ## 10. Variations and pairings
 

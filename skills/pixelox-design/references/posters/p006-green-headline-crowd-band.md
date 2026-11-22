@@ -7,7 +7,7 @@ style: [photo-composite, type-led, editorial]
 format: portrait-a
 archetype: A-event-stack
 palette: ['#f4f4f4', '#024422', '#171d24', '#081b3a', '#40454d']
-techniques: [T-fit-width, T-text-behind-subject, T-paper-grain, T-color-grade]
+techniques: [T-fit-width, T-text-behind-subject, T-paper-grain, T-color-grade, T-icon-row]
 needs: [subject-cutout, photo]
 ---
 
@@ -92,15 +92,18 @@ white would vanish on the paper.
 
 ## 7. Effects and textures
 
-* **T-fit-width**: both headline lines are scaled to the same 79% W, so the block is a
-  rectangle; the 6-letter line comes out taller than the 7-letter line.
+* **T-fit-width**: both headline lines are fitted to the same 79% W (`--fit-width 854`),
+  so the block is a rectangle; the 6-letter line comes out taller than the 7-letter line.
 * **T-text-behind-subject**: the cutout is placed after the headline and the band. The head
   covers the middle two letters of line 2 only; the first three and last two stay clear.
 * Band crop: the photo is clipped to a rectangle (`layer clip`), then a paper-colored
   stripe is drawn over it for the slit.
 * **T-color-grade** on the band photo: vibrance -30, shadows toward blue.
-* **T-paper-grain**, amount 10, soft-light 35%, plus a pale cloud mottle in multiply at 12%
-  for the paper feel.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`), plus a pale cloud mottle for
+  the paper feel: one `fill noise --as-layer` line, stops `#b9b9b9` to white, `multiply`,
+  12%.
+* **T-icon-row**, contact variant: the footer pin is `shape icon map-pin`, 48 px, with
+  `--fill` in the line color so it reads as a solid pin with a hole.
 
 ## 8. Hierarchy and eye path
 
@@ -117,20 +120,13 @@ Cap-height ratio: headline 18 and 16 : date 1.2 : names and address 1.0, about 1
 congregation photo) are your images here.
 
 ```bash
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1528 --seed 21 --param lo='#b9b9b9' --param hi='#ffffff' --param scale=4 --param octaves=6 --param warp=0.4
 pixelox new -o service.pxo --size 1080x1528 --fill '#f4f4f4'
-pixelox comp place service.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend service.pxo --in-place --layer Mottle --mode multiply
-pixelox layer opacity service.pxo --in-place --layer Mottle --value 12
-pixelox text add service.pxo --in-place --name Presenter --content "ROWAN & HALE" --font "Avenir Next" --weight 700 --size 1.4% --tracking 20 --color '#081b3a' --at 10%,8.1% --anchor l
-pixelox text add service.pxo --in-place --name When --content "06.09.31    10AM" --font "Avenir Next" --weight 700 --size 1.65% --color '#081b3a' --at 90%,8.1% --anchor r
+pixelox fill noise service.pxo --in-place --as-layer --name Mottle --seed 21 --scale 25% --warp 16 --stops '#b9b9b9,#ffffff' --blend multiply --opacity 12
+pixelox text add service.pxo --in-place --name Presenter --content "ROWAN & HALE" --font @geometric-sans --weight 700 --size 1.4% --tracking 20 --color '#081b3a' --at 10%,8.1% --anchor l
+pixelox text add service.pxo --in-place --name When --content "06.09.31    10AM" --font @geometric-sans --weight 700 --size 1.65% --color '#081b3a' --at 90%,8.1% --anchor r
 pixelox shape line service.pxo --in-place --name WhenRule --from 82.9%,7.4% --to 82.9%,8.8% --stroke '#081b3a' --stroke-width 2
-pixelox text add service.pxo --in-place --name H1 --content "EASTER" --font Impact --size 10% --tracking -10 --color '#024422'
-pixelox transform scale service.pxo --in-place --layer H1 --size 854x
-pixelox transform move service.pxo --in-place --layer H1 --to 10.6%,11.8% --anchor tl
-pixelox text add service.pxo --in-place --name H2 --content "SERVICE" --font Impact --size 10% --tracking -10 --color '#024422'
-pixelox transform scale service.pxo --in-place --layer H2 --size 854x
-pixelox transform move service.pxo --in-place --layer H2 --to 10.6%,31.6% --anchor tl
+pixelox text add service.pxo --in-place --name H1 --content "EASTER" --font @condensed-heavy --fit-width 854 --tracking -10 --color '#024422' --at 10.6%,11.8% --anchor-to ink
+pixelox text add service.pxo --in-place --name H2 --content "SERVICE" --font @condensed-heavy --fit-width 854 --tracking -10 --color '#024422' --at 10.6%,31.6% --anchor-to ink
 pixelox shape rect service.pxo --in-place --name Band --rect 0,52.5%,100%x32.5% --fill '#40454d'
 pixelox comp place service.pxo photo.png --in-place --as Crowd --size 1080x --at 50%,68.7% --anchor c
 pixelox layer clip service.pxo --in-place --layer Crowd
@@ -139,17 +135,12 @@ pixelox adjust color-balance service.pxo --in-place --layer Crowd --shadows=-8,0
 pixelox adjust levels service.pxo --in-place --layer Crowd --gamma 0.85
 pixelox shape rect service.pxo --in-place --name Slit --rect 0,61.4%,100%x1.3% --fill '#f4f4f4'
 pixelox comp place service.pxo subject.png --in-place --as Figure --size x980 --at 51%,100% --anchor b
-pixelox shape ellipse service.pxo --in-place --name PinHead --rect 10%,89.9%,2.8%x2% --fill '#081b3a'
-pixelox shape polygon service.pxo --in-place --name PinTip --center 11.4%,91.9% --radius 13 --sides 3 --rotation 90 --fill '#081b3a'
-pixelox shape ellipse service.pxo --in-place --name PinHole --rect 10.9%,90.5%,1%x0.7% --fill '#f4f4f4'
-pixelox text add service.pxo --in-place --name Address --content $'12 Example Road,\nYour City 00000' --font "Avenir Next" --weight 700 --size 1.3% --leading 125% --color '#081b3a' --at 14%,91.2% --anchor l
+pixelox shape icon service.pxo map-pin --in-place --name Pin --size 48 --at 9.4%,91.2% --anchor l --color '#081b3a' --fill '#081b3a'
+pixelox text add service.pxo --in-place --name Address --content $'12 Example Road,\nYour City 00000' --font @geometric-sans --weight 700 --size 1.3% --leading 125% --color '#081b3a' --at 14%,91.2% --anchor l
 pixelox shape ellipse service.pxo --in-place --name Dot1 --rect 80.6%,91%,2.7%x1.9% --fill '#081b3a'
 pixelox shape ellipse service.pxo --in-place --name Dot2 --rect 84%,91%,2.7%x1.9% --fill '#081b3a'
 pixelox shape ellipse service.pxo --in-place --name Dot3 --rect 87.3%,91%,2.7%x1.9% --fill '#081b3a'
-pixelox layer add service.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise service.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend service.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity service.pxo --in-place --layer Grain --value 35
+pixelox filter grain service.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export service.pxo -o service.png
 ```
 

@@ -7,7 +7,7 @@ style: [illustration, flat, retro]
 format: portrait-2x3
 archetype: A-scene-title
 palette: ['#65bda5', '#072c20', '#245b47', '#a5c856', '#f4faf8']
-techniques: [T-waves, T-geo-shapes, T-pattern, T-paper-grain]
+techniques: [T-waves, T-geo-shapes, T-pattern, T-paper-grain, T-icon-row]
 needs: nothing
 ---
 
@@ -99,12 +99,15 @@ landmark" composition.
 
 * **T-geo-shapes**: mountain, tail, teeth, ball, skyline are `shape path`, `shape ellipse`,
   and `shape polygon` layers.
+* The ferry is a bundled outline icon (`shape icon ship`, see **T-icon-row**), 96 px, with
+  the outline in green-black and `--fill` in white so it matches the skyline.
 * **T-pattern**: `pattern.js kind=rings` (cell 14, weight 0.25) clipped to the tail for
   the engraved contour lines.
 * **T-waves** twice: filled bands (`count=8`, `freq=5`, `amp=0.016`, `chaos=0.6`) for the
   sea, then `mode=line` (`count=30`) in green-black over them; a third, flat line set for
   the open water.
-* **T-paper-grain**, very light (amount 8, soft-light 25%): the print is nearly clean.
+* **T-paper-grain**, very light (`filter grain --as-layer --amount 8`, last): the print is
+  nearly clean.
 
 ## 8. Hierarchy and eye path
 
@@ -132,6 +135,7 @@ pixelox shape path host.pxo --in-place --name PeakShade --d 'M 389 551 L 579 373
 pixelox shape path host.pxo --in-place --name Skyline --d 'M 30 890 V 850 H 60 V 820 H 85 V 850 H 110 V 800 H 118 V 745 H 124 V 800 H 132 V 850 H 170 V 830 H 200 V 860 H 240 V 840 H 270 V 870 H 330 V 890 Z M 600 890 V 860 H 640 V 840 H 670 V 810 H 700 V 780 H 730 V 830 H 760 V 800 H 800 V 770 H 830 V 820 H 870 V 790 H 900 V 840 H 950 V 810 H 990 V 890 Z' --fill '#f4faf8' --stroke '#072c20' --stroke-width 3
 pixelox shape line host.pxo --in-place --name Horizon --from 0,890 --to 1080,890 --stroke '#072c20' --stroke-width 3
 pixelox comp place host.pxo water.png --in-place --as Water --fit cover
+pixelox shape icon host.pxo ship --in-place --name Ferry --size 96 --at 87.5%,59% --anchor c --color '#072c20' --fill '#f4faf8' --stroke-width 5
 pixelox shape path host.pxo --in-place --name Tail --d 'M 404 1140 C 430 980 470 860 500 760 C 440 700 250 610 67 690 C 90 560 200 470 330 470 C 430 470 520 510 555 548 C 590 510 680 470 780 470 C 900 470 1000 560 1026 700 C 850 610 660 700 610 760 C 620 880 630 1000 640 1140 Z' --fill '#072c20'
 pixelox comp place host.pxo rings.png --in-place --as Engraving --fit cover
 pixelox layer clip host.pxo --in-place --layer Engraving
@@ -141,16 +145,13 @@ pixelox shape polygon host.pxo --in-place --name Patch --center 918,365 --radius
 pixelox shape path host.pxo --in-place --name Seams --d 'M 918 319 L 918 259 M 962 351 L 1019 332 M 945 402 L 980 451 M 891 402 L 856 451 M 874 351 L 817 332' --fill none --stroke '#072c20' --stroke-width 5
 pixelox comp place host.pxo sea.png --in-place --as Sea --fit cover
 pixelox comp place host.pxo crests.png --in-place --as Crests --fit cover
-pixelox text add host.pxo --in-place --name Headline --content "HARBOR CITY CUP 31" --font "Helvetica Neue" --weight 900 --size 4.1% --color '#072c20' --at 5.3%,8.3% --anchor l
-pixelox text add host.pxo --in-place --name Dates --content "JUNE 4 - JULY 12" --font "Helvetica Neue" --weight 700 --size 1.2% --tracking 150 --color '#072c20' --at 5.4%,11.3% --anchor l
-pixelox text add host.pxo --in-place --name Numeral --content $'3\n1' --font "Arial Black" --size 7.6% --leading 90% --align center --color '#a5c856' --at 88.5%,87.5% --anchor c
+pixelox text add host.pxo --in-place --name Headline --content "HARBOR CITY CUP 31" --font "Helvetica Neue" --weight 900 --stretch condensed --size 4.1% --color '#072c20' --at 5.3%,8.3% --anchor l
+pixelox text add host.pxo --in-place --name Dates --content "JUNE 4 - JULY 12" --font @neo-grotesque --weight 700 --size 1.2% --tracking 150 --color '#072c20' --at 5.4%,11.3% --anchor l
+pixelox text add host.pxo --in-place --name Numeral --content $'3\n1' --font @heavy-wide --size 7.6% --leading 90% --align center --color '#a5c856' --at 88.5%,87.5% --anchor c
 pixelox fx stroke host.pxo --in-place --layer Numeral --width 4 --color '#072c20' --position outside
 pixelox shape rect host.pxo --in-place --name LabelBox --rect 82%,93.8%,13%x2.4% --fill '#072c20'
-pixelox text add host.pxo --in-place --name Label --content "YOUR CITY" --font "Helvetica Neue" --weight 700 --size 1.1% --tracking 100 --color '#f4faf8' --at 88.5%,95% --anchor c
-pixelox layer add host.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise host.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend host.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity host.pxo --in-place --layer Grain --value 25
+pixelox text add host.pxo --in-place --name Label --content "YOUR CITY" --font @neo-grotesque --weight 700 --size 1.1% --tracking 100 --color '#f4faf8' --at 88.5%,95% --anchor c
+pixelox filter grain host.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export host.pxo -o host.png
 ```
 

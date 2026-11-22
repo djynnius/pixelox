@@ -119,6 +119,24 @@
         "default": "100",
         "x-pixelox-kind": "float"
       },
+      "cover_stroke": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "true",
+              "false"
+            ]
+          }
+        ],
+        "description": "Also paint over a shape or text layer's own stroke (by default the stroke stays on top) Type: flag.",
+        "x-pixelox-kind": "flag"
+      },
       "blend": {
         "type": "string",
         "enum": [

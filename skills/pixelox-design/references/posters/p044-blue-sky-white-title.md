@@ -96,8 +96,10 @@ show its base floating.
 
 ## 7. Effects and textures
 
-* **T-photo-fade**, reversed: a sky-blue field (`#8fa9d2`) is solid above 40% H and clears
-  by 70% H, so the title always sits on calm, even blue whatever the photo does up there.
+* **T-photo-fade**, run upward: a gradient mask on the photo (`mask add --gradient linear
+  --from 0,70% --to 0,40%`). The photo is whole at 70% H and gone above 40% H, where the
+  sky-blue ground (`#8fa9d2`) shows, so the title always sits on calm, even blue whatever
+  the photo does up there.
 * Sun haze: a soft white radial glow centered on the top edge (50% W, 0% H), reaching
   down to 50% H, 65% strong at its center; it gives the sky its pale-top, deep-bottom fall-off.
 * **T-script-overlap**, quiet variant: script in the same white as the block word, level,
@@ -119,38 +121,30 @@ sub-line 2 : footer 1.3, about 7 : 6 : 1.6 : 1.5 : 1.
 ## 9. Build recipe
 
 `photo.png` is your image here: a photo whose subject fills its lower third under a plain
-sky. It is anchored to the bottom edge at full width; the top of the canvas is filled by
-the fade color.
+sky. It is anchored to the bottom edge at full width; its top fades out, and the top of
+the canvas is the ground color.
 
 ```bash
 pixelox new -o skyfest.pxo --size 1080x1620 --fill '#8fa9d2'
 pixelox comp place skyfest.pxo photo.png --in-place --as Photo --size 1080x --at 0,100% --anchor bl
-pixelox layer add skyfest.pxo --in-place --name SkyFade
-pixelox fill gradient skyfest.pxo --in-place --layer SkyFade --from 0,70% --to 0,40% --stops '#8fa9d200@0,#8fa9d2ff@1'
+pixelox mask add skyfest.pxo --in-place --layer Photo --gradient linear --from 0,70% --to 0,40%
 pixelox layer add skyfest.pxo --in-place --name Haze
 pixelox fill gradient skyfest.pxo --in-place --layer Haze --kind radial --from 50%,0 --to 50%,50% --stops '#ffffffa6@0,#ffffff00@1'
 pixelox layer add skyfest.pxo --in-place --name Deep
 pixelox fill gradient skyfest.pxo --in-place --layer Deep --from 0,45% --to 0,100% --stops '#3e6eb000@0,#3e6eb059@1'
 pixelox text add skyfest.pxo --in-place --name Presenter --content "YOUR CHURCH PRESENTS" --font "DIN Condensed" --weight 700 --size 2.6% --tracking 150 --color '#ffffff' --at 50%,4.3% --anchor c
-pixelox text add skyfest.pxo --in-place --name Date --content "22.08.2031" --font "DIN Condensed" --weight 700 --size 2.75% --tracking 100 --color '#ffffff'
-pixelox transform move skyfest.pxo --in-place --layer Date --to 18.4%,17.7% --anchor tl
-pixelox text add skyfest.pxo --in-place --name Headline --content "RIVERSIDE" --font "DIN Condensed" --weight 700 --size 10% --color '#ffffff'
-pixelox transform scale skyfest.pxo --in-place --layer Headline --size 708x
-pixelox transform move skyfest.pxo --in-place --layer Headline --to 18.4%,20.5% --anchor tl
-pixelox text add skyfest.pxo --in-place --name Script --content "Revival" --font "Snell Roundhand" --weight 900 --size 12% --color '#ffffff'
-pixelox transform scale skyfest.pxo --in-place --layer Script --size 620x
-pixelox transform move skyfest.pxo --in-place --layer Script --to 52.5%,28.8% --anchor t
-pixelox text add skyfest.pxo --in-place --name Sub --content "SUMMER EVENT" --font "DIN Condensed" --weight 700 --size 2.7% --tracking 300 --color '#ffffff'
-pixelox transform move skyfest.pxo --in-place --layer Sub --to 52.5%,40.2% --anchor t
-pixelox text add skyfest.pxo --in-place --name Body --content $'Three days of music, teaching, and food\nfor every age. Bring a friend, a chair,\nand an open heart. Gates open at four;\nfirst song at five.' --font "DIN Condensed" --weight 700 --size 3% --tracking 130 --leading 104% --align center --color '#ffffff'
-pixelox transform move skyfest.pxo --in-place --layer Body --to 50%,51.5% --anchor t
+pixelox text add skyfest.pxo --in-place --name Date --content "22.08.2031" --font "DIN Condensed" --weight 700 --size 2.75% --tracking 100 --color '#ffffff' --at 18.4%,17.7% --anchor tl --anchor-to ink
+pixelox text add skyfest.pxo --in-place --name Headline --content "RIVERSIDE" --font "DIN Condensed" --weight 700 --fit-width 708 --color '#ffffff' --at 18.4%,20.5% --anchor-to ink
+pixelox text add skyfest.pxo --in-place --name Script --content "Revival" --font @script-formal --weight 900 --fit-width 620 --color '#ffffff' --at 52.5%,28.8% --anchor t --anchor-to ink
+pixelox text add skyfest.pxo --in-place --name Sub --content "SUMMER EVENT" --font "DIN Condensed" --weight 700 --size 2.7% --tracking 300 --color '#ffffff' --at 52.5%,40.2% --anchor t --anchor-to ink
+pixelox text add skyfest.pxo --in-place --name Body --content $'Three days of music, teaching, and food\nfor every age. Bring a friend, a chair,\nand an open heart. Gates open at four;\nfirst song at five.' --font "DIN Condensed" --weight 700 --size 3% --tracking 130 --leading 104% --align center --color '#ffffff' --at 50%,51.5% --anchor t --anchor-to ink
 pixelox text add skyfest.pxo --in-place --name Footer --content "12 EXAMPLE ROAD, YOUR CITY  -  WWW.EXAMPLE.COM  -  PHONE 555 0100" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 150 --color '#ffffff' --at 50%,96.7% --anchor c
 pixelox export skyfest.pxo -o skyfest.png
 ```
 
-Change first: the fade color. Sample your photo's sky where it meets the fade
-(`pixelox analyze stats photo.png --rect 540,300,9x9 --json`) and use that hex in `new` and
-in both SkyFade stops, so the join is invisible. Then the headline (7 to 10 letters), the
+Change first: the ground color. Sample your photo's sky where it meets the fade
+(`pixelox analyze stats photo.png --rect 540,300,9x9 --json`) and use that hex as the
+`--fill` of `new`, so the join is invisible. Then the headline (7 to 10 letters), the
 script word, and the paragraph (break the lines by hand at 38 to 40 characters).
 
 ## 10. Variations and pairings
@@ -158,9 +152,9 @@ script word, and the paragraph (break the lines by hand at 38 to 40 characters).
 * Twin: p043 is the same title block in dark maroon on a white winter photo, without the
   paragraph. Use p043's dark type when the sky is paler than about `#d5dde8`; white type
   needs a sky at least as deep as `#9aaeca`.
-* Sunset version: fade color `#e8a070`, deep layer `#7a2f4a`, type white; the paragraph
+* Sunset version: ground color `#e8a070`, deep layer `#7a2f4a`, type white; the paragraph
   gains a `fx drop-shadow` (offset 0,2, blur 8, opacity 30).
-* Night version: fade `#0f1d3d`, haze removed, T-bokeh or `particles.js` stars in the top
+* Night version: ground `#0f1d3d`, haze removed, T-bokeh or `particles.js` stars in the top
   half, type white.
 * Drop the paragraph and move the statue up to 60% H for a cleaner teaser; or replace the
   paragraph with a three-column T-info-bar at 54 to 62% H.
@@ -176,7 +170,7 @@ script word, and the paragraph (break the lines by hand at 38 to 40 characters).
   the page in two and collides with the paragraph. This layout wants a wide, low subject.
 * A paragraph in regular weight or tracked 0: at this size white-on-blue text thins out.
   Use weight 700, tracking 100 to 140, and no more than four lines.
-* A visible seam where the fade meets the photo's own sky: the fade color does not match.
-  Sample it from the photo rather than choosing a "nice blue".
+* A visible seam where the fade meets the photo's own sky: the ground color does not
+  match. Sample it from the photo rather than choosing a "nice blue".
 * Letting the footer run over a light, detailed part of the subject. Keep it on the darker
   plinth or ground, or add a 25% dark gradient over the bottom 6% H.

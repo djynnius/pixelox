@@ -103,7 +103,8 @@ corporate message about change, growth, or direction.
   shape's own bounds), where one stop is the ground color `#020066`. No transparency is
   needed because the ground is flat.
 * No shadows, outlines, or blur. The original has no grain; if the gradients show steps
-  on your screen, add **T-paper-grain** at amount 8, opacity 25, below the type.
+  on your screen, add **T-paper-grain** (`filter grain --as-layer --amount 8`) before the
+  text lines, so the grain stays below the type.
 * **T-ring-arcs** in [techniques.md](../techniques.md) is the tested library version of the ring, halo, or arc shapes; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -135,10 +136,9 @@ pixelox shape path bands.pxo --in-place --name Band2 --d 'M 570 367 A 1532 1532 
 pixelox fx overlay bands.pxo --in-place --layer Band2 --stops '#050aff@0,#0173ff@0.75' --angle 0
 pixelox shape path bands.pxo --in-place --name Band1 --d 'M 190 118 A 1717 1717 0 0 1 936 318 L 849 481 A 1532 1532 0 0 0 183 303 Z' --fill '#00b6ff'
 pixelox fx overlay bands.pxo --in-place --layer Band1 --stops '#020066@0.08,#0156af@0.5,#00b6ff@0.9' --angle 0
-pixelox text add bands.pxo --in-place --name Logo --content "yourbrand" --font "Helvetica Neue" --weight 700 --size 2.4% --tracking -20 --color '#ffffff' --at 12.6%,8.6% --anchor l
-pixelox text add bands.pxo --in-place --name Headline --content $'MAKE\nIT\nNEW\nEACH\nDAY.' --font "Arial Black" --size 7.9% --leading 84% --tracking -30 --color '#ffffff'
-pixelox transform move bands.pxo --in-place --layer Headline --to 13%,44.3% --anchor tl
-pixelox text add bands.pxo --in-place --name Body --content $'Two or three calm sentences that say what is\nchanging, who it is for, and where to find out\nmore. Keep every line under 48 characters.' --font "Helvetica Neue" --weight 400 --size 1.1% --leading 165% --color '#8d8dbf' --at 12.6%,86.3% --anchor tl
+pixelox text add bands.pxo --in-place --name Logo --content "yourbrand" --font @neo-grotesque --weight 700 --size 2.4% --tracking -20 --color '#ffffff' --at 12.6%,8.6% --anchor l
+pixelox text add bands.pxo --in-place --name Headline --content $'MAKE\nIT\nNEW\nEACH\nDAY.' --font @heavy-wide --size 7.9% --leading 84% --tracking -30 --color '#ffffff' --at 13%,44.3% --anchor tl --anchor-to ink
+pixelox text add bands.pxo --in-place --name Body --content $'Two or three calm sentences that say what is\nchanging, who it is for, and where to find out\nmore. Keep every line under 48 characters.' --font @neo-grotesque --weight 400 --size 1.1% --leading 165% --color '#8d8dbf' --at 12.6%,86.3% --anchor tl
 pixelox export bands.pxo -o bands.png
 ```
 

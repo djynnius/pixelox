@@ -104,15 +104,14 @@ toothbrush, a bottle, a remote, a lipstick, a thermometer, a pen.
 
 * Wall drift: one diagonal linear gradient layer over the flat fill, `#71b5d8` at the
   lower left to `#8dc7eb` at the upper right.
-* Product-as-letter (no library technique): the word is set in two text layers with a gap,
-  and the product is scaled to the cap height and stood on the baseline in the gap.
+* **T-object-as-letter**: the word is set in two text layers with a gap, and the product
+  is scaled to the cap height and stood on the baseline in the gap.
 * Stroke weight: the stand-in face at weight 275 is slightly too thin, so `fx stroke` in
   white (2 px, outside) thickens it to about 1.7% W.
 * **T-cutout-drop-shadow** soft shadows: product `--offset -14,12 --blur 26 --opacity 35`;
   hand `--offset -50,14 --blur 44 --opacity 45`; shadow color `#1d4a60`, not black.
 * **T-rules**: a 1 px vertical divider between the two link items.
 * No grain, no vignette.
-* **T-object-as-letter** in [techniques.md](../techniques.md) is the tested library version of the product standing in for a letter; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -136,29 +135,27 @@ hand would be.
 pixelox new -o letter.pxo --size 1080x1440 --fill '#7fbfe2'
 pixelox layer add letter.pxo --in-place --name Drift
 pixelox fill gradient letter.pxo --in-place --layer Drift --from 0,100% --to 100%,0 --stops '#71b5d8ff@0,#8dc7ebff@1'
-pixelox text add letter.pxo --in-place --name Intro1 --content "Luma Style hair straightener" --font "Avenir Next" --weight 700 --size 2.75% --color '#ffffff'
+pixelox text add letter.pxo --in-place --name Intro1 --content "Luma Style hair straightener" --font @geometric-sans --weight 700 --size 2.75% --color '#ffffff'
 pixelox transform move letter.pxo --in-place --layer Intro1 --to 7.1%,17.9% --anchor tl
-pixelox text add letter.pxo --in-place --name Intro2 --content "Smooth in one pass." --font "Avenir Next" --weight 400 --size 2.75% --color '#ffffff'
+pixelox text add letter.pxo --in-place --name Intro2 --content "Smooth in one pass." --font @geometric-sans --weight 400 --size 2.75% --color '#ffffff'
 pixelox transform move letter.pxo --in-place --layer Intro2 --to 7.1%,21.6% --anchor tl
-pixelox text add letter.pxo --in-place --name WordA --content "Sty" --font "Avenir Next" --weight 275 --size 27.8% --tracking 80 --color '#ffffff'
+pixelox text add letter.pxo --in-place --name WordA --content "Sty" --font @thin-sans --size 27.8% --tracking 80 --color '#ffffff'
 pixelox transform move letter.pxo --in-place --layer WordA --to 7.2%,39.9% --anchor tl
 pixelox fx stroke letter.pxo --in-place --layer WordA --width 2 --color '#ffffff' --position outside
-pixelox text add letter.pxo --in-place --name WordB --content "e" --font "Avenir Next" --weight 275 --size 27.8% --color '#ffffff'
+pixelox text add letter.pxo --in-place --name WordB --content "e" --font @thin-sans --size 27.8% --color '#ffffff'
 pixelox transform move letter.pxo --in-place --layer WordB --to 90.6%,60% --anchor br
 pixelox fx copy letter.pxo --in-place --from WordA --to WordB
 pixelox comp place letter.pxo product.png --in-place --as Product --size x288 --at 66.7%,59.9% --anchor b
 pixelox fx drop-shadow letter.pxo --in-place --layer Product --offset=-14,12 --blur 26 --color '#1d4a60' --opacity 35
 pixelox comp place letter.pxo subject.png --in-place --as Hand --size x640 --at 74%,100% --anchor b
 pixelox fx drop-shadow letter.pxo --in-place --layer Hand --offset=-50,14 --blur 44 --color '#1d4a60' --opacity 45
-pixelox text add letter.pxo --in-place --name Para --content $'Ready in fifteen seconds, with plates that float\nso they never pull. Style reads the heat sixty\ntimes a second and holds it steady from root\nto tip. It switches itself off when you set it\ndown, and one charge covers a week of\nmornings, at home or away.' --font "Avenir Next" --weight 400 --size 1.3% --leading 107% --color '#ffffff'
+pixelox text add letter.pxo --in-place --name Para --content $'Ready in fifteen seconds, with plates that float\nso they never pull. Style reads the heat sixty\ntimes a second and holds it steady from root\nto tip. It switches itself off when you set it\ndown, and one charge covers a week of\nmornings, at home or away.' --font @geometric-sans --weight 400 --size 1.3% --leading 107% --color '#ffffff'
 pixelox transform move letter.pxo --in-place --layer Para --to 7.1%,66.5% --anchor tl
-pixelox text add letter.pxo --in-place --name Link1 --content "example.com" --font "Avenir Next" --weight 700 --size 1.3% --color '#ffffff' --at 7.1%,76.6% --anchor l
+pixelox text add letter.pxo --in-place --name Link1 --content "example.com" --font @geometric-sans --weight 700 --size 1.3% --color '#ffffff' --at 7.1%,76.6% --anchor l
 pixelox shape line letter.pxo --in-place --name LinkRule --from 19.9%,76% --to 19.9%,77.2% --stroke '#ffffff' --stroke-width 1
-pixelox text add letter.pxo --in-place --name Link2 --content "In stores" --font "Avenir Next" --weight 700 --size 1.3% --color '#ffffff' --at 21.4%,76.6% --anchor l
-pixelox text add letter.pxo --in-place --name Wordmark --content "luma" --font "Arial Rounded MT Bold" --size 8% --tracking -20 --color '#ffffff'
-pixelox transform scale letter.pxo --in-place --layer Wordmark --size 190x
-pixelox transform move letter.pxo --in-place --layer Wordmark --to 7.1%,85.8% --anchor tl
-pixelox text add letter.pxo --in-place --name Fine --content "Heat mat and travel pouch included. Battery life depends on the temperature setting and hair length." --font "Avenir Next" --weight 400 --size 0.85% --color '#ffffff' --at 7.1%,97.2% --anchor l
+pixelox text add letter.pxo --in-place --name Link2 --content "In stores" --font @geometric-sans --weight 700 --size 1.3% --color '#ffffff' --at 21.4%,76.6% --anchor l
+pixelox text add letter.pxo --in-place --name Wordmark --content "luma" --font @rounded-heavy --fit-width 190 --tracking -20 --color '#ffffff' --at 7.1%,85.8% --anchor-to ink
+pixelox text add letter.pxo --in-place --name Fine --content "Heat mat and travel pouch included. Battery life depends on the temperature setting and hair length." --font @geometric-sans --weight 400 --size 0.85% --color '#ffffff' --at 7.1%,97.2% --anchor l
 pixelox export letter.pxo -o letter.png
 ```
 

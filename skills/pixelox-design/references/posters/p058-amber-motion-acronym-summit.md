@@ -7,7 +7,7 @@ style: [photo-composite, type-led]
 format: portrait-9x16
 archetype: A-text-behind-subject
 palette: ['#fbeccc', '#1c210a', '#49330c', '#f1cb92', '#b0772f', '#794c14']
-techniques: [T-text-behind-subject, T-motion-streak, T-duotone, T-fit-width, T-rules, T-paper-grain, T-warp-type]
+techniques: [T-text-behind-subject, T-motion-streak, T-duotone, T-fit-width, T-rules, T-paper-grain, T-warp-type, T-stretch-type, T-icon-row]
 needs: [photo, subject-cutout]
 ---
 
@@ -123,13 +123,21 @@ sits below the center, half over the dark ground and half over the cream letter.
   the center, and an olive one from the center to the bottom-right corner.
 * Growing letters: the first three letters are one text layer bent with
   `transform perspective` (left edge 16% H tall, right edge 27% H, tops shifted right for
-  the lean); the fourth letter is its own layer, stretched tall with `transform scale` and
-  leaned with `transform skew`.
+  the lean); that layer is rasterized (warning PXW2003). The fourth letter is its own live
+  text layer: **T-stretch-type** makes it tall and narrow (`--scale-x 60.9% --fit-width
+  385`) and `--style italic` leans it.
 * **T-rules**: hairline dividers between values and between feature columns; two short
   rules around the closing line.
-* **T-paper-grain**, amount 10, soft-light 35%, to hide banding in the blur.
-* **T-warp-type** in [techniques.md](../techniques.md) is the tested library version of the growing, rising, or wedge-warped headline; start from it when reusing this idea.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8, to hide banding in the blur.
+* **T-warp-type** (`--warp rise --bend 35 --h-distort 70`) grows a word as live text, but
+  it also narrows the first letter. The perspective quad keeps the three letters equally
+  wide, as in the original, so the recipe keeps it.
+* **T-fit-width**: the title line and the last letter are set to exact widths with
+  `--fit-width`.
+* **T-icon-row**: `shape icon` draws the four outline icons over the feature labels (72 px,
+  `--stroke-width 3`), the `map-pin` before the venue, and three 24 px glyphs before the
+  handles. The bundled set has no social-network logos: `at-sign`, `globe`, and
+  `message-circle` stand in.
 
 ## 8. Hierarchy and eye path
 
@@ -156,49 +164,50 @@ pixelox layer add summit.pxo --in-place --name Light
 pixelox fill gradient summit.pxo --in-place --layer Light --from 0,0 --to 85%,60% --stops '#fde8c0e6@0,#f6cd9080@0.35,#f2ad3900@0.8'
 pixelox layer add summit.pxo --in-place --name Shade
 pixelox fill gradient summit.pxo --in-place --layer Shade --from 35%,50% --to 100%,100% --stops '#1c210a00@0,#141a08e6@1'
-pixelox text add summit.pxo --in-place --name Word --content "ACT" --font Impact --size 20% --tracking -30 --color '#fbeccc'
+pixelox text add summit.pxo --in-place --name Word --content "ACT" --font @condensed-heavy --size 20% --tracking -30 --color '#fbeccc'
 pixelox transform perspective summit.pxo --in-place --layer Word --quad '86,653 722,461 622,979 32,960'
-pixelox text add summit.pxo --in-place --name Last --content "S" --font Impact --size 40% --color '#fbeccc'
-pixelox transform scale summit.pxo --in-place --layer Last --size 330x950
-pixelox transform skew summit.pxo --in-place --layer Last --x=-9
-pixelox transform move summit.pxo --in-place --layer Last --to 99%,27.6% --anchor tr
+pixelox text add summit.pxo --in-place --name Last --content "S" --font @condensed-heavy --style italic --scale-x 60.9% --fit-width 385 --color '#fbeccc' --at 99%,27.6% --anchor tr --anchor-to ink
 pixelox comp place summit.pxo subject.png --in-place --as Mover --size 330x --at 50%,66.5% --anchor c
 pixelox adjust gradient-map summit.pxo --in-place --layer Mover --stops '#1a1206@0,#8a4f12@0.45,#f0b860@0.8,#fff3d6@1'
-pixelox text add summit.pxo --in-place --name Handles --content "@yourhandle         @yourhandle         @yourhandle" --font "Helvetica Neue" --weight 500 --size 0.85% --color '#3a2a10' --at 6.3%,2.9% --anchor l
-pixelox text add summit.pxo --in-place --name Org --content "CITY" --font "Avenir Next" --weight 400 --size 2.2% --tracking 900 --color '#1c210a' --at 51.5%,11.7% --anchor c
-pixelox text add summit.pxo --in-place --name Title --content "ANNUAL LEADERSHIP FORUM" --font "DIN Condensed" --weight 700 --size 4.3% --tracking 40 --color '#1c210a'
-pixelox transform scale summit.pxo --in-place --layer Title --size 690x
-pixelox transform move summit.pxo --in-place --layer Title --to 50%,13.5% --anchor t
+pixelox shape icon summit.pxo at-sign --in-place --name Social1 --size 24 --at 6.3%,2.9% --anchor l --color '#3a2a10'
+pixelox text add summit.pxo --in-place --name Handle1 --content "@yourhandle" --font @neo-grotesque --weight 500 --size 0.85% --color '#3a2a10' --at 9.2%,2.9% --anchor l
+pixelox shape icon summit.pxo globe --in-place --name Social2 --size 24 --at 23.5%,2.9% --anchor l --color '#3a2a10'
+pixelox text add summit.pxo --in-place --name Handle2 --content "@yourhandle" --font @neo-grotesque --weight 500 --size 0.85% --color '#3a2a10' --at 26.4%,2.9% --anchor l
+pixelox shape icon summit.pxo message-circle --in-place --name Social3 --size 24 --at 41%,2.9% --anchor l --color '#3a2a10'
+pixelox text add summit.pxo --in-place --name Handle3 --content "@yourhandle" --font @neo-grotesque --weight 500 --size 0.85% --color '#3a2a10' --at 43.9%,2.9% --anchor l
+pixelox text add summit.pxo --in-place --name Org --content "CITY" --font @geometric-sans --weight 400 --size 2.2% --tracking 900 --color '#1c210a' --at 51.5%,11.7% --anchor c
+pixelox text add summit.pxo --in-place --name Title --content "ANNUAL LEADERSHIP FORUM" --font "DIN Condensed" --weight 700 --fit-width 690 --tracking 40 --color '#1c210a' --at 50%,13.5% --anchor t --anchor-to ink
 pixelox text add summit.pxo --in-place --name Values --content "FAITH        VISION        ACTION" --font "DIN Condensed" --weight 700 --size 1.4% --tracking 400 --color '#1c210a' --at 50.5%,18.6% --anchor c
 pixelox shape path summit.pxo --in-place --name DarkRules --d 'M 395 344 V 372 M 673 344 V 372' --fill none --stroke '#1c210a' --stroke-width 2
-pixelox text add summit.pxo --in-place --name Label1 --content "ARISE" --font "Helvetica Neue" --weight 700 --size 1.55% --color '#1c210a' --at 19%,30.1% --anchor c
-pixelox text add summit.pxo --in-place --name Label2 --content "CONNECT" --font "Helvetica Neue" --weight 700 --size 1.55% --color '#1c210a' --at 38%,30.1% --anchor c
-pixelox text add summit.pxo --in-place --name Label3 --content "TEACH" --font "Helvetica Neue" --weight 700 --size 1.55% --color '#1c210a' --at 60%,30.1% --anchor c
-pixelox text add summit.pxo --in-place --name Label4 --content "SERVE" --font "Helvetica Neue" --weight 700 --size 1.55% --color '#1c210a' --at 83.5%,30.1% --anchor c
-pixelox text add summit.pxo --in-place --name Slogan --content $'READY\n   FOR WHAT\n      COMES NEXT' --font "Helvetica Neue" --weight 700 --size 1.5% --leading 125% --color '#fbeccc' --at 44%,52% --anchor tl
+pixelox text add summit.pxo --in-place --name Label1 --content "ARISE" --font @neo-grotesque --weight 700 --size 1.55% --color '#1c210a' --at 19%,30.1% --anchor c
+pixelox text add summit.pxo --in-place --name Label2 --content "CONNECT" --font @neo-grotesque --weight 700 --size 1.55% --color '#1c210a' --at 38%,30.1% --anchor c
+pixelox text add summit.pxo --in-place --name Label3 --content "TEACH" --font @neo-grotesque --weight 700 --size 1.55% --color '#1c210a' --at 60%,30.1% --anchor c
+pixelox text add summit.pxo --in-place --name Label4 --content "SERVE" --font @neo-grotesque --weight 700 --size 1.55% --color '#1c210a' --at 83.5%,30.1% --anchor c
+pixelox text add summit.pxo --in-place --name Slogan --content $'READY\n   FOR WHAT\n      COMES NEXT' --font @neo-grotesque --weight 700 --size 1.5% --leading 125% --color '#fbeccc' --at 44%,52% --anchor tl
 pixelox text add summit.pxo --in-place --name Month --content "MARCH" --font "DIN Condensed" --weight 700 --size 1.5% --tracking 500 --color '#f6e7c6' --at 6.3%,63.8% --anchor l
-pixelox text add summit.pxo --in-place --name Date --content $'5TH - 8TH,\n2031' --font "Arial Black" --size 3.4% --leading 105% --color '#fdf3df' --at 6.3%,68.6% --anchor l
-pixelox shape path summit.pxo --in-place --name Pin --d 'M 262 1520 L 246 1494 A 19 19 0 1 1 278 1494 Z' --fill none --stroke '#f1e2c0' --stroke-width 3
+pixelox text add summit.pxo --in-place --name Date --content $'5TH - 8TH,\n2031' --font @heavy-wide --size 3.4% --leading 105% --color '#fdf3df' --at 6.3%,68.6% --anchor l
+pixelox shape icon summit.pxo map-pin --in-place --name Pin --size 72 --at 24.3%,77.9% --anchor c --color '#f1e2c0' --stroke-width 3
 pixelox text add summit.pxo --in-place --name Venue --content "CITY CONVENTION HALL, YOUR TOWN" --font "DIN Condensed" --weight 700 --size 1.5% --tracking 220 --color '#f1e2c0' --at 54.5%,78.1% --anchor c
-pixelox shape path summit.pxo --in-place --name Icons --d 'M 136 1619 A 26 26 0 1 0 188 1619 A 26 26 0 1 0 136 1619 Z M 384 1619 A 26 26 0 1 0 436 1619 A 26 26 0 1 0 384 1619 Z M 640 1619 A 26 26 0 1 0 692 1619 A 26 26 0 1 0 640 1619 Z M 892 1619 A 26 26 0 1 0 944 1619 A 26 26 0 1 0 892 1619 Z' --fill none --stroke '#f1e2c0' --stroke-width 3
-pixelox text add summit.pxo --in-place --name Feat1 --content $'KEYNOTE\nSESSIONS' --font "Helvetica Neue" --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 15%,87.7% --anchor c
-pixelox text add summit.pxo --in-place --name Feat2 --content $'HONEST\nMENTORING' --font "Helvetica Neue" --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 38%,87.7% --anchor c
-pixelox text add summit.pxo --in-place --name Feat3 --content $'FRESH\nIDEAS' --font "Helvetica Neue" --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 61.7%,87.7% --anchor c
-pixelox text add summit.pxo --in-place --name Feat4 --content $'HANDS-ON\nWORKSHOPS' --font "Helvetica Neue" --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 85%,87.7% --anchor c
+pixelox shape icon summit.pxo mic --in-place --name Icon1 --size 72 --at 15%,84.3% --anchor c --color '#f1e2c0' --stroke-width 3
+pixelox shape icon summit.pxo handshake --in-place --name Icon2 --size 72 --at 38%,84.3% --anchor c --color '#f1e2c0' --stroke-width 3
+pixelox shape icon summit.pxo lightbulb --in-place --name Icon3 --size 72 --at 61.7%,84.3% --anchor c --color '#f1e2c0' --stroke-width 3
+pixelox shape icon summit.pxo wrench --in-place --name Icon4 --size 72 --at 85%,84.3% --anchor c --color '#f1e2c0' --stroke-width 3
+pixelox text add summit.pxo --in-place --name Feat1 --content $'KEYNOTE\nSESSIONS' --font @neo-grotesque --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 15%,87.7% --anchor c
+pixelox text add summit.pxo --in-place --name Feat2 --content $'HONEST\nMENTORING' --font @neo-grotesque --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 38%,87.7% --anchor c
+pixelox text add summit.pxo --in-place --name Feat3 --content $'FRESH\nIDEAS' --font @neo-grotesque --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 61.7%,87.7% --anchor c
+pixelox text add summit.pxo --in-place --name Feat4 --content $'HANDS-ON\nWORKSHOPS' --font @neo-grotesque --weight 700 --size 1.3% --tracking 100 --leading 130% --align center --color '#f1e2c0' --at 85%,87.7% --anchor c
 pixelox shape path summit.pxo --in-place --name LightRules --d 'M 281 1600 V 1700 M 540 1600 V 1700 M 794 1600 V 1700 M 68 1787 H 140 M 891 1787 H 1004' --fill none --stroke '#e9d9b4' --stroke-width 2
 pixelox text add summit.pxo --in-place --name Closing --content "THREE DAYS FOR PEOPLE WHO BUILD OTHERS" --font "DIN Condensed" --weight 700 --size 1.2% --tracking 300 --color '#e9d9b4' --at 48.5%,93.1% --anchor c
 pixelox shape star summit.pxo --in-place --name Sparkle --center 14.5%,52.5% --points 8 --outer 26 --inner 5 --fill '#fbeccc'
-pixelox layer add summit.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise summit.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend summit.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity summit.pxo --in-place --layer Grain --value 35
+pixelox filter grain summit.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export summit.pxo -o summit.png
 ```
 
 Change first: the acronym (three letters in `Word`, the last one in `Last`; a round last
 letter such as S, C, G, or O gives the sweeping curve, a straight one such as T or L gives
-a pillar), then the four label words, then the date. The `--quad` corners are top-left,
-top-right, bottom-right, bottom-left of the three-letter group.
+a pillar), then the four label words, then the date, then the four feature labels and
+their icons (`pixelox shape icons --search WORD` finds a name). The `--quad` corners are
+top-left, top-right, bottom-right, bottom-left of the three-letter group.
 
 The slogan is set in cream on the dark ground beside the letters. When your letters leave
 a wide cream area (a long foot, a fat bowl), move it inside in dark olive `#1c210a`, as the

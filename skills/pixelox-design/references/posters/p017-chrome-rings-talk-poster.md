@@ -7,7 +7,7 @@ style: [3d-render, type-led, minimal]
 format: portrait-a
 archetype: A-abstract-title
 palette: ['#1e1d20', '#ffffff', '#d2d9e1', '#73787f', '#313338']
-techniques: [T-glitch, T-fit-width, T-paper-grain, T-sliced-type]
+techniques: [T-sliced-type, T-fit-width, T-paper-grain]
 needs: nothing
 ---
 
@@ -55,7 +55,7 @@ white type), and the single glitch cut makes static type look as if it were movi
 11. Footer: bold call to action at the left margin, web address at the right margin,
     both at 93% H.
 12. Studio block: two-line bold name at 10% W, 9 to 13% H; small handle at 17.8% H.
-13. Grain: fine noise, soft-light, 25%.
+13. Grain: one live grain layer under the type.
 
 ## 4. Palette
 
@@ -103,12 +103,15 @@ type.
   `#060607@0, #3a3d43@0.14, #0c0c0e@0.26, #aeb5bf@0.4, #f4f6f8@0.5, #2a2c31@0.6,
   #0a0a0c@0.7, #c9cfd7@0.86, #ffffff@1`; `filter gaussian` sigma 1.6 to melt the facets.
   More alternations = more liquid; fewer = brushed steel.
-* Sliced type (the type half of **T-glitch**): two copies of the same text layer, each
-  with a vector mask (`mask add --from-path`), one showing everything above the cut, one
-  everything below it; the lower copy is moved 26 px right.
+* Sliced type (**T-sliced-type** with a level cut): two copies of the same text layer,
+  each with a vector mask (`mask add --from-path`), one showing everything above the cut,
+  one everything below it; the lower copy is moved 26 px right. `filter glitch`
+  (**T-glitch**) is not used here: it shifts thin random bands, and this design needs one
+  clean cut with a gap.
 * **T-fit-width** for the two headline lines (one width for line 1, line 2 set to the
   same cap height).
-* **T-paper-grain**, amount 10, soft-light 25%, under the type.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`), added before the type so the
+  letters stay clean.
 * **T-sliced-type** in [techniques.md](../techniques.md) is the tested library version of the cut-and-shifted headline; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -145,32 +148,25 @@ pixelox transform rotate talk.pxo --in-place --layer DimA --degrees 70
 pixelox transform rotate talk.pxo --in-place --layer DimB --degrees=-60
 pixelox layer opacity talk.pxo --in-place --layer DimA --value 45
 pixelox layer opacity talk.pxo --in-place --layer DimB --value 45
-pixelox layer add talk.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise talk.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend talk.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity talk.pxo --in-place --layer Grain --value 25
-pixelox text add talk.pxo --in-place --name H1 --content "Deep" --font "Helvetica Neue" --weight 700 --size 20% --tracking=-70 --color '#ffffff'
-pixelox transform scale talk.pxo --in-place --layer H1 --size 680x
-pixelox transform move talk.pxo --in-place --layer H1 --to 50%,29.5% --anchor t
+pixelox filter grain talk.pxo --in-place --as-layer --name Grain --amount 8
+pixelox text add talk.pxo --in-place --name H1 --content "Deep" --font @neo-grotesque --weight 700 --fit-width 680 --tracking=-70 --color '#ffffff' --at 50%,29.5% --anchor t --anchor-to ink
 pixelox layer dup talk.pxo --in-place --layer H1 --name H1Low
 pixelox mask add talk.pxo --in-place --layer H1 --from-path 'M 0 0 H 1080 V 600 H 0 Z'
 pixelox mask add talk.pxo --in-place --layer H1Low --from-path 'M 0 608 H 1080 V 1528 H 0 Z'
 pixelox transform move talk.pxo --in-place --layer H1Low --by 26,0
-pixelox text add talk.pxo --in-place --name H2 --content "Dive." --font "Helvetica Neue" --weight 700 --size 20% --tracking=-70 --color '#ffffff'
-pixelox transform scale talk.pxo --in-place --layer H2 --size 640x
-pixelox transform move talk.pxo --in-place --layer H2 --to 51%,45.5% --anchor t
-pixelox text add talk.pxo --in-place --name Sub --content $'A NIGHT ON MACHINES\nTHAT TEACH US' --font "Helvetica Neue" --weight 300 --size 3.5% --tracking=-40 --leading 100% --align center --color '#ffffff' --at 50%,67.3% --anchor c
-pixelox text add talk.pxo --in-place --name Date --content "[MAY 09] / [6PM-8PM]" --font "Helvetica Neue" --weight 500 --size 4.9% --tracking=-40 --color '#ffffff' --at 50%,79% --anchor c
-pixelox text add talk.pxo --in-place --name Address --content "Will be held at 12 Example Road, Your City" --font "Helvetica Neue" --weight 400 --size 1.75% --tracking=-20 --color '#ffffff' --at 50%,84.8% --anchor c
-pixelox text add talk.pxo --in-place --name Cta --content "REGISTER NOW" --font "Helvetica Neue" --weight 700 --size 1.65% --tracking=-20 --color '#ffffff' --at 10%,93% --anchor l
-pixelox text add talk.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Helvetica Neue" --weight 400 --size 1.65% --tracking=-20 --color '#ffffff' --at 90%,93% --anchor r
-pixelox text add talk.pxo --in-place --name Studio --content $'Studio\nNorthlight' --font "Helvetica Neue" --weight 700 --size 2.8% --tracking=-50 --leading 95% --color '#ffffff' --at 10%,11% --anchor l
-pixelox text add talk.pxo --in-place --name Handle --content "@yourhandle" --font "Helvetica Neue" --weight 400 --size 1.4% --tracking=-20 --color '#ffffff' --at 10%,17.8% --anchor l
+pixelox text add talk.pxo --in-place --name H2 --content "Dive." --font @neo-grotesque --weight 700 --fit-width 640 --tracking=-70 --color '#ffffff' --at 51%,45.5% --anchor t --anchor-to ink
+pixelox text add talk.pxo --in-place --name Sub --content $'A NIGHT ON MACHINES\nTHAT TEACH US' --font @neo-grotesque --weight 300 --size 3.5% --tracking=-40 --leading 100% --align center --color '#ffffff' --at 50%,67.3% --anchor c
+pixelox text add talk.pxo --in-place --name Date --content "[MAY 09] / [6PM-8PM]" --font @neo-grotesque --weight 500 --size 4.9% --tracking=-40 --color '#ffffff' --at 50%,79% --anchor c
+pixelox text add talk.pxo --in-place --name Address --content "Will be held at 12 Example Road, Your City" --font @neo-grotesque --weight 400 --size 1.75% --tracking=-20 --color '#ffffff' --at 50%,84.8% --anchor c
+pixelox text add talk.pxo --in-place --name Cta --content "REGISTER NOW" --font @neo-grotesque --weight 700 --size 1.65% --tracking=-20 --color '#ffffff' --at 10%,93% --anchor l
+pixelox text add talk.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @neo-grotesque --weight 400 --size 1.65% --tracking=-20 --color '#ffffff' --at 90%,93% --anchor r
+pixelox text add talk.pxo --in-place --name Studio --content $'Studio\nNorthlight' --font @neo-grotesque --weight 700 --size 2.8% --tracking=-50 --leading 95% --color '#ffffff' --at 10%,11% --anchor l
+pixelox text add talk.pxo --in-place --name Handle --content "@yourhandle" --font @neo-grotesque --weight 400 --size 1.4% --tracking=-20 --color '#ffffff' --at 10%,17.8% --anchor l
 pixelox export talk.pxo -o talk.png
 ```
 
-Change first: the two headline words (4 to 5 letters each; set the `transform scale`
-widths so both lines have the same cap height), then the cut height: the two mask paths
+Change first: the two headline words (4 to 5 letters each; set the two `--fit-width`
+values so both lines have the same cap height), then the cut height: the two mask paths
 meet at y 600 and 608 px here, which must fall inside line 1 (between 55% and 75% of its
 height reads best).
 

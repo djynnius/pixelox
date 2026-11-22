@@ -7,7 +7,7 @@ style: [editorial, type-led, photo-composite]
 format: portrait-2x3
 archetype: A-text-behind-subject
 palette: ['#f8d8ce', '#d8436c', '#302329', '#f1ece6']
-techniques: [T-text-behind-subject, T-fit-width, T-vertical-type, T-cutout-drop-shadow, T-rules, T-light-streaks, T-stretch-type, T-counterchange]
+techniques: [T-text-behind-subject, T-fit-width, T-vertical-type, T-cutout-drop-shadow, T-rules, T-light-streaks, T-stretch-type, T-counterchange, T-barcode, T-icon-row]
 needs: subject-cutout
 ---
 
@@ -112,10 +112,11 @@ too many letters: use a full-length pose, or raise the masthead above the should
 ## 7. Effects and textures
 
 * **T-text-behind-subject** taken to the limit: two words, both behind the figure.
-* **T-fit-width** with both numbers: `transform scale --size 790x735` forces width and
-  height, which compresses DIN Condensed to the proportions of an ultra-compressed face
-  (the layer is rasterized, warning PXW2003). `fx stroke` in the letter color, 8 px
-  outside, thickens the stems to 4.7% W.
+* **T-fit-width** with **T-stretch-type**: `--scale-x 36.4% --fit-width 790` narrows DIN
+  Condensed to the proportions of an ultra-compressed face and then fits the width, so
+  the word comes out 735 px tall (word 2: `--scale-x 58.9%`). Both words stay live text.
+  `fx stroke` in the letter color, 8 px outside, thickens the stems to 4.7% W. Word 1 is
+  placed 38 px above the canvas (`--at 50.8%,0-38`) so the top edge cuts its caps.
 * Two-tone cover lines: the rose copy sits below the masthead (so it disappears into
   the letters), and a blush copy above the masthead is clipped to it with `layer clip`;
   two clipped layers in a row share the same base.
@@ -123,9 +124,12 @@ too many letters: use a full-length pose, or raise the masthead above the should
   `filter motion-blur --angle 22 --distance 170` (the filter's angle runs the other way
   round from the generator's) to stretch and feather them.
 * **T-vertical-type** for the margin phrases; **T-rules** for the thin rules.
+* **T-barcode**: a real `shape barcode` (Code 128, a short number so the bars stay wide),
+  turned -90 degrees to stand upright in the right margin. It is drawn in the wine of the
+  shadow, not in rose: rose on blush is too pale to scan (warning PXW6010).
+* The globe is `shape icon globe`, 36 px, `--stroke-width 2` (**T-icon-row**).
 * No grain, no gradient: flat color everywhere except the photo, shadow, and streaks.
 * **T-light-streaks** in [techniques.md](../techniques.md) is the tested library version of the defocused light streaks; start from it when reusing this idea.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
 * **T-counterchange** in [techniques.md](../techniques.md) is the tested library version of the lettering that changes color where it crosses a shape; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -146,47 +150,41 @@ the full-length figure this design wants, use `--size x1470` so the head top lan
 
 ```bash
 pixelox render js scripts/particles.js -o streaks.png --size 1080x1620 --seed 7 --param shape=streak --param colors='#ff6f9c,#ffffff,#ff4f8b,#ffd0dc' --param count=14 --param min=1.2 --param max=3.5 --param angle=-22 --param jitter=3 --param amin=0.7 --param amax=1 --param focus='0.45,0.55,0.5'
-pixelox render js scripts/pattern.js -o bars.png --size 44x160 --param kind=stripes --param angle=90 --param cell=7 --param weight=0.55 --param color='#d8436c'
 pixelox new -o cover.pxo --size 1080x1620 --fill '#f8d8ce'
 pixelox text add cover.pxo --in-place --name LeftPink --content $'BOLD\nNEW\nCODE.' --font "DIN Condensed" --weight 700 --size 7.4% --leading 86% --color '#d8436c' --at 3.6%,56.3% --anchor tl
-pixelox text add cover.pxo --in-place --name RightPink --content $'SET\nTHE\nTONE.' --font "Avenir Next Condensed" --weight 500 --size 5.2% --leading 100% --align right --color '#d8436c' --at 97%,55.6% --anchor tr
-pixelox text add cover.pxo --in-place --name Word1 --content "FORMA" --font "DIN Condensed" --weight 700 --size 30% --color '#d8436c'
-pixelox transform scale cover.pxo --in-place --layer Word1 --size 790x735
-pixelox transform move cover.pxo --in-place --layer Word1 --to 50.8%,0% --anchor t
-pixelox transform move cover.pxo --in-place --layer Word1 --by 0,-38
-pixelox text add cover.pxo --in-place --name Word2 --content "HIM" --font "DIN Condensed" --weight 700 --size 30% --color '#d8436c'
-pixelox transform scale cover.pxo --in-place --layer Word2 --size 794x880
-pixelox transform move cover.pxo --in-place --layer Word2 --to 50.5%,46.8% --anchor t
+pixelox text add cover.pxo --in-place --name RightPink --content $'SET\nTHE\nTONE.' --font @condensed --weight 500 --size 5.2% --leading 100% --align right --color '#d8436c' --at 97%,55.6% --anchor tr
+pixelox text add cover.pxo --in-place --name Word1 --content "FORMA" --font "DIN Condensed" --weight 700 --scale-x 36.4% --fit-width 790 --color '#d8436c' --at 50.8%,0-38 --anchor t --anchor-to ink
+pixelox text add cover.pxo --in-place --name Word2 --content "HIM" --font "DIN Condensed" --weight 700 --scale-x 58.9% --fit-width 794 --color '#d8436c' --at 50.5%,46.8% --anchor t --anchor-to ink
 pixelox fx stroke cover.pxo --in-place --layer Word1 --width 8 --color '#d8436c' --position outside
 pixelox fx copy cover.pxo --in-place --from Word1 --to Word2
 pixelox text add cover.pxo --in-place --name LeftBlush --content $'BOLD\nNEW\nCODE.' --font "DIN Condensed" --weight 700 --size 7.4% --leading 86% --color '#f8d8ce' --at 3.6%,56.3% --anchor tl
 pixelox layer clip cover.pxo --in-place --layer LeftBlush
-pixelox text add cover.pxo --in-place --name RightBlush --content $'SET\nTHE\nTONE.' --font "Avenir Next Condensed" --weight 500 --size 5.2% --leading 100% --align right --color '#f8d8ce' --at 97%,55.6% --anchor tr
+pixelox text add cover.pxo --in-place --name RightBlush --content $'SET\nTHE\nTONE.' --font @condensed --weight 500 --size 5.2% --leading 100% --align right --color '#f8d8ce' --at 97%,55.6% --anchor tr
 pixelox layer clip cover.pxo --in-place --layer RightBlush
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1200 --at 52%,100% --anchor b
 pixelox fx drop-shadow cover.pxo --in-place --layer Subject --offset=-46,8 --blur 60 --color '#4a0f2a' --opacity 60
 pixelox comp place cover.pxo streaks.png --in-place --as Streaks --fit cover
 pixelox filter motion-blur cover.pxo --in-place --layer Streaks --angle 22 --distance 170
-pixelox text add cover.pxo --in-place --name TopLeft --content $'FIRST\nLOOK' --font "Avenir Next Condensed" --weight 700 --size 1.45% --tracking 60 --leading 120% --color '#c93f68' --at 3.6%,2.2% --anchor tl
-pixelox text add cover.pxo --in-place --name TopRight --content $'2031\nEDITION' --font "Avenir Next Condensed" --weight 700 --size 1.45% --tracking 60 --leading 120% --align right --color '#c93f68' --at 97%,2.2% --anchor tr
-pixelox text add cover.pxo --in-place --name Side1 --content "QUIET IS LOUD" --font "Avenir Next Condensed" --weight 600 --size 1% --tracking 220 --color '#c93f68' --at 50%,50% --anchor c
+pixelox text add cover.pxo --in-place --name TopLeft --content $'FIRST\nLOOK' --font @condensed --weight 700 --size 1.45% --tracking 60 --leading 120% --color '#c93f68' --at 3.6%,2.2% --anchor tl
+pixelox text add cover.pxo --in-place --name TopRight --content $'2031\nEDITION' --font @condensed --weight 700 --size 1.45% --tracking 60 --leading 120% --align right --color '#c93f68' --at 97%,2.2% --anchor tr
+pixelox text add cover.pxo --in-place --name Side1 --content "QUIET IS LOUD" --font @condensed --weight 600 --size 1% --tracking 220 --color '#c93f68' --at 50%,50% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Side1 --degrees -90
 pixelox transform move cover.pxo --in-place --layer Side1 --to 3.6%,17% --anchor bl
 pixelox shape line cover.pxo --in-place --name SideRule --from 4.4%,18.5% --to 4.4%,24% --stroke '#c93f68' --stroke-width 2
-pixelox text add cover.pxo --in-place --name Side2 --content "FIT COMES FIRST" --font "Avenir Next Condensed" --weight 600 --size 1% --tracking 220 --color '#c93f68' --at 50%,50% --anchor c
+pixelox text add cover.pxo --in-place --name Side2 --content "FIT COMES FIRST" --font @condensed --weight 600 --size 1% --tracking 220 --color '#c93f68' --at 50%,50% --anchor c
 pixelox transform rotate cover.pxo --in-place --layer Side2 --degrees -90
 pixelox transform move cover.pxo --in-place --layer Side2 --to 3.6%,35% --anchor bl
-pixelox text add cover.pxo --in-place --name Trio --content $'SHAPE\nTEXTURE\nPOSTURE' --font "Avenir Next Condensed" --weight 500 --size 1.85% --tracking 30 --leading 110% --color '#c93f68' --at 3.6%,38.2% --anchor tl
-pixelox shape ellipse cover.pxo --in-place --name Globe --rect 3.6%,46%,3.2%x2.13% --fill none --stroke '#c93f68' --stroke-width 2
-pixelox shape line cover.pxo --in-place --name GlobeLine --from 3.6%,47.07% --to 6.8%,47.07% --stroke '#c93f68' --stroke-width 2
-pixelox text add cover.pxo --in-place --name Vol --content "VOL. 07" --font "Avenir Next Condensed" --weight 500 --size 1.7% --tracking 30 --color '#c93f68' --at 97%,39.2% --anchor r
-pixelox text add cover.pxo --in-place --name VolNote --content $'TAILORING\nCOLLECTION' --font "Avenir Next Condensed" --weight 600 --size 0.85% --tracking 60 --leading 130% --align right --color '#c93f68' --at 97%,40.8% --anchor tr
+pixelox text add cover.pxo --in-place --name Trio --content $'SHAPE\nTEXTURE\nPOSTURE' --font @condensed --weight 500 --size 1.85% --tracking 30 --leading 110% --color '#c93f68' --at 3.6%,38.2% --anchor tl
+pixelox shape icon cover.pxo globe --in-place --name Globe --size 36 --at 3.6%,46% --color '#c93f68' --stroke-width 2
+pixelox text add cover.pxo --in-place --name Vol --content "VOL. 07" --font @condensed --weight 500 --size 1.7% --tracking 30 --color '#c93f68' --at 97%,39.2% --anchor r
+pixelox text add cover.pxo --in-place --name VolNote --content $'TAILORING\nCOLLECTION' --font @condensed --weight 600 --size 0.85% --tracking 60 --leading 130% --align right --color '#c93f68' --at 97%,40.8% --anchor tr
 pixelox shape line cover.pxo --in-place --name VolRule --from 90.5%,43.8% --to 97%,43.8% --stroke '#c93f68' --stroke-width 2
-pixelox text add cover.pxo --in-place --name DeckL --content $'SHARP LINES,\nSOFT CLOTH,\nNO NOISE.' --font "Avenir Next Condensed" --weight 600 --size 1.05% --tracking 30 --leading 135% --color '#c93f68' --at 3.9%,74.8% --anchor tl
-pixelox text add cover.pxo --in-place --name DeckR --content $'CUT FOR\nLONG DAYS,\nLATE NIGHTS.' --font "Avenir Next Condensed" --weight 600 --size 1.05% --tracking 30 --leading 135% --align right --color '#c93f68' --at 97%,74.5% --anchor tr
-pixelox text add cover.pxo --in-place --name FootL --content $'WEAR LESS.\nMEAN MORE.\nSTAND TALL.' --font "Avenir Next Condensed" --weight 600 --size 1.05% --tracking 30 --leading 135% --color '#c93f68' --at 3.9%,87.6% --anchor tl
-pixelox text add cover.pxo --in-place --name FootR --content $'WOOL BLEND,\nCLEAN SEAMS,\nREAL WEIGHT.' --font "Avenir Next Condensed" --weight 600 --size 1.05% --tracking 30 --leading 135% --align right --color '#f8d8ce' --at 87%,93.3% --anchor tr
-pixelox comp place cover.pxo bars.png --in-place --as Barcode --at 90.8%,84.8%
+pixelox text add cover.pxo --in-place --name DeckL --content $'SHARP LINES,\nSOFT CLOTH,\nNO NOISE.' --font @condensed --weight 600 --size 1.05% --tracking 30 --leading 135% --color '#c93f68' --at 3.9%,74.8% --anchor tl
+pixelox text add cover.pxo --in-place --name DeckR --content $'CUT FOR\nLONG DAYS,\nLATE NIGHTS.' --font @condensed --weight 600 --size 1.05% --tracking 30 --leading 135% --align right --color '#c93f68' --at 97%,74.5% --anchor tr
+pixelox text add cover.pxo --in-place --name FootL --content $'WEAR LESS.\nMEAN MORE.\nSTAND TALL.' --font @condensed --weight 600 --size 1.05% --tracking 30 --leading 135% --color '#c93f68' --at 3.9%,87.6% --anchor tl
+pixelox text add cover.pxo --in-place --name FootR --content $'WOOL BLEND,\nCLEAN SEAMS,\nREAL WEIGHT.' --font @condensed --weight 600 --size 1.05% --tracking 30 --leading 135% --align right --color '#f8d8ce' --at 87%,93.3% --anchor tr
+pixelox shape barcode cover.pxo --in-place --name Barcode --type code128 --data '0731' --width 210 --height 40 --color '#4a0f2a' --at 92.9%,89.75% --anchor c
+pixelox transform rotate cover.pxo --in-place --layer Barcode --degrees -90
 pixelox export cover.pxo -o cover.png
 ```
 
@@ -194,7 +192,8 @@ Layer order is the trick: rose cover lines, then the masthead words, then the bl
 copies clipped to word 2, then the figure. Keep the small margin lines under 12
 characters so they stay inside the 3.6 to 13% and 88 to 97% columns; a longer line needs
 the same two-copy treatment as the cover lines. Change first: the two masthead words (keep
-the `transform scale` sizes), the two cover lines, then the rose and blush pair.
+`--fit-width`; lower `--scale-x` to make a word taller, raise it to make it shorter), the
+two cover lines, then the rose and blush pair, then the barcode `--data`.
 
 ## 10. Variations and pairings
 
@@ -205,7 +204,7 @@ the `transform scale` sizes), the two cover lines, then the rose and blush pair.
   behind a three-quarter figure.
 * Sport or dance: swap the streaks for **T-motion-streak** pulled out of the figure.
 * Works for lookbooks, model cards, music-artist announcements, store-opening posters.
-* Pairs with T-paper-grain (amount 10, soft-light) and T-outline-type (word 2 as an
+* Pairs with T-paper-grain (amount 10) and T-outline-type (word 2 as an
   outline only) when the photo needs more room.
 
 ## 11. Pitfalls

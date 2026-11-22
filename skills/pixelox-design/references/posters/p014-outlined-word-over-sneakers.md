@@ -7,7 +7,7 @@ style: [minimal, photo-composite, type-led]
 format: portrait-a
 archetype: A-text-behind-subject
 palette: ['#e6e7ee', '#1c1d1c', '#fcea0c', '#f4d93a', '#ffffff']
-techniques: [T-text-behind-subject, T-outline-type, T-fit-width, T-pill-button, T-spotlight, T-ghost-type]
+techniques: [T-text-behind-subject, T-outline-type, T-fit-width, T-stretch-type, T-pill-button, T-spotlight, T-ghost-type]
 needs: product-cutout
 ---
 
@@ -102,14 +102,15 @@ on top (**T-outline-type**).
 
 * **T-text-behind-subject**: solid word, then product, then the outline copy.
 * **T-outline-type**: `--color transparent --stroke '#1c1d1c' --stroke-width 2`. No mask
-  is needed: over the gray ground the outline lies exactly on the solid letters.
-* **T-fit-width** with a stretch: `transform scale --size 778x306` sets both the width and
-  the cap height of word two, which turns an ordinary condensed face into an
-  ultra-condensed one. A two-number size rasterizes the text (warning PXW2003), so set
-  the wording first.
-* **T-spotlight** shadow only, built so the blur is not clipped: an empty layer, a
-  feathered `select ellipse` (`--feather 24`), `fill solid --mask @sel`, `select none`.
-  (A rasterized `shape ellipse` blurred with a large sigma is cut off at its own box.)
+  is needed: over the gray ground the outline lies exactly on the solid letters. The
+  solid word carries the same 2 px stroke in its own color, so both copies take the same
+  flags and fit to the same size.
+* **T-fit-width** with **T-stretch-type**: `--scale-x 70.4% --fit-width 778` sets both the
+  width and the cap height of word two (the narrower the scale, the taller the fitted
+  line; here 306 px), which turns an ordinary condensed face into an ultra-condensed one.
+  The text stays live.
+* **T-spotlight** shadow only: a `shape ellipse` with `filter gaussian --sigma 12` on it.
+  The blur is live and is not cut off at the shape's box.
 * **T-pill-button**: filled pill in the accent color.
 * No grain, no gradients: a clean catalog look.
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
@@ -133,33 +134,24 @@ pair of shoes, a bag) use `--size 860x` so it spans 80% of the width and still e
 
 ```bash
 pixelox new -o launch.pxo --size 1080x1528 --fill '#e6e7ee'
-pixelox text add launch.pxo --in-place --name Brand --content "Northlane" --font "Avenir Next" --weight 400 --size 2.2% --color '#1c1d1c' --at 50%,9% --anchor c
-pixelox text add launch.pxo --in-place --name Word1 --content "NEW" --font Futura --weight 700 --size 12% --tracking -20 --color '#1c1d1c'
-pixelox transform scale launch.pxo --in-place --layer Word1 --size 417x
-pixelox transform move launch.pxo --in-place --layer Word1 --to 50%,15.8% --anchor t
-pixelox text add launch.pxo --in-place --name Word2 --content "ARRIVAL" --font "DIN Condensed" --weight 700 --size 20% --color '#1c1d1c'
-pixelox transform scale launch.pxo --in-place --layer Word2 --size 778x306
-pixelox transform move launch.pxo --in-place --layer Word2 --to 50%,28% --anchor t
-pixelox layer add launch.pxo --in-place --name Shadow
-pixelox select ellipse launch.pxo --in-place --rect 16%,61.5%,68%x5.5% --feather 24
-pixelox fill solid launch.pxo --in-place --layer Shadow --color '#8e8e96' --mask @sel
-pixelox select none launch.pxo --in-place
+pixelox text add launch.pxo --in-place --name Brand --content "Northlane" --font @geometric-sans --weight 400 --size 2.2% --color '#1c1d1c' --at 50%,9% --anchor c
+pixelox text add launch.pxo --in-place --name Word1 --content "NEW" --font Futura --weight 700 --fit-width 417 --tracking -20 --color '#1c1d1c' --at 50%,15.8% --anchor t --anchor-to ink
+pixelox text add launch.pxo --in-place --name Word2 --content "ARRIVAL" --font "DIN Condensed" --weight 700 --scale-x 70.4% --fit-width 778 --color '#1c1d1c' --stroke '#1c1d1c' --stroke-width 2 --at 50%,28% --anchor t --anchor-to ink
+pixelox shape ellipse launch.pxo --in-place --name Shadow --rect 16%,61.5%,68%x5.5% --fill '#8e8e96'
+pixelox filter gaussian launch.pxo --in-place --layer Shadow --sigma 12
 pixelox comp place launch.pxo product.png --in-place --as Product --size x600 --at 50%,68% --anchor b
-pixelox text add launch.pxo --in-place --name Outline --content "ARRIVAL" --font "DIN Condensed" --weight 700 --size 20% --color transparent --stroke '#1c1d1c' --stroke-width 2
-pixelox transform scale launch.pxo --in-place --layer Outline --size 778x306
-pixelox transform move launch.pxo --in-place --layer Outline --to 50%,28% --anchor t
-pixelox text add launch.pxo --in-place --name Body --content $'Built light for long days on your feet:\ncushioned, breathable, and ready\nfor the street.' --font "Avenir Next" --weight 400 --size 2.6% --tracking 10 --leading 128% --align center --color '#1c1d1c'
-pixelox transform move launch.pxo --in-place --layer Body --to 50%,71.5% --anchor t
+pixelox text add launch.pxo --in-place --name Outline --content "ARRIVAL" --font "DIN Condensed" --weight 700 --scale-x 70.4% --fit-width 778 --color transparent --stroke '#1c1d1c' --stroke-width 2 --at 50%,28% --anchor t --anchor-to ink
+pixelox text add launch.pxo --in-place --name Body --content $'Built light for long days on your feet:\ncushioned, breathable, and ready\nfor the street.' --font @geometric-sans --weight 400 --size 2.6% --tracking 10 --leading 128% --align center --color '#1c1d1c' --at 50%,71.5% --anchor t --anchor-to ink
 pixelox shape rect launch.pxo --in-place --name Pill --rect 33.9%,81.5%,32.2%x6.3% --radius 48 --fill '#fcea0c'
-pixelox text add launch.pxo --in-place --name PillText --content "Shop Now" --font "Avenir Next" --weight 700 --size 3.3% --color '#1c1d1c'
-pixelox transform move launch.pxo --in-place --layer PillText --to 50%,84.7% --anchor c
-pixelox text add launch.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 400 --size 2.2% --tracking 280 --color '#1c1d1c'
-pixelox transform move launch.pxo --in-place --layer Site --to 50%,91.6% --anchor c
+pixelox text add launch.pxo --in-place --name PillText --content "Shop Now" --font @geometric-sans --weight 700 --size 3.3% --color '#1c1d1c' --at 50%,84.7% --anchor c --anchor-to ink
+pixelox text add launch.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 400 --size 2.2% --tracking 280 --color '#1c1d1c' --at 50%,91.6% --anchor c --anchor-to ink
 pixelox export launch.pxo -o launch.png
 ```
 
-Change first: the product, then word two (6 to 8 letters; keep the `778x306` box), then
-the accent yellow in the pill to a color sampled from your product and brightened.
+Change first: the product, then word two on both copies (6 to 8 letters; keep
+`--fit-width 778` and change `--scale-x` until the letters are about 306 px tall: a
+smaller scale gives taller letters), then the accent yellow in the pill to a color
+sampled from your product and brightened.
 
 ## 10. Variations and pairings
 
@@ -177,12 +169,13 @@ the accent yellow in the pill to a color sampled from your product and brightene
 ## 11. Pitfalls
 
 * The outline copy shifted by even 2 px: a black edge appears beside the solid letters.
-  Give both copies the same content, font, `transform scale`, and `transform move`.
+  Give both copies the same content, font, `--scale-x`, `--fit-width`, stroke, and `--at`;
+  only `--color` differs.
 * The product covering the whole word. Keep the top 40 to 55% of the letters clear and
   let the product hide only the lower part of the middle letters.
 * A dark or busy product: a thin black outline disappears on it. Use a white outline on
   dark products, or raise the stroke to 3 px.
-* Stretching a wide face. Only a condensed face survives the vertical stretch; a regular
-  grotesque gets hairline horizontals and looks broken.
+* Narrowing a wide face. Only a condensed face survives `--scale-x 70%`; a regular
+  grotesque gets hairline verticals and looks broken.
 * Two accent colors. The yellow may appear on the product and the button, nowhere else;
   a colored headline or address line destroys the calm.

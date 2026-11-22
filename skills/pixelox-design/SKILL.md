@@ -14,6 +14,10 @@ Run pixelox with `--json` and read `result` (text layers report `bounds` as `[x,
 and `overflow`), `warnings`, and `error.hint`. Check flags with `pixelox docs <command>`.
 Work in one `.pxo` with `--in-place`; export at the end.
 
+Needs pixelox 0.5.0 or later (`pixelox update`; ask the user before updating). Check with
+`pixelox --version`: older versions lack `--fit-width`, font classes, `fill noise`,
+`render splash`, `shape icon`, and the other commands used here.
+
 ## What is in this skill
 
 | File | Use it for |
@@ -21,10 +25,10 @@ Work in one `.pxo` with `--in-place`; export at the end.
 | `references/index.md` | **read first**: which designs to start from for which brief, 12 worked combinations, the layout archetypes, lists by genre, mood, and needed material |
 | `references/catalog.md` | one linked row per design; lists by color, style, format, technique |
 | `references/posters/pNNN-*.md` | 126 studied designs: grid in percent, layer stack, palette, type table, a tested build recipe, variations, pitfalls |
-| `references/techniques.md` | 74 tested effect recipes by ID (`T-smoke`, `T-grunge`, `T-duotone`, `T-fit-width`, `T-water-splash`, ...); search for the heading, do not read it all |
-| `references/typography.md` | fonts: what to use on this machine, classes with look-alikes, size scale, spacing, pairing |
+| `references/techniques.md` | 80 tested effect recipes by ID (`T-smoke`, `T-grunge`, `T-duotone`, `T-fit-width`, `T-water-splash`, `T-info-bar`, ...); search for the heading, do not read it all |
+| `references/typography.md` | fonts: the 28 font classes (`--font @condensed-heavy`) with free look-alikes, size scale, spacing, pairing |
 | `references/palettes.md` | named palettes with hexes and area ratios |
-| `scripts/*.js` | generators for `render js`: clouds, blobs, grunge, rays, particles, brush, splatter, splash, torn, crack, waves, ribbons, pattern, tiles, standin |
+| `scripts/*.js` | generators for `render js`, for what pixelox has no command for: blobs, grunge, rays, particles, brush, splatter, torn, crack, waves, ribbons, pattern, tiles, standin |
 
 Copy `scripts/` next to your work (or use its full path); every script documents its
 parameters in its first lines.
@@ -74,9 +78,13 @@ Write the plan as text:
 * Grid: the archetype's zones in percent; one alignment system (all centered, or all hung
   from one or two left edges).
 * Palette: 3 to 5 hexes with area ratios near 60/30/10, and the type colors.
-* Fonts: two families at most. **Run `pixelox fonts list --json` now** and choose families
-  that are installed, by class, with `references/typography.md` ("Fonts on your machine").
-  Recipes name macOS fonts; a missing font stops a command (PX4102).
+* Fonts: two at most, chosen by **class** with `references/typography.md`
+  (`--font @condensed-heavy`, `@geometric-sans`, `@script-formal`). **Run
+  `pixelox fonts classes` now** to see what each class draws on this machine. A class
+  marked `stand-in` or `substitute`, or a named family that is missing, is drawn with the
+  closest installed face and a warning (PXW4010, PXW4014), never an error. If the design
+  depends on the real face, ask the user whether to download the free family, and only
+  after a yes run `pixelox fonts get @stencil -y` (or a family name).
 * Text table: every text element with its level, cap height in % of the height, position.
 * Layer stack, back to front, with the technique ID for each effect.
 
@@ -101,10 +109,13 @@ panels, small type, finishing.
 * Name every layer (`--name`, `--as`) and address layers by name.
 * Use percent for positions and sizes. Pixel values in recipes (blur, offsets, stroke
   widths) are for a 1080 px wide canvas: multiply by `width / 1080`.
-* Fit headlines by width, not by guessing a size: add the text, then
-  `pixelox transform scale d.pxo --in-place --layer H1 --size 920x`, then
-  `pixelox transform move d.pxo --in-place --layer H1 --to 50%,18% --anchor t`.
+* Fit headlines by width, not by guessing a size: give `text add` `--fit-width 920`
+  instead of `--size`, and `--at 50%,18% --anchor t --anchor-to ink` to place the visible
+  letters exactly (T-fit-width).
 * One text layer per headline line. Body copy: `--content $'line one\nline two'` or `--box`.
+* Use the native commands before a script: `fill noise` (smoke, clouds, mottle), `filter
+  grain --as-layer`, `render splash|droplets|ice`, `shape icon|qr|barcode`, `fx
+  long-shadow|extrude|reflection`, `text warp`, `mask add --gradient` (fades).
 * Past a dozen commands, put them in a pipeline file (`pixelox docs pipelines`).
 
 **Things that bite** (each cost a designer an hour):
@@ -112,19 +123,29 @@ panels, small type, finishing.
 * Line breaks need `$'A\nB'`; `"A\nB"` prints a backslash. No `|` and no three dots in
   `--content`. Quote every color. A value starting with a minus needs `=`
   (`--angle=-52`).
-* Negative coordinates count from the far edge (`--at`, `--rect`, `--from`, `--to`). To
-  hang something off the left or top edge, place it inside, then `transform move --by`.
-* New layers land above the **active** layer, and `layer reorder` and `layer dup` change
-  which one is active. After either, send your next new layer to the top
-  (`pixelox layer reorder d.pxo --in-place --layer NAME --index 1`) or it hides under others.
-* `transform scale` with two numbers, `skew`, `perspective`, and `flip` turn text into
-  pixels (warning PXW2003): finish the wording first.
-* Filters and fills need pixels: `layer rasterize` text and shapes first. A blurred shape
-  is cut off at its own bounds: for soft glows and shadows use a canvas-sized `layer add`
-  with `select ellipse --feather` and `fill solid --mask @sel`, or `paint stroke`.
+* A negative coordinate counts from the far edge (`--at -60,-60` is 60 px in from the
+  right and bottom). To go **past** the left or top edge, write a sum: `--at 0-80,40%` is
+  80 px left of the canvas, `50%-120` is 120 px left of center.
+* New layers land on top of the stack. To put one elsewhere, add `--below NAME`, `--above
+  NAME`, or `--into GROUP` to the command that creates it.
+* Read `warnings` after every `text add`: a font that is not installed is replaced
+  (PXW4010), and a weight the family lacks is swapped for the nearest (PXW4013).
+* Filters are live on text, shapes, and placed images (blur a shape for a glow or a soft
+  shadow; nothing to rasterize). A blur fades where its shape runs off the canvas: for
+  light that bleeds off an edge use `fill gradient` or `paint stroke`.
+* `fill ...` and `paint stroke` need a pixel layer (`layer add`). `transform skew`,
+  `perspective`, and `flip` turn text into pixels (warning PXW2003): finish the wording
+  first.
+* `render droplets` and `render ice` capture what is behind them when they run: add them
+  after the background and the product, and run them again after either changes. Bead a
+  product before giving it a glow or shadow style, or the beads land on the glow too.
+* Random effects (`fill noise`, `render splash`, `render ice`, `filter grain`) depend on
+  `--seed` and on how many commands ran before them: after inserting or removing earlier
+  lines, look again and re-pick `--seed` where smoke, a cube, or a splash now covers
+  something.
 * `layer clip` attaches a layer to the nearest unclipped layer below it.
 * A `%` rect is % of width by % of height: use pixels for true circles and squares.
-* `fx overlay` covers a shape's own stroke; `--angle 90` runs bottom to top.
+* `fx overlay --angle 90` runs bottom to top.
 
 **Stand-ins and real photos.** With no photo yet, lay out with a stand-in
 (`pixelox render js scripts/standin.js -o subject.png --size 900x1200 --param kind=person`;
@@ -136,7 +157,9 @@ out (ask before downloading the model: `pixelox detect subject shot.pxo --in-pla
 (`pixelox transform trim subject.png -o subject-tight.png`), swap it in
 (`pixelox comp relink d.pxo --in-place --layer Subject --to subject-tight.png`), then
 re-check size and overlaps by eye. A stand-in proves the layout only. Never deliver one;
-if no photo will come, switch to a design that needs none.
+if no photo will come, switch to a design that needs none. Liquid, ice, and condensation
+belong to the photo-led version: once the real product is in, stand it in a splash
+(T-water-splash), bead it (T-condensation), and scatter ice (T-ice-cubes).
 
 ### 5. Look at it
 
@@ -191,9 +214,9 @@ placeholder copy, anything still a stand-in, and one sentence on the design idea
 
 * **One hero.** One dominant element (a word, a face, or an object) takes 30 to 60% of
   the area. Everything else supports it or gets smaller.
-* **Group the facts.** Date, time, and place form one block (T-info-bar); the call to
-  action is one separate element (T-pill-button); the organizer's mark sits small at the
-  top or bottom edge.
+* **Group the facts.** Date, time, and place form one block with an icon each
+  (T-info-bar); the call to action is one separate element (T-pill-button, or T-qr-code
+  when there is a link); the organizer's mark sits small at the top or bottom edge.
 * **Overlap creates depth.** Let the subject cross the headline (T-text-behind-subject),
   a badge cross the product, a panel cross the photo's edge.
 * **Repeat to unify.** The same accent color, corner radius, line weight, and shadow
@@ -214,8 +237,8 @@ placeholder copy, anything still a stand-in, and one sentence on the design idea
 | Pure red on pure blue, rainbow gradients | One palette from `palettes.md`; one accent |
 | Shadows, strokes, and glows on everything | One effect on one element |
 | Photo pasted in with its rectangular background | Cut it out, or use it full-bleed |
-| Clip-art icons, emoji, star bursts everywhere | Simple shapes in palette colors, or none |
-| Stretched text or a squashed photo | Scale uniformly (`--size 920x`); crop, do not squeeze |
+| Clip-art icons, emoji, star bursts everywhere | One icon set (`shape icon`), one size, one color; or none |
+| Stretched text or a squashed photo | Fit type with `--fit-width`; scale photos uniformly; crop, do not squeeze |
 | Tiny text to fit long copy | Cut the copy |
 | Equal gaps everywhere | Tight inside a group, wide between groups |
 

@@ -100,7 +100,9 @@ off-center to the left of the sheet's middle and is cut off below the chest on a
   the left to 88% H at the right.
 * Card: **T-label-box** logic with the box in the ground color: `shape rect`, rotated -3
   degrees; the text is rotated by the same angle.
-* **T-paper-grain**, amount 8, soft-light 25%. No shadows anywhere.
+* The three stack lines are placed by their letters, not their text boxes (`--anchor tl
+  --anchor-to ink`), so `--at 5%,60.1%` is the exact left edge and cap top.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8. No shadows anywhere.
 
 ## 8. Hierarchy and eye path
 
@@ -124,20 +126,14 @@ pixelox adjust bw novel.pxo --in-place --layer Figure
 pixelox adjust levels novel.pxo --in-place --layer Figure --in-black 25 --in-white 215
 pixelox shape rect novel.pxo --in-place --name Card --rect 387,421,350x146 --fill '#ee353d'
 pixelox transform rotate novel.pxo --in-place --layer Card --degrees -3
-pixelox text add novel.pxo --in-place --name CardText --content "A NOVEL" --font "Helvetica Neue" --weight 700 --style italic --size 4.3% --color '#161614' --at 52%,30.5% --anchor c
+pixelox text add novel.pxo --in-place --name CardText --content "A NOVEL" --font @neo-grotesque --weight 700 --style italic --size 4.3% --color '#161614' --at 52%,30.5% --anchor c
 pixelox transform rotate novel.pxo --in-place --layer CardText --degrees -3
-pixelox text add novel.pxo --in-place --name Title --content "HARBOR" --font "Helvetica Neue" --weight 700 --size 12.8% --tracking -20 --color '#d8e89c'
-pixelox transform move novel.pxo --in-place --layer Title --to 5%,60.1% --anchor tl
-pixelox text add novel.pxo --in-place --name Author1 --content "IDA" --font "Helvetica Neue" --weight 700 --size 12.8% --tracking -20 --color '#161614'
-pixelox transform move novel.pxo --in-place --layer Author1 --to 5%,72.7% --anchor tl
-pixelox text add novel.pxo --in-place --name Author2 --content "AUTHOR" --font "Helvetica Neue" --weight 700 --size 12.8% --tracking -20 --color '#161614'
-pixelox transform move novel.pxo --in-place --layer Author2 --to 5%,84.7% --anchor tl
-pixelox text add novel.pxo --in-place --name Quote --content $'"Quick, bright, and unsparing about a city and a self."\n-Critic Name, author of ANOTHER BOOK' --font "Helvetica Neue" --weight 400 --size 1.75% --leading 160% --color '#161614' --at 5%,4.8% --anchor l
+pixelox text add novel.pxo --in-place --name Title --content "HARBOR" --font @neo-grotesque --weight 700 --size 12.8% --tracking -20 --color '#d8e89c' --at 5%,60.1% --anchor tl --anchor-to ink
+pixelox text add novel.pxo --in-place --name Author1 --content "IDA" --font @neo-grotesque --weight 700 --size 12.8% --tracking -20 --color '#161614' --at 5%,72.7% --anchor tl --anchor-to ink
+pixelox text add novel.pxo --in-place --name Author2 --content "AUTHOR" --font @neo-grotesque --weight 700 --size 12.8% --tracking -20 --color '#161614' --at 5%,84.7% --anchor tl --anchor-to ink
+pixelox text add novel.pxo --in-place --name Quote --content $'"Quick, bright, and unsparing about a city and a self."\n-Critic Name, author of ANOTHER BOOK' --font @neo-grotesque --weight 400 --size 1.75% --leading 160% --color '#161614' --at 5%,4.8% --anchor l
 pixelox comp place novel.pxo logo.png --in-place --as Logo --size 72x --at 89.7%,10% --anchor c
-pixelox layer add novel.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise novel.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend novel.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity novel.pxo --in-place --layer Grain --value 25
+pixelox filter grain novel.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export novel.pxo -o novel.png
 ```
 

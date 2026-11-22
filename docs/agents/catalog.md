@@ -7,7 +7,7 @@ pixelox: image editor CLI for agents. Grammar: pixelox <group> <cmd> INPUT [flag
 INPUT: image (jpg png tif webp gif bmp psd svg) or .pxo document; images open as one layer `Background`. -o x.pxo keeps layers; -o x.png flattens. --in-place only rewrites .pxo.
 Always: --json (one envelope: ok, result, outputs[].path+sha256, warnings[], error{code,hint}); --dry-run before writing; --overwrite only when asked; -y only with download consent.
 Globals: --seed N|random --threads N --progress json --no-sidecar --background --redact-paths --config F.
-Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom), --anchor tl..br; colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
+Address: --layer name|#N|@top|@bottom|@active; --mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png [--invert-mask]; X,Y,WxH / X,Y / WxH in px % pt mm in (negative = from right/bottom; 0-80 = past left/top), --anchor tl..br; new layers go on top (--above/--below/--into); colors #rrggbb[aa] rgb() hsl() names transparent; stops '#000@0,#fff@1'.
 Exit: 0 ok 1 runtime 2 usage 3 input 4 exists 5 format 6 consent 7 script 8 job 9 verify 10 interrupt 11 memory 12 not-in-build. Each output gets out.pixelox.json (replay/verify).
 More than 3 steps: write a pipeline (pixelox docs pipelines). Check work: analyze diff A B; verify out.pixelox.json.
 Workflows:
@@ -109,10 +109,14 @@ filter charcoal: Charcoal drawing: bold smudged strokes
 filter cutout: Cutout: few flat colors, simplified shapes
 filter denoise: Edge-aware noise reduction (non-local means)
 filter despeckle: Remove speckles while keeping edges
+filter displace: Displace by an image, layer, or noise map
+filter distort: Wave, ripple, twirl, pinch, spherize, or polar
 filter dust: Dust and scratches removal
 filter emboss: Emboss into a gray relief
 filter find-edges: Highlight edges (Sobel, inverted)
 filter gaussian: Gaussian blur
+filter glitch: RGB split, slice shifts, scanlines
+filter grain: Film grain (size-aware, tone-weighted)
 filter halftone: Halftone dot screen, mono or CMYK
 filter high-pass: High-pass filter for frequency separation
 filter ink: Pen and ink: crisp lines, solid blacks
@@ -131,6 +135,7 @@ filter vignette: Add (+) or remove (−) a vignette
 filter watercolor: Watercolor: soft washes, pooled edges, grain
 fill content-aware: Fill a region from its surroundings (inpaint) (ml)
 fill gradient: Fill with a linear, radial, angular, or reflected gradient
+fill noise: Clouds, smoke, fractal or cell noise
 fill pattern: Fill with a tiled image pattern
 fill solid: Fill a layer or region with a color
 retouch blemishes: Find (and heal) blemishes: small dark or light spots
@@ -150,6 +155,7 @@ text list: List text layers and the fonts they use
 text on-path: Flow a text layer along a path or shape
 text style: Restyle a text layer, keeping its content
 text to-path: Convert a text layer to a vector shape layer
+text warp: Warp a text layer with a preset, keeping it live
 path exclude: Exclusive-or of shape layers
 path intersect: Intersection of shape layers
 path outline-stroke: Convert a shape's stroke to a filled path
@@ -157,10 +163,14 @@ path simplify: Reduce the anchor count of a shape path
 path subtract: Subtract later shape layers from the first
 path unite: Union of shape layers
 shape arrow: Add an arrow shape layer
+shape barcode: Add an EAN, UPC, or Code 128/39 barcode
 shape ellipse: Add an ellipse or circle shape layer
+shape icon <icon>: Add a Lucide icon as a shape layer
+shape icons: List or search the bundled icons
 shape line: Add a straight line shape layer
 shape path: Add a shape layer from SVG path data
 shape polygon: Add a regular polygon shape layer
+shape qr: Add a QR code as a shape layer
 shape rect: Add a rectangle shape layer (rounded via radius)
 shape set: Restyle an existing shape layer
 shape star: Add a star or burst shape layer
@@ -175,16 +185,20 @@ transform scale: Scale a layer
 transform skew: Skew (shear) a layer
 transform straighten: Level a tilted horizon or edges
 transform trim: Crop away a uniform or transparent border
-transform warp: Grid-mesh warp of a layer
+transform warp: Warp with a preset (arc, flag...) or a mesh
 fx bevel: Add or replace a layer's bevel & emboss
 fx copy: Copy a layer's style stack to other layers
 fx drop-shadow: Add or replace a layer's drop shadow
+fx extrude: Add or replace a 3D extrusion (block sides)
 fx fire: Add or replace flames rising from a layer's outline
+fx grain: Add or replace a layer's film grain
 fx inner-glow: Add or replace a layer's inner glow
 fx inner-shadow: Add or replace a layer's inner shadow
 fx list: List a layer's style effects
+fx long-shadow: Add or replace a long (flat) shadow
 fx outer-glow: Add or replace a layer's outer glow
 fx overlay: Add a color, gradient, or pattern overlay
+fx reflection: Add or replace a floor reflection
 fx rm: Remove style effects from a layer
 fx satin: Add or replace a layer's satin sheen
 fx scale: Scale all effect geometry on a layer
@@ -217,8 +231,11 @@ svg use: Instance a symbol or element with <use>
 trace: Vectorize a bitmap into an SVG
 render 3d: Render primitives, extrusions, or OBJ scenes (CPU 3D)
 render d3: Run a d3 script (d3 bundle via --lib) to SVG or PNG
+render droplets: Condensation droplets clipped to a layer
+render ice: Ice cubes that refract the design, on a new layer
 render js: Run a sandboxed JS script that draws to canvas or SVG
 render lens-flare: Add a camera lens flare as a new screen layer
+render splash: Liquid splash (crown or sheet) on a new layer
 render three: Run a three.js script (bundle via --lib) to SVG/PNG
 frames assemble FILES..: Build an animated GIF from stills
 frames extract: Explode an animated GIF or multi-page TIFF to stills
@@ -242,6 +259,8 @@ config list: List every key with its effective value
 config path: Print the config file path
 config set <key> <value>: Set a value in config.toml
 fonts add <dir>: Register a folder of fonts
+fonts classes <class>: List font classes and what each resolves to
+fonts get <family>: Download a Google Fonts family (consent: -y)
 fonts list: List installed and registered fonts
 models add: Register a custom ONNX model
 models info <name>: Show one model's task, license, and size

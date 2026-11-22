@@ -91,9 +91,11 @@ height. Do not crop in on it; the emptiness is the design.
 
 ## 7. Effects and textures
 
-* **T-photo-fade**, reversed: the ground color `#f8fafd` is solid above 44% H and clears by
-  74% H, which guarantees a clean field for the title on any photo. A second, short fade at
-  the bottom (91 to 97% H, 90% strength) stands in for the snow under the footer line.
+* **T-photo-fade**, run upward: a gradient mask on the photo (`mask add --gradient linear
+  --from 0,74% --to 0,44%`). The photo is whole at 74% H and gone above 44% H, so the
+  ground color `#f8fafd` shows there, which guarantees a clean field for the title on any
+  photo. A second, short fade at the bottom is a gradient layer (`FootFade`, 91 to 97% H,
+  90% strength) that stands in for the snow under the footer line.
 * **T-script-overlap**, quiet variant: script and block word in the *same* color, no
   rotation, no shadow; the script only kisses the block word's baseline (overlap under 5%
   of its height). The contrast is in the letterforms, not in color.
@@ -122,21 +124,14 @@ pixelox new -o jubilee.pxo --size 1080x1620 --fill '#f8fafd'
 pixelox comp place jubilee.pxo photo.png --in-place --as Photo --size 1080x --at 0,100% --anchor bl
 pixelox adjust levels jubilee.pxo --in-place --layer Photo --gamma 1.5 --out-black 70
 pixelox adjust vibrance jubilee.pxo --in-place --layer Photo --vibrance -15
-pixelox layer add jubilee.pxo --in-place --name SkyFade
-pixelox fill gradient jubilee.pxo --in-place --layer SkyFade --from 0,74% --to 0,44% --stops '#f8fafd00@0,#f8fafdff@1'
+pixelox mask add jubilee.pxo --in-place --layer Photo --gradient linear --from 0,74% --to 0,44%
 pixelox layer add jubilee.pxo --in-place --name FootFade
 pixelox fill gradient jubilee.pxo --in-place --layer FootFade --from 0,91% --to 0,97% --stops '#f8fafd00@0,#f8fafde6@1'
 pixelox text add jubilee.pxo --in-place --name Presenter --content "YOUR CHURCH PRESENTS" --font "DIN Condensed" --weight 700 --size 2.6% --tracking 150 --color '#6a0f2d' --at 50%,4.3% --anchor c
-pixelox text add jubilee.pxo --in-place --name Date --content "14.06.2031" --font "DIN Condensed" --weight 700 --size 2.75% --tracking 100 --color '#6a0f2d'
-pixelox transform move jubilee.pxo --in-place --layer Date --to 18.4%,17.7% --anchor tl
-pixelox text add jubilee.pxo --in-place --name Headline --content "COMMUNITY" --font "DIN Condensed" --weight 700 --size 10% --color '#6a0f2d'
-pixelox transform scale jubilee.pxo --in-place --layer Headline --size 708x
-pixelox transform move jubilee.pxo --in-place --layer Headline --to 18.4%,20.5% --anchor tl
-pixelox text add jubilee.pxo --in-place --name Script --content "Jubilee" --font "Snell Roundhand" --weight 900 --size 12% --color '#6a0f2d'
-pixelox transform scale jubilee.pxo --in-place --layer Script --size 620x
-pixelox transform move jubilee.pxo --in-place --layer Script --to 52.5%,28.8% --anchor t
-pixelox text add jubilee.pxo --in-place --name Sub --content "SUMMER EVENT" --font "DIN Condensed" --weight 700 --size 2.7% --tracking 300 --color '#6a0f2d'
-pixelox transform move jubilee.pxo --in-place --layer Sub --to 52.5%,40.2% --anchor t
+pixelox text add jubilee.pxo --in-place --name Date --content "14.06.2031" --font "DIN Condensed" --weight 700 --size 2.75% --tracking 100 --color '#6a0f2d' --at 18.4%,17.7% --anchor tl --anchor-to ink
+pixelox text add jubilee.pxo --in-place --name Headline --content "COMMUNITY" --font "DIN Condensed" --weight 700 --fit-width 708 --color '#6a0f2d' --at 18.4%,20.5% --anchor-to ink
+pixelox text add jubilee.pxo --in-place --name Script --content "Jubilee" --font @script-formal --weight 900 --fit-width 620 --color '#6a0f2d' --at 52.5%,28.8% --anchor t --anchor-to ink
+pixelox text add jubilee.pxo --in-place --name Sub --content "SUMMER EVENT" --font "DIN Condensed" --weight 700 --size 2.7% --tracking 300 --color '#6a0f2d' --at 52.5%,40.2% --anchor t --anchor-to ink
 pixelox text add jubilee.pxo --in-place --name Footer --content "12 EXAMPLE ROAD, YOUR CITY  -  WWW.EXAMPLE.COM  -  PHONE 555 0100" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 150 --color '#6a0f2d' --at 50%,96.7% --anchor c
 pixelox export jubilee.pxo -o jubilee.png
 ```
@@ -160,7 +155,7 @@ its lowest descender.
   minimalist real-estate ads. In a square format keep the title block at 14 to 44% H and
   let the subject sit in the bottom 40%.
 * Pairs with T-rules (a hairline above the footer) and T-paper-grain at its lightest
-  setting (amount 8, opacity 25) if the white looks too digital in print.
+  setting (`--amount 8`) if the white looks too digital in print.
 
 ## 11. Pitfalls
 
@@ -169,7 +164,7 @@ its lowest descender.
 * Enlarging the subject to fill the space. Keep the building under 60% W and leave the
   16% H band of empty sky between the sub-line and the roof peak.
 * A busy or blue sky behind the title: maroon on mid-blue vibrates. Fade the sky to the
-  ground color first (the SkyFade layer), or switch to the white-type sibling.
+  ground color first (the gradient mask on the photo), or switch to the white-type sibling.
 * Setting the script in a second color or rotating it. Here the pairing is tone on tone;
   the script must stay level and touch the headline, not float 2% below it.
 * A footer wider than 90% W or tracked tighter than 100: at cap height 1.3% H it needs the
