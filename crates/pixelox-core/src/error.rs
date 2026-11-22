@@ -175,6 +175,9 @@ catalog! {
     "PX3310", Usage, "Curve points are not monotonic", "Give curve points with strictly increasing input values.";
     "PX3311", Usage, "Invalid LUT file", "Supply a valid .cube 3D LUT.";
     "PX3320", Usage, "Empty region", "The selection or mask covers no pixels.";
+    "PX3341", Usage, "Displacement map is empty", "Give a map image or layer with visible pixels.";
+    "PX3342", Usage, "A map layer cannot drive a smart filter", "Rasterize the placed layer first, or use the generated noise map.";
+    "PX3343", Usage, "Nothing to put droplets on", "Name a layer with opaque pixels in --layer.";
     // PX4xxx — text and fonts
     "PX4101", Runtime, "Font file unreadable", "Check the font path.";
     "PX4102", Usage, "Font family not found", "List fonts with `pixelox fonts list`, or add a folder with `pixelox fonts add <dir>`.";
@@ -223,6 +226,7 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW2005", "searched the whole layer without a mask (features may be listed as spots)"),
     ("PXW3002", "text auto-shrink was skipped or the text still overflows its slot"),
     ("PXW3001", "a parameter was clamped to its valid range"),
+    ("PXW3010", "--tile adjusted the noise settings (basis, lacunarity, or angle) so the texture repeats"),
     ("PXW4001", "a glyph was missing from the font and drawn with a fallback"),
     ("PXW4002", "synthetic bold or italic was used because the face was not installed"),
     ("PXW6001", "the script read the clock (--allow-time): output is not deterministic"),

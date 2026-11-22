@@ -22,8 +22,10 @@ pub mod envelope;
 pub mod error;
 pub mod exec;
 pub mod geom;
+pub mod grain;
 pub mod image;
 pub mod kernels;
+pub mod noise;
 pub mod op;
 pub mod paths;
 pub mod presets;
@@ -32,6 +34,7 @@ pub mod registry;
 pub mod schema;
 pub mod testing;
 pub mod units;
+pub mod warp_preset;
 
 pub use blend::BlendMode;
 pub use color::Rgba;
