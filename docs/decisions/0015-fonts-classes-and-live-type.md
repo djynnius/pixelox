@@ -120,9 +120,11 @@ recorded font first and name what is missing and the command that gets it (PXW40
 
 ## Consequences
 * Recipes that name macOS fonts render everywhere with a reported substitute, and recipes can
-  name classes instead of families. 37 of the 126 posters changed: requests like
-  `Helvetica Neue --weight 900` now draw the normal-width Bold instead of the condensed face
-  (the regression notes list them).
+  name classes instead of families. On the skill's 126 poster recipes (macOS), 7 outputs
+  changed: four ask for `Helvetica Neue --weight 900` and now draw the normal-width Bold
+  instead of Condensed Black (p005, p035, p053, p090; adding `--stretch condensed` restores
+  them exactly), and three stretch text with an unequal `transform scale`, which now stays
+  live and crisp instead of being resampled as pixels (p038, p060, p122).
 * `text add` without `--weight` records no weight; old sidecars record 400 and replay as before.
 * Measured metrics (`metrics.rs`: cap-advance width over cap height, ink darkness) only rank
   installed faces when no class candidate exists; targets come from each class's first Google
