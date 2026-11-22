@@ -133,6 +133,17 @@ pub fn apply_adjustment(op: &str, params: &Map<String, Value>, img: &mut Image) 
 /// A layer's own pixels (before mask, opacity, and blending), with its fx applied.
 /// `None` for adjustment layers and empty content.
 pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, Image>, i32, i32)>> {
+    if let Some((base, rest)) = overlays_under_stroke(doc, layer)? {
+        return match (base, rest.is_empty()) {
+            (None, _) => Ok(None),
+            (Some(b), true) => Ok(Some((Cow::Owned(b.image), b.x, b.y))),
+            (Some(b), false) => {
+                let f = hooks().fx.ok_or_else(|| missing("layer style (fx)"))?;
+                let r = f(&rest, b, doc)?;
+                Ok(Some((Cow::Owned(r.image), r.x, r.y)))
+            }
+        };
+    }
     let base: Option<(Cow<'a, Image>, i32, i32)> = match &layer.content {
         LayerKind::Raster { image } => {
             if image.is_empty() {
@@ -176,6 +187,83 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
         }
         (None, _) => Ok(None),
     }
+}
+
+/// A color, gradient, or pattern overlay (`fx overlay`) recolors the fill of a shape or text
+/// layer that also has a stroke, and leaves the stroke on top, unless the overlay was given
+/// `--cover-stroke` (Photoshop's behavior, where the stroke is part of the content). Returns
+/// the content with those overlays applied under the stroke, and the effects still to apply;
+/// None when the layer needs no split (no such overlay, or no fill and stroke to separate).
+fn overlays_under_stroke(doc: &Document, layer: &Layer) -> Result<Option<(Option<Rendered>, Vec<FxSpec>)>> {
+    let (spec, fill_key, blank) = match &layer.content {
+        LayerKind::Shape { spec } => (spec, "fill", Value::Null),
+        LayerKind::Text { spec } => (spec, "color", Value::String("transparent".into())),
+        _ => return Ok(None),
+    };
+    let painted = |k: &str| {
+        spec.get(k).and_then(Value::as_str).and_then(|c| crate::color::parse_color(c).ok()).is_some_and(|c| c.a > 0.0)
+    };
+    let stroked = spec.get("stroke_width").and_then(Value::as_f64).is_none_or(|w| w > 0.0);
+    if !(painted(fill_key) && painted("stroke") && stroked) {
+        return Ok(None);
+    }
+    let covers = |f: &FxSpec| {
+        f.params.get("cover_stroke").is_some_and(|v| match v {
+            Value::Bool(b) => *b,
+            Value::String(s) => matches!(s.as_str(), "true" | "on" | "yes" | "1"),
+            _ => false,
+        })
+    };
+    let (under, rest): (Vec<FxSpec>, Vec<FxSpec>) =
+        layer.fx.iter().filter(|f| f.enabled).cloned().partition(|f| f.kind == "overlay" && !covers(f));
+    if under.is_empty() {
+        return Ok(None);
+    }
+    let with = |key: &str, v: Value, fx: Vec<FxSpec>| {
+        let mut l = layer.clone();
+        if let LayerKind::Shape { spec } | LayerKind::Text { spec } = &mut l.content {
+            spec[key] = v;
+        }
+        l.fx = fx;
+        l
+    };
+    let filled = render_layer(doc, &with("stroke", Value::Null, under))?;
+    let stroke = render_layer(doc, &with(fill_key, blank, Vec::new()))?;
+    Ok(Some((
+        match (filled, stroke) {
+            (Some(a), Some(b)) => Some(over_rendered(a, &b)),
+            (a, b) => a.or(b),
+        },
+        rest,
+    )))
+}
+
+/// `b` composited over `a` on the union of their rectangles.
+fn over_rendered(a: Rendered, b: &Rendered) -> Rendered {
+    let x0 = a.x.min(b.x);
+    let y0 = a.y.min(b.y);
+    let x1 = (a.x + a.image.width as i32).max(b.x + b.image.width as i32);
+    let y1 = (a.y + a.image.height as i32).max(b.y + b.image.height as i32);
+    let (w, h) = ((x1 - x0) as u32, (y1 - y0) as u32);
+    let mut out = Image::new(w, h);
+    for (src, normal) in [(&a, true), (b, false)] {
+        for y in 0..src.image.height {
+            for x in 0..src.image.width {
+                let p = src.image.get(x, y);
+                if p[3] <= 0.0 {
+                    continue;
+                }
+                let (ox, oy) = ((src.x - x0) as u32 + x, (src.y - y0) as u32 + y);
+                let i = out.idx(ox, oy);
+                if normal {
+                    out.data[i..i + 4].copy_from_slice(&p);
+                } else {
+                    composite_pixel(BlendMode::Normal, &mut out.data[i..i + 4], p);
+                }
+            }
+        }
+    }
+    Rendered { image: out, x: x0, y: y0 }
 }
 
 /// Run a placed layer's smart filters on its rendered content. The content is first

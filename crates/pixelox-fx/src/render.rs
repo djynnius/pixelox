@@ -4,7 +4,8 @@
 //! composited, on a canvas grown by the largest effect extent and trimmed back to the
 //! visible pixels. Order (bottom → top), after Photoshop's style stack:
 //!
-//! 1. beneath the content: drop shadow, smoke, fire, outer glow, outside stroke;
+//! 0. a reflection (beneath everything), then a long shadow;
+//! 1. beneath the content: drop shadow, smoke, fire, outer glow, extrusion, outside stroke;
 //! 2. the content, with these clipped to its alpha (colors change, coverage does not):
 //!    pattern, gradient, and color overlays, satin, inner glow, inner shadow, the inner
 //!    part of bevel & emboss (highlight and shadow), and an inside stroke;
@@ -12,12 +13,18 @@
 //!    fire that licks over the content's edges (`--front`).
 //!
 //! Fire and smoke are computed by [`crate::flame`] from the content's alpha, anchored to
-//! the content (not the canvas), so they move with the layer unchanged.
+//! the content (not the canvas), so they move with the layer unchanged. Long shadows,
+//! extrusions, and reflections are computed by [`crate::cast`]; a long shadow and a drop
+//! shadow are cast by the extruded block when the layer has an extrusion.
+//!
+//! Content cut off by the canvas edge is treated as continuing past it
+//! ([`crate::cast::continued`]), so no effect draws a false edge along the canvas.
 //!
 //! Every effect uses its own blend mode and opacity. Within the layer, an effect over
 //! transparent pixels composites like `normal` (the W3C rule); the layer as a whole is
 //! then blended onto the backdrop with the layer's own mode.
 
+use crate::cast::{self, Cast};
 use crate::flame::{self, Plume, Rise};
 use pixelox_core::blend::composite_pixel;
 use pixelox_core::color::{Interp, Stop};
@@ -60,20 +67,24 @@ impl<'a> Params<'a> {
         value_str(self.m.get(key)?)
     }
 
-    fn bad(&self, key: &str, v: &str, what: &str) -> Error {
+    pub(crate) fn kind(&self) -> &str {
+        self.kind
+    }
+
+    pub(crate) fn bad(&self, key: &str, v: &str, what: &str) -> Error {
         Error::new("PX1010", format!("fx {}: {key} '{v}' is not {what}", self.kind))
             .with_context("fx", self.kind)
             .with_context("param", key)
     }
 
-    fn num(&self, key: &str, d: f64) -> Result<f64> {
+    pub(crate) fn num(&self, key: &str, d: f64) -> Result<f64> {
         match self.raw(key) {
             None => Ok(d),
             Some(v) => parse_num(&v).ok_or_else(|| self.bad(key, &v, "a number")),
         }
     }
 
-    fn color(&self, key: &str, d: Rgba) -> Result<[f32; 4]> {
+    pub(crate) fn color(&self, key: &str, d: Rgba) -> Result<[f32; 4]> {
         match self.raw(key) {
             None => Ok(d.to_array()),
             Some(v) => color::parse_color(&v).map(|c| c.to_array()),
@@ -94,7 +105,7 @@ impl<'a> Params<'a> {
         }
     }
 
-    fn look(&self, key: &str, mode: BlendMode, opacity: f64) -> Result<Look> {
+    pub(crate) fn look(&self, key: &str, mode: BlendMode, opacity: f64) -> Result<Look> {
         Ok(Look {
             mode: self.blend(key, mode)?,
             opacity: (self.num("opacity", opacity)?.clamp(0.0, 100.0) / 100.0) as f32,
@@ -121,7 +132,7 @@ impl<'a> Params<'a> {
         }
     }
 
-    fn angle(&self, key: &str, d: f64) -> Result<f64> {
+    pub(crate) fn angle(&self, key: &str, d: f64) -> Result<f64> {
         match self.raw(key) {
             None => Ok(d),
             Some(v) => units::parse_angle(&v),
@@ -180,7 +191,7 @@ pub(crate) fn fmt_len(l: Length) -> String {
 // effects
 
 #[derive(Clone, Copy, Debug)]
-struct Look {
+pub(crate) struct Look {
     mode: BlendMode,
     /// 0..1.
     opacity: f32,
@@ -294,6 +305,11 @@ enum Effect {
         pos: StrokePos,
     },
     Plume(PlumeFx),
+    /// Long shadow, extrusion, or reflection.
+    Cast {
+        look: Look,
+        cast: Cast,
+    },
 }
 
 /// Fire or smoke.
@@ -343,14 +359,17 @@ impl Effect {
             Effect::Overlay { .. } => 0.0,
             Effect::Stroke { width, .. } => *width,
             Effect::Plume(p) => p.rise.margins().into_iter().fold(0.0, f64::max),
+            Effect::Cast { cast, .. } => cast.margins([f64::INFINITY; 4]).into_iter().fold(0.0, f64::max),
         }
     }
 
     /// How far the effect reaches beyond the content on each side: left, top, right,
-    /// bottom (px). Plumes reach far only toward their rise direction.
-    fn margins(&self) -> [f64; 4] {
+    /// bottom (px). Plumes reach far only toward their rise direction; long shadows stop at
+    /// `room`, the distance to the canvas edges.
+    fn margins(&self, room: [f64; 4]) -> [f64; 4] {
         match self {
             Effect::Plume(p) => p.rise.margins(),
+            Effect::Cast { cast, .. } => cast.margins(room),
             other => [other.extent(); 4],
         }
     }
@@ -362,7 +381,8 @@ impl Effect {
             Effect::Plume(p) if p.rise.plume == Plume::Smoke => 1,
             Effect::Plume(_) => 2,
             Effect::OuterGlow { .. } => 3,
-            Effect::Stroke { pos: StrokePos::Outside, .. } => 4,
+            Effect::Cast { .. } => 4,
+            Effect::Stroke { pos: StrokePos::Outside, .. } => 5,
             Effect::Overlay { rank, .. } => 10 + rank,
             Effect::Satin { .. } => 13,
             Effect::InnerGlow { .. } => 14,
@@ -522,6 +542,10 @@ fn parse(spec: &FxSpec, doc: &Document, size: (u32, u32)) -> Result<Option<Effec
             }
         }
         "fire" | "smoke" => Effect::Plume(parse_plume(&p, spec.kind == "fire", doc, size)?),
+        "long-shadow" | "extrude" | "reflection" => {
+            let (look, cast) = cast::parse(&p, doc, size)?;
+            Effect::Cast { look, cast }
+        }
         _ => return Ok(None),
     }))
 }
@@ -638,6 +662,8 @@ enum Paint<'a> {
     },
     /// The colors of a fire or smoke field over the buffer (coverage comes separately).
     Plume(&'a flame::Field, &'a PlumeFx),
+    /// The colors of a buffer-sized image (coverage comes separately).
+    Pixels(&'a Image),
 }
 
 impl Paint<'_> {
@@ -672,6 +698,10 @@ impl Paint<'_> {
             Paint::Plume(f, pf) => {
                 let i = y * f.value.width as usize + x;
                 plume_color(f.value.data[i], f.aux.data[i], pf)
+            }
+            Paint::Pixels(img) => {
+                let i = (y * img.width as usize + x) * 4;
+                [img.data[i], img.data[i + 1], img.data[i + 2], 1.0]
             }
         }
     }
@@ -912,12 +942,41 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
     let Some(bb) = visible else {
         return Ok(content);
     };
-    let reach = effects.iter().map(Effect::margins).fold([0.0f64; 4], |m, e| [0, 1, 2, 3].map(|k| m[k].max(e[k])));
+    // room to the canvas edges: a long shadow stops there
+    let (vx, vy) = ((content.x + bb.x) as f64, (content.y + bb.y) as f64);
+    let room =
+        [vx, vy, doc.width as f64 - vx - bb.w as f64, doc.height as f64 - vy - bb.h as f64].map(|v| v.max(0.0) + 2.0);
+    // shadows cast by an extruded block reach as far again as the block does
+    let block_m = effects
+        .iter()
+        .find_map(|e| match e {
+            Effect::Cast { cast: c @ Cast::Extrude(_), .. } => Some(c.margins(room)),
+            _ => None,
+        })
+        .unwrap_or([0.0; 4]);
+    let reach = effects
+        .iter()
+        .map(|e| match e {
+            Effect::DropShadow { .. } => {
+                let m = e.margins(room);
+                [0, 1, 2, 3].map(|k| m[k] + block_m[k])
+            }
+            Effect::Cast { cast: Cast::LongShadow(_), .. } => {
+                let m = e.margins(room);
+                [0, 1, 2, 3].map(|k| (m[k] + block_m[k]).min(room[k]))
+            }
+            _ => e.margins(room),
+        })
+        .fold([0.0f64; 4], |m, e| [0, 1, 2, 3].map(|k| m[k].max(e[k])));
     let [pl, pt, pr, pb] = reach.map(|v| v.clamp(0.0, MAX_PAD).ceil() as u32 + 2);
     let (w, h) = (bb.w + pl + pr, bb.h + pt + pb);
     let origin = (content.x + bb.x - pl as i32, content.y + bb.y - pt as i32);
     let mut fill = content.image.crop(RectI::new(bb.x - pl as i32, bb.y - pt as i32, w, h));
-    let a = fill.alpha_mask();
+    // fire and smoke rise from the content's own outline; every other effect sees content
+    // that the canvas edge cut off as continuing past it
+    let a_own = fill.alpha_mask();
+    let crect = RectI::new(content.x, content.y, content.image.width, content.image.height);
+    let a = cast::continued(&a_own, origin, crect, &content.image, doc);
     let cbox = [pl as f64, pt as f64, bb.w as f64, bb.h as f64];
     let grow = |d: f64| [cbox[0] - d, cbox[1] - d, cbox[2] + 2.0 * d, cbox[3] + 2.0 * d];
     let seed = |i: usize| 0xF0F0_5EED_u64 ^ (i as u64 + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15);
@@ -928,41 +987,6 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
 
     let mut order: Vec<usize> = (0..effects.len()).collect();
     order.sort_by_key(|&i| effects[i].phase());
-
-    // 1. beneath the content
-    let mut below = Image::new(w, h);
-    for &i in &order {
-        match &effects[i] {
-            Effect::DropShadow { look, color, off, blur, spread } => {
-                let (m, s) = blur_parts(*blur, *spread);
-                let cov = shift(&gauss(&kernels::dilate(&a, m), s, Edge::Zero), off.0, off.1, 0.0);
-                apply(&mut below, &cov, &Paint::Solid(*color), *look, false, seed(i), origin);
-            }
-            Effect::OuterGlow { look, glow, blur, spread } => {
-                let (m, s) = blur_parts(*blur, *spread);
-                let cov = map(gauss(&kernels::dilate(&a, m), s, Edge::Zero), boost);
-                apply(&mut below, &cov, &glow_paint(glow), *look, false, seed(i), origin);
-            }
-            Effect::Plume(pf) => {
-                let f = flame::field(&a, &pf.rise, anchor);
-                let cov = plume_cov(&f, pf);
-                apply(&mut below, &cov, &Paint::Plume(&f, pf), pf.look, false, seed(i), origin);
-                if pf.front > 0.0 {
-                    // tongues of the flames over the content's own edges
-                    let k = pf.front;
-                    let licks = flame::licks(&a, &pf.rise, anchor);
-                    fronts.push((zip(&cov, &licks, move |c, l| c * l * k), f, i));
-                }
-            }
-            Effect::Stroke { look, fill: f, width, pos: StrokePos::Outside } => {
-                // the coverage that, under the content, makes the union reach the dilation
-                let d = kernels::dilate(&a, *width);
-                let cov = zip(&d, &a, |dv, av| if av >= 1.0 { 0.0 } else { ((dv - av) / (1.0 - av)).clamp(0.0, 1.0) });
-                apply(&mut below, &cov, &fill_paint(f, grow(*width), origin), *look, false, seed(i), origin);
-            }
-            _ => {}
-        }
-    }
 
     // 2. the content and the effects clipped to it
     let ones = Mask::filled(w, h, 1.0);
@@ -1018,8 +1042,84 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
             _ => {}
         }
     }
+    // an extrusion's sides (colored from the styled face) and the block they make with it:
+    // long and drop shadows are cast by the block
+    let mut sides: Option<(Mask, Image)> = None;
+    for &i in &order {
+        if let Effect::Cast { cast: Cast::Extrude(e), .. } = &effects[i] {
+            sides = Some(cast::extrude(&a, &fill, e));
+        }
+    }
+    let block = match &sides {
+        Some((cov, _)) => zip(&a, cov, f32::max),
+        None => a.clone(),
+    };
+    // a reflection mirrors the block with its strokes, collected in `body`
+    let reflect = order.iter().rev().find_map(|&i| match &effects[i] {
+        Effect::Cast { look, cast: Cast::Reflection(r) } => Some((i, *look, r.clone())),
+        _ => None,
+    });
+    let mut body = reflect.as_ref().map(|_| Image::new(w, h));
+
+    // 1. beneath the content (long shadows first, under everything else)
+    let mut below = Image::new(w, h);
+    for &i in &order {
+        if let Effect::Cast { look, cast: Cast::LongShadow(ls) } = &effects[i] {
+            apply(&mut below, &cast::long_shadow(&block, ls), &Paint::Solid(ls.color), *look, false, seed(i), origin);
+        }
+    }
+    for &i in &order {
+        match &effects[i] {
+            Effect::DropShadow { look, color, off, blur, spread } => {
+                let (m, s) = blur_parts(*blur, *spread);
+                let cov = shift(&gauss(&kernels::dilate(&block, m), s, Edge::Zero), off.0, off.1, 0.0);
+                apply(&mut below, &cov, &Paint::Solid(*color), *look, false, seed(i), origin);
+            }
+            Effect::OuterGlow { look, glow, blur, spread } => {
+                let (m, s) = blur_parts(*blur, *spread);
+                let cov = map(gauss(&kernels::dilate(&a, m), s, Edge::Zero), boost);
+                apply(&mut below, &cov, &glow_paint(glow), *look, false, seed(i), origin);
+            }
+            Effect::Plume(pf) => {
+                let f = flame::field(&a_own, &pf.rise, anchor);
+                let cov = plume_cov(&f, pf);
+                apply(&mut below, &cov, &Paint::Plume(&f, pf), pf.look, false, seed(i), origin);
+                if pf.front > 0.0 {
+                    // tongues of the flames over the content's own edges
+                    let k = pf.front;
+                    let licks = flame::licks(&a_own, &pf.rise, anchor);
+                    fronts.push((zip(&cov, &licks, move |c, l| c * l * k), f, i));
+                }
+            }
+            Effect::Cast { look, cast: Cast::Extrude(e) } => {
+                let Some((cov, img)) = &sides else { continue };
+                let ring = (e.outline > 0.0).then(|| {
+                    let d = kernels::dilate(cov, e.outline);
+                    zip(&d, cov, |dv, cv| if cv >= 1.0 { 0.0 } else { ((dv - cv) / (1.0 - cv)).clamp(0.0, 1.0) })
+                });
+                for dst in std::iter::once(&mut below).chain(body.as_mut()) {
+                    if let Some(ring) = &ring {
+                        apply(dst, ring, &Paint::Solid(e.outline_color), *look, false, seed(i) ^ 3, origin);
+                    }
+                    apply(dst, &img.alpha_mask(), &Paint::Pixels(img), *look, false, seed(i), origin);
+                }
+            }
+            Effect::Stroke { look, fill: f, width, pos: StrokePos::Outside } => {
+                // the coverage that, under the content, makes the union reach the dilation
+                let d = kernels::dilate(&a, *width);
+                let cov = zip(&d, &a, |dv, av| if av >= 1.0 { 0.0 } else { ((dv - av) / (1.0 - av)).clamp(0.0, 1.0) });
+                for dst in std::iter::once(&mut below).chain(body.as_mut()) {
+                    apply(dst, &cov, &fill_paint(f, grow(*width), origin), *look, false, seed(i), origin);
+                }
+            }
+            _ => {}
+        }
+    }
     let mut out = below;
     over(&mut out, &fill);
+    if let Some(b) = body.as_mut() {
+        over(b, &fill);
+    }
 
     // 3. on top
     for (cov, color, look, s) in &top {
@@ -1029,12 +1129,25 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
         if let Effect::Stroke { look, fill: f, width, pos: StrokePos::Center } = &effects[i] {
             let half = width / 2.0;
             let cov = zip(&kernels::dilate(&a, half), &kernels::erode(&a, half), |d, e| (d - e).clamp(0.0, 1.0));
-            apply(&mut out, &cov, &fill_paint(f, grow(half), origin), *look, false, seed(i), origin);
+            for dst in std::iter::once(&mut out).chain(body.as_mut()) {
+                apply(dst, &cov, &fill_paint(f, grow(half), origin), *look, false, seed(i), origin);
+            }
         }
     }
     for (cov, f, i) in &fronts {
         if let Effect::Plume(pf) = &effects[*i] {
             apply(&mut out, cov, &Paint::Plume(f, pf), pf.look, false, seed(*i) ^ 2, origin);
+        }
+    }
+
+    // 0. the reflection, under everything: the block mirrored about its bottom edge
+    if let (Some((i, look, r)), Some(b)) = (&reflect, &body) {
+        if let Some(bx) = b.alpha_bbox(0.0) {
+            let mirror = cast::reflection(b, [bx.x as f64, bx.y as f64, bx.w as f64, bx.h as f64], r);
+            let mut under = Image::new(w, h);
+            apply(&mut under, &mirror.alpha_mask(), &Paint::Pixels(&mirror), *look, false, seed(*i), origin);
+            over(&mut under, &out);
+            out = under;
         }
     }
 
