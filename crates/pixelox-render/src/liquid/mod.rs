@@ -69,13 +69,29 @@ impl Draw {
     }
 }
 
-/// Insert `image` at (`x`, `y`) as a new normal raster layer above `--layer` (or the
-/// active layer, or on top); returns its path.
+/// The placement of a new liquid layer: directly above `--layer` when given (the layer it
+/// belongs to), else where `--above/--below/--into` say (on top by default). PX1005 when
+/// both `--layer` and a placement flag are given.
+pub(crate) fn placement(a: &Args, doc: &Document) -> Result<pixelox_core::stack::Placement> {
+    use pixelox_core::stack::{self, Placement};
+    Ok(match (stack::from_args(a, doc)?, a.raw("layer")) {
+        (Some(_), Some(_)) => {
+            return Err(Error::new(
+                "PX1005",
+                "--layer and --above/--below/--into both place the new layer; give only one",
+            )
+            .with_hint("use --above <layer> (the same as --layer) or --below/--into"))
+        }
+        (Some(p), None) => p,
+        (None, Some(r)) => Placement::Above(doc.resolve(r)?),
+        (None, None) => Placement::Top,
+    })
+}
+
+/// Insert `image` at (`x`, `y`) as a new normal raster layer at [`placement`]; returns its
+/// path.
 pub(crate) fn add_layer(a: &Args, doc: &mut Document, r: Rendered, default: &str) -> Result<LayerPath> {
-    let above = match a.raw("layer") {
-        Some(l) => Some(doc.resolve(l)?),
-        None => doc.active.clone().and_then(|id| doc.find_by_id(&id)),
-    };
+    let at = placement(a, doc)?;
     let name = match a.str("name").map(|n| n.trim().to_string()).filter(|n| !n.is_empty()) {
         Some(n) => {
             doc.check_name_free(&n, None)?;
@@ -91,7 +107,7 @@ pub(crate) fn add_layer(a: &Args, doc: &mut Document, r: Rendered, default: &str
     let mut layer = doc.new_layer(&name, LayerKind::Raster { image });
     layer.x = x;
     layer.y = y;
-    Ok(doc.insert_above(above.as_deref(), layer))
+    Ok(pixelox_core::stack::insert_at(doc, layer, &at))
 }
 
 /// Round to one decimal for results.

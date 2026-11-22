@@ -188,6 +188,46 @@ fn liquids_and_grain_style_are_layers_that_replay() {
     let v = ok(d, &["render", "droplets", "doc.pxo", "--in-place", "--layer", "Photo", "--size", "4"]);
     assert_eq!(v["result"]["clipped"], true);
     assert!(v["result"]["beads"].as_u64().unwrap() > 5, "{}", v["result"]);
+    // placement (ADR 0014): on top by default, --below puts it under a layer
+    let names = |list: &Value| -> Vec<String> {
+        list["result"]["layers"].as_array().unwrap().iter().map(|l| l["name"].as_str().unwrap().to_string()).collect()
+    };
+    let list = names(&ok(d, &["layer", "list", "doc.pxo"]));
+    let at = |n: &str| list.iter().position(|x| x == n).unwrap();
+    assert_eq!(at("Droplets") + 1, at("Photo"), "droplets sit directly above the product: {list:?}");
+    ok(d, &["render", "splash", "doc.pxo", "--in-place", "--part", "front", "--below", "Photo", "--name", "Under"]);
+    let list = names(&ok(d, &["layer", "list", "doc.pxo"]));
+    assert_eq!(list.iter().position(|x| x == "Under").unwrap(), list.iter().position(|x| x == "Photo").unwrap() + 1);
+    let (code, v) = run_in(d, &["render", "splash", "doc.pxo", "--in-place", "--layer", "Photo", "--above", "Photo"]);
+    assert_eq!((code, v["error"]["code"].as_str().unwrap()), (2, "PX1005"));
+    // filters and warp presets on live text stay live (smart filters)
+    ok(
+        d,
+        &[
+            "text",
+            "add",
+            "doc.pxo",
+            "--in-place",
+            "--content",
+            "Hi",
+            "--font",
+            "sans-serif",
+            "--size",
+            "30px",
+            "--at",
+            "80,60",
+            "--anchor",
+            "c",
+            "--name",
+            "Word",
+        ],
+    );
+    let v = ok(d, &["filter", "glitch", "doc.pxo", "--in-place", "--layer", "Word", "--split", "3"]);
+    assert_eq!(v["result"]["smart_filter"], "filter.glitch");
+    let v = ok(d, &["transform", "warp", "doc.pxo", "--in-place", "--layer", "Word", "--preset", "arc"]);
+    assert_eq!(v["result"]["smart_filter"], "transform.warp");
+    let list = ok(d, &["layer", "list", "doc.pxo"]);
+    assert_eq!(layer(&list, "Word")["kind"], "text");
     // a grain style on a live shape layer keeps it live
     ok(d, &["shape", "rect", "doc.pxo", "--in-place", "--rect", "10,10,40x30", "--fill", "#ffffff", "--name", "Card"]);
     ok(d, &["fx", "grain", "doc.pxo", "--in-place", "--layer", "Card", "--amount", "60"]);

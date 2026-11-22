@@ -48,8 +48,9 @@ pub fn ops() -> Vec<OpSpec> {
         .param(param("tile", ParamKind::Flag).help("Repeat seamlessly across the canvas edges (for pattern tiles)"))
         .param(param("blend", ParamKind::Choice).choices(&BLEND_MODES[..BLEND_MODES.len() - 1]).default("normal").help("How the noise combines with the pixels (difference = Difference Clouds); with --as-layer, the new layer's mode"))
         .param(param("opacity", ParamKind::Float).default("100").range("0..100").help("Opacity of the noise in percent (with --as-layer, the layer's opacity)"))
-        .param(param("as-layer", ParamKind::Flag).help("Paint onto a new canvas-sized layer above --layer (or the active layer) instead"))
+        .param(param("as-layer", ParamKind::Flag).help("Paint onto a new canvas-sized layer instead: on top of the stack, directly above --layer, or where --above/--below/--into say"))
         .param(common::name())
+        .params(common::placement())
         .params(common::region())
         .example("pixelox fill noise doc.pxo --in-place --layer Sky --stops '#1b2a4a,#f2f4f8'", "Render Clouds into a layer")
         .example("pixelox fill noise doc.pxo --in-place --as-layer --name Smoke --kind smoke --stops 'transparent,#c9d2e0' --blend screen --opacity 70", "Rising smoke on its own screen layer")
@@ -331,12 +332,13 @@ pub(crate) fn settings(a: &Args, doc: &Document, kind: &str, ctx: &mut OpCtx) ->
     })
 }
 
-/// A new, empty, canvas-sized raster layer above `--layer` (or the active layer, or on
-/// top), named `--name` or `default`. Returns its path.
+/// A new, empty, canvas-sized raster layer named `--name` or `default`: directly above
+/// `--layer` when given, else where the placement flags say (on top by default).
+/// Returns its path.
 pub(crate) fn new_layer(a: &Args, doc: &mut Document, default: &str) -> Result<pixelox_core::doc::LayerPath> {
-    let above = match a.raw("layer") {
+    let source = match a.raw("layer") {
         Some(r) => Some(doc.resolve(r)?),
-        None => doc.active.clone().and_then(|id| doc.find_by_id(&id)),
+        None => None,
     };
     let name = match a.str("name").map(|n| n.trim().to_string()).filter(|n| !n.is_empty()) {
         Some(n) => {
@@ -346,7 +348,7 @@ pub(crate) fn new_layer(a: &Args, doc: &mut Document, default: &str) -> Result<p
         None => default.to_string(),
     };
     let layer = doc.new_layer(&name, LayerKind::Raster { image: Image::new(doc.width.max(1), doc.height.max(1)) });
-    Ok(doc.insert_above(above.as_deref(), layer))
+    pixelox_core::stack::insert_derived(a, doc, layer, source.as_deref())
 }
 
 fn fill_noise(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
@@ -363,6 +365,15 @@ fn fill_noise(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         return Err(Error::new("PX1005", "--name names the layer made by --as-layer")
             .with_hint("add --as-layer to paint onto a new layer, or drop --name"));
     }
+    if !as_layer && pixelox_core::stack::given(a) {
+        return Err(Error::new("PX1005", "--above, --below, and --into place the layer made by --as-layer")
+            .with_hint("add --as-layer to paint onto a new layer, or drop the placement flag"));
+    }
+    if as_layer && a.has("layer") && pixelox_core::stack::given(a) {
+        return Err(Error::new("PX1005", "--layer and --above/--below/--into both place the new layer; give only one")
+            .with_hint("use --above <layer> (the same as --layer with --as-layer) or --below/--into"));
+    }
+    pixelox_core::stack::from_args(a, doc)?;
     let seed = ctx.rng().next_u64();
     let (scale, tile) = (settings.scale, settings.tile);
     let tex = texture(settings, seed, (doc.width, doc.height), ctx);

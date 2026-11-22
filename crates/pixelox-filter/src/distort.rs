@@ -13,6 +13,7 @@ use pixelox_core::kernels::Edge;
 use pixelox_core::noise::Basis;
 use pixelox_core::op::ParamSpec;
 use pixelox_core::prelude::*;
+use pixelox_core::region::{apply_to_raster_grow, takes_smart_filters, Reach};
 use pixelox_core::units::Length;
 use rand_core::RngCore;
 use rayon::prelude::*;
@@ -67,8 +68,8 @@ pub fn ops() -> Vec<OpSpec> {
                  put, by up to --amount px (a grayscale map moves pixels diagonally; the noise map has independent \
                  channels: a turbulent wobble for heat haze or water). --mode slope moves pixels along the map's \
                  brightness slopes, as if seen through glass or printed on fabric (the steepest slopes move by \
-                 --amount). On a placed layer the noise map is recorded as a smart filter; a map file or layer is read \
-                 only once, so rasterize the placed layer first to use one.",
+                 --amount). On a placed, text, or shape layer the noise map is recorded as a smart filter; a map file \
+                 or layer is read only once, so rasterize such a layer first to use one.",
             )
             .param(param("map", ParamKind::Path).help("Displacement map image (grayscale or color)"))
             .param(param("map-layer", ParamKind::Layer).help("Use another layer of the document as the map"))
@@ -195,9 +196,13 @@ fn distort(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let shape = a.choice("shape");
     let center = util::canvas_point(a, "center", doc)?;
     let radius = a.length("radius")?.map(|l| l.to_px(short, dpi));
-    let (ox, oy) = util::layer_offset(a, doc)?;
+    // waves and ripples move content up to their amplitude past where it was
+    let reach = match kind.as_str() {
+        "wave" | "ripple" => Reach::uniform(amplitude.abs() + 1.0),
+        _ => Reach::NONE,
+    };
     let mut resolved = Map::new();
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (ox, oy), _| {
         if img.is_empty() {
             return Ok(img.clone());
         }
@@ -315,14 +320,17 @@ fn displace(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         return Err(Error::new("PX1005", "give --map or --map-layer, not both"));
     }
     let path = target_layer(a, doc)?;
-    let is_placed = matches!(doc.layer(&path).content, LayerKind::Placed { .. });
+    let is_placed = takes_smart_filters(&doc.layer(&path).content);
     if is_placed && a.has("map-layer") {
-        return Err(Error::new("PX3342", "a --map-layer cannot drive a smart filter on a placed layer")
-            .with_hint(format!(
-                "rasterize first (pixelox layer rasterize <doc> --layer '{}' --in-place), or use the noise map",
-                doc.layer(&path).name
-            ))
-            .with_context("layer", &doc.layer(&path).name));
+        return Err(Error::new(
+            "PX3342",
+            "a --map-layer cannot drive a smart filter on a placed, text, or shape layer",
+        )
+        .with_hint(format!(
+            "rasterize first (pixelox layer rasterize <doc> --layer '{}' --in-place), or use the noise map",
+            doc.layer(&path).name
+        ))
+        .with_context("layer", &doc.layer(&path).name));
     }
     // the map (unless the op is recorded as a smart filter, which needs no map now)
     let mut map_img: Option<Image> = None;
@@ -365,7 +373,7 @@ fn displace(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         };
         Ok(procedural::texture(s, kseed, (doc.width, doc.height), ctx))
     };
-    let (lx, ly) = {
+    let (lx0, ly0) = {
         let l = doc.layer(&path);
         (l.x as f64, l.y as f64)
     };
@@ -373,14 +381,17 @@ fn displace(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         Some(img) => {
             let li = doc.layer(&path);
             let b = match li.raster().ok().and_then(|r| r.alpha_bbox(0.0)) {
-                Some(r) => (lx + r.x as f64, ly + r.y as f64, r.w as f64, r.h as f64),
+                Some(r) => (lx0 + r.x as f64, ly0 + r.y as f64, r.w as f64, r.h as f64),
                 None => (0.0, 0.0, doc.width as f64, doc.height as f64),
             };
             MapSrc::Image { img, x: b.0, y: b.1, w: b.2, h: b.3, tile }
         }
         None => MapSrc::Noise(Box::new((noise_settings(seed, ctx)?, noise_settings(seed ^ 0x5A5A_A5A5, ctx)?))),
     };
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    // pixels move up to the amount (slopes: 1.5x) past where they were
+    let reach = Reach::uniform(amount.abs() * if slope { 1.5 } else { 1.0 } + 1.0);
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (gx, gy), _| {
+        let (lx, ly) = (gx as f64, gy as f64);
         let (w, h) = (img.width as usize, img.height as usize);
         if w == 0 || h == 0 {
             return Ok(img.clone());
@@ -478,7 +489,6 @@ fn glitch(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             g
         }
     };
-    let (_, oy) = util::layer_offset(a, doc)?;
     let mut rng = ctx.rng();
     let draws: Vec<[f64; 4]> = (0..slices)
         .map(|_| {
@@ -487,13 +497,20 @@ fn glitch(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         })
         .collect();
     let mut report = Vec::new();
-    let v = apply_to_raster(a, doc, ctx, |img, _| {
+    // the split and the slice shifts carry content sideways (sizes in % are of the layer)
+    let lw = {
+        let p = target_layer(a, doc)?;
+        doc.layer(&p).raster().map(|r| r.width as f64).unwrap_or(doc.width as f64)
+    };
+    let side = split_l.to_px(lw, dpi) * 3.0 + shift_l.to_px(lw, dpi) + 1.0;
+    let reach = Reach { left: side.ceil() as u32, right: side.ceil() as u32, top: 0, bottom: 0 };
+    let v = apply_to_raster_grow(a, doc, ctx, reach, |img, (_, oy), _| {
         let (w, h) = (img.width as usize, img.height as usize);
         if w == 0 || h == 0 {
             return Ok(img.clone());
         }
-        let split = split_l.to_px(w as f64, dpi);
-        let max_shift = shift_l.to_px(w as f64, dpi);
+        let split = split_l.to_px(lw, dpi);
+        let max_shift = shift_l.to_px(lw, dpi);
         // bands: (y0, y1, shift, extra split)
         let bands: Vec<(f64, f64, f64, f64)> = draws
             .iter()

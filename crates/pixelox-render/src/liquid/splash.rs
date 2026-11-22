@@ -11,7 +11,8 @@ use std::f64::consts::{PI, TAU};
 pub fn ops() -> Vec<OpSpec> {
     vec![OpSpec::doc("render splash", Category::Render, "Liquid splash (crown or sheet) on a new layer", splash)
         .about(
-            "Renders a liquid splash onto a new layer named 'Splash' above --layer (or the active layer, or on top). \
+            "Renders a liquid splash onto a new layer named 'Splash' on top of the stack (directly above --layer, or \
+             where --above/--below/--into say). \
              --kind crown: a pool at --at whose rim rises into a wall that breaks into spikes tipped with drops (a \
              drop landing, a product dropped in). --kind sheet: streams thrown from --at toward --angle (90 = up), \
              fanned over --spread degrees, falling back under gravity, merged into one sheet near the origin and \
@@ -33,13 +34,15 @@ pub fn ops() -> Vec<OpSpec> {
         .param(param("color", ParamKind::Color).help("Recolor the liquid (keeps its clarity): e.g. '#ff5a1f' for orange soda"))
         .param(param("highlight", ParamKind::Color).default("#ffffff").help("Color of the highlights and reflections"))
         .param(param("opacity", ParamKind::Float).default("100").range("0..100").help("Opacity of the splash in percent"))
-        .param(param("layer", ParamKind::Layer).help("Put the splash layer above this layer (default: above the active layer, or on top)"))
+        .param(param("layer", ParamKind::Layer).help("Put the splash layer directly above this layer (the same as --above; default: on top of the stack)"))
         .param(param("name", ParamKind::Str).help("Name for the new layer (default: Splash)"))
+        .params(common::placement())
         .example("pixelox render splash doc.pxo --in-place --at 50%,88% --size 80%", "A water crown around a product's base")
         .example("pixelox render splash doc.pxo --in-place --kind sheet --at 50%,75% --angle 70 --spread 140 --liquid juice", "Orange juice thrown up and to the right")
         .example("pixelox render splash doc.pxo --in-place --kind sheet --liquid milk --at 30%,80% --angle 60 --size 90% --name Milk", "A milk splash on its own layer")
         .example("pixelox render splash photo.jpg -o splash.jpg --liquid cola --seed 7", "A cola crown on a photo")
-        .example("pixelox render splash doc.pxo --in-place --part front --layer Can --at 50%,90% --size 70% --seed 4 --name SplashFront", "The near wall of a crown in front of a can")]
+        .example("pixelox render splash doc.pxo --in-place --part front --layer Can --at 50%,90% --size 70% --seed 4 --name SplashFront", "The near wall of a crown in front of a can")
+        .example("pixelox render splash doc.pxo --in-place --part back --below Can --at 50%,90% --size 70% --seed 4 --name SplashBack", "The far wall and the pool behind it")]
 }
 
 /// A crown splash centered at `c` with width `w` (y grows down).
@@ -189,8 +192,11 @@ fn splash(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let (w, h) = (doc.width as f64, doc.height as f64);
     let short = w.min(h).max(1.0);
     let at = a.point("at")?.map(|p| p.resolve(w, h, doc.dpi())).unwrap_or((w / 2.0, h * 0.7));
-    let size =
-        a.length("size")?.unwrap_or(Length { value: 60.0, unit: units::Unit::Pct, plus: None }).to_px(short, doc.dpi()).max(4.0);
+    let size = a
+        .length("size")?
+        .unwrap_or(Length { value: 60.0, unit: units::Unit::Pct, plus: None })
+        .to_px(short, doc.dpi())
+        .max(4.0);
     let kind = a.choice("kind");
     let angle = a.angle("angle")?;
     let spread = a.f64("spread")?;

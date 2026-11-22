@@ -41,11 +41,13 @@ in overlay mode for grain. 53 posters added grain and about 25 used clouds or sm
   map each output pixel to a source position and sample premultiplied. Their centers and
   boxes default to the layer's visible bounds, which on a placed layer's smart-filter canvas
   is the placed content, so they register as smart filters the standard way (ADR 0011). A
-  map file or map layer is not re-read at render time: on a placed layer only the noise map
-  is recorded (PX3342 for a map layer).
+  map file or map layer is not re-read at render time: on a placed, text, or shape layer only
+  the noise map is recorded (PX3342 for a map layer). Waves, ripples, displacement, and
+  glitch move content past where it was, so they grow a small layer by their reach first
+  (`apply_to_raster_grow`, ADR 0014); the other distortions stay inside the content.
 * **Warp presets reuse the mesh warp's inversion.** `transform warp --preset` samples the
   preset's forward map on an 8 px mesh and inverts cells bilinearly (the same code as the
-  points mode). On a placed layer the warp is recorded as a smart filter whose op is
+  points mode). On a placed, text, or shape layer the warp is recorded as a smart filter whose op is
   `transform.warp` with an advanced `--keep-bounds` flag, so the re-run keeps the canvas-sized
   image the smart-filter hook requires; it stays live instead of rasterizing.
 * **Liquid is a lit metaball field.** Splashes and beads are tapered capsules and spheres
@@ -57,6 +59,12 @@ in overlay mode for grain. 53 posters added grain and about 25 used clouds or sm
 * **Ice cubes are not native yet.** A convincing cube needs a refracting, internally
   cracked 3-D volume; the metaball shader does not produce one, and a half-convincing cube
   would be worse than the skill's stylized workaround. Left for a ray-marched renderer.
+
+* **Placement follows ADR 0014.** New layers (`fill noise --as-layer`, `filter grain
+  --as-layer`, `render splash`, `render droplets`) go on top of the stack, directly above
+  `--layer` when one is named (the layer they belong to), or where `--above`, `--below`, or
+  `--into` say. `render droplets --layer P` clips to P only in its default place, directly
+  above P.
 
 ## Consequences
 New commands: `fill noise`, `filter grain`, `filter distort`, `filter displace`, `filter

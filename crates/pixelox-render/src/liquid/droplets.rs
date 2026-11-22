@@ -18,8 +18,8 @@ pub fn ops() -> Vec<OpSpec> {
              drops running down with a trail; --mist adds a fine frosting of tiny beads. With --refract on (the \
              default) each bead shows the product behind it upside down and magnified, like real water; the \
              refraction is computed once, so re-run the command after changing the product. --color tints the \
-             water. Without --layer the whole canvas is covered (on top, not clipped). --seed draws another \
-             arrangement.",
+             water. Without --layer the whole canvas is covered (on top, not clipped); --above/--below/--into \
+             place the layer elsewhere (then it is not clipped). --seed draws another arrangement.",
         )
         .param(param("layer", ParamKind::Layer).help("The product layer to bead (default: the whole canvas)"))
         .param(
@@ -54,6 +54,7 @@ pub fn ops() -> Vec<OpSpec> {
         )
         .param(param("color", ParamKind::Color).default("#ffffff").help("Tint of the water (white = clear)"))
         .param(param("name", ParamKind::Str).help("Name for the new layer (default: Droplets)"))
+        .params(common::placement())
         .example("pixelox render droplets doc.pxo --in-place --layer Can", "Bead a can with condensation")
         .example(
             "pixelox render droplets doc.pxo --in-place --layer Bottle --density 70 --trickles 6 --mist 60",
@@ -76,6 +77,7 @@ struct Bead {
 fn droplets(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let (cw, ch) = (doc.width, doc.height);
     // the target: its rendered pixels (for the region and the refraction)
+    let placed_by_flag = pixelox_core::stack::from_args(a, doc)?.is_some();
     let (target, tname) = match a.raw("layer") {
         Some(r) => {
             let p = doc.resolve(r)?;
@@ -218,8 +220,20 @@ fn droplets(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         Some(f) => shade(&f, target.as_ref().filter(|_| refract), [tint.r, tint.g, tint.b]),
         None => Rendered { image: Image::new(1, 1), x: 0, y: 0 },
     };
-    let path = add_layer(a, doc, rendered, "Droplets")?;
-    if target.is_some() {
+    // directly above the product: clip to it (a placement flag puts it elsewhere)
+    let path = if target.is_some() && placed_by_flag {
+        let r = rendered;
+        let mut b = Args::new();
+        for k in ["above", "below", "into", "name"] {
+            if let Some(v) = a.raw(k) {
+                b.set(k, v);
+            }
+        }
+        add_layer(&b, doc, r, "Droplets")?
+    } else {
+        add_layer(a, doc, rendered, "Droplets")?
+    };
+    if target.is_some() && !placed_by_flag {
         doc.layer_mut(&path).clip = true;
     }
     let l = doc.layer(&path);

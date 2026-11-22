@@ -13,7 +13,8 @@ pub fn ops() -> Vec<OpSpec> {
              midtones and fading toward pure black and white (--tone 0 grains every tone evenly). --roughness mixes \
              in a finer, crisper layer; --color 0 is monochrome grain, 100 independent color grain. The grain is \
              anchored to the canvas and seeded (--seed). On a placed layer it is recorded as a smart filter. \
-             --as-layer instead adds a 'Grain' adjustment layer above --layer (or the active layer, or on top) that \
+             --as-layer instead adds a 'Grain' adjustment layer on top (directly above --layer, or where \
+             --above/--below/--into say) that \
              grains everything below it, live: the usual last step of a poster, keeping small text above it clean.",
         )
         .param(
@@ -52,6 +53,7 @@ pub fn ops() -> Vec<OpSpec> {
                 .help("Add a live grain adjustment layer that grains everything below it instead of changing pixels"),
         )
         .param(common::name())
+        .params(common::placement())
         .params(common::region())
         .example("pixelox filter grain photo.jpg -o grainy.jpg", "Default film grain")
         .example(
@@ -94,6 +96,10 @@ fn grain_op(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         return Err(Error::new("PX1005", "--name names the layer made by --as-layer")
             .with_hint("add --as-layer to make a grain adjustment layer, or drop --name"));
     }
+    if pixelox_core::stack::given(a) {
+        return Err(Error::new("PX1005", "--above, --below, and --into place the layer made by --as-layer")
+            .with_hint("add --as-layer to make a grain adjustment layer, or drop the placement flag"));
+    }
     let path = target_layer(a, doc)?;
     let origin = {
         let l = doc.layer(&path);
@@ -111,10 +117,18 @@ fn grain_op(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 }
 
 fn as_layer(a: &Args, doc: &mut Document, ctx: &mut OpCtx, g: Grain, report: Value) -> Result<Value> {
-    let above = match a.raw("layer") {
+    let source = match a.raw("layer") {
         Some(r) => Some(doc.resolve(r)?),
-        None => doc.active.clone().and_then(|id| doc.find_by_id(&id)),
+        None => None,
     };
+    if source.is_some() && pixelox_core::stack::given(a) {
+        return Err(Error::new(
+            "PX1005",
+            "--layer and --above/--below/--into both place the grain layer; give only one",
+        )
+        .with_hint("use --above <layer> (the same as --layer with --as-layer) or --below/--into"));
+    }
+    pixelox_core::stack::from_args(a, doc)?;
     let mask = ctx.mask_arg(a, doc)?;
     let name = match a.str("name").map(|n| n.trim().to_string()).filter(|n| !n.is_empty()) {
         Some(n) => {
@@ -129,11 +143,13 @@ fn as_layer(a: &Args, doc: &mut Document, ctx: &mut OpCtx, g: Grain, report: Val
         layer.mask = Some(LayerMask::new(m));
     }
     let (id, lname) = (layer.id.clone(), layer.name.clone());
-    doc.insert_above(above.as_deref(), layer);
+    let path = pixelox_core::stack::insert_derived(a, doc, layer, source.as_deref())?;
     let mut v =
         json!({"layer": lname, "layer_id": id, "as_layer": true, "adjustment": {"op": "grain", "params": params}});
-    if let Some(p) = &above {
-        v["above"] = json!(doc.layer(p).name);
+    if let Some(i) = path.last().filter(|&&i| i > 0) {
+        let mut below = path.clone();
+        *below.last_mut().unwrap() = i - 1;
+        v["above"] = json!(doc.layer(&below).name);
     }
     if let (Value::Object(m), Value::Object(r)) = (&mut v, report) {
         m.extend(r);
