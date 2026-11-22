@@ -3,9 +3,11 @@
 //! * `render js` / `render d3` / `render three`: scripts in a QuickJS sandbox with a frozen
 //!   `px` API (a Canvas2D context drawn in Rust over tiny-skia, a DOM-lite SVG document);
 //! * `render 3d`: a native CPU 3D-lite renderer (primitives, SVG-profile extrusions, OBJ
-//!   meshes; wireframe, hidden-line, and flat-shaded styles; SVG or raster output).
+//!   meshes; wireframe, hidden-line, and flat-shaded styles; SVG or raster output);
+//! * `render splash` / `render droplets`: native liquid generators that add a layer.
 
 mod js;
+mod liquid;
 mod three_d;
 
 use pixelox_core::ctx::format_of;
@@ -16,6 +18,7 @@ use std::path::Path;
 pub fn ops() -> Vec<OpSpec> {
     let mut v = js::ops();
     v.extend(three_d::ops());
+    v.extend(liquid::ops());
     v
 }
 
