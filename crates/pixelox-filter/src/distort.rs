@@ -186,7 +186,7 @@ fn distort(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let short = doc.width.min(doc.height).max(1) as f64;
     let dpi = doc.dpi();
     let len = |name: &str, pct: f64| -> Result<f64> {
-        Ok(a.length(name)?.unwrap_or(Length { value: pct, unit: units::Unit::Pct }).to_px(short, dpi))
+        Ok(a.length(name)?.unwrap_or(Length { value: pct, unit: units::Unit::Pct, plus: None }).to_px(short, dpi))
     };
     let amount = a.f64("amount")? / 100.0;
     let amplitude = len("amplitude", 2.0)?;
@@ -466,8 +466,8 @@ fn displace(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 fn glitch(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let short = doc.width.min(doc.height).max(1) as f64;
     let dpi = doc.dpi();
-    let split_l = a.length("split")?.unwrap_or(Length { value: 1.6, unit: units::Unit::Pct });
-    let shift_l = a.length("slice-shift")?.unwrap_or(Length { value: 6.0, unit: units::Unit::Pct });
+    let split_l = a.length("split")?.unwrap_or(Length { value: 1.6, unit: units::Unit::Pct, plus: None });
+    let shift_l = a.length("slice-shift")?.unwrap_or(Length { value: 6.0, unit: units::Unit::Pct, plus: None });
     let slices = a.usize("slices")?;
     let dark = (a.f64("scanlines")? / 100.0) as f32;
     let gap = match a.opt_f64("line-gap")? {

@@ -841,6 +841,11 @@ pub mod common {
     pub fn region() -> Vec<ParamSpec> {
         vec![layer(), mask(), invert_mask()]
     }
+    /// `--above`, `--below`, `--into`: where a layer-creating command puts the new layer
+    /// (default: on top of the stack; see `crate::stack`).
+    pub fn placement() -> Vec<ParamSpec> {
+        crate::stack::params()
+    }
 }
 
 #[cfg(test)]

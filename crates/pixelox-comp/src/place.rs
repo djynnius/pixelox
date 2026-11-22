@@ -8,6 +8,7 @@ use pixelox_core::ctx::is_pxo;
 use pixelox_core::envelope::sha256_file;
 use pixelox_core::exec;
 use pixelox_core::prelude::*;
+use pixelox_core::stack;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -17,13 +18,15 @@ pub fn ops() -> Vec<OpSpec> {
     vec![
         OpSpec::doc("comp place", Category::Comp, "Place an image file as a new placed layer", place)
             .about(
-                "Imports an image (any readable format, SVG included) as a placed layer above the active layer. \
+                "Imports an image (any readable format, SVG included) as a placed layer on top of the stack (or \
+                 where `--above`, `--below`, or `--into` say). \
                  The file is embedded in the document; `--link` also records it as linked so `comp \
                  update-links` re-reads it when it changes. By default the image keeps its natural size \
                  (scaled down to fit the canvas when larger) and is centered. `--size WxH` sets the size (`%` \
                  of the canvas; a blank side keeps the aspect: `220x`); `--fit` fits it to the canvas instead. \
                  `--at X,Y` puts the `--anchor` point of the image there (default anchor `tl`; negative values \
-                 count from the right/bottom); `--anchor` alone snaps to that canvas corner or edge.",
+                 count from the right/bottom, `0-80` is 80 px past the left/top edge); `--anchor` alone snaps to \
+                 that canvas corner or edge.",
             )
             .param(param("file", ParamKind::Path).required().help("Image file to place"))
             .param(param("as", ParamKind::Str).help("Name for the placed layer (default: the file name without extension)"))
@@ -33,13 +36,15 @@ pub fn ops() -> Vec<OpSpec> {
             .param(param("fit", ParamKind::Choice).choices(FITS).help("Fit the image to the canvas instead of --size: cover, contain, or fill"))
             .param(param("link", ParamKind::Flag).help("Keep a link to the file so `comp update-links` can refresh it"))
             .param(param("embed", ParamKind::Flag).help("Embed only, without a link (the default)"))
+            .params(common::placement())
             .positional("file")
             .example(
                 "pixelox comp place photo.jpg brand/logo.png -o marked.pxo --as Watermark --anchor br --at -48,-48 --size 220x",
                 "Watermark: a 220 px wide logo 48 px from the bottom-right corner",
             )
             .example("pixelox comp place doc.pxo hero.jpg --in-place --fit cover", "Fill the canvas with a photo")
-            .example("pixelox comp place doc.pxo logo.svg --in-place --as Logo --at 50%,120 --anchor t --link", "Place a linked logo centered near the top"),
+            .example("pixelox comp place doc.pxo logo.svg --in-place --as Logo --at 50%,120 --anchor t --link", "Place a linked logo centered near the top")
+            .example("pixelox comp place doc.pxo texture.png --in-place --as Grain --fit cover --below Title", "Place a texture under the title"),
         OpSpec::doc("comp relink", Category::Comp, "Point a placed layer at a different file", relink)
             .about(
                 "Replaces the source of a placed layer with another file (embedded; the link flag is kept). \
@@ -86,6 +91,7 @@ fn place(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     if size.is_some() && fit.is_some() {
         return Err(Error::new("PX1005", "pass either --size or --fit, not both"));
     }
+    let at_place = stack::from_args(a, doc)?.unwrap_or(stack::Placement::Top);
     let name = match a.str("as") {
         Some(n) => fresh_name(doc, &n, &[])?,
         None => {
@@ -155,7 +161,7 @@ fn place(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         },
     );
     let id = l.id.clone();
-    let p = insert_new(doc, l);
+    let p = stack::insert_at(doc, l, &at_place);
     Ok(json!({
         "layer": name,
         "id": id,

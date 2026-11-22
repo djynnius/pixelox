@@ -63,10 +63,12 @@ prints any command's reference page.
 
 ## Addressing
 
-`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|@mask:LAYER|mask.png`
+`--layer name|#N|@top|@bottom|@active` · `--mask name|@sel|@alpha:LAYER|@luma:LAYER|@mask:LAYER|mask.png`
 (`--invert-mask`) · geometry `X,Y,WxH`, `X,Y`, `WxH` in px, `%`, `pt`, `mm`, `in`
-(negative = from the right/bottom; `--anchor tl..br`) · colors `#rrggbb[aa]`, `rgb()`,
-`hsl()`, CSS names, `transparent`. Details: `pixelox docs addressing`.
+(negative = from the right/bottom, `0-80` = 80 px past the left/top edge; `--anchor
+tl..br`) · colors `#rrggbb[aa]`, `rgb()`, `hsl()`, CSS names, `transparent`. New layers go
+on top of the stack; `--above`, `--below`, `--into` place them elsewhere. Details:
+`pixelox docs addressing`; masks, clipping, and gradient fades: `pixelox docs masking`.
 
 ## Recipes
 

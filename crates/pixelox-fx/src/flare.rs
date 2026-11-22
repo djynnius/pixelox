@@ -33,7 +33,8 @@ pub(crate) fn ops() -> Vec<OpSpec> {
     )
     .about(
         "Renders a lens flare (like Filter > Render > Lens Flare) centered at --at onto a new raster layer named \
-             'Lens Flare' in screen mode, above --layer (default: above the active layer, or on top), so it stays \
+             'Lens Flare' in screen mode, on top of the stack (or above --layer, or where --above, --below, or \
+             --into say), so it stays \
              movable and editable. --lens picks the look: zoom (50-300 mm zoom: warm glow, fine rays, a halo ring, \
              and a chain of colored hexagonal and round ghosts), 35mm (35 mm prime: a small core, a sharp starburst, \
              small round ghosts), 105mm (105 mm prime: a large bright glow with a chromatic halo ring and a few big \
@@ -59,9 +60,10 @@ pub(crate) fn ops() -> Vec<OpSpec> {
     ))
     .param(
         param("layer", ParamKind::Layer)
-            .help("Put the flare layer above this layer (default: above the active layer, or on top)"),
+            .help("Put the flare layer directly above this layer (the same as --above; default: on top of the stack)"),
     )
     .param(param("name", ParamKind::Str).help("Name for the new layer (default: Lens Flare, made unique)"))
+    .params(common::placement())
     .example("pixelox render lens-flare photo.jpg -o flare.jpg --at 72%,22%", "Flare in the upper right of a photo")
     .example(
         "pixelox render lens-flare doc.pxo --in-place --at 1200,300 --lens 105mm --brightness 140",
@@ -465,9 +467,15 @@ fn lens_flare(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
             Some(v)
         }
     };
-    let above = match a.raw("layer") {
-        Some(r) => Some(doc.resolve(r)?),
-        None => doc.active.clone().and_then(|id| doc.find_by_id(&id)),
+    // --layer (the layer the flare lights) keeps meaning "directly above it"
+    let place = match (pixelox_core::stack::from_args(a, doc)?, a.raw("layer")) {
+        (Some(_), Some(_)) => {
+            return Err(Error::new("PX1005", "--layer and --above/--below/--into both place the flare; give only one")
+                .with_hint("use --above <layer> (the same as --layer) or --below/--into"));
+        }
+        (Some(at), None) => at,
+        (None, Some(r)) => pixelox_core::stack::Placement::Above(doc.resolve(r)?),
+        (None, None) => pixelox_core::stack::Placement::Top,
     };
     let name = match a.str("name") {
         Some(n) => {
@@ -490,7 +498,7 @@ fn lens_flare(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     layer.y = y;
     layer.blend = BlendMode::Screen;
     let (id, lname) = (layer.id.clone(), layer.name.clone());
-    let path = doc.insert_above(above.as_deref(), layer);
+    let path = pixelox_core::stack::insert_at(doc, layer, &place);
     let bounds = compose::layer_bounds(doc, doc.layer(&path))?.map(|b| b.to_json()).unwrap_or(Value::Null);
     let ghosts: Vec<Value> = p
         .ghosts
@@ -512,7 +520,11 @@ fn lens_flare(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     Ok(json!({
         "layer": lname,
         "id": id,
-        "above": above.map(|p| doc.layer(&p).name.clone()),
+        // the layer directly under the flare
+        "above": match path.last() {
+            Some(&i) if i > 0 => json!(doc.siblings(&path)[i - 1].name),
+            _ => Value::Null,
+        },
         "blend": "screen",
         "lens": lens_name,
         "at": [round1(at.0), round1(at.1)],

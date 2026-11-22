@@ -18,59 +18,126 @@ pub enum Unit {
 }
 
 /// A length or coordinate with a unit. Resolve with [`Length::resolve`].
+///
+/// A coordinate may also be a sum `A+B` or difference `A-B` of two lengths (`0-80`,
+/// `50%-120`, `100%+2in`). A sum always counts from the near (left/top) edge, so `0-80` is a
+/// true negative coordinate, 80 px past the left or top edge, while a single negative value
+/// (`-80`) keeps counting from the far edge.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Length {
     pub value: f64,
     pub unit: Unit,
+    /// The second term of `A+B` / `A-B` (signed), added to `value`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plus: Option<(f64, Unit)>,
 }
 
 fn geom_err(s: &str, what: &str) -> Error {
-    Error::new("PX1011", format!("'{s}' is not a valid {what}")).with_context("value", s)
+    Error::new("PX1011", format!("'{s}' is not a valid {what}"))
+        .with_hint("lengths are numbers with an optional unit (px, %, pt, mm, in); a negative value counts from the far edge, and 0-80 is a true -80 (past the left/top edge)")
+        .with_context("value", s)
+}
+
+/// Value and unit of one term (`-48`, `50%`, `2.5in`).
+fn parse_term(t: &str) -> Option<(f64, Unit)> {
+    let t = t.trim();
+    let (num, unit) = if let Some(n) = t.strip_suffix('%') {
+        (n, Unit::Pct)
+    } else if let Some(n) = t.strip_suffix("px") {
+        (n, Unit::Px)
+    } else if let Some(n) = t.strip_suffix("pt") {
+        (n, Unit::Pt)
+    } else if let Some(n) = t.strip_suffix("mm") {
+        (n, Unit::Mm)
+    } else if let Some(n) = t.strip_suffix("in") {
+        (n, Unit::In)
+    } else {
+        (t, Unit::Px)
+    };
+    let value: f64 = num.trim().parse().ok()?;
+    value.is_finite().then_some((value, unit))
+}
+
+fn unit_px(value: f64, unit: Unit, reference: f64, dpi: f64) -> f64 {
+    match unit {
+        Unit::Px => value,
+        Unit::Pct => value / 100.0 * reference,
+        Unit::Pt => value * dpi / 72.0,
+        Unit::Mm => value * dpi / 25.4,
+        Unit::In => value * dpi,
+    }
+}
+
+fn unit_suffix(unit: Unit) -> &'static str {
+    match unit {
+        Unit::Px => "",
+        Unit::Pct => "%",
+        Unit::Pt => "pt",
+        Unit::Mm => "mm",
+        Unit::In => "in",
+    }
+}
+
+impl std::fmt::Display for Length {
+    /// The text form that parses back to the same length (`-48`, `50%`, `0-80`).
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.value, unit_suffix(self.unit))?;
+        if let Some((v, u)) = self.plus {
+            write!(f, "{}{}{}", if v < 0.0 { "-" } else { "+" }, v.abs(), unit_suffix(u))?;
+        }
+        Ok(())
+    }
 }
 
 impl Length {
     pub fn px(v: f64) -> Length {
-        Length { value: v, unit: Unit::Px }
+        Length { value: v, unit: Unit::Px, plus: None }
+    }
+
+    /// Every term multiplied by `k` (scaling a geometry).
+    pub fn scaled(self, k: f64) -> Length {
+        Length { value: self.value * k, unit: self.unit, plus: self.plus.map(|(v, u)| (v * k, u)) }
+    }
+
+    /// True for a sum or difference of two terms (`0-80`), which counts from the near edge.
+    pub fn is_sum(&self) -> bool {
+        self.plus.is_some()
     }
 
     pub fn parse(s: &str) -> Result<Length> {
-        let t = s.trim();
-        let (num, unit) = if let Some(n) = t.strip_suffix('%') {
-            (n, Unit::Pct)
-        } else if let Some(n) = t.strip_suffix("px") {
-            (n, Unit::Px)
-        } else if let Some(n) = t.strip_suffix("pt") {
-            (n, Unit::Pt)
-        } else if let Some(n) = t.strip_suffix("mm") {
-            (n, Unit::Mm)
-        } else if let Some(n) = t.strip_suffix("in") {
-            (n, Unit::In)
-        } else {
-            (t, Unit::Px)
-        };
-        let value: f64 = num.trim().parse().map_err(|_| geom_err(s, "length"))?;
-        if !value.is_finite() {
-            return Err(geom_err(s, "length"));
+        if let Some((value, unit)) = parse_term(s) {
+            return Ok(Length { value, unit, plus: None });
         }
-        Ok(Length { value, unit })
+        // `A+B` / `A-B`: split at the first sign after the first character
+        let t = s.trim();
+        let split = t
+            .char_indices()
+            .skip(1)
+            .find(|&(i, c)| (c == '+' || c == '-') && !matches!(t[..i].chars().last(), Some('e' | 'E' | '+' | '-')));
+        if let Some((i, c)) = split {
+            if let (Some((value, unit)), Some((b, bu))) = (parse_term(&t[..i]), parse_term(&t[i + 1..])) {
+                let b = if c == '-' { -b } else { b };
+                return Ok(Length { value, unit, plus: Some((b, bu)) });
+            }
+        }
+        Err(geom_err(s, "length"))
     }
 
     /// Size in pixels: `%` of `reference`, physical units through `dpi`.
     pub fn to_px(self, reference: f64, dpi: f64) -> f64 {
-        match self.unit {
-            Unit::Px => self.value,
-            Unit::Pct => self.value / 100.0 * reference,
-            Unit::Pt => self.value * dpi / 72.0,
-            Unit::Mm => self.value * dpi / 25.4,
-            Unit::In => self.value * dpi,
+        let base = unit_px(self.value, self.unit, reference, dpi);
+        match self.plus {
+            Some((v, u)) => base + unit_px(v, u, reference, dpi),
+            None => base,
         }
     }
 
-    /// A position: like [`Length::to_px`], but negative non-percent values count from the
-    /// far edge (`-48` on a 1000 px axis is 952).
+    /// A position: like [`Length::to_px`], but a single negative value counts from the far
+    /// edge (`-48` on a 1000 px axis is 952). A sum (`0-48`) counts from the near edge, so
+    /// it can be negative (-48: past the left or top edge).
     pub fn resolve_pos(self, extent: f64, dpi: f64) -> f64 {
         let v = self.to_px(extent, dpi);
-        if self.value < 0.0 {
+        if self.value < 0.0 && self.plus.is_none() {
             extent + v
         } else {
             v
@@ -307,13 +374,25 @@ impl Anchor {
     }
 }
 
-/// `x1,y1 x2,y2 ...` (whitespace between points, a comma inside a point).
+/// A plain number, or a px sum/difference such as `0-80` (point lists take raw numbers).
+fn parse_plain(t: &str) -> Option<f64> {
+    if let Ok(v) = t.trim().parse::<f64>() {
+        return Some(v);
+    }
+    match Length::parse(t).ok()? {
+        Length { value, unit: Unit::Px, plus: Some((b, Unit::Px)) } => Some(value + b),
+        _ => None,
+    }
+}
+
+/// `x1,y1 x2,y2 ...` (whitespace between points, a comma inside a point). Coordinates are
+/// plain numbers (a negative one is just negative); `0-80` works here too.
 pub fn parse_points(s: &str) -> Result<Vec<(f64, f64)>> {
     let mut out = Vec::new();
     for tok in s.split_whitespace() {
         let (a, b) = tok.split_once(',').ok_or_else(|| geom_err(s, "point list ('x1,y1 x2,y2 ...')"))?;
-        let x: f64 = a.trim().parse().map_err(|_| geom_err(s, "point list"))?;
-        let y: f64 = b.trim().parse().map_err(|_| geom_err(s, "point list"))?;
+        let x = parse_plain(a).ok_or_else(|| geom_err(s, "point list"))?;
+        let y = parse_plain(b).ok_or_else(|| geom_err(s, "point list"))?;
         out.push((x, y));
     }
     if out.is_empty() {
@@ -396,6 +475,33 @@ mod tests {
         assert_eq!(Length::parse("72pt").unwrap().to_px(0.0, 144.0), 144.0);
         assert_eq!(Length::parse("-48").unwrap().resolve_pos(1000.0, 72.0), 952.0);
         assert!(Length::parse("abc").is_err());
+    }
+
+    #[test]
+    fn sums_count_from_the_near_edge() {
+        // a single negative value counts from the far edge; a sum from the near edge
+        assert_eq!(Length::parse("-80").unwrap().resolve_pos(1000.0, 72.0), 920.0);
+        assert_eq!(Length::parse("0-80").unwrap().resolve_pos(1000.0, 72.0), -80.0);
+        assert_eq!(Length::parse("50%-120").unwrap().resolve_pos(1000.0, 72.0), 380.0);
+        assert_eq!(Length::parse("100%+40").unwrap().resolve_pos(1000.0, 72.0), 1040.0);
+        assert_eq!(Length::parse("1in+36pt").unwrap().to_px(0.0, 144.0), 216.0);
+        assert_eq!(Length::parse("10%-10%").unwrap().resolve_pos(500.0, 72.0), 0.0);
+        let l = Length::parse("0-80").unwrap();
+        assert!(l.is_sum());
+        assert_eq!(l.to_string(), "0-80");
+        assert_eq!(Length::parse(&l.to_string()).unwrap(), l);
+        assert_eq!(Length::parse("50%+12").unwrap().scaled(2.0).to_string(), "100%+24");
+        assert_eq!(Length::parse("-48").unwrap().to_string(), "-48");
+        assert!(Length::parse("1-2-3").is_err());
+        assert!(Length::parse("--80").is_err());
+        assert!(Length::parse("0-").is_err());
+        assert!(Length::parse("1e-3").is_ok(), "exponents still parse as numbers");
+        let p = PointSpec::parse("0-80,0-40").unwrap().resolve(1000.0, 800.0, 72.0);
+        assert_eq!(p, (-80.0, -40.0));
+        let r = RectSpec::parse("0-100,-200,300x100").unwrap().resolve(1000.0, 800.0, 72.0);
+        assert_eq!((r.x, r.y, r.w, r.h), (-100.0, 600.0, 300.0, 100.0));
+        assert_eq!(SizeSpec::parse("100%-40x50%").unwrap().resolve(1000.0, 800.0, 72.0), (960, 400));
+        assert_eq!(parse_points("0-80,10 20,-5").unwrap(), vec![(-80.0, 10.0), (20.0, -5.0)]);
     }
 
     #[test]

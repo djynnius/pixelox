@@ -190,7 +190,7 @@ fn splash(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let short = w.min(h).max(1.0);
     let at = a.point("at")?.map(|p| p.resolve(w, h, doc.dpi())).unwrap_or((w / 2.0, h * 0.7));
     let size =
-        a.length("size")?.unwrap_or(Length { value: 60.0, unit: units::Unit::Pct }).to_px(short, doc.dpi()).max(4.0);
+        a.length("size")?.unwrap_or(Length { value: 60.0, unit: units::Unit::Pct, plus: None }).to_px(short, doc.dpi()).max(4.0);
     let kind = a.choice("kind");
     let angle = a.angle("angle")?;
     let spread = a.f64("spread")?;

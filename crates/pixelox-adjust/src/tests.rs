@@ -1149,6 +1149,20 @@ fn adjustment_layer_masks_position_and_hook() {
     assert!(close(px(&comp, 20, 3)[0], px(&g, 20, 3)[0], 1e-5));
     // Top sits above the adjustment and is not inverted
     assert_eq!(&px(&comp, 2, 2)[..3], &[1.0, 0.0, 0.0]);
+    // placement flags (ADR 0014): below a layer, into a group; never with --layer
+    run(&spec("adjust invert"), &[("as-layer", "true"), ("below", "Base"), ("name", "Under")], &mut d).unwrap();
+    assert_eq!(d.layers[0].name, "Under");
+    let mut g = d.new_layer("G", LayerKind::Group { children: vec![] });
+    g.children_mut().unwrap().push(d.new_layer("Inner", LayerKind::Raster { image: grad() }));
+    d.insert_above(None, g);
+    let v = run(&spec("adjust auto"), &[("as-layer", "true"), ("into", "G"), ("name", "InG")], &mut d).unwrap();
+    assert_eq!(v["layer"], "InG");
+    assert_eq!(d.layers.last().unwrap().children().unwrap().last().unwrap().name, "InG");
+    let e =
+        run(&spec("adjust invert"), &[("as-layer", "true"), ("layer", "Base"), ("above", "Top")], &mut d).unwrap_err();
+    assert_eq!(e.code, "PX1005");
+    let e = run(&spec("adjust invert"), &[("layer", "Base"), ("above", "Top")], &mut d).unwrap_err();
+    assert_eq!(e.code, "PX1005");
 
     // the hook directly, with string params as Args::to_json writes them
     let mut img = grad();

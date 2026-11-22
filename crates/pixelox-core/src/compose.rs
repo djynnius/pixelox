@@ -7,7 +7,7 @@
 //! content → fx → clipped layers → layer mask → opacity → blend mode onto the backdrop.
 
 use crate::blend::{composite_pixel, BlendMode};
-use crate::doc::{BlendIf, Document, FxSpec, Layer, LayerKind, SmartFilter};
+use crate::doc::{BlendIf, Document, FxSpec, Layer, LayerKind, MaskLink, SmartFilter};
 use crate::error::{Error, Result};
 use crate::image::{Image, Mask, Rendered};
 use crate::kernels;
@@ -143,11 +143,11 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
         }
         LayerKind::Text { .. } => {
             let f = hooks().text.ok_or_else(|| missing("text"))?;
-            f(layer, doc)?.map(|r| (Cow::Owned(r.image), r.x, r.y))
+            with_smart_filters(layer, f(layer, doc)?, doc)?.map(|r| (Cow::Owned(r.image), r.x, r.y))
         }
         LayerKind::Shape { .. } => {
             let f = hooks().shape.ok_or_else(|| missing("shape"))?;
-            f(layer, doc)?.map(|r| (Cow::Owned(r.image), r.x, r.y))
+            with_smart_filters(layer, f(layer, doc)?, doc)?.map(|r| (Cow::Owned(r.image), r.x, r.y))
         }
         LayerKind::Placed { source, rect, angle, .. } => match source {
             None => None,
@@ -178,7 +178,17 @@ pub fn content<'a>(doc: &Document, layer: &'a Layer) -> Result<Option<(Cow<'a, I
     }
 }
 
-/// Run a placed layer's smart filters on its rendered content. The content is first
+/// A live layer's rendered content with its enabled smart filters applied.
+fn with_smart_filters(layer: &Layer, r: Option<Rendered>, doc: &Document) -> Result<Option<Rendered>> {
+    match r {
+        Some(r) if layer.smart_filters.iter().any(|f| f.enabled) => {
+            Ok(Some(apply_smart_filters(&layer.smart_filters, r, doc)?))
+        }
+        r => Ok(r),
+    }
+}
+
+/// Run a live layer's smart filters on its rendered content. The content is first
 /// spread onto the canvas so blurs and other neighborhood filters can grow past the
 /// placed rectangle (clipped to the canvas, as in Photoshop).
 fn apply_smart_filters(filters: &[SmartFilter], r: Rendered, doc: &Document) -> Result<Rendered> {
@@ -337,10 +347,54 @@ pub fn composite_layers(doc: &Document, layers: &[Layer], backdrop: &mut Image) 
     Ok(())
 }
 
-/// Per-pixel coverage multiplier from a layer's mask (None = all 1).
-fn mask_factor(layer: &Layer) -> Option<Mask> {
+thread_local! {
+    /// How deep linked masks are being rendered (a link through a group could loop).
+    static LINK_DEPTH: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+/// The canvas-sized mask a live layer mask reads from its source layer right now: the
+/// source's content (without its layer styles) as alpha or luminosity × alpha, inverted on
+/// request. `None` when the source layer is gone.
+pub fn linked_mask(doc: &Document, link: &MaskLink) -> Result<Option<Mask>> {
+    let Some(p) = doc.find_by_id(&link.layer) else { return Ok(None) };
+    if LINK_DEPTH.with(|d| d.get()) >= 4 {
+        return Ok(None);
+    }
+    let mut src = doc.layer(&p).clone();
+    src.fx.clear();
+    LINK_DEPTH.with(|d| d.set(d.get() + 1));
+    let r = render_layer(doc, &src);
+    LINK_DEPTH.with(|d| d.set(d.get() - 1));
+    let (w, h) = (doc.width, doc.height);
+    let mut m = match r? {
+        None => Mask::new(w, h),
+        Some(r) => {
+            let img = r.to_canvas(w, h);
+            if link.channel == "luma" {
+                let data = img
+                    .data
+                    .par_chunks(4)
+                    .map(|p| crate::color::luma(p[0], p[1], p[2]).clamp(0.0, 1.0) * p[3])
+                    .collect();
+                Mask { width: w, height: h, data }
+            } else {
+                img.alpha_mask()
+            }
+        }
+    };
+    if link.invert {
+        m.invert();
+    }
+    Ok(Some(m))
+}
+
+/// Per-pixel coverage multiplier from a layer's mask (None = all 1). A linked mask is
+/// read from its source layer as it renders now.
+fn mask_factor(doc: &Document, layer: &Layer) -> Option<Mask> {
     let lm = layer.mask.as_ref().filter(|m| m.enabled)?;
-    let mut m = if lm.feather > 0.0 { kernels::blur_mask(&lm.mask, lm.feather as f64 / 2.0) } else { lm.mask.clone() };
+    let live = lm.link.as_ref().and_then(|k| linked_mask(doc, k).ok().flatten());
+    let base = live.as_ref().unwrap_or(&lm.mask);
+    let mut m = if lm.feather > 0.0 { kernels::blur_mask(base, lm.feather as f64 / 2.0) } else { base.clone() };
     let d = lm.density / 100.0;
     m.data.par_iter_mut().for_each(|v| *v = 1.0 - d * (1.0 - *v));
     Some(m)
@@ -411,12 +465,12 @@ fn mix_into(dst: &mut Image, adjusted: &Image, t: f32, mask: Option<&Mask>) {
     });
 }
 
-fn apply_adjustment_layer(layer: &Layer, target: &mut Image) -> Result<()> {
+fn apply_adjustment_layer(doc: &Document, layer: &Layer, target: &mut Image) -> Result<()> {
     if let LayerKind::Adjustment { op, params } = &layer.content {
         let mut adjusted = target.clone();
         apply_adjustment(op, params, &mut adjusted)?;
         let bi = blend_if_mask(layer.blend_if.as_ref(), &adjusted, target);
-        let m = combine_masks(mask_factor(layer), bi);
+        let m = combine_masks(mask_factor(doc, layer), bi);
         mix_into(target, &adjusted, layer.opacity / 100.0, m.as_ref());
     }
     Ok(())
@@ -426,7 +480,7 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
     let (w, h) = (doc.width, doc.height);
     match &base.content {
         LayerKind::Adjustment { .. } => {
-            apply_adjustment_layer(base, backdrop)?;
+            apply_adjustment_layer(doc, base, backdrop)?;
             // layers clipped to an adjustment layer have nothing to clip to: draw normally
             for c in clipped.iter().filter(|c| c.visible) {
                 let mut c = c.clone();
@@ -441,7 +495,7 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
                 && base.fx.is_empty()
                 && base.blend_if.is_none() =>
         {
-            let m = mask_factor(base);
+            let m = mask_factor(doc, base);
             if base.opacity >= 100.0 && m.is_none() {
                 return composite_layers(doc, children, backdrop);
             }
@@ -473,7 +527,7 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
     for c in clipped.iter().filter(|c| c.visible) {
         if matches!(c.content, LayerKind::Adjustment { .. }) {
             let alpha: Vec<f32> = layer_img.data.chunks(4).map(|p| p[3]).collect();
-            apply_adjustment_layer(c, &mut layer_img)?;
+            apply_adjustment_layer(doc, c, &mut layer_img)?;
             for (p, a) in layer_img.data.chunks_mut(4).zip(alpha) {
                 p[3] = a;
             }
@@ -481,7 +535,7 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
         }
         let Some((cimg, cx, cy)) = content(doc, c)? else { continue };
         let csrc = Rendered { image: cimg.into_owned(), x: cx, y: cy }.to_canvas(w, h);
-        let cm = mask_factor(c);
+        let cm = mask_factor(doc, c);
         let alpha: Vec<f32> = layer_img.data.chunks(4).map(|p| p[3]).collect();
         blend_onto(&mut layer_img, &csrc, c.blend, c.opacity / 100.0, cm.as_ref(), layer_seed(c));
         // clipping keeps the base's coverage
@@ -490,7 +544,7 @@ fn draw_layer(doc: &Document, base: &Layer, clipped: &[Layer], backdrop: &mut Im
         }
     }
     let bi = blend_if_mask(base.blend_if.as_ref(), &layer_img, backdrop);
-    let m = combine_masks(mask_factor(base), bi);
+    let m = combine_masks(mask_factor(doc, base), bi);
     let mode = if base.blend == BlendMode::PassThrough { BlendMode::Normal } else { base.blend };
     blend_onto(backdrop, &layer_img, mode, base.opacity / 100.0, m.as_ref(), layer_seed(base));
     Ok(())

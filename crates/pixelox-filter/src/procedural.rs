@@ -276,7 +276,7 @@ pub(crate) fn settings(a: &Args, doc: &Document, kind: &str, ctx: &mut OpCtx) ->
         None => {
             let pct = if kind == "smoke" { 70.0 } else { 40.0 };
             ctx.resolve_param("scale", format!("{pct}%"));
-            Length { value: pct, unit: units::Unit::Pct }.to_px(short, doc.dpi())
+            Length { value: pct, unit: units::Unit::Pct, plus: None }.to_px(short, doc.dpi())
         }
     };
     if scale.is_nan() || scale <= 0.0 {

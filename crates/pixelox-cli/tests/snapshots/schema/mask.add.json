@@ -38,7 +38,7 @@
         "examples": [
           "@sel"
         ],
-        "description": "Mask reference: @sel, a library name, @alpha:<layer>, or @mask:<layer> Type: mask.",
+        "description": "Mask reference: @sel, a library name, @alpha:<layer>, @luma:<layer>, or @mask:<layer>; with --gradient, the start point X,Y (fully revealed) Type: mask.",
         "x-pixelox-kind": "mask"
       },
       "from_file": {
@@ -86,6 +86,63 @@
         "type": "string",
         "description": "SVG path data in canvas pixels: a vector mask Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "gradient": {
+        "type": "string",
+        "enum": [
+          "linear",
+          "radial"
+        ],
+        "description": "A gradient mask: linear (revealed at --from, hidden at --to, a ramp between) or radial (revealed at the center --from, hidden at the radius |--to - --from|) Type: choice.",
+        "x-pixelox-kind": "choice"
+      },
+      "to": {
+        "type": "string",
+        "examples": [
+          "50%,120"
+        ],
+        "description": "With --gradient: the end point X,Y, where the layer is fully hidden Type: X,Y.",
+        "x-pixelox-kind": "point"
+      },
+      "ease": {
+        "type": "string",
+        "enum": [
+          "linear",
+          "smooth"
+        ],
+        "description": "With --gradient: the ramp's shape, linear or smooth (smoothstep: no visible start and end) Type: choice.",
+        "default": "linear",
+        "x-pixelox-kind": "choice"
+      },
+      "from_layer": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "A live mask from another layer: it follows that layer's outline (or brightness, --channel luma) whenever the layer changes Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "channel": {
+        "type": "string",
+        "enum": [
+          "alpha",
+          "luma"
+        ],
+        "description": "With --from-layer: alpha (the layer's outline) or luma (its brightness where it is opaque) Type: choice.",
+        "default": "alpha",
+        "x-pixelox-kind": "choice"
+      },
+      "combine": {
+        "type": "string",
+        "enum": [
+          "replace",
+          "intersect",
+          "add",
+          "subtract"
+        ],
+        "description": "Merge with the layer's existing mask: replace, intersect (both), add (either), or subtract (the existing minus the new) Type: choice.",
+        "default": "replace",
+        "x-pixelox-kind": "choice"
       }
     },
     "required": [
@@ -276,6 +333,7 @@
     "PX1003",
     "PX1004",
     "PX1010",
+    "PX1011",
     "PX1101",
     "PX1103",
     "PX1105",

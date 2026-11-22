@@ -657,7 +657,7 @@ fn sharpen(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
 
 fn blur(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let sigma = a.f64("sigma")?;
-    apply_to_raster(a, doc, ctx, |img, _| {
+    apply_to_raster_grow(a, doc, ctx, crate::blur::gaussian_reach(sigma), |img, _, _| {
         if sigma <= 0.0 {
             return Ok(img.clone());
         }

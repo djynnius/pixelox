@@ -74,13 +74,37 @@
         "examples": [
           "@top"
         ],
-        "description": "Put the flare layer above this layer (default: above the active layer, or on top) Type: layer.",
+        "description": "Put the flare layer directly above this layer (the same as --above; default: on top of the stack) Type: layer.",
         "x-pixelox-kind": "layer"
       },
       "name": {
         "type": "string",
         "description": "Name for the new layer (default: Lens Flare, made unique) Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly above this layer (default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
       }
     },
     "required": [
