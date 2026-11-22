@@ -314,15 +314,24 @@ pub fn mesh_field(r: (f64, f64, f64, f64), cols: usize, rows: usize, dst: &[(f64
         let col_y: Vec<f64> = (0..rows).map(|j| catmull(&dys[j * cols..(j + 1) * cols], tu)).collect();
         (catmull(&col_x, tv), catmull(&col_y, tv))
     };
+    map_field(r, |u, v| {
+        let (ddx, ddy) = disp(u, v);
+        (x + u * w + ddx, y + v * h + ddy)
+    })
+}
+
+/// The field of any smooth forward map of the rectangle `r`: `f(u, v)` (0..1 across the
+/// rectangle) gives where that point goes in canvas pixels. The map is sampled on an
+/// 8 px mesh whose cells are inverted bilinearly.
+pub fn map_field(r: (f64, f64, f64, f64), f: impl Fn(f64, f64) -> (f64, f64) + Sync) -> Result<CoordField> {
+    let (x, y, w, h) = r;
     let nx = ((w / 8.0).ceil() as usize).clamp(1, 512);
     let ny = ((h / 8.0).ceil() as usize).clamp(1, 512);
     let mut pos = vec![(0f64, 0f64); (nx + 1) * (ny + 1)];
     pos.par_chunks_mut(nx + 1).enumerate().for_each(|(l, row)| {
         let v = l as f64 / ny as f64;
         for (k, o) in row.iter_mut().enumerate() {
-            let u = k as f64 / nx as f64;
-            let (ddx, ddy) = disp(u, v);
-            *o = (x + u * w + ddx, y + v * h + ddy);
+            *o = f(k as f64 / nx as f64, v);
         }
     });
     let (bx, by, bw, bh) = field_box(&pos)?;
