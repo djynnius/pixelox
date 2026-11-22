@@ -60,6 +60,11 @@ prints any command's reference page.
     (`references/techniques.md`, 74 tested recipes such as `T-smoke`, `T-fit-width`,
     `T-text-behind-subject`), build, export a preview, look, fix. Check installed fonts
     first (`pixelox fonts list --json`): a missing font is an error.
+12. Icons and codes are vector shapes: `shape icon calendar --size 48` (Lucide; find names with
+    `shape icons --search WORD`), `shape qr --data URL --background-color white` (decoded back
+    before it is added), `shape barcode --type ean13 --data 12DIGITS`. Depth is live:
+    `fx long-shadow`, `fx extrude`, `fx reflection`
+    (`docs/guides/cookbook/icons-codes-and-3d-type.md`).
 
 ## Addressing
 
