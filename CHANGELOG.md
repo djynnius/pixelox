@@ -17,6 +17,25 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   palettes, and 15 `render js` generators (clouds, blobs, grunge, rays, particles, brush,
   splatter, splash, torn, crack, waves, ribbons, pattern, tiles, stand-ins). No images are
   included. Every documented command is parsed by the contract test.
+- Placement flags on every command that creates a layer (ADR 0014): `--above <layer>`,
+  `--below <layer>`, and `--into <group>` on `layer add`, `layer dup`, `layer stamp`,
+  `comp place`, `text add`, every `shape` creator, `render lens-flare`, `render 3d
+  --as-layer`, and `adjust ... --as-layer` (PX2330 when `--into` is not a group).
+- Filters and adjustments on live text and shape layers: `filter *` and `adjust *` on a
+  text or shape layer are recorded as smart filters, as on placed layers, so
+  `filter gaussian --layer Title` keeps the title editable (`text edit`) and its blur whole.
+  `layer smart-filter`, `layer rasterize`, and `text to-path` handle them.
+- True negative coordinates: a coordinate may be a sum or difference of two lengths,
+  `0-80` (80 px past the left or top edge), `50%-120`, `100%+2in`. A single negative value
+  still counts from the far edge. Works in every point, rectangle, size, and point list;
+  `pixelox docs addressing` documents it.
+- Masking: `mask add --gradient linear|radial --from X,Y --to X,Y [--ease smooth]` fades a
+  layer out in one command; `mask add --from-layer L [--channel luma]` makes a live mask that
+  follows another layer's outline or brightness (text stays editable; `mask invert` keeps it
+  live); `mask add --combine intersect|add|subtract` merges a new mask with the existing
+  one; the `@luma:<layer>` mask reference (a layer's brightness) works wherever a mask is
+  taken (PX2331 when a layer would mask itself). New topic: `pixelox docs masking` explains
+  every masking feature with examples.
 - Font classes (ADR 0015): `--font @condensed-heavy`, `@didone`, `@script-formal`, `@brush`,
   `@slab`, `@stencil`, `@blackletter`, `@geometric-sans`, `@mono`, and 19 more resolve to the
   best installed face (macOS, Windows, and Linux families first, then Google Fonts), with the
@@ -41,6 +60,17 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
 - `pixelox docs fonts` and `pixelox docs text-warp` topic pages.
 
 ### Changed
+- New layers go on top of the stack (ADR 0014). They used to land above the *active* layer,
+  and `layer reorder` and `layer dup` change which layer is active, so a layer created after
+  a reorder could land mid-stack and hide under others. `layer dup` still puts the copy
+  directly above the original, and `adjust --as-layer --layer X` and `render lens-flare
+  --layer X` directly above X. The active layer (`@active`) no longer decides placement.
+- Spatial filters grow a layer that is smaller than the canvas before filtering and trim the
+  growth to what is visible afterwards: `filter gaussian`, `box`, `motion-blur`,
+  `radial-blur`, `lens-blur`, `pixelate`, and `retouch blur`. A blurred rasterized shape or
+  text is no longer cut off in a rectangle at the layer's edge; the result's `grown` field
+  reports the growth. Layers that cover the canvas render exactly as before. An opaque
+  layer smaller than the canvas now softens into transparency at its edges when blurred.
 - A font family that is not installed no longer fails (PX4102, exit 2): the closest installed
   face of its class is used, with warning PXW4010 naming the substitute and the
   `pixelox fonts get` command. `--strict-font` or `PIXELOX_STRICT_FONTS=1` keeps the error
@@ -58,6 +88,18 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   them (PXW4011; `replay --strict` fails with PX4112, exit 9).
 
 ### Fixed
+- Fills (`fill solid|gradient|pattern`) on a text, shape, or placed layer now fail with a
+  PX2303 hint naming the live alternative (`text style --color`, `shape set --fill`,
+  `fx overlay`) instead of only suggesting rasterizing.
+- Transforms that rasterize a layer with smart filters bake the filters and drop them from
+  the layer (they were left behind on the raster); `svg from-doc` no longer exports a
+  placed layer's source without its smart filters.
+- The contract test tokenizes quoted strings: commands with `|`, `#`, or `...` inside a quoted
+  value (`--content "A | B"`) are now checked instead of skipped.
+- `filter motion-blur --angle` was verified to follow the same counter-clockwise convention
+  as `fx overlay`, `fx bevel`, and `filter emboss` (45 rises to the right); its help and
+  `pixelox docs addressing` now say so, and that `render js` scripts measure angles the
+  other way. No behavior changed.
 - `text on-path` let letters run past the end of an open path, or overlap the start of a closed
   one, silently; it now warns (PXW4012) with the count and the size that would fit.
 

@@ -8,6 +8,7 @@ use crate::raster::{fill_mask, parse_path};
 use crate::util::{self, at_most_one, decode_mask_file, fit_mask, mask_json, r3, resolve_mask_ref};
 use pixelox_core::doc::LayerPath;
 use pixelox_core::exec;
+use pixelox_core::image::SelectMode;
 use pixelox_core::op::ParamSpec;
 use pixelox_core::prelude::*;
 use rayon::prelude::*;
@@ -58,16 +59,27 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox mask rm doc.pxo --mask @sel --in-place", "Clear the selection")
             .example("pixelox mask rm doc.pxo --mask tmp -o clean.pxo", "Write a copy without the mask"),
         OpSpec::doc("mask add", CAT, "Attach a layer mask", add)
-            .about("Attach a non-destructive layer mask (Photoshop semantics: white reveals, black hides) from the selection or a mask reference (--from), an image (--from-file), all revealed or hidden, or SVG path data (--from-path: a vector mask, rasterized anti-aliased into the layer mask with the path kept on the layer). With no source flag: the active selection if there is one, else reveal-all. Replaces an existing layer mask.")
+            .about("Attach a non-destructive layer mask (Photoshop semantics: white reveals, black hides) from the selection or a mask reference (--from: @sel, a library name, @alpha:<layer>, @luma:<layer>, @mask:<layer>), an image (--from-file), all revealed or hidden, SVG path data (--from-path: a vector mask, rasterized anti-aliased into the layer mask with the path kept on the layer), a gradient (--gradient linear|radial: revealed at --from, hidden at --to), or another layer, live (--from-layer: the mask follows that layer's outline, or its brightness with --channel luma, whenever it changes; text stays editable). With no source flag: the active selection if there is one, else reveal-all. --combine intersect|add|subtract merges the new mask with the layer's existing mask instead of replacing it (a gradient fade on top of a cutout). `pixelox docs masking` explains every masking feature.")
             .param(param("layer", ParamKind::Layer).help("Layer to mask (default: the only layer)"))
-            .param(param("from", ParamKind::Mask).help("Mask reference: @sel, a library name, @alpha:<layer>, or @mask:<layer>"))
+            .param(param("from", ParamKind::Mask).help("Mask reference: @sel, a library name, @alpha:<layer>, @luma:<layer>, or @mask:<layer>; with --gradient, the start point X,Y (fully revealed)"))
             .param(param("from-file", ParamKind::Path).help("Grayscale image the size of the canvas"))
             .param(param("reveal-all", ParamKind::Flag).help("A white mask (everything visible)"))
             .param(param("hide-all", ParamKind::Flag).help("A black mask (everything hidden)"))
             .param(param("from-path", ParamKind::Str).help("SVG path data in canvas pixels: a vector mask"))
+            .param(param("gradient", ParamKind::Choice).choices(&["linear", "radial"]).help("A gradient mask: linear (revealed at --from, hidden at --to, a ramp between) or radial (revealed at the center --from, hidden at the radius |--to - --from|)"))
+            .param(param("to", ParamKind::Point).help("With --gradient: the end point X,Y, where the layer is fully hidden"))
+            .param(param("ease", ParamKind::Choice).choices(&["linear", "smooth"]).default("linear").help("With --gradient: the ramp's shape, linear or smooth (smoothstep: no visible start and end)"))
+            .param(param("from-layer", ParamKind::Layer).help("A live mask from another layer: it follows that layer's outline (or brightness, --channel luma) whenever the layer changes"))
+            .param(param("channel", ParamKind::Choice).choices(&["alpha", "luma"]).default("alpha").help("With --from-layer: alpha (the layer's outline) or luma (its brightness where it is opaque)"))
+            .param(param("combine", ParamKind::Choice).choices(&["replace", "intersect", "add", "subtract"]).default("replace").help("Merge with the layer's existing mask: replace, intersect (both), add (either), or subtract (the existing minus the new)"))
             .example("pixelox mask add doc.pxo --layer Photo --from @sel --in-place", "Mask a layer by the selection")
             .example("pixelox mask add doc.pxo --layer Photo --from-file matte.png --in-place", "Mask a layer by an image")
-            .example("pixelox mask add doc.pxo --layer Badge --from-path 'M 0 0 H 300 V 300 Z' --in-place", "Vector mask"),
+            .example("pixelox mask add doc.pxo --layer Badge --from-path 'M 0 0 H 300 V 300 Z' --in-place", "Vector mask")
+            .example("pixelox mask add doc.pxo --layer Photo --gradient linear --from 0,60% --to 0,100% --in-place", "Fade a photo out toward the bottom")
+            .example("pixelox mask add doc.pxo --layer Photo --gradient radial --from 50%,45% --to 50%,95% --ease smooth --in-place", "A soft oval vignette mask")
+            .example("pixelox mask add doc.pxo --layer Subject --gradient linear --from 0,70% --to 0,95% --combine intersect --in-place", "Fade the bottom of a cutout, keeping its outline")
+            .example("pixelox mask add doc.pxo --layer Photo --from-layer Title --in-place", "Photo inside live text (then hide Title)")
+            .example("pixelox mask add doc.pxo --layer Photo --from @luma:Clouds --in-place", "Reveal a photo where a texture is bright"),
         OpSpec::doc("mask remove", CAT, "Delete a layer mask, or bake it into alpha", remove)
             .about("Remove a layer's mask (and vector mask). With --apply, first multiply the mask (with its density and live feather) into the raster layer's alpha (PX2303 for non-raster layers).")
             .param(param("layer", ParamKind::Layer).help("Layer whose mask to remove (default: the only layer)"))
@@ -221,6 +233,8 @@ fn set(doc: &mut Document, t: &Target, m: Mask) {
             let l = doc.layer_mut(p);
             if let Some(lm) = &mut l.mask {
                 lm.mask = m;
+                // edited pixels no longer follow the source layer: the mask becomes fixed
+                lm.link = None;
             }
             // the edited pixels no longer match a vector mask's path
             l.vector_mask = None;
@@ -261,6 +275,13 @@ fn list(_: &Args, doc: &mut Document, _: &mut OpCtx) -> Result<Value> {
             j["density"] = json!(lm.density);
             j["feather"] = json!(lm.feather);
             j["vector"] = json!(l.vector_mask.is_some());
+            if let Some(k) = &lm.link {
+                j["link"] = json!({
+                    "layer": doc.find_by_id(&k.layer).map(|p| json!(doc.layer(&p).name)).unwrap_or(Value::Null),
+                    "channel": k.channel,
+                    "invert": k.invert,
+                });
+            }
             Some(j)
         })
         .collect();
@@ -316,9 +337,42 @@ fn rm(a: &Args, doc: &mut Document, _: &mut OpCtx) -> Result<Value> {
 
 fn add(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let p = target_layer(a, doc)?;
-    at_most_one(a, &["from", "from-file", "from-path"], &["reveal-all", "hide-all"])?;
+    let gradient = a.str("gradient");
+    if gradient.is_some() {
+        at_most_one(a, &["gradient", "from-file", "from-path", "from-layer"], &["reveal-all", "hide-all"])?;
+    } else {
+        at_most_one(a, &["from", "from-file", "from-path", "from-layer"], &["reveal-all", "hide-all"])?;
+        if a.has("to") {
+            return Err(Error::new("PX1005", "--to is the end point of --gradient")
+                .with_hint("add --gradient linear (or radial) with --from X,Y --to X,Y"));
+        }
+    }
+    let combine = SelectMode::parse(&a.choice("combine"))?;
     let (w, h) = (doc.width, doc.height);
-    let (mask, source, vector) = if let Some(r) = a.str("from") {
+    let mut link = None;
+    let (mask, source, vector) = if let Some(kind) = gradient {
+        (gradient_mask(a, doc, &kind)?, format!("gradient:{kind}"), None)
+    } else if let Some(r) = a.str("from-layer") {
+        let sp = doc.resolve(&r)?;
+        if sp.starts_with(&p) || p.starts_with(&sp) {
+            return Err(Error::new("PX2331", "a layer cannot be masked by itself or by a group it belongs to")
+                .with_hint("pick another layer for --from-layer, or use --from @alpha:<layer> for a fixed copy")
+                .with_context("layer", doc.layer(&p).name.clone())
+                .with_context("from_layer", doc.layer(&sp).name.clone()));
+        }
+        if combine != SelectMode::Replace {
+            return Err(Error::new("PX1005", "a live mask (--from-layer) cannot be combined with --combine")
+                .with_hint("use --from @alpha:<layer> (a fixed copy) with --combine, or drop --combine"));
+        }
+        let k = pixelox_core::doc::MaskLink {
+            layer: doc.layer(&sp).id.clone(),
+            channel: a.choice("channel"),
+            invert: false,
+        };
+        let m = compose::linked_mask(doc, &k)?.unwrap_or_else(|| Mask::new(w, h));
+        link = Some(k);
+        (m, format!("layer:{}", doc.layer(&sp).name), None)
+    } else if let Some(r) = a.str("from") {
         (resolve_mask_ref(ctx, doc, &r, "from")?, r, None)
     } else if let Some(f) = a.path("from-file") {
         (decode_mask_file(ctx, doc, &f, "from-file")?, f.display().to_string(), None)
@@ -332,12 +386,66 @@ fn add(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     } else {
         (fit_mask(doc.named_mask("@sel")?, w, h), "@sel".to_string(), None)
     };
+    // merge with the existing mask (its pixels; a live mask becomes a fixed one)
+    let existing = doc.layer(&p).mask.as_ref().map(|lm| fit_mask(lm.mask.clone(), w, h));
+    let (mask, combined) = match (combine, existing) {
+        (SelectMode::Replace, _) | (_, None) => (mask, false),
+        (mode, Some(mut old)) => {
+            old.combine(&mask, mode);
+            (old, true)
+        }
+    };
     let stats = mask_json(&mask);
     let l = doc.layer_mut(&p);
     let replaced = l.mask.is_some();
-    l.mask = Some(LayerMask::new(mask));
-    l.vector_mask = vector.clone();
-    Ok(json!({"layer": l.name, "source": source, "vector": vector.is_some(), "replaced": replaced, "stats": stats}))
+    let kept = l.mask.take().filter(|_| combined);
+    let live = link.is_some();
+    l.mask = Some(match kept {
+        // merging keeps the existing mask's density, feather, and enabled state
+        Some(old) => LayerMask { mask, link: None, ..old },
+        None => LayerMask { link, ..LayerMask::new(mask) },
+    });
+    // merged pixels no longer match a vector mask's path
+    l.vector_mask = if combined { None } else { vector.clone() };
+    Ok(
+        json!({"layer": l.name, "source": source, "vector": vector.is_some(), "live": live, "replaced": replaced, "combine": a.choice("combine"), "stats": stats}),
+    )
+}
+
+/// A canvas-sized gradient mask: 1 at --from, 0 at --to (linear) or at the radius
+/// |--to - --from| around --from (radial).
+fn gradient_mask(a: &Args, doc: &Document, kind: &str) -> Result<Mask> {
+    let (w, h, dpi) = (doc.width as f64, doc.height as f64, doc.dpi());
+    let point = |name: &str| -> Result<(f64, f64)> {
+        let raw = a.str(name).ok_or_else(|| {
+            Error::new("PX1003", format!("--gradient needs --{name} X,Y"))
+                .with_hint(
+                    "for example --gradient linear --from 0,60% --to 0,100% (revealed at --from, hidden at --to)",
+                )
+                .with_context("param", name)
+        })?;
+        let p =
+            units::PointSpec::parse(&raw).map_err(|e| Error { message: format!("--{name}: {}", e.message), ..e })?;
+        Ok(p.resolve(w, h, dpi))
+    };
+    let (from, to) = (point("from")?, point("to")?);
+    let (vx, vy) = (to.0 - from.0, to.1 - from.1);
+    let len2 = vx * vx + vy * vy;
+    if len2 < 1e-9 {
+        return Err(Error::new("PX1010", "--from and --to are the same point; a gradient mask needs a direction")
+            .with_context("from", [from.0, from.1])
+            .with_context("to", [to.0, to.1]));
+    }
+    let smooth = a.choice("ease") == "smooth";
+    let radial = kind == "radial";
+    let len = len2.sqrt();
+    Ok(Mask::from_fn(doc.width, doc.height, |x, y| {
+        let (dx, dy) = (x as f64 + 0.5 - from.0, y as f64 + 0.5 - from.1);
+        let t = if radial { (dx * dx + dy * dy).sqrt() / len } else { (dx * vx + dy * vy) / len2 };
+        let t = t.clamp(0.0, 1.0);
+        let t = if smooth { t * t * (3.0 - 2.0 * t) } else { t };
+        (1.0 - t) as f32
+    }))
 }
 
 /// The mask's effect as rendered: live feather, then density.
@@ -464,5 +572,17 @@ fn smooth(a: &Args, doc: &mut Document, _: &mut OpCtx) -> Result<Value> {
 }
 
 fn invert(a: &Args, doc: &mut Document, _: &mut OpCtx) -> Result<Value> {
+    // a live mask stays live: flip which side of its source it reveals
+    if let Ok(Target::Layer(p)) = target(a, doc) {
+        let l = doc.layer_mut(&p);
+        if let Some(k) = l.mask.as_mut().and_then(|lm| lm.link.as_mut()) {
+            k.invert = !k.invert;
+            let inverted = k.invert;
+            let name = l.name.clone();
+            doc.refresh_mask_links();
+            let stats = doc.layer(&p).mask.as_ref().map(|lm| mask_json(&lm.mask));
+            return Ok(json!({"layer": name, "live": true, "inverted": inverted, "stats": stats}));
+        }
+    }
     refine(a, doc, |m| m.inverted())
 }

@@ -65,8 +65,18 @@ pub fn needs_raster(l: &Layer, geo: &Geo, force: bool) -> bool {
 pub fn rasterize_layer(doc: &mut Document, path: &[usize]) -> Result<()> {
     let mut c = doc.layer(path).clone();
     c.fx.clear();
+    let filtered = c.smart_filters.iter().any(|f| f.enabled);
     let r = compose::render_layer(doc, &c)?;
     let l = doc.layer_mut(path);
+    // smart filters are baked into the pixels
+    l.smart_filters.clear();
+    // smart filters render canvas-sized: keep only the visible part
+    let r = match r {
+        Some(r) if filtered => {
+            r.image.alpha_bbox(0.0).map(|b| Rendered { image: r.image.crop(b), x: r.x + b.x, y: r.y + b.y })
+        }
+        r => r,
+    };
     match r {
         Some(r) => {
             l.content = LayerKind::Raster { image: r.image };

@@ -383,9 +383,9 @@ pub(crate) fn text_add(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<
         }
         None => default_name(&spec.content),
     };
+    let at = pixelox_core::stack::from_args(a, doc)?.unwrap_or(pixelox_core::stack::Placement::Top);
     let layer = doc.new_layer(&name, LayerKind::Text { spec: spec.to_value(None) });
-    let above = doc.active.as_deref().and_then(|id| doc.find_by_id(id));
-    let path = doc.insert_above(above.as_deref(), layer);
+    let path = pixelox_core::stack::insert_at(doc, layer, &at);
     Ok(result_json(doc.layer(&path), &spec, &c))
 }
 
@@ -619,7 +619,8 @@ pub(crate) fn text_ops() -> Vec<OpSpec> {
     vec![
         OpSpec::doc("text add", Category::Text, "Add a live text layer", text_add)
             .about(
-                "Creates a live (re-editable) text layer above the active layer. Text is shaped with rustybuzz \
+                "Creates a live (re-editable) text layer on top of the stack (or where --above, --below, or --into \
+                 say). Text is shaped with rustybuzz \
                  (kerning, ligatures, bidi/RTL, complex scripts), wraps inside --box, and is drawn from glyph \
                  outlines without hinting, so it renders identically everywhere. --at places the anchor point of the \
                  text box (--anchor) on the canvas (--anchor-to ink places the visible letters instead). Fonts are \
@@ -638,6 +639,7 @@ pub(crate) fn text_ops() -> Vec<OpSpec> {
             .params(style_params(true))
             .params(place_params(true))
             .param(common::name().help("Layer name (default: the first words of the content)"))
+            .params(common::placement())
             .example(
                 "pixelox text add poster.pxo --in-place --content \"Hello\" --font Inter --size 64pt --color '#ffffff' --at 50%,50% --anchor c",
                 "Centered white headline",
@@ -669,6 +671,10 @@ pub(crate) fn text_ops() -> Vec<OpSpec> {
             .example(
                 "pixelox text add poster.pxo --in-place --content \"FESTIVAL\" --font \"Bebas Neue\" --size 15% --at 50%,50% --anchor c -y",
                 "Download the Google Fonts family first, with consent",
+            )
+            .example(
+                "pixelox text add poster.pxo --in-place --name Ghost --content \"SUMMER\" --size 30% --color '#ffffff22' --at 0-120,40% --below Subject",
+                "Huge ghost type behind a subject, running off the left edge",
             ),
         OpSpec::doc("text edit", Category::Text, "Change a text layer's content or style", text_edit)
             .about(

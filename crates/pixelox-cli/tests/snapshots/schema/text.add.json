@@ -339,6 +339,30 @@
         "type": "string",
         "description": "Layer name (default: the first words of the content) Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "above": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly above this layer (default: on top of the stack) Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "below": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer directly below this layer Type: layer.",
+        "x-pixelox-kind": "layer"
+      },
+      "into": {
+        "type": "string",
+        "examples": [
+          "@top"
+        ],
+        "description": "Insert the new layer on top of this group's children Type: layer.",
+        "x-pixelox-kind": "layer"
       }
     },
     "required": [
