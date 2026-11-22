@@ -16,7 +16,11 @@ in overlay mode for grain. 53 posters added grain and about 25 used clouds or sm
   (film grain), and `pixelox_core::warp_preset` (Photoshop's 15 warp styles) are pure
   functions of a seed and coordinates, so they render identically on any thread count and
   can be used by every crate: fills and filters, the fx renderer, the adjustment hook, and
-  live text (WS2 implements warp presets for text; its map should be this one).
+  live text. The warp formulas are WS2's (ADR 0015, written for `text warp`), moved from
+  `pixelox_text::warp` into core with `libm` trigonometry; pixelox-text re-exports them,
+  so a preset with the same `--bend`, `--h-distort`, `--v-distort`, and `--orient` takes the
+  same shape on type and on pixels (checked: SSIM 0.98 to 0.999 between a warped text
+  layer and a warped rasterized copy, the residue being the ink box versus the alpha box).
 * **Normalized noise.** A fractal sum is divided by the basis's measured standard deviation
   (sampled once at a fixed set of points) times the root of the summed squared octave
   amplitudes, so every kind, octave count, and persistence has mean 0.5 and spread 0.18:
@@ -47,7 +51,8 @@ in overlay mode for grain. 53 posters added grain and about 25 used clouds or sm
   (`apply_to_raster_grow`, ADR 0014); the other distortions stay inside the content.
 * **Warp presets reuse the mesh warp's inversion.** `transform warp --preset` samples the
   preset's forward map on an 8 px mesh and inverts cells bilinearly (the same code as the
-  points mode). On a placed, text, or shape layer the warp is recorded as a smart filter whose op is
+  points mode). On a text layer it sets the text's own live warp (the `warp` key of the text
+  spec, `Warp::to_json`). On a placed or shape layer the warp is recorded as a smart filter whose op is
   `transform.warp` with an advanced `--keep-bounds` flag, so the re-run keeps the canvas-sized
   image the smart-filter hook requires; it stays live instead of rasterizing.
 * **Liquid is a lit metaball field.** Splashes and beads are tapered capsules and spheres

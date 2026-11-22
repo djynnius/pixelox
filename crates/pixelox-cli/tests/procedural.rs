@@ -224,8 +224,10 @@ fn liquids_and_grain_style_are_layers_that_replay() {
     );
     let v = ok(d, &["filter", "glitch", "doc.pxo", "--in-place", "--layer", "Word", "--split", "3"]);
     assert_eq!(v["result"]["smart_filter"], "filter.glitch");
+    // a warp preset on text is the text's own live warp (the same map as on pixels)
     let v = ok(d, &["transform", "warp", "doc.pxo", "--in-place", "--layer", "Word", "--preset", "arc"]);
-    assert_eq!(v["result"]["smart_filter"], "transform.warp");
+    assert_eq!(v["result"]["text_warp"], true);
+    assert_eq!(v["result"]["warp"]["preset"], "arc");
     let list = ok(d, &["layer", "list", "doc.pxo"]);
     assert_eq!(layer(&list, "Word")["kind"], "text");
     // a grain style on a live shape layer keeps it live

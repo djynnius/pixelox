@@ -30,7 +30,7 @@
         "examples": [
           "12px"
         ],
-        "description": "Red/cyan channel offset in px or % of the layer width Type: length.",
+        "description": "Red/cyan channel offset in px or % of the content width Type: length.",
         "default": "1.6%",
         "x-pixelox-kind": "length"
       },
@@ -55,7 +55,7 @@
         "examples": [
           "12px"
         ],
-        "description": "Largest sideways shift of a band in px or % of the layer width Type: length.",
+        "description": "Largest sideways shift of a band in px or % of the content width Type: length.",
         "default": "6%",
         "x-pixelox-kind": "length"
       },

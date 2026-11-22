@@ -33,9 +33,10 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
   split, shifted slices, scanlines; seeded). All work as smart filters on placed layers.
 - `transform warp --preset`: Photoshop's 15 warp styles (arc, arc-lower, arc-upper, arch,
   bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, twist)
-  with `--bend`, `--h-distort`, `--v-distort`, and `--orient`; live on placed layers. The
-  preset math is shared in `pixelox_core::warp_preset`. `--points` is no longer required
-  when `--preset` is given.
+  with `--bend`, `--h-distort`, `--v-distort`, and `--orient`: the same map as `text warp`
+  (moved to `pixelox_core::warp_preset`, so type and pixels bend alike). On a text layer it
+  sets the live text warp; on placed and shape layers it stays live as a smart filter.
+  `--points` is no longer required when `--preset` is given.
 - `render splash`: a liquid crown (`--part back|front` to stand a product in it) or a thrown
   sheet, lit like glass, for water, milk, juice, cola, coffee, wine, or oil (`--color`
   recolors). `render droplets`: condensation beads on a product, clipped to it, each bead

@@ -71,8 +71,9 @@ these filters (with the noise map) is recorded as a smart filter.
 
 Warp presets bend a layer's visible bounds like Photoshop's Warp: arc, arc-lower, arc-upper,
 arch, bulge, shell-lower, shell-upper, flag, wave, fish, rise, fisheye, inflate, squeeze, and
-twist, with `--bend`, `--h-distort`, `--v-distort`, and `--orient`. On a placed layer the warp
-stays live.
+twist, with `--bend`, `--h-distort`, `--v-distort`, and `--orient`: the same shapes as
+`text warp`, so type and images bent with the same settings match. On a text layer it sets
+the live text warp; on a placed or shape layer the warp stays live.
 
 ```bash
 pixelox transform warp badge.pxo --in-place --layer Logo --preset arc --bend 40

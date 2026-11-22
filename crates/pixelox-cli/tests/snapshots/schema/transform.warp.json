@@ -81,7 +81,7 @@
             "type": "string"
           }
         ],
-        "description": "Preset perspective: positive shrinks the left end, negative the right end Range: -100..100. Type: number.",
+        "description": "Preset perspective: positive grows the right side, negative the left Range: -100..100. Type: number.",
         "default": "0",
         "x-pixelox-kind": "float"
       },
@@ -96,7 +96,7 @@
             "type": "string"
           }
         ],
-        "description": "Preset perspective: positive shrinks the top, negative the bottom Range: -100..100. Type: number.",
+        "description": "Preset perspective: positive grows the bottom, negative the top Range: -100..100. Type: number.",
         "default": "0",
         "x-pixelox-kind": "float"
       },
@@ -106,7 +106,7 @@
           "horizontal",
           "vertical"
         ],
-        "description": "Preset orientation: horizontal, or vertical (a quarter turn: it bends toward the right) Type: choice.",
+        "description": "Preset orientation: horizontal, or vertical (the preset runs along the vertical axis) Type: choice.",
         "default": "horizontal",
         "x-pixelox-kind": "choice"
       },

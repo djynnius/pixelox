@@ -183,6 +183,7 @@ pipeline.validate
 render.3d
 render.d3
 render.droplets
+render.ice
 render.js
 render.lens-flare
 render.splash

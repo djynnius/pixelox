@@ -27,16 +27,42 @@ pub fn ops() -> Vec<OpSpec> {
         )
         .param(param("count", ParamKind::Int).default("3").range("1..40").help("Number of cubes"))
         .param(param("at", ParamKind::Point).default("50%,70%").help("Center of the group of cubes (X,Y)"))
-        .param(param("size", ParamKind::Length).default("16%").help("Cube size (edge length) in px or % of the shorter canvas side"))
-        .param(param("spread", ParamKind::Length).default("22%").help("How far the cubes scatter from --at, in px or % of the shorter side"))
-        .param(param("frost", ParamKind::Float).default("55").range("0..100").help("Cloudy, cracked core: 0 = clear, 100 = white"))
+        .param(
+            param("size", ParamKind::Length)
+                .default("16%")
+                .help("Cube size (edge length) in px or % of the shorter canvas side"),
+        )
+        .param(
+            param("spread", ParamKind::Length)
+                .default("22%")
+                .help("How far the cubes scatter from --at, in px or % of the shorter side"),
+        )
+        .param(
+            param("frost", ParamKind::Float)
+                .default("55")
+                .range("0..100")
+                .help("Cloudy, cracked core: 0 = clear, 100 = white"),
+        )
         .param(param("tint", ParamKind::Color).default("#e4f4ff").help("Color of the ice"))
-        .param(param("layer", ParamKind::Layer).help("Put the ice layer directly above this layer (the same as --above; default: on top of the stack)"))
+        .param(
+            param("layer", ParamKind::Layer).help(
+                "Put the ice layer directly above this layer (the same as --above; default: on top of the stack)",
+            ),
+        )
         .param(param("name", ParamKind::Str).help("Name for the new layer (default: Ice)"))
         .params(common::placement())
-        .example("pixelox render ice doc.pxo --in-place --at 50%,80% --count 4", "Four ice cubes at the foot of a drink")
-        .example("pixelox render ice doc.pxo --in-place --count 1 --size 30% --at 70%,30% --frost 30 --seed 5", "One large, clear cube")
-        .example("pixelox render ice doc.pxo --in-place --count 8 --size 9% --spread 40% --tint '#fff4e0' --name IceFar", "A scatter of small warm-tinted cubes")]
+        .example(
+            "pixelox render ice doc.pxo --in-place --at 50%,80% --count 4",
+            "Four ice cubes at the foot of a drink",
+        )
+        .example(
+            "pixelox render ice doc.pxo --in-place --count 1 --size 30% --at 70%,30% --frost 30 --seed 5",
+            "One large, clear cube",
+        )
+        .example(
+            "pixelox render ice doc.pxo --in-place --count 8 --size 9% --spread 40% --tint '#fff4e0' --name IceFar",
+            "A scatter of small warm-tinted cubes",
+        )]
 }
 
 type V3 = [f64; 3];
@@ -91,7 +117,8 @@ impl Cube {
     }
     /// Signed distance in local coordinates.
     fn sdf(&self, p: V3) -> f64 {
-        let q = [p[0].abs() - (self.b[0] - self.r), p[1].abs() - (self.b[1] - self.r), p[2].abs() - (self.b[2] - self.r)];
+        let q =
+            [p[0].abs() - (self.b[0] - self.r), p[1].abs() - (self.b[1] - self.r), p[2].abs() - (self.b[2] - self.r)];
         let o = [q[0].max(0.0), q[1].max(0.0), q[2].max(0.0)];
         dot(o, o).sqrt() + q[0].max(q[1]).max(q[2]).min(0.0) - self.r
     }
@@ -223,7 +250,8 @@ fn ice(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
                         let (exit, d2) = match cube.march(inside_start, d1, true, rr * 4.0) {
                             Some(e) => {
                                 let ne = cube.normal(e);
-                                let out = refract(d1, mul(ne, -1.0), 1.31).unwrap_or_else(|| reflect(d1, mul(ne, -1.0)));
+                                let out =
+                                    refract(d1, mul(ne, -1.0), 1.31).unwrap_or_else(|| reflect(d1, mul(ne, -1.0)));
                                 (e, out)
                             }
                             None => (inside_start, d1),

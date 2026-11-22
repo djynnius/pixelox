@@ -1024,6 +1024,7 @@ dependencies = [
  "glob",
  "hex",
  "kurbo",
+ "libm",
  "rand_chacha",
  "rand_core",
  "rayon",

@@ -225,6 +225,7 @@ trace: Vectorize a bitmap into an SVG
 render 3d: Render primitives, extrusions, or OBJ scenes (CPU 3D)
 render d3: Run a d3 script (d3 bundle via --lib) to SVG or PNG
 render droplets: Condensation droplets clipped to a layer
+render ice: Ice cubes that refract the design, on a new layer
 render js: Run a sandboxed JS script that draws to canvas or SVG
 render lens-flare: Add a camera lens flare as a new screen layer
 render splash: Liquid splash (crown or sheet) on a new layer

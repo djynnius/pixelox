@@ -19,3 +19,5 @@ glob.workspace = true
 rand_core.workspace = true
 rand_chacha.workspace = true
 kurbo.workspace = true
+# Pure-Rust trigonometry for the warp presets (identical shapes on every platform).
+libm = "0.2"
