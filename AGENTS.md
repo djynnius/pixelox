@@ -58,8 +58,9 @@ prints any command's reference page.
     commands. `skills/pixelox-design/SKILL.md` is the playbook: pick 2 to 4 of its 126
     studied designs (`references/index.md`), combine layout, palette, and one effect
     (`references/techniques.md`, 74 tested recipes such as `T-smoke`, `T-fit-width`,
-    `T-text-behind-subject`), build, export a preview, look, fix. Check installed fonts
-    first (`pixelox fonts list --json`): a missing font is an error.
+    `T-text-behind-subject`), build, export a preview, look, fix. Name fonts by class
+    (`--font @condensed-heavy`, `pixelox fonts classes`); a missing family is replaced by the
+    closest installed face with warning PXW4010 (`pixelox fonts get <family> -y` with consent).
 
 ## Addressing
 

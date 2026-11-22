@@ -64,6 +64,15 @@
         "description": "Glyphs outside or inside a closed path (above or below an open one) Type: choice.",
         "default": "outside",
         "x-pixelox-kind": "choice"
+      },
+      "fit": {
+        "type": "string",
+        "enum": [
+          "none",
+          "shrink"
+        ],
+        "description": "shrink: lower the font size until the text fits on the path (kept for later edits); none: leave the size (glyphs that do not fit raise PXW4012) Type: choice.",
+        "x-pixelox-kind": "choice"
       }
     },
     "required": [

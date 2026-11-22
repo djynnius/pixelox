@@ -21,6 +21,11 @@
         "type": "string",
         "description": "Only families whose name contains this (case-insensitive) Type: text.",
         "x-pixelox-kind": "str"
+      },
+      "class": {
+        "type": "string",
+        "description": "Only families listed in this font class, e.g. @didone Type: text.",
+        "x-pixelox-kind": "str"
       }
     },
     "required": [],

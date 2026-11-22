@@ -90,6 +90,8 @@ filter.unsharp
 filter.vignette
 filter.watercolor
 fonts.add
+fonts.classes
+fonts.get
 fonts.list
 frames.assemble
 frames.extract
@@ -228,6 +230,7 @@ text.list
 text.on-path
 text.style
 text.to-path
+text.warp
 trace
 transform.canvas
 transform.crop
