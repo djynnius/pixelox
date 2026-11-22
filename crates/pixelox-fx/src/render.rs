@@ -970,6 +970,18 @@ pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Ren
                 let m = e.margins(room);
                 [0, 1, 2, 3].map(|k| (m[k] + block_m[k]).min(room[k]))
             }
+            // a reflection hangs from the bottom of the block and its strokes
+            Effect::Cast { cast: Cast::Reflection(_), .. } => {
+                let stroke = effects
+                    .iter()
+                    .map(|s| match s {
+                        Effect::Stroke { width, pos: StrokePos::Outside | StrokePos::Center, .. } => *width,
+                        _ => 0.0,
+                    })
+                    .fold(0.0, f64::max);
+                let m = e.margins(room);
+                [m[0], m[1], m[2], m[3] + block_m[3] + stroke]
+            }
             _ => e.margins(room),
         })
         .fold([0.0f64; 4], |m, e| [0, 1, 2, 3].map(|k| m[k].max(e[k])));

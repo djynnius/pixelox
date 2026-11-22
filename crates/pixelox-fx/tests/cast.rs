@@ -213,3 +213,18 @@ fn work_on_every_layer_kind_and_replay_from_their_params() {
     assert_eq!(spec.params["length"], "50%");
     assert_eq!(spec.params["angle"], "300");
 }
+
+#[test]
+fn reflections_of_an_extruded_stroked_block_are_whole() {
+    // a 20 px square at y 10..30, extruded 10 px down and stroked 4 px outside (the stroke
+    // wraps the face): the block ends at y 40, and a 20 px reflection with no fade must
+    // reach y 60 uncut
+    let mut d = doc_with_square(60, 120, 20, 10, 20, RED);
+    fx("fx extrude", &[("layer", "Box"), ("angle", "270"), ("depth", "10")], &mut d);
+    fx("fx stroke", &[("layer", "Box"), ("width", "4")], &mut d);
+    fx("fx reflection", &[("layer", "Box"), ("length", "20"), ("fade", "0"), ("opacity", "100")], &mut d);
+    let b = bounds(&d);
+    assert!((59..=61).contains(&(b.y + b.h as i32)), "{b:?}");
+    let out = canvas(&d);
+    assert!(out.get(30, 58)[3] > 0.9, "the far end of the reflection is drawn: {:?}", out.get(30, 58));
+}
