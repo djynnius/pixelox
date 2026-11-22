@@ -53,9 +53,10 @@ pub(crate) fn ops() -> Vec<OpSpec> {
             .help("Lens type: zoom (50-300 mm), 35mm prime, 105mm prime, or movie prime"),
     )
     .param(param("brightness", ParamKind::Float).range("10..300").default("100").help("Flare brightness in percent"))
-    .param(
-        param("color", ParamKind::Color).help("Tint the whole flare with this color (default: the lens's own colors)"),
-    )
+    .param(param("color", ParamKind::Color).help(
+        "Recolor the flare: glow, streak, halo, and ghosts take this hue (the core stays white-hot); default: the \
+         lens's own colors",
+    ))
     .param(
         param("layer", ParamKind::Layer)
             .help("Put the flare layer above this layer (default: above the active layer, or on top)"),
@@ -237,6 +238,8 @@ struct Plan {
     glow: (f64, f64, [f64; 3]),
     veil: (f64, f64),
     halo: Option<(f64, f64, f64, f64)>,
+    /// The halo ring's color (white with chromatic edges unless tinted).
+    halo_color: [f64; 3],
     rays: Vec<Ray>,
     streak: Option<(f64, f64, f64, [f64; 3])>,
     ghosts: Vec<Ghost>,
@@ -249,8 +252,32 @@ fn uniform(rng: &mut impl RngCore, lo: f64, hi: f64) -> f64 {
     lo + (hi - lo) * (rng.next_u64() >> 11) as f64 / (1u64 << 53) as f64
 }
 
-fn plan(lens: Lens, at: (f64, f64), size: (u32, u32), rng: &mut impl RngCore) -> Plan {
-    let rc = recipe(lens);
+/// Rec. 709 luminance of a linear-ish color triple.
+fn lum(c: [f64; 3]) -> f64 {
+    0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+}
+
+/// `c` moved `k` of the way to `tint` at `c`'s own luminance (so the element keeps its
+/// brightness and takes the tint's hue and saturation).
+fn recolor(c: [f64; 3], tint: Option<[f64; 3]>, k: f64) -> [f64; 3] {
+    match tint {
+        None => c,
+        Some(t) => {
+            let s = lum(c) / lum(t).max(1e-6);
+            [0, 1, 2].map(|i| c[i] + (t[i] * s - c[i]) * k)
+        }
+    }
+}
+
+fn plan(lens: Lens, at: (f64, f64), size: (u32, u32), rng: &mut impl RngCore, tint: Option<[f64; 3]>) -> Plan {
+    let mut rc = recipe(lens);
+    // --color recolors every element (the white-hot core only partly), so the glow, the
+    // streak, the halo, and the ghosts all take the tint instead of keeping the lens's hues
+    rc.core.2 = recolor(rc.core.2, tint, 0.45);
+    rc.glow.2 = recolor(rc.glow.2, tint, 1.0);
+    if let Some(st) = rc.streak.as_mut() {
+        st.3 = recolor(st.3, tint, 1.0);
+    }
     let s = (size.0 as f64).hypot(size.1 as f64).max(1.0);
     let center = (size.0 as f64 / 2.0, size.1 as f64 / 2.0);
     let axis = (center.0 - at.0, center.1 - at.1);
@@ -286,7 +313,7 @@ fn plan(lens: Lens, at: (f64, f64), size: (u32, u32), rng: &mut impl RngCore) ->
             y: at.1 + t * axis.1,
             r: px(r * uniform(rng, 0.9, 1.1), 1.0),
             sides,
-            color,
+            color: recolor(color, tint, 0.85),
             i: i * uniform(rng, 0.85, 1.15),
             rim,
         })
@@ -297,6 +324,7 @@ fn plan(lens: Lens, at: (f64, f64), size: (u32, u32), rng: &mut impl RngCore) ->
         glow: (px(rc.glow.0, 2.0), rc.glow.1, rc.glow.2),
         veil: (px(rc.veil.0, 4.0), rc.veil.1),
         halo: rc.halo.map(|(r, w, i, split)| (px(r, 3.0), px(w, 0.8), i, split)),
+        halo_color: recolor([1.0; 3], tint, 1.0),
         rays,
         streak: rc.streak.map(|(l, w, i, c)| (px(l, 4.0), px(w, 0.7), i, c)),
         ghosts,
@@ -333,7 +361,7 @@ impl Plan {
             if (r - hr).abs() < hr * split * 2.0 + 4.0 * hw {
                 for (ch, k) in [1.0, 0.0, -1.0].iter().enumerate() {
                     let d = (r - hr * (1.0 + split * k)) / hw;
-                    e[ch] += hi * (-d * d).exp();
+                    e[ch] += hi * self.halo_color[ch] * (-d * d).exp();
                 }
             }
         }
@@ -426,16 +454,15 @@ fn lens_flare(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let lens = Lens::parse(&lens_name)?;
     let brightness = a.f64("brightness")?;
     let tint = match a.opt_color("color")? {
-        None => [1.0; 3],
+        None => None,
         Some(c) => {
-            // tint by hue and saturation, keeping the flare's brightness
+            // the tint's hue and saturation; each element keeps its own brightness
             let v = [c.r as f64, c.g as f64, c.b as f64];
-            let m = v[0].max(v[1]).max(v[2]);
-            if m <= 1e-6 {
+            if lum(v) <= 1e-3 {
                 return Err(Error::new("PX1010", "--color: a black tint would remove the flare")
                     .with_hint("give a light color such as '#9fd4ff', or leave --color out"));
             }
-            v.map(|x| x / m)
+            Some(v)
         }
     };
     let above = match a.raw("layer") {
@@ -451,8 +478,8 @@ fn lens_flare(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     };
 
     let mut rng = ctx.rng();
-    let p = plan(lens, at, (w, h), &mut rng);
-    let full = draw(&p, w, h, brightness / 100.0, tint, rng.next_u64());
+    let p = plan(lens, at, (w, h), &mut rng, tint);
+    let full = draw(&p, w, h, brightness / 100.0, [1.0; 3], rng.next_u64());
     let (image, x, y) = match full.alpha_bbox(0.0) {
         Some(r) if (r.w, r.h) != (w, h) => (full.crop(r), r.x, r.y),
         Some(_) => (full, 0, 0),
@@ -518,6 +545,7 @@ mod tests {
             glow: (1.0, 0.0, [0.0; 3]),
             veil: (1.0, 0.0),
             halo: None,
+            halo_color: [1.0; 3],
             rays: vec![],
             streak: None,
             ghosts: vec![Ghost { x: 50.0, y: 50.0, r: 20.0, sides: 6, color: [1.0; 3], i: 1.0, rim: 0.0 }],
@@ -528,5 +556,46 @@ mod tests {
         let corner = p.light(50.0 + 19.0, 50.0)[1];
         let flat = p.light(50.0, 50.0 + 19.0)[1];
         assert!(corner > 0.3 && flat < corner * 0.5, "corner {corner} flat {flat}");
+    }
+}
+
+#[cfg(test)]
+mod tint_tests {
+    use super::*;
+
+    #[test]
+    fn color_recolors_the_streak_and_ghosts() {
+        let warm = Some([1.0, 0.55, 0.15]);
+        let mut r1 = rand_chacha_like();
+        let p = plan(Lens::Movie, (100.0, 100.0), (400, 300), &mut r1, warm);
+        let st = p.streak.unwrap().3;
+        assert!(st[0] > st[2] * 3.0, "the blue streak turns warm: {st:?}");
+        assert!(p.ghosts.iter().all(|g| g.color[0] >= g.color[2]));
+        // brightness is kept
+        let base = recipe(Lens::Movie).streak.unwrap().3;
+        assert!((lum(st) - lum(base)).abs() < 1e-9);
+    }
+
+    fn rand_chacha_like() -> impl RngCore {
+        struct Lcg(u64);
+        impl RngCore for Lcg {
+            fn next_u32(&mut self) -> u32 {
+                self.next_u64() as u32
+            }
+            fn next_u64(&mut self) -> u64 {
+                self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                self.0
+            }
+            fn fill_bytes(&mut self, d: &mut [u8]) {
+                for b in d {
+                    *b = self.next_u64() as u8;
+                }
+            }
+            fn try_fill_bytes(&mut self, d: &mut [u8]) -> std::result::Result<(), rand_core::Error> {
+                self.fill_bytes(d);
+                Ok(())
+            }
+        }
+        Lcg(7)
     }
 }

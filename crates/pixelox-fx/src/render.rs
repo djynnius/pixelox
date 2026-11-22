@@ -896,8 +896,16 @@ fn plume_cov(f: &flame::Field, pf: &PlumeFx) -> Mask {
 // ---------------------------------------------------------------------------------------
 // the renderer
 
-/// Apply a layer's style stack to its rendered content (the `compose` fx hook).
+/// Apply a layer's style stack to its rendered content (the `compose` fx hook). Grain
+/// (`crate::grain`) goes last, over everything the other effects drew.
 pub fn render(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Rendered> {
+    let anchor = (content.x, content.y);
+    let out = render_styles(specs, content, doc)?;
+    crate::grain::apply(specs, out, anchor, doc)
+}
+
+/// The style stack without grain.
+fn render_styles(specs: &[FxSpec], content: Rendered, doc: &Document) -> Result<Rendered> {
     let visible = content.image.alpha_bbox(0.0);
     let size = visible.map(|b| (b.w, b.h)).unwrap_or((0, 0));
     let mut effects = Vec::new();

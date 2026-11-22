@@ -52,6 +52,7 @@ const RM_KINDS: &[&str] = &[
     "stroke",
     "fire",
     "smoke",
+    "grain",
     "color-overlay",
     "gradient-overlay",
     "pattern-overlay",
@@ -470,7 +471,7 @@ fn variant(kind: &str, a: &Args, layer: &Layer, ctx: &OpCtx) -> Result<u64> {
 }
 
 /// Add or replace one effect of `kind` on `--layer`; `--enabled` alone toggles it.
-fn set_style(kind: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
+pub(crate) fn set_style(kind: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
     let path = target_layer(a, doc)?;
     let layer = doc.layer(&path);
     styleable(layer)?;
@@ -517,7 +518,7 @@ fn set_style(kind: &'static str, a: &Args, doc: &mut Document, ctx: &mut OpCtx) 
         "stroke" => {
             params.insert("fill".into(), json!(fill_given(a).unwrap_or("color")));
         }
-        "fire" | "smoke" => {
+        "fire" | "smoke" | "grain" => {
             let v = variant(kind, a, doc.layer(&path), ctx)?;
             params.insert("variant".into(), json!(v.to_string()));
             ctx.resolve_param("variant", v);

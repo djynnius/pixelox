@@ -1,4 +1,4 @@
-//! Layer styles (fx *): shadows, glows, bevel, satin, overlays, stroke, fire, smoke;
+//! Layer styles (fx *): shadows, glows, bevel, satin, overlays, stroke, fire, smoke, grain;
 //! and `render lens-flare`.
 //!
 //! Each style command stores one [`FxSpec`](pixelox_core::doc::FxSpec) on a layer:
@@ -13,6 +13,7 @@
 mod commands;
 mod flame;
 mod flare;
+mod grain;
 mod noise;
 mod render;
 
@@ -24,6 +25,7 @@ pub use render::render;
 pub fn ops() -> Vec<OpSpec> {
     let mut v = commands::ops();
     v.extend(flare::ops());
+    v.extend(grain::ops());
     v
 }
 
