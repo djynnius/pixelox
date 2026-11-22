@@ -1,4 +1,4 @@
-# Clouds, grain, distortion, and liquid splashes
+# Clouds, grain, distortion, liquid, and ice
 
 Procedural textures, film grain, distortions, and liquid are native commands: no scripts,
 no intermediate PNGs, and every result is seeded (`--seed`), recorded in the sidecar, and
@@ -102,6 +102,14 @@ shows the product behind it upside down, as real water does:
 ```bash
 pixelox render droplets ad.pxo --in-place --layer Can
 pixelox render droplets ad.pxo --in-place --layer Bottle --density 70 --trickles 6 --mist 60
+```
+
+`render ice` ray-traces tumbling ice cubes that refract the design behind them, so add them
+after the background and the product:
+
+```bash
+pixelox render ice ad.pxo --in-place --at 50%,85% --count 4 --size 14%
+pixelox render ice ad.pxo --in-place --count 1 --size 30% --at 70%,30% --frost 30
 ```
 
 ## Lens flare color

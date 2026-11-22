@@ -235,6 +235,8 @@ fn liquids_and_grain_style_are_layers_that_replay() {
     assert_eq!(layer(&list, "Card")["kind"], "shape");
     assert_eq!(layer(&list, "Droplets")["clip"], true);
     ok(d, &["render", "lens-flare", "doc.pxo", "--in-place", "--lens", "movie", "--color", "#ff9a3c"]);
+    let v = ok(d, &["render", "ice", "doc.pxo", "--in-place", "--count", "2", "--size", "20%"]);
+    assert_eq!(v["result"]["cubes"].as_array().unwrap().len(), 2);
     ok(d, &["export", "doc.pxo", "-o", "out.png"]);
     replays(d, "out.png");
 }

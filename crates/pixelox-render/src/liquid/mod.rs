@@ -1,10 +1,11 @@
 //! Native liquid generators: `render splash` (a crown or a thrown sheet of liquid with
-//! flying drops) and `render droplets` (condensation beads clipped onto a product). Both
-//! add a new raster layer. Shapes are metaball fields of tapered strands and drops
+//! flying drops), `render droplets` (condensation beads clipped onto a product), and
+//! `render ice` (ray-traced ice cubes). Each adds a new raster layer. Shapes are metaball fields of tapered strands and drops
 //! (`field.rs`) lit as glossy liquid; every random choice comes from the op's seed.
 
 mod droplets;
 mod field;
+mod ice;
 mod splash;
 
 use pixelox_core::doc::LayerPath;
@@ -19,6 +20,7 @@ pub use splash::ops as splash_ops;
 pub fn ops() -> Vec<OpSpec> {
     let mut v = splash_ops();
     v.extend(droplet_ops());
+    v.extend(ice::ops());
     v
 }
 

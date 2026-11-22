@@ -4,7 +4,8 @@
 //!   `px` API (a Canvas2D context drawn in Rust over tiny-skia, a DOM-lite SVG document);
 //! * `render 3d`: a native CPU 3D-lite renderer (primitives, SVG-profile extrusions, OBJ
 //!   meshes; wireframe, hidden-line, and flat-shaded styles; SVG or raster output);
-//! * `render splash` / `render droplets`: native liquid generators that add a layer.
+//! * `render splash` / `render droplets` / `render ice`: native liquid and ice generators
+//!   that add a layer.
 
 mod js;
 mod liquid;

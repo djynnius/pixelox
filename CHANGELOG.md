@@ -39,7 +39,8 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
 - `render splash`: a liquid crown (`--part back|front` to stand a product in it) or a thrown
   sheet, lit like glass, for water, milk, juice, cola, coffee, wine, or oil (`--color`
   recolors). `render droplets`: condensation beads on a product, clipped to it, each bead
-  refracting the product behind it, with running drops and mist.
+  refracting the product behind it, with running drops and mist. `render ice`: ray-traced
+  ice cubes that refract the design behind them, with a frosty, cracked core (`--frost`).
 - Error codes PX3341 (empty displacement map), PX3342 (a map layer cannot drive a smart
   filter), PX3343 (nothing to put droplets on); warning PXW3010 (`--tile` adjusted the
   noise). Cookbook page `docs/guides/cookbook/textures-and-liquids.md`.

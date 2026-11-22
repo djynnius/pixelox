@@ -56,20 +56,23 @@ in overlay mode for grain. 53 posters added grain and about 25 used clouds or sm
   radius gives normals; the shader is a clear or opaque body, a refracting rim, a caustic,
   Fresnel reflection, and specular highlights. Condensation beads refract the product layer
   (rendered once, so re-run after changing the product) and are clipped to it.
-* **Ice cubes are not native yet.** A convincing cube needs a refracting, internally
-  cracked 3-D volume; the metaball shader does not produce one, and a half-convincing cube
-  would be worse than the skill's stylized workaround. Left for a ray-marched renderer.
+* **Ice is ray-marched.** A cube needs a refracting, internally cracked 3-D volume, which
+  the metaball shader cannot give. `render ice` sphere-traces irregular rounded boxes (signed
+  distance fields) in random orientations with an orthographic camera, refracts in and out
+  (index 1.31) onto the design behind (the composite when the command runs, plus the cubes
+  already drawn), gathers a frosty core from noise along the inner path, and adds Fresnel
+  reflections of a studio environment and edge highlights, with 2×2 supersampling.
 
 * **Placement follows ADR 0014.** New layers (`fill noise --as-layer`, `filter grain
-  --as-layer`, `render splash`, `render droplets`) go on top of the stack, directly above
+  --as-layer`, `render splash`, `render droplets`, `render ice`) go on top of the stack, directly above
   `--layer` when one is named (the layer they belong to), or where `--above`, `--below`, or
   `--into` say. `render droplets --layer P` clips to P only in its default place, directly
   above P.
 
 ## Consequences
 New commands: `fill noise`, `filter grain`, `filter distort`, `filter displace`, `filter
-glitch`, `fx grain`, `render splash`, `render droplets`, and `transform warp --preset`
-(about 130 tokens of the agent briefing). `render lens-flare --color` now recolors every
+glitch`, `fx grain`, `render splash`, `render droplets`, `render ice`, and `transform warp
+--preset` (about 140 tokens of the agent briefing). `render lens-flare --color` now recolors every
 element (a fix). `fx rm --kind` accepts `grain`. The noise normalization constants are
 measured at startup from a fixed sample, so they are deterministic but not hand-tunable;
 changing the basis functions changes every noise render (a replay-visible change).

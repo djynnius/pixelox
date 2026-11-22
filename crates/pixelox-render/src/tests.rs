@@ -637,7 +637,7 @@ fn op_specs_follow_the_authoring_contract() {
     ];
     let specs = ops();
     let names: Vec<&str> = specs.iter().map(|s| s.name).collect();
-    assert_eq!(names, vec!["render js", "render d3", "render three", "render 3d"]);
+    assert_eq!(names, vec!["render js", "render d3", "render three", "render 3d", "render splash", "render droplets", "render ice"]);
     for s in &specs {
         assert!(s.summary.len() <= 60 && !s.summary.ends_with('.'), "{}: summary", s.name);
         assert!(!s.about.is_empty(), "{}: about", s.name);

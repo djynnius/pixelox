@@ -88,13 +88,13 @@ pub fn ops() -> Vec<OpSpec> {
             .about(
                 "Digital damage, seeded: the red channel is pulled --split px away from green and blue (red and cyan \
                  fringes; the alpha spreads with them, so type gets colored edges), --slices horizontal bands of random \
-                 heights (2 to 10% of the layer) are shifted sideways by up to --slice-shift with extra split inside \
+                 heights (2 to 10% of the layer's visible content) are shifted sideways by up to --slice-shift with extra split inside \
                  them, and dark --scanlines run every --line-gap px. --seed picks another arrangement. Works as a smart \
                  filter on placed layers.",
             )
-            .param(param("split", ParamKind::Length).default("1.6%").help("Red/cyan channel offset in px or % of the layer width"))
+            .param(param("split", ParamKind::Length).default("1.6%").help("Red/cyan channel offset in px or % of the content width"))
             .param(param("slices", ParamKind::Int).default("6").range("0..200").help("Number of shifted horizontal bands"))
-            .param(param("slice-shift", ParamKind::Length).default("6%").help("Largest sideways shift of a band in px or % of the layer width"))
+            .param(param("slice-shift", ParamKind::Length).default("6%").help("Largest sideways shift of a band in px or % of the content width"))
             .param(param("scanlines", ParamKind::Float).default("30").range("0..100").help("Darkness of the scanlines in percent (0 = none)"))
             .param(param("line-gap", ParamKind::Float).auto().default("auto").range("2..200").help("Scanline spacing in px (auto: 0.4% of the shorter canvas side, at least 3)"))
             .params(common::region())
@@ -509,14 +509,17 @@ fn glitch(a: &Args, doc: &mut Document, ctx: &mut OpCtx) -> Result<Value> {
         if w == 0 || h == 0 {
             return Ok(img.clone());
         }
-        let split = split_l.to_px(lw, dpi);
-        let max_shift = shift_l.to_px(lw, dpi);
+        // sizes and bands follow the visible content (on a smart filter's canvas-sized
+        // image too), not the layer's transparent margins
+        let (_, by, bw, bh) = bounds(img);
+        let split = split_l.to_px(bw.min(lw), dpi);
+        let max_shift = shift_l.to_px(bw.min(lw), dpi);
         // bands: (y0, y1, shift, extra split)
         let bands: Vec<(f64, f64, f64, f64)> = draws
             .iter()
             .map(|d| {
-                let hh = h as f64 * (0.02 + 0.08 * d[1]);
-                let y0 = d[0] * (h as f64 - hh).max(0.0);
+                let hh = bh * (0.02 + 0.08 * d[1]);
+                let y0 = by + d[0] * (bh - hh).max(0.0);
                 // mostly clear shifts: 35..100% of the maximum, either way
                 let shift =
                     (if d[2] < 0.5 { -1.0 } else { 1.0 }) * (0.35 + 0.65 * (2.0 * d[2] - 1.0).abs()) * max_shift;

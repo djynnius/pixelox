@@ -94,7 +94,7 @@ pub fn ops() -> Vec<OpSpec> {
             .param(interp_param())
             .example("pixelox transform warp doc.pxo --layer Logo --preset arc --bend 40 --in-place", "Bend a logo into an arc")
             .example("pixelox transform warp doc.pxo --layer Banner --preset flag --bend 30 --h-distort 20 --in-place", "Wave a banner that recedes to the left")
-            .example("pixelox transform warp doc.pxo --layer Product --preset bulge --bend -25 --in-place", "Pinch a placed product (stays live)")
+            .example("pixelox transform warp doc.pxo --layer Product --preset bulge --bend=-25 --in-place", "Pinch a placed product (stays live)")
             .example("pixelox transform warp doc.pxo --layer Ribbon --preset rise --orient vertical --bend 60 --in-place", "A vertical S-bend")
             .example("pixelox transform warp doc.pxo --layer Flag --grid 3x3 --points warp.json --in-place", "Bend a layer with a mesh")
             .example("pixelox transform warp doc.pxo --layer Label --grid 4x2 --points bulge.json --in-place", "Wrap a label")

@@ -53,7 +53,10 @@ prints any command's reference page.
     path), then `mask refine --mask subject --decontaminate` for hair-level edges without
     a background fringe (`docs/guides/cookbook/extract-a-subject.md`). Effects: `render
     lens-flare`, `fx fire`, `fx smoke`; art looks are `filter pencil|charcoal|ink|oil-paint|
-    watercolor|cartoon|cutout|halftone`.
+    watercolor|cartoon|cutout|halftone`. Textures and liquid are native: `fill noise`
+    (clouds, smoke, cells), `filter grain --as-layer`, `render splash|droplets|ice`,
+    `filter distort|displace|glitch`, `transform warp --preset arc`
+    (`docs/guides/cookbook/textures-and-liquids.md`).
 11. Designing from a brief (poster, flyer, ad, cover, social post): do not start from
     commands. `skills/pixelox-design/SKILL.md` is the playbook: pick 2 to 4 of its 126
     studied designs (`references/index.md`), combine layout, palette, and one effect
