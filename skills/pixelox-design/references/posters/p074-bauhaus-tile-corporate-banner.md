@@ -139,18 +139,14 @@ pixelox shape path banner.pxo --in-place --name Yellow --d 'M 1240 0 h 180 v 180
 pixelox shape path banner.pxo --in-place --name Orange --d 'M 1240 0 h 90 v 180 h -90 Z M 1429 270 A 81 81 0 1 1 1591 270 A 81 81 0 1 1 1429 270 Z M 1249 450 A 81 81 0 1 1 1411 450 A 81 81 0 1 1 1249 450 Z M 889 810 A 81 81 0 1 1 1051 810 A 81 81 0 1 1 889 810 Z' --fill '#fe7400'
 pixelox shape path banner.pxo --in-place --name Teal --d 'M 1420 360 L 1600 360 L 1600 540 Z M 880 540 L 1060 540 L 1060 720 Z' --fill '#0a8ec0'
 pixelox shape path banner.pxo --in-place --name RedMotif --d 'M 1060 360 A 180 180 0 0 1 1240 540 L 1060 540 Z' --fill '#ff162e'
-pixelox text add banner.pxo --in-place --name Label --content "COMMUNITY" --font Avenir --weight 300 --size 6% --tracking 40 --color '#222222'
-pixelox transform move banner.pxo --in-place --layer Label --to 6.3%,7.9% --anchor tl
-pixelox text add banner.pxo --in-place --name Title --content $'OPEN\nFORUM' --font "Avenir Next" --weight 900 --size 10% --tracking 10 --leading 92% --color '#ff162e'
-pixelox transform move banner.pxo --in-place --layer Title --to 6.3%,17% --anchor tl
+pixelox text add banner.pxo --in-place --name Label --content "COMMUNITY" --font Avenir --weight 300 --size 6% --tracking 40 --color '#222222' --at 6.3%,7.9% --anchor-to ink
+pixelox text add banner.pxo --in-place --name Title --content $'OPEN\nFORUM' --font @geometric-sans --weight 900 --size 10% --tracking 10 --leading 92% --color '#ff162e' --at 6.3%,17% --anchor-to ink
 pixelox text add banner.pxo --in-place --name Sub --content "Quarterly Update" --font Avenir --weight 300 --style italic --size 5.4% --tracking 20 --color '#222222' --at 6.3%,40% --anchor l
-pixelox text add banner.pxo --in-place --name Weekday --content "Thursday" --font "Avenir Next" --weight 700 --size 5.6% --color '#111111' --at 6.3%,52% --anchor l
-pixelox text add banner.pxo --in-place --name MonthDay --content "JUNE 12" --font "Avenir Next" --weight 900 --size 12.4% --tracking 10 --color '#111111'
-pixelox transform move banner.pxo --in-place --layer MonthDay --to 6.3%,56% --anchor tl
-pixelox text add banner.pxo --in-place --name Suffix --content "th" --font "Avenir Next" --weight 900 --size 5.4% --color '#111111' --at 38%,57.6% --anchor l
-pixelox text add banner.pxo --in-place --name Year --content "2031" --font "Avenir Next" --weight 900 --size 11.4% --tracking 10 --color '#111111'
-pixelox transform move banner.pxo --in-place --layer Year --to 6.3%,67.6% --anchor tl
-pixelox text add banner.pxo --in-place --name Para --content $'Join the whole team for an open hour of news, numbers, and questions.\nWe will share what shipped this quarter, what slipped and why,\nand what we plan to build next. Bring a question or send it ahead;\nevery one of them gets an answer on the day or in writing after.\nCoffee from nine, start at half past, done by eleven.' --font "Helvetica Neue" --weight 400 --size 2.1% --leading 130% --color '#444444' --at 6.3%,83% --anchor tl
+pixelox text add banner.pxo --in-place --name Weekday --content "Thursday" --font @geometric-sans --weight 700 --size 5.6% --color '#111111' --at 6.3%,52% --anchor l
+pixelox text add banner.pxo --in-place --name MonthDay --content "JUNE 12" --font @geometric-sans --weight 900 --size 12.4% --tracking 10 --color '#111111' --at 6.3%,56% --anchor-to ink
+pixelox text add banner.pxo --in-place --name Suffix --content "th" --font @geometric-sans --weight 900 --size 5.4% --color '#111111' --at 38%,57.6% --anchor l
+pixelox text add banner.pxo --in-place --name Year --content "2031" --font @geometric-sans --weight 900 --size 11.4% --tracking 10 --color '#111111' --at 6.3%,67.6% --anchor-to ink
+pixelox text add banner.pxo --in-place --name Para --content $'Join the whole team for an open hour of news, numbers, and questions.\nWe will share what shipped this quarter, what slipped and why,\nand what we plan to build next. Bring a question or send it ahead;\nevery one of them gets an answer on the day or in writing after.\nCoffee from nine, start at half past, done by eleven.' --font @neo-grotesque --weight 400 --size 2.1% --leading 130% --color '#444444' --at 6.3%,83% --anchor tl
 pixelox export banner.pxo -o banner.png
 ```
 

@@ -148,20 +148,20 @@ pixelox filter halftone art.pxo --in-place --layer Subject --cell 10 --angle 0 -
 pixelox shape ellipse art.pxo --in-place --name Tint --rect 40%,49%,30%x10% --fill '#e0283c'
 pixelox layer clip art.pxo --in-place --layer Tint
 pixelox layer blend art.pxo --in-place --layer Tint --mode multiply
-pixelox text add art.pxo --in-place --name Word1 --content "SPOKEN" --font "Avenir Next" --weight 900 --size 13.4% --tracking 30 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Word1 --content "SPOKEN" --font @geometric-sans --weight 900 --size 13.4% --tracking 30 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Word1 --degrees -90
 pixelox transform move art.pxo --in-place --layer Word1 --to 5.8%,73% --anchor bl
-pixelox text add art.pxo --in-place --name Word2 --content "ACT" --font "Avenir Next" --weight 900 --size 13.4% --tracking 30 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Word2 --content "ACT" --font @geometric-sans --weight 900 --size 13.4% --tracking 30 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Word2 --degrees -90
 pixelox transform move art.pxo --in-place --layer Word2 --to 81.5%,91.5% --anchor bl
-pixelox text add art.pxo --in-place --name Date --content "24.04.2031" --font "Avenir Next" --weight 600 --size 4% --tracking 600 --color '#f6ecdf' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Date --content "24.04.2031" --font @geometric-sans --weight 600 --size 4% --tracking 600 --color '#f6ecdf' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Date --degrees -90
 pixelox transform move art.pxo --in-place --layer Date --to 24.5%,92% --anchor bl
-pixelox text add art.pxo --in-place --name Time --content "20:30" --font "Avenir Next" --weight 600 --size 4% --tracking 600 --color '#f6ecdf' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Time --content "20:30" --font @geometric-sans --weight 600 --size 4% --tracking 600 --color '#f6ecdf' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Time --degrees -90
 pixelox transform move art.pxo --in-place --layer Time --to 34%,92.5% --anchor bl
-pixelox text add art.pxo --in-place --name Body --content $'DOORS OPEN AT SEVEN FOR A NIGHT\nOF NEW WORK BY SIX ARTISTS,\nWITH LIVE SOUND AND FILM\nIN THE MAIN HALL. ENTRY IS FREE\nBEFORE EIGHT.' --font "Avenir Next Condensed" --weight 600 --size 1.35% --leading 106% --tracking 80 --color '#ffffff' --at 41%,85.3% --anchor tl
-pixelox text add art.pxo --in-place --name Side --content $'A SECOND SHORT NOTE GOES HERE,\nFIVE LINES OF SMALL CAPITALS,\nSET ON ITS SIDE TO ECHO\nTHE TWO BIG WORDS AND FILL\nTHE RIGHT EDGE.' --font "Avenir Next Condensed" --weight 600 --size 2% --leading 108% --tracking 60 --color '#e8ddd0' --at 50%,50% --anchor c
+pixelox text add art.pxo --in-place --name Body --content $'DOORS OPEN AT SEVEN FOR A NIGHT\nOF NEW WORK BY SIX ARTISTS,\nWITH LIVE SOUND AND FILM\nIN THE MAIN HALL. ENTRY IS FREE\nBEFORE EIGHT.' --font @condensed --weight 600 --size 1.35% --leading 106% --tracking 80 --color '#ffffff' --at 41%,85.3% --anchor tl
+pixelox text add art.pxo --in-place --name Side --content $'A SECOND SHORT NOTE GOES HERE,\nFIVE LINES OF SMALL CAPITALS,\nSET ON ITS SIDE TO ECHO\nTHE TWO BIG WORDS AND FILL\nTHE RIGHT EDGE.' --font @condensed --weight 600 --size 2% --leading 108% --tracking 60 --color '#e8ddd0' --at 50%,50% --anchor c
 pixelox transform rotate art.pxo --in-place --layer Side --degrees -90
 pixelox transform move art.pxo --in-place --layer Side --to 81.5%,60% --anchor bl
 pixelox export art.pxo -o art.png
@@ -183,16 +183,16 @@ line starts.
   colors when the subject is a full portrait.
 * Suits gallery openings, club and festival nights, lecture series, record sleeves. As a
   series, keep the type tracks fixed and change only the cutout and one glow.
-* Pairs with T-paper-grain (amount 14, soft-light) over the glows to hide banding, and with
+* Pairs with T-paper-grain (`--amount 14`) over the glows to hide banding, and with
   T-glitch on the cutout for electronic music.
 
 ## 11. Pitfalls
 
 * Rotating the two big words in opposite directions (one up, one down). The reader then
   tilts twice. Turn every vertical line -90 degrees.
-* Building the halo by blurring a rasterized ellipse: the blur is cut off at the shape's
-  bounding box and leaves a visible rectangle. Use a radial gradient on a full layer and
-  squeeze it with `transform scale`, as in the recipe.
+* Building the halo from one blurred ellipse (`shape ellipse` with `filter gaussian`): it
+  fades evenly from the middle and has no pale rim. Use a radial gradient with a flat
+  inside on a full layer and squeeze it with `transform scale`, as in the recipe.
 * A halo that is brightest in the middle only. Behind the cutout nothing shows; the color
   must stay flat out to two thirds of the radius so an even ring appears around the subject.
 * Glows in adjacent corners, or a third glow. Two glows on one diagonal leave black in the

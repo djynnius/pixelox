@@ -7,7 +7,7 @@ style: [photo-composite, grunge, type-led]
 format: portrait-4x5
 archetype: A-text-behind-subject
 palette: ['#e8fb01', '#050505', '#2c3212', '#f4f4f4']
-techniques: [T-text-behind-subject, T-image-in-type, T-duotone, T-brush-swash, T-grunge, T-script-overlap, T-label-box, T-fit-width, T-stretch-type]
+techniques: [T-text-behind-subject, T-image-in-type, T-duotone, T-brush-swash, T-grunge, T-script-overlap, T-label-box, T-fit-width, T-stretch-type, T-icon-row]
 needs: [subject-cutout, photo]
 ---
 
@@ -112,8 +112,9 @@ script), and one light tracked sans for the footer.
 ## 7. Effects and textures
 
 * **T-text-behind-subject** with **T-image-in-type**: letters, then the city clipped to
-  them, then the man. The letters are Impact forced to `930x860` with `transform scale`
-  (rasterized, warning PXW2003).
+  them, then the man. The letters are narrowed with `--scale-x 58.4%` and fitted with
+  `--fit-width 930` (**T-stretch-type**), which makes them about 860 px tall; they stay
+  live text.
 * **T-brush-swash** four times, all from `scripts/brush.js`: the black bottom band
   (placed with an explicit `--size 1500x`, centered on the bottom edge so half of it
   hangs off the canvas, rotated 3 degrees), the left edge smear (rotated 82 degrees), the
@@ -124,9 +125,13 @@ script), and one light tracked sans for the footer.
 * **T-grunge**, dirt layer only: black specks and scratches at 70% on the yellow.
 * **T-script-overlap**: yellow script over the feet of the white wordmark, both tilted.
 * **T-label-box**: the slanted black tag with yellow text.
-* Social discs: one `shape line` with `--dash 0,50 --cap round`.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* Social discs: one `shape line` with `--dash 0,50 --cap round` draws the three white
+  discs; a black `shape icon` sits on each (**T-icon-row**: `share-2`, `at-sign`,
+  `message-circle`, 20 px, `--stroke-width 2.5`). The icon set has no brand logos; place
+  the user's own social logos as images if they are needed.
+* **T-fit-width**: the giant letters and the brush wordmark are set to exact widths with
+  `--fit-width`; the wordmark is placed by its center (`--anchor c --anchor-to ink`) and
+  then rotated in place.
 
 ## 8. Hierarchy and eye path
 
@@ -156,9 +161,7 @@ pixelox comp place promo.pxo specks.png --in-place --as Specks --fit cover
 pixelox layer opacity promo.pxo --in-place --layer Specks --value 70
 pixelox comp place promo.pxo edge.png --in-place --as EdgeL --at 0%,58% --anchor c
 pixelox transform rotate promo.pxo --in-place --layer EdgeL --degrees 82
-pixelox text add promo.pxo --in-place --name Letters --content "VYB" --font Impact --size 40% --tracking -40 --color '#11100a'
-pixelox transform scale promo.pxo --in-place --layer Letters --size 930x860
-pixelox transform move promo.pxo --in-place --layer Letters --to 52%,12.5% --anchor t
+pixelox text add promo.pxo --in-place --name Letters --content "VYB" --font @condensed-heavy --scale-x 58.4% --fit-width 930 --tracking -40 --color '#11100a' --at 52%,12.5% --anchor t --anchor-to ink
 pixelox comp place promo.pxo photo.png --in-place --as City --fit cover
 pixelox adjust gradient-map promo.pxo --in-place --layer City --stops '#070803@0,#2c3212@0.5,#93a318@1'
 pixelox layer clip promo.pxo --in-place --layer City
@@ -166,10 +169,8 @@ pixelox comp place promo.pxo subject.png --in-place --as Subject --size x1150 --
 pixelox adjust clarity promo.pxo --in-place --layer Subject --amount 40
 pixelox comp place promo.pxo band.png --in-place --as Band --size 1500x --at 50%,100% --anchor c
 pixelox transform rotate promo.pxo --in-place --layer Band --degrees 3
-pixelox text add promo.pxo --in-place --name BrushWord --content "VYB" --font "Avenir Next Condensed" --weight 900 --style italic --size 22% --color '#1a1a1a'
-pixelox transform scale promo.pxo --in-place --layer BrushWord --size 500x
+pixelox text add promo.pxo --in-place --name BrushWord --content "VYB" --font @condensed --weight 900 --style italic --fit-width 500 --color '#1a1a1a' --at 34.5%,78% --anchor c --anchor-to ink
 pixelox transform rotate promo.pxo --in-place --layer BrushWord --degrees -9
-pixelox transform move promo.pxo --in-place --layer BrushWord --to 34.5%,78% --anchor c
 pixelox comp place promo.pxo drybrush.png --in-place --as DryFill --at 34.5%,78% --anchor c
 pixelox transform rotate promo.pxo --in-place --layer DryFill --degrees -9
 pixelox layer clip promo.pxo --in-place --layer DryFill
@@ -178,17 +179,20 @@ pixelox transform rotate promo.pxo --in-place --layer Script --degrees -7
 pixelox comp place promo.pxo swoosh.png --in-place --as Swoosh --at 54%,92.5% --anchor c
 pixelox transform rotate promo.pxo --in-place --layer Swoosh --degrees -7
 pixelox shape path promo.pxo --in-place --name Crown --d 'M 128 62 L 122 30 L 142 46 L 162 22 L 182 46 L 202 30 L 196 62 Z' --fill none --stroke '#050505' --stroke-width 5
-pixelox text add promo.pxo --in-place --name Logo --content "VYB" --font "Arial Black" --size 6.4% --tracking -20 --color '#050505' --at 15.8%,8.2% --anchor c
-pixelox text add promo.pxo --in-place --name Tagline --content "STREET  .  STUDIO  .  STAGE" --font "Avenir Next" --weight 700 --size 0.95% --tracking 120 --color '#050505' --at 15.8%,12.3% --anchor c
-pixelox text add promo.pxo --in-place --name SloganTR --content $'THINK LOUDER\nMOVE FASTER' --font "Avenir Next Condensed" --weight 800 --style italic --size 3% --leading 105% --align center --color '#050505' --at 85.5%,5.5% --anchor c
-pixelox text add promo.pxo --in-place --name SloganL --content $'WEAR\nYOUR\nNOISE' --font "Avenir Next Condensed" --weight 800 --style italic --size 3% --leading 105% --color '#050505' --at 2.4%,30% --anchor l
-pixelox text add promo.pxo --in-place --name Claim --content $'STAND\nOUT LOUD\nWITH' --font "Avenir Next Condensed" --weight 900 --style italic --size 3.4% --leading 100% --color '#050505' --at 80.4%,71.2% --anchor l
+pixelox text add promo.pxo --in-place --name Logo --content "VYB" --font @heavy-wide --size 6.4% --tracking -20 --color '#050505' --at 15.8%,8.2% --anchor c
+pixelox text add promo.pxo --in-place --name Tagline --content "STREET  .  STUDIO  .  STAGE" --font @geometric-sans --weight 700 --size 0.95% --tracking 120 --color '#050505' --at 15.8%,12.3% --anchor c
+pixelox text add promo.pxo --in-place --name SloganTR --content $'THINK LOUDER\nMOVE FASTER' --font @condensed --weight 800 --style italic --size 3% --leading 105% --align center --color '#050505' --at 85.5%,5.5% --anchor c
+pixelox text add promo.pxo --in-place --name SloganL --content $'WEAR\nYOUR\nNOISE' --font @condensed --weight 800 --style italic --size 3% --leading 105% --color '#050505' --at 2.4%,30% --anchor l
+pixelox text add promo.pxo --in-place --name Claim --content $'STAND\nOUT LOUD\nWITH' --font @condensed --weight 900 --style italic --size 3.4% --leading 100% --color '#050505' --at 80.4%,71.2% --anchor l
 pixelox shape path promo.pxo --in-place --name Tag --d 'M 908 1036 L 1054 1022 L 1046 1124 L 900 1138 Z' --fill '#050505'
-pixelox text add promo.pxo --in-place --name TagText --content "VYB" --font "Avenir Next Condensed" --weight 900 --style italic --size 5.4% --color '#e8fb01' --at 90.4%,80% --anchor c
+pixelox text add promo.pxo --in-place --name TagText --content "VYB" --font @condensed --weight 900 --style italic --size 5.4% --color '#e8fb01' --at 90.4%,80% --anchor c
 pixelox shape line promo.pxo --in-place --name FootRule --from 3.4%,92% --to 3.4%,98.5% --stroke '#ffffff' --stroke-width 2
-pixelox text add promo.pxo --in-place --name Foot --content $'MADE\nFOR THE\nSTREET' --font "Avenir Next" --weight 500 --size 1.4% --tracking 350 --leading 130% --color '#ffffff' --at 6.5%,95.4% --anchor l
+pixelox text add promo.pxo --in-place --name Foot --content $'MADE\nFOR THE\nSTREET' --font @geometric-sans --weight 500 --size 1.4% --tracking 350 --leading 130% --color '#ffffff' --at 6.5%,95.4% --anchor l
 pixelox shape line promo.pxo --in-place --name Social --from 77.6%,95.6% --to 87.2%,95.6% --stroke '#ffffff' --stroke-width 34 --dash 0,50 --cap round
-pixelox text add promo.pxo --in-place --name Handle --content "/VYB" --font "Avenir Next" --weight 500 --size 1.9% --color '#ffffff' --at 90.5%,95.6% --anchor l
+pixelox shape icon promo.pxo share-2 --in-place --name Social1 --size 20 --at 838,1291 --anchor c --color '#050505' --stroke-width 2.5
+pixelox shape icon promo.pxo at-sign --in-place --name Social2 --size 20 --at 888,1291 --anchor c --color '#050505' --stroke-width 2.5
+pixelox shape icon promo.pxo message-circle --in-place --name Social3 --size 20 --at 938,1291 --anchor c --color '#050505' --stroke-width 2.5
+pixelox text add promo.pxo --in-place --name Handle --content "/VYB" --font @geometric-sans --weight 500 --size 1.9% --color '#ffffff' --at 90.5%,95.6% --anchor l
 pixelox export promo.pxo -o promo.png
 ```
 

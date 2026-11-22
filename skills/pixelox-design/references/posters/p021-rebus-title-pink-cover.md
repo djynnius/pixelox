@@ -87,8 +87,8 @@ flat color. The only added effect is the contact shadow from **T-spotlight**.
 ## 7. Effects and textures
 
 * Contact shadow (the shadow step of **T-spotlight**): `shape ellipse` in a darker shade of
-  the ground, rasterized, `filter gaussian --sigma 12`, 60% opacity, 20% W wide and 2.2% H
-  tall, centered under the feet.
+  the ground, blurred with `filter gaussian --sigma 12` (the filter stays live on the
+  shape), 60% opacity, 20% W wide and 2.2% H tall, centered under the feet.
 * **T-mono-on-color**: `adjust bw` on the cutout; no other grade.
 * Nothing else. No grain, no vignette: the flatness is what makes it feel expensive.
 
@@ -112,17 +112,16 @@ darken the stand-in; with a naturally dark subject keep `adjust bw` and drop `le
 ```bash
 pixelox new -o rebus.pxo --size 1080x1620 --fill '#fbcec9'
 pixelox shape ellipse rebus.pxo --in-place --name Shadow --rect 36%,53.7%,20%x2.2% --fill '#c99a96'
-pixelox layer rasterize rebus.pxo --in-place --layer Shadow
 pixelox filter gaussian rebus.pxo --in-place --layer Shadow --sigma 12
 pixelox layer opacity rebus.pxo --in-place --layer Shadow --value 60
 pixelox comp place rebus.pxo subject.png --in-place --as Creature --size x340 --at 46%,55% --anchor b
 pixelox adjust bw rebus.pxo --in-place --layer Creature
 pixelox adjust levels rebus.pxo --in-place --layer Creature --gamma 0.55 --out-white 120
-pixelox text add rebus.pxo --in-place --name Article --content "The" --font Baskerville --weight 400 --size 4% --tracking 80 --color '#281c19' --at 38.8%,43.6% --anchor r
-pixelox text add rebus.pxo --in-place --name Possessive --content "’s" --font Baskerville --weight 400 --size 6.6% --color '#281c19' --at 60.5%,42.6% --anchor l
-pixelox text add rebus.pxo --in-place --name LastWord --content "Oath" --font Baskerville --weight 400 --size 6.6% --tracking 20 --color '#281c19'
+pixelox text add rebus.pxo --in-place --name Article --content "The" --font @oldstyle --weight 400 --size 4% --tracking 80 --color '#281c19' --at 38.8%,43.6% --anchor r
+pixelox text add rebus.pxo --in-place --name Possessive --content "’s" --font @oldstyle --weight 400 --size 6.6% --color '#281c19' --at 60.5%,42.6% --anchor l
+pixelox text add rebus.pxo --in-place --name LastWord --content "Oath" --font @oldstyle --weight 400 --size 6.6% --tracking 20 --color '#281c19'
 pixelox transform move rebus.pxo --in-place --layer LastWord --to 62.2%,58.2% --anchor tl
-pixelox text add rebus.pxo --in-place --name Author --content "Author Name" --font Baskerville --weight 400 --size 3.4% --tracking 100 --color '#281c19' --at 51%,90.4% --anchor c
+pixelox text add rebus.pxo --in-place --name Author --content "Author Name" --font @oldstyle --weight 400 --size 3.4% --tracking 100 --color '#281c19' --at 51%,90.4% --anchor c
 pixelox export rebus.pxo -o rebus.png
 ```
 

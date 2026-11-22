@@ -98,13 +98,15 @@ the wedges are drawn as shapes behind a cutout. Push the cutout's color with
 ## 7. Effects and textures
 
 * **T-text-behind-subject**: masthead, then cutout.
-* **T-fit-width**: the main masthead word is scaled to 89% W; `fx stroke` in white, 7 px
-  outside, fattens the stand-in face and closes the gaps between the letters.
-* **T-vertical-type**: the second word is rotated 90 degrees (reads top to bottom), scaled
-  to the masthead's height, and anchored by its top right corner.
+* **T-fit-width**: the main masthead word is fitted to 89% W (`--fit-width 960`); `fx
+  stroke` in white, 7 px outside, fattens the stand-in face and closes the gaps between
+  the letters.
+* **T-vertical-type**: the second word is fitted to the masthead's height while still
+  level (`--fit-width 262`), rotated 90 degrees (reads top to bottom), and anchored by its
+  top right corner.
 * Color blocks: `shape path` polygons; one radial gradient lightens the wall at the right.
-* **T-paper-grain**, amount 10, soft-light, 30%: just enough to stop the flat cyan from
-  banding.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`): just enough to stop the flat
+  cyan from banding.
 * No shadows, glows, or outlines on any type.
 
 ## 8. Hierarchy and eye path
@@ -128,28 +130,20 @@ pixelox fill gradient cover.pxo --in-place --layer Glow --kind radial --from 98%
 pixelox shape path cover.pxo --in-place --name RedPanel --d 'M 0 475 L 432 1132 L 432 1440 L 0 1440 Z' --fill '#b92630'
 pixelox shape path cover.pxo --in-place --name PanelEdge --d 'M 0 437 L 0 475 L 432 1132 L 457 1132 Z' --fill '#d9a85e'
 pixelox shape path cover.pxo --in-place --name Wedge --d 'M 1080 1100 L 1080 1440 L 985 1440 Z' --fill '#b07a15'
-pixelox text add cover.pxo --in-place --name Masthead --content "VIVID" --font "Avenir Next Condensed" --weight 900 --size 26% --tracking -20 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 960x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 2.6%,2.6% --anchor tl
+pixelox text add cover.pxo --in-place --name Masthead --content "VIVID" --font @condensed --weight 900 --fit-width 960 --tracking -20 --color '#ffffff' --at 2.6%,2.6% --anchor-to ink
 pixelox fx stroke cover.pxo --in-place --layer Masthead --width 7 --color '#ffffff' --position outside
-pixelox text add cover.pxo --in-place --name SideWord --content "& CURIOUS" --font "Avenir Next Condensed" --weight 900 --size 4% --color '#ffffff'
+pixelox text add cover.pxo --in-place --name SideWord --content "& CURIOUS" --font @condensed --weight 900 --fit-width 262 --color '#ffffff'
 pixelox transform rotate cover.pxo --in-place --layer SideWord --degrees 90
-pixelox transform scale cover.pxo --in-place --layer SideWord --size x262
 pixelox transform move cover.pxo --in-place --layer SideWord --to 96.2%,2.6% --anchor tr
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1400 --at 53%,100% --anchor b
 pixelox adjust vibrance cover.pxo --in-place --layer Subject --vibrance 35
-pixelox text add cover.pxo --in-place --name CoverLine --content $'COLOR\nRUNS\nTHE\nSHOW' --font "Avenir Next Condensed" --weight 275 --size 5% --leading 100% --tracking 150 --align center --color '#ffffff'
-pixelox transform move cover.pxo --in-place --layer CoverLine --to 13.4%,43% --anchor t
-pixelox text add cover.pxo --in-place --name List --content $'featuring\nAda Marlowe\nJune Okoye\nTess Rivera\nPaper Lanterns\nImani Castellan\nRosa van Dalen\nNoor Fields\nKit Hollis\nMarta Quinn\nDelia Sato\nHalcyon\nWren Abara' --font Menlo --weight 400 --size 1.45% --leading 114% --align center --color '#f6c9c9'
-pixelox transform move cover.pxo --in-place --layer List --to 13.2%,64.3% --anchor t
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 30
+pixelox text add cover.pxo --in-place --name CoverLine --content $'COLOR\nRUNS\nTHE\nSHOW' --font @condensed-hairline --size 5% --leading 100% --tracking 150 --align center --color '#ffffff' --at 13.4%,43% --anchor t --anchor-to ink
+pixelox text add cover.pxo --in-place --name List --content $'featuring\nAda Marlowe\nJune Okoye\nTess Rivera\nPaper Lanterns\nImani Castellan\nRosa van Dalen\nNoor Fields\nKit Hollis\nMarta Quinn\nDelia Sato\nHalcyon\nWren Abara' --font @mono --weight 400 --size 1.45% --leading 114% --align center --color '#f6c9c9' --at 13.2%,64.3% --anchor t --anchor-to ink
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export cover.pxo -o cover.png
 ```
 
-Change first: the masthead word (4 to 6 letters; the scale width stays 960 px), then the
+Change first: the masthead word (4 to 6 letters; `--fit-width` stays 960), then the
 three block colors, taking the wedge color from an accent in the subject's clothing. If
 the photo already has a colored backdrop, place it full-bleed under the Masthead layer
 (`comp place --fit cover`), then place the cutout of the same photo on top at the same

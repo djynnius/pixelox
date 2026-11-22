@@ -7,7 +7,7 @@ style: [photo-composite]
 format: portrait-a
 archetype: A-promo-stack
 palette: ['#4aa6d9', '#1175b7', '#243b59', '#ffffff', '#c34439', '#64bae9']
-techniques: [T-spotlight, T-fit-width, T-label-box, T-info-bar, T-cutout-drop-shadow, T-rules, T-water-splash, T-ice-cubes]
+techniques: [T-spotlight, T-fit-width, T-label-box, T-info-bar, T-cutout-drop-shadow, T-rules, T-water-splash, T-ice-cubes, T-condensation, T-icon-row]
 needs: [product-cutout, logo]
 ---
 
@@ -103,7 +103,8 @@ the light cut of the heavy sans in the footer.
   hero's base and makes a floor line.
 
 In a build, the ball is your round logo (`logo.png`) and the range is the same cutout
-repeated at different sizes, or your real packs.
+repeated at different sizes, or your real packs. The recipe renders the drops and the ice
+(`render droplets`, `render ice`); they are drawn, not photographed.
 
 ## 7. Effects and textures
 
@@ -115,11 +116,16 @@ repeated at different sizes, or your real packs.
 * **T-rules**: the two bars that tie the slogan to the left edge.
 * **T-cutout-drop-shadow**, soft variant, under the bottle and the ball.
 * **T-info-bar**, reduced to two facts with one divider.
-* Drops and ice: no generator makes real ones. The recipe uses `particles.js` rings for
-  drops and a wide, short strip of translucent `rect` shards (rendered at 860x200 so the
-  pile is flat) for ice. Use photographed ice cutouts when you have them.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
-* **T-ice-cubes** in [techniques.md](../techniques.md) is the tested library version of the ice cubes (`particles.js` with `shape=cube` draws fuller cubes than the shards here); start from it when reusing this idea.
+* Drops: **T-condensation**, used three ways. `render droplets` without `--layer` scatters
+  clear beads over the whole canvas (`--density 14 --size 4.5%`, no trickles, no mist), and
+  a linear gradient mask hides them above 17% H so none sits behind the headline. Then
+  `render droplets --layer Ball` and `--layer Hero` bead the ball and the bottle.
+* **T-ice-cubes**: four `render ice` groups of six cubes side by side (`--size 7%`,
+  `--spread 9%`, centers at 18, 39, 54, and 74% W) form one low pile. They come after the
+  ball and the bottle, so the cubes refract them, and before the range row, so the packs
+  stand in front.
+* **T-icon-row**: the rider pictogram is `shape icon motorbike`, 72 px, white.
+* **T-water-splash** in [techniques.md](../techniques.md) is the library technique for a full splash around the bottle; add it when you want more water than drops.
 
 ## 8. Hierarchy and eye path
 
@@ -137,55 +143,52 @@ about 7.5 : 7 : 2.8 : 1.4 : 1.
 here. Replace the five `Pack` layers with your real range (the original shows 13 packs).
 
 ```bash
-pixelox render js scripts/particles.js -o drops.png --size 1080x1528 --seed 9 --param shape=ring --param colors='#ffffff,#d6efff' --param count=45 --param min=0.8 --param max=3.4 --param amin=0.35 --param amax=0.85 --param focus='0.45,0.47,0.36'
-pixelox render js scripts/particles.js -o ice.png --size 860x200 --seed 3 --param shape=rect --param colors='#ffffff,#d8eefc,#b9dcf5' --param count=80 --param min=14 --param max=24 --param jitter=180 --param amin=0.5 --param amax=0.95
 pixelox new -o flyer.pxo --size 1080x1528 --fill '#0a86c8'
 pixelox layer add flyer.pxo --in-place --name Ground
 pixelox fill gradient flyer.pxo --in-place --layer Ground --kind radial --from 52%,48% --to 52%,112% --stops '#6cc0ee@0,#2a9bd8@0.45,#0a7fc2@0.8,#0064ad@1'
 pixelox shape ellipse flyer.pxo --in-place --name Floor --rect -20%,57%,140%x70% --fill '#3aaae2' --opacity 70
-pixelox comp place flyer.pxo drops.png --in-place --as Drops --fit cover
+pixelox render droplets flyer.pxo --in-place --name Drops --density 14 --size 4.5% --trickles 0 --mist 0 --seed 9
+pixelox mask add flyer.pxo --in-place --layer Drops --gradient linear --from 0,27% --to 0,17%
 pixelox shape path flyer.pxo --in-place --name Badge --d 'M 737 118 C 800 62 850 128 930 82 C 990 44 1040 62 1080 30 L 1080 252 C 1040 300 990 244 930 272 C 860 300 800 252 737 316 Z' --fill '#64bae9'
-pixelox text add flyer.pxo --in-place --name Offer --content $'BUY\nGET' --font "Avenir Next" --weight 900 --size 4% --leading 92% --color '#ffffff'
+pixelox text add flyer.pxo --in-place --name Offer --content $'BUY\nGET' --font @geometric-sans --weight 900 --size 4% --leading 92% --color '#ffffff'
 pixelox transform move flyer.pxo --in-place --layer Offer --to 743,134 --anchor tl
-pixelox text add flyer.pxo --in-place --name One --content "1" --font "Avenir Next" --weight 900 --size 11% --color '#ffffff'
+pixelox text add flyer.pxo --in-place --name One --content "1" --font @geometric-sans --weight 900 --size 11% --color '#ffffff'
 pixelox transform move flyer.pxo --in-place --layer One --to 906,126 --anchor t
-pixelox text add flyer.pxo --in-place --name Free --content "FREE" --font "Avenir Next" --weight 900 --size 4.4% --color '#ffffff'
-pixelox transform scale flyer.pxo --in-place --layer Free --size 122x
-pixelox transform move flyer.pxo --in-place --layer Free --to 950,155 --anchor tl
-pixelox text add flyer.pxo --in-place --name Headline --content "BRAND" --font "Avenir Next" --weight 900 --size 12% --color '#ffffff'
-pixelox transform scale flyer.pxo --in-place --layer Headline --size 497x
-pixelox transform move flyer.pxo --in-place --layer Headline --to 122,108 --anchor tl
+pixelox text add flyer.pxo --in-place --name Free --content "FREE" --font @geometric-sans --weight 900 --fit-width 122 --color '#ffffff' --at 950,155 --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Headline --content "BRAND" --font @geometric-sans --weight 900 --fit-width 497 --color '#ffffff' --at 122,108 --anchor-to ink
 pixelox fx drop-shadow flyer.pxo --in-place --layer Headline --offset 0,8 --blur 26 --color '#0a4f96' --opacity 60
 pixelox shape rect flyer.pxo --in-place --name Bar1 --rect 0,286,125x7 --fill '#1175b7'
 pixelox shape rect flyer.pxo --in-place --name Bar2 --rect 0,315,330x7 --fill '#1175b7'
-pixelox text add flyer.pxo --in-place --name Slogan --content $'THIRSTY ON THE ROAD?\nGRAB A BRAND' --font "Arial Rounded MT Bold" --size 1.6% --tracking 20 --leading 118% --align right --color '#ffffff' --at 46.7%,18% --anchor tr
-pixelox shape ellipse flyer.pxo --in-place --name Wheel1 --rect 524,300,34x34 --fill none --stroke '#ffffff' --stroke-width 6
-pixelox shape ellipse flyer.pxo --in-place --name Wheel2 --rect 592,300,34x34 --fill none --stroke '#ffffff' --stroke-width 6
-pixelox shape path flyer.pxo --in-place --name Frame --d 'M 541 317 L 562 284 L 596 284 L 609 317 M 562 284 L 577 317 M 590 272 L 604 272' --fill none --stroke '#ffffff' --stroke-width 6 --cap round --join round
+pixelox text add flyer.pxo --in-place --name Slogan --content $'THIRSTY ON THE ROAD?\nGRAB A BRAND' --font @rounded-heavy --size 1.6% --tracking 20 --leading 118% --align right --color '#ffffff' --at 46.7%,18% --anchor tr
+pixelox shape icon flyer.pxo motorbike --in-place --name Rider --size 72 --at 575,303 --anchor c --color '#ffffff'
 pixelox comp place flyer.pxo logo.png --in-place --as Ball --size 400x --at 40%,44% --anchor c
 pixelox fx drop-shadow flyer.pxo --in-place --layer Ball --offset 0,20 --blur 50 --color '#063a73' --opacity 45
 pixelox comp place flyer.pxo product.png --in-place --as Hero --size x600 --at 64.5%,40% --anchor c
 pixelox transform rotate flyer.pxo --in-place --layer Hero --degrees 18
 pixelox fx drop-shadow flyer.pxo --in-place --layer Hero --offset -12,18 --blur 40 --color '#063a73' --opacity 45
-pixelox comp place flyer.pxo ice.png --in-place --as Ice --at 46%,59.5% --anchor c
+pixelox render droplets flyer.pxo --in-place --layer Ball --name BallDrops --density 25 --trickles 0
+pixelox render droplets flyer.pxo --in-place --layer Hero --name HeroDrops --density 40 --trickles 2
+pixelox render ice flyer.pxo --in-place --name Ice1 --at 18%,59.5% --count 6 --size 7% --spread 9% --seed 3
+pixelox render ice flyer.pxo --in-place --name Ice2 --at 39%,60.5% --count 6 --size 7% --spread 9% --seed 7
+pixelox render ice flyer.pxo --in-place --name Ice3 --at 54%,60.5% --count 6 --size 7% --spread 9% --seed 11
+pixelox render ice flyer.pxo --in-place --name Ice4 --at 74%,59.5% --count 6 --size 7% --spread 9% --seed 5
 pixelox comp place flyer.pxo product.png --in-place --as Pack1 --size x240 --at 17%,85.5% --anchor b
 pixelox comp place flyer.pxo product.png --in-place --as Pack2 --size x290 --at 33.5%,85.5% --anchor b
 pixelox comp place flyer.pxo product.png --in-place --as Pack3 --size x320 --at 50%,85.5% --anchor b
 pixelox comp place flyer.pxo product.png --in-place --as Pack4 --size x290 --at 66.5%,85.5% --anchor b
 pixelox comp place flyer.pxo product.png --in-place --as Pack5 --size x240 --at 83%,85.5% --anchor b
 pixelox shape rect flyer.pxo --in-place --name FootBar --rect 0,92.1%,100%x7.9% --fill '#243b59'
-pixelox text add flyer.pxo --in-place --name Address --content "NO: 17, EXAMPLE STREET, YOUR CITY" --font "Avenir Next" --weight 400 --size 2.2% --color '#ffffff'
-pixelox transform scale flyer.pxo --in-place --layer Address --size 530x
-pixelox transform move flyer.pxo --in-place --layer Address --to 3.7%,95.9% --anchor l
+pixelox text add flyer.pxo --in-place --name Address --content "NO: 17, EXAMPLE STREET, YOUR CITY" --font @geometric-sans --weight 400 --fit-width 530 --color '#ffffff' --at 3.7%,95.9% --anchor l --anchor-to ink
 pixelox shape line flyer.pxo --in-place --name Divider --from 58%,94.6% --to 58%,97.3% --stroke '#ffffff' --stroke-width 3
-pixelox text add flyer.pxo --in-place --name Contact --content "CONTACT: 0000 555 010" --font "Avenir Next" --weight 400 --size 2.2% --color '#ffffff'
-pixelox transform scale flyer.pxo --in-place --layer Contact --size 360x
-pixelox transform move flyer.pxo --in-place --layer Contact --to 96.3%,95.9% --anchor r
+pixelox text add flyer.pxo --in-place --name Contact --content "CONTACT: 0000 555 010" --font @geometric-sans --weight 400 --fit-width 360 --color '#ffffff' --at 96.3%,95.9% --anchor r --anchor-to ink
 pixelox export flyer.pxo -o flyer.png
 ```
 
-Change first: the headline (3 to 7 letters; refit with `transform scale`), the offer words,
-then the ground stops to your brand color (keep light center, darker rim).
+Change first: the headline (3 to 7 letters; `--fit-width 497` refits it), the offer words,
+then the ground stops to your brand color (keep light center, darker rim). Ice and
+droplets show what is behind them when their command runs, and the cubes fall differently
+when lines before them change: after any edit run the recipe again from the top, look,
+and change an ice `--seed` if a cube covers the label.
 
 ## 10. Variations and pairings
 
@@ -205,8 +208,10 @@ then the ground stops to your brand color (keep light center, darker rim).
   largest, the offer in its own shape in the corner.
 * The range row at uneven baselines or with gaps looks like clutter. One baseline, slight
   overlaps, tallest in the middle.
-* Too many drops, too opaque: they read as polka dots. 30 to 45, in two sizes, alpha under
-  0.85, none on the type.
+* Too many drops read as polka dots. Keep the canvas drops at `--density` 10 to 16 and
+  mask them away from the type.
+* One ice group with a large `--spread` climbs over the ball and the range row. Several
+  small groups in a row make a flat pile.
 * Footer text that touches the bar's edges or runs under the divider. Keep 3.7% W padding
   and put the divider in the gap, not at the canvas center.
 * A flat single-blue ground: the hero loses its stage. Keep the light center behind it.

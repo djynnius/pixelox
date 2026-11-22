@@ -7,7 +7,7 @@ style: [photo-composite, geometric, flat]
 format: square
 archetype: A-split-field
 palette: ['#343434', '#ffffff', '#606060', '#51db02', '#1e1e1e']
-techniques: [T-mono-on-color, T-cutout-drop-shadow, T-label-box, T-pill-button, T-geo-shapes]
+techniques: [T-mono-on-color, T-cutout-drop-shadow, T-label-box, T-pill-button, T-geo-shapes, T-icon-row]
 needs: subject-cutout
 ---
 
@@ -58,8 +58,8 @@ frame; the frame is not part of the design.
 10. Phone pill: green, fully round, with a bold dark-green phone number and a tracked web
     address under it.
 11. Contact pill: dark, small, with a white arrow and a green bold label.
-12. Logo text (two short white lines, top left); four small green discs with a tiny gray
-    caption (top right).
+12. Logo text (two short white lines, top left); four small green discs, each with a tiny
+    white social glyph, over a tiny gray caption (top right).
 
 ## 4. Palette
 
@@ -114,7 +114,11 @@ the white field.
   dark list panel (radius 16 px).
 * **T-pill-button**: the green phone pill and the dark contact pill with `shape arrow`.
 * Wide tracking (600 to 800) on the small lines of the headline stack makes them as wide
-  as the big words without making them louder.
+  as the big words without making them louder. The two big words are placed by the top
+  center of their letters (`--anchor t --anchor-to ink`).
+* **T-icon-row**, tiny: a 12 px white `shape icon` on each 18 px green disc. The bundled
+  icons have no social-network logos, so neutral glyphs stand in (`at-sign`, `globe`,
+  `message-circle`, `share-2`).
 * No grain; flat fills only.
 
 ## 8. Hierarchy and eye path
@@ -147,31 +151,33 @@ pixelox fx drop-shadow post.pxo --in-place --layer Subject --offset 18,10 --blur
 pixelox text add post.pxo --in-place --name LeadIn --content "We Are" --font Avenir --weight 300 --size 2.1% --tracking 600 --color '#3a3a3a' --at 73.7%,20.3% --anchor c
 pixelox shape rect post.pxo --in-place --name WordBar --rect 637,232,320x27 --fill '#1e1e1e'
 pixelox text add post.pxo --in-place --name BarWord --content "Friendly" --font Avenir --weight 400 --size 1.9% --tracking 600 --color '#ffffff' --at 73.8%,22.75% --anchor c
-pixelox text add post.pxo --in-place --name Light --content "Practical" --font Avenir --weight 300 --size 7.2% --color '#1e1e1e'
-pixelox transform move post.pxo --in-place --layer Light --to 73%,25.8% --anchor t
-pixelox text add post.pxo --in-place --name Heavy --content "Marketing" --font "Avenir Next" --weight 900 --size 7.4% --tracking=-10 --color '#51db02'
-pixelox transform move post.pxo --in-place --layer Heavy --to 72%,31.6% --anchor t
+pixelox text add post.pxo --in-place --name Light --content "Practical" --font Avenir --weight 300 --size 7.2% --color '#1e1e1e' --at 73%,25.8% --anchor t --anchor-to ink
+pixelox text add post.pxo --in-place --name Heavy --content "Marketing" --font @geometric-sans --weight 900 --size 7.4% --tracking=-10 --color '#51db02' --at 72%,31.6% --anchor t --anchor-to ink
 pixelox text add post.pxo --in-place --name Tail --content "Studio" --font Avenir --weight 300 --size 2.1% --tracking 800 --color '#6a6a6a' --at 73%,40.6% --anchor c
 pixelox shape ellipse post.pxo --in-place --name Badge --rect 117,473,190x190 --fill '#3a3a3a'
-pixelox text add post.pxo --in-place --name Badge1 --content "Got A" --font "Avenir Next" --weight 500 --size 1.8% --tracking 150 --color '#ffffff' --at 19.6%,49.5% --anchor c
+pixelox text add post.pxo --in-place --name Badge1 --content "Got A" --font @geometric-sans --weight 500 --size 1.8% --tracking 150 --color '#ffffff' --at 19.6%,49.5% --anchor c
 pixelox text add post.pxo --in-place --name Badge2 --content "Plan" --font Avenir --weight 300 --size 4.2% --tracking 150 --color '#ffffff' --at 19.6%,52.8% --anchor c
-pixelox text add post.pxo --in-place --name Badge3 --content "Or A Hunch?" --font "Avenir Next" --weight 500 --size 1.8% --tracking 150 --color '#ffffff' --at 19.6%,56.2% --anchor c
+pixelox text add post.pxo --in-place --name Badge3 --content "Or A Hunch?" --font @geometric-sans --weight 500 --size 1.8% --tracking 150 --color '#ffffff' --at 19.6%,56.2% --anchor c
 pixelox shape rect post.pxo --in-place --name TabWhite --rect 690,551,112x45 --radius 8 --fill '#ffffff'
 pixelox fx drop-shadow post.pxo --in-place --layer TabWhite --offset 0,6 --blur 16 --opacity 25
 pixelox shape rect post.pxo --in-place --name TabGreen --rect 802,551,158x45 --radius 8 --fill '#51db02'
-pixelox text add post.pxo --in-place --name TabText1 --content "What We Do" --font "Avenir Next" --weight 500 --size 1.35% --color '#3a3a3a' --at 69.1%,53.1% --anchor c
-pixelox text add post.pxo --in-place --name TabText2 --content "Our Services" --font "Avenir Next" --weight 700 --size 1.75% --color '#1e3b0a' --at 81.6%,53.1% --anchor c
+pixelox text add post.pxo --in-place --name TabText1 --content "What We Do" --font @geometric-sans --weight 500 --size 1.35% --color '#3a3a3a' --at 69.1%,53.1% --anchor c
+pixelox text add post.pxo --in-place --name TabText2 --content "Our Services" --font @geometric-sans --weight 700 --size 1.75% --color '#1e3b0a' --at 81.6%,53.1% --anchor c
 pixelox shape rect post.pxo --in-place --name ListPanel --rect 712,596,228x172 --radius 16 --fill '#3c3c3c'
-pixelox text add post.pxo --in-place --name List --content $'1 Launch Campaigns\n2 Brand Refresh\n3 Social Content\n4 Growth Reports' --font "Avenir Next" --weight 600 --size 1.4% --leading 215% --color '#ffffff' --at 68%,63.4% --anchor l
+pixelox text add post.pxo --in-place --name List --content $'1 Launch Campaigns\n2 Brand Refresh\n3 Social Content\n4 Growth Reports' --font @geometric-sans --weight 600 --size 1.4% --leading 215% --color '#ffffff' --at 68%,63.4% --anchor l
 pixelox shape rect post.pxo --in-place --name PhonePill --rect 50,965,342x65 --radius 33 --fill '#51db02'
-pixelox text add post.pxo --in-place --name Phone --content "000-555-0100" --font "Avenir Next" --weight 800 --size 2.5% --tracking 40 --color '#1e3b0a' --at 7.8%,91.4% --anchor l
-pixelox text add post.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 500 --size 1.5% --tracking 150 --color '#2f5f12' --at 7.8%,93.8% --anchor l
+pixelox text add post.pxo --in-place --name Phone --content "000-555-0100" --font @geometric-sans --weight 800 --size 2.5% --tracking 40 --color '#1e3b0a' --at 7.8%,91.4% --anchor l
+pixelox text add post.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 500 --size 1.5% --tracking 150 --color '#2f5f12' --at 7.8%,93.8% --anchor l
 pixelox shape rect post.pxo --in-place --name ContactPill --rect 868,985,158x41 --radius 21 --fill '#3a3a3a'
 pixelox shape arrow post.pxo --in-place --name ContactArrow --from 886,1006 --to 906,1006 --stroke '#ffffff' --stroke-width 2 --head-size 8
-pixelox text add post.pxo --in-place --name Contact --content "Contact Us" --font "Avenir Next" --weight 700 --size 1.5% --color '#51db02' --at 84.8%,93.1% --anchor l
-pixelox text add post.pxo --in-place --name Logo --content $'Logo\nHere' --font "Avenir Next" --weight 500 --size 2% --leading 100% --color '#ffffff' --at 4.6%,7.4% --anchor l
+pixelox text add post.pxo --in-place --name Contact --content "Contact Us" --font @geometric-sans --weight 700 --size 1.5% --color '#51db02' --at 84.8%,93.1% --anchor l
+pixelox text add post.pxo --in-place --name Logo --content $'Logo\nHere' --font @geometric-sans --weight 500 --size 2% --leading 100% --color '#ffffff' --at 4.6%,7.4% --anchor l
 pixelox shape path post.pxo --in-place --name Socials --d 'M 923 63 A 9 9 0 1 1 941 63 A 9 9 0 1 1 923 63 Z M 948 63 A 9 9 0 1 1 966 63 A 9 9 0 1 1 948 63 Z M 973 63 A 9 9 0 1 1 991 63 A 9 9 0 1 1 973 63 Z M 998 63 A 9 9 0 1 1 1016 63 A 9 9 0 1 1 998 63 Z' --fill '#51db02'
-pixelox text add post.pxo --in-place --name Follow --content "Follow Us Now" --font "Avenir Next" --weight 400 --size 1.2% --color '#8a8a8a' --at 89.8%,7.8% --anchor c
+pixelox shape icon post.pxo at-sign --in-place --name Social1 --size 12 --at 932,63 --anchor c --color '#ffffff' --stroke-width 1.5
+pixelox shape icon post.pxo globe --in-place --name Social2 --size 12 --at 957,63 --anchor c --color '#ffffff' --stroke-width 1.5
+pixelox shape icon post.pxo message-circle --in-place --name Social3 --size 12 --at 982,63 --anchor c --color '#ffffff' --stroke-width 1.5
+pixelox shape icon post.pxo share-2 --in-place --name Social4 --size 12 --at 1007,63 --anchor c --color '#ffffff' --stroke-width 1.5
+pixelox text add post.pxo --in-place --name Follow --content "Follow Us Now" --font @geometric-sans --weight 400 --size 1.2% --color '#8a8a8a' --at 89.8%,7.8% --anchor c
 pixelox export post.pxo -o post.png
 ```
 

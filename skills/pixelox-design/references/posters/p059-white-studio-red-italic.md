@@ -105,17 +105,19 @@ is needed against the white.
 
 * **T-text-behind-subject**: the figure is placed after the headline and covers 2 letters
   in the middle of line 2.
-* **T-fit-width** with a twist: each headline line is set in the widest heavy face, then
-  stretched to its target box with a non-uniform `transform scale` (140% wide) and slanted
-  12 degrees with `transform skew`, to stand in for an extended italic face.
+* **T-fit-width** with **T-stretch-type**: each headline line is set in the widest heavy
+  face, widened with `--scale-x` (126% and 98.6%), slanted with `--style italic`, and
+  fitted to its width with `--fit-width`, to stand in for an extended italic face. The
+  face has no italic, so pixelox slants it 12 degrees (warning PXW4002, expected). Both
+  lines stay live text.
 * Floor target: five nested `shape ellipse` layers (pink, floor white, stronger pink,
   white, pale pink), each about 6 times wider than tall, so the rings narrow at the
   front and back as a circle on the floor would; plus a **T-spotlight** contact shadow.
 * Ticker: a slanted black bar (a `shape path` that runs past both canvas edges) with a
   rotated line of repeated text: a **T-label-box** stretched into a tape.
-* Studio wall: a cloud render stretched vertically, multiply at 30%, and a gray gradient
-  for the horizon. No grain: the cleanliness is the look.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
+* Studio wall: cloud noise stretched vertically (`fill noise --as-layer --stretch 3 --angle
+  90`), multiply at 30%, and a gray gradient for the horizon. No grain: the cleanliness is
+  the look.
 
 ## 8. Hierarchy and eye path
 
@@ -133,48 +135,38 @@ where.
 `subject.png` (a full-length cutout in dark clothing) and `logo.png` are your images here.
 
 ```bash
-pixelox render js scripts/clouds.js -o drape.png --size 1080x1350 --seed 6 --param lo='#d5d8de' --param hi='#ffffff' --param scale=2.5 --param stretch=3 --param warp=0.7 --param contrast=1.2
 pixelox new -o midweek.pxo --size 1080x1350 --fill '#fafafb'
-pixelox comp place midweek.pxo drape.png --in-place --as Drape --fit cover
-pixelox layer blend midweek.pxo --in-place --layer Drape --mode multiply
-pixelox layer opacity midweek.pxo --in-place --layer Drape --value 30
+pixelox fill noise midweek.pxo --in-place --as-layer --name Drape --seed 6 --scale 40% --stretch 3 --angle 90 --warp 28 --stops '#d5d8de,#ffffff' --blend multiply --opacity 30
 pixelox layer add midweek.pxo --in-place --name Horizon
 pixelox fill gradient midweek.pxo --in-place --layer Horizon --from 0,44% --to 0,58.5% --stops '#fafafb00@0,#dfe2e7ff@0.97,#fafafbff@1'
 pixelox shape rect midweek.pxo --in-place --name Floor --rect 0,58.5%,100%x41.5% --fill '#fbfbfc'
 pixelox shape path midweek.pxo --in-place --name Tape --d 'M -20 68 L 1100 20 L 1100 52 L -20 100 Z' --fill '#0c0c0e'
-pixelox text add midweek.pxo --in-place --name Ticker --content "SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY" --font "Arial Black" --style italic --size 1% --tracking 40 --color '#ffffff' --at 50%,4.5% --anchor c
+pixelox text add midweek.pxo --in-place --name Ticker --content "SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY   -   SEE YOU THIS FRIDAY" --font @heavy-wide --style italic --size 1% --tracking 40 --color '#ffffff' --at 50%,4.5% --anchor c
 pixelox transform rotate midweek.pxo --in-place --layer Ticker --degrees -2.45
-pixelox text add midweek.pxo --in-place --name Theme --content "RESTORING YOUR HOPE" --font "Arial Black" --style italic --size 1.95% --tracking 20 --color '#1d1d1e' --at 52%,15.4% --anchor c
-pixelox text add midweek.pxo --in-place --name H1 --content "HOPE" --font "Arial Black" --size 12% --tracking -10 --color '#e7070f'
-pixelox transform scale midweek.pxo --in-place --layer H1 --size 610x122
-pixelox transform skew midweek.pxo --in-place --layer H1 --x=-12
-pixelox transform move midweek.pxo --in-place --layer H1 --to 52.5%,17.4% --anchor t
-pixelox text add midweek.pxo --in-place --name H2 --content "FRIDAYS" --font "Arial Black" --size 12% --tracking -10 --color '#e7070f'
-pixelox transform scale midweek.pxo --in-place --layer H2 --size 805x134
-pixelox transform skew midweek.pxo --in-place --layer H2 --x=-12
-pixelox transform move midweek.pxo --in-place --layer H2 --to 50.4%,28.4% --anchor t
+pixelox text add midweek.pxo --in-place --name Theme --content "RESTORING YOUR HOPE" --font @heavy-wide --style italic --size 1.95% --tracking 20 --color '#1d1d1e' --at 52%,15.4% --anchor c
+pixelox text add midweek.pxo --in-place --name H1 --content "HOPE" --font @heavy-wide --style italic --scale-x 126% --fit-width 635 --tracking -10 --color '#e7070f' --at 52.5%,17.4% --anchor t --anchor-to ink
+pixelox text add midweek.pxo --in-place --name H2 --content "FRIDAYS" --font @heavy-wide --style italic --scale-x 98.6% --fit-width 823 --tracking -10 --color '#e7070f' --at 50.4%,28.4% --anchor t --anchor-to ink
 pixelox shape ellipse midweek.pxo --in-place --name Ring1 --rect 15%,79%,68%x11.5% --fill '#fbdadd'
 pixelox shape ellipse midweek.pxo --in-place --name Gap1 --rect 22%,80.15%,54%x9.1% --fill '#fbfbfc'
 pixelox shape ellipse midweek.pxo --in-place --name Ring2 --rect 28%,81.15%,42%x7.1% --fill '#ffb3b9'
 pixelox shape ellipse midweek.pxo --in-place --name Gap2 --rect 35%,82.35%,28%x4.7% --fill '#fbfbfc'
 pixelox shape ellipse midweek.pxo --in-place --name Ring3 --rect 41%,83.35%,16%x2.7% --fill '#f9ccd0'
 pixelox shape ellipse midweek.pxo --in-place --name Contact --rect 39%,85.4%,22%x2.4% --fill '#8a1418'
-pixelox layer rasterize midweek.pxo --in-place --layer Contact
 pixelox filter gaussian midweek.pxo --in-place --layer Contact --sigma 9
 pixelox comp place midweek.pxo subject.png --in-place --as Speaker --size x702 --at 50.5%,87% --anchor b
 pixelox comp place midweek.pxo logo.png --in-place --as Logo --size 118x --at 25.5%,68% --anchor c
-pixelox text add midweek.pxo --in-place --name Time --content "7PM" --font "Arial Black" --size 3.9% --color '#e7070f' --at 81.5%,69% --anchor c
-pixelox text add midweek.pxo --in-place --name Zone --content "(GMT)" --font "Helvetica Neue" --weight 700 --size 1.5% --tracking 100 --color '#9a9a9e' --at 81.5%,72% --anchor c
-pixelox text add midweek.pxo --in-place --name Venue --content "CITY AUDITORIUM" --font "Arial Black" --size 2.8% --color '#e7070f' --at 5.6%,92.6% --anchor l
-pixelox text add midweek.pxo --in-place --name Address --content $'12 EXAMPLE ROAD, EAST DISTRICT,\nYOUR CITY 00000' --font "Helvetica Neue" --weight 700 --size 1.1% --tracking 60 --leading 135% --color '#55555a' --at 5.6%,95.4% --anchor l
-pixelox text add midweek.pxo --in-place --name Stream --content $'Streaming live on @yourchannel\nAlso on the app and on satellite TV' --font "Helvetica Neue" --weight 500 --size 1.1% --leading 135% --align right --color '#3a3a3e' --at 94%,95.3% --anchor r
+pixelox text add midweek.pxo --in-place --name Time --content "7PM" --font @heavy-wide --size 3.9% --color '#e7070f' --at 81.5%,69% --anchor c
+pixelox text add midweek.pxo --in-place --name Zone --content "(GMT)" --font @neo-grotesque --weight 700 --size 1.5% --tracking 100 --color '#9a9a9e' --at 81.5%,72% --anchor c
+pixelox text add midweek.pxo --in-place --name Venue --content "CITY AUDITORIUM" --font @heavy-wide --size 2.8% --color '#e7070f' --at 5.6%,92.6% --anchor l
+pixelox text add midweek.pxo --in-place --name Address --content $'12 EXAMPLE ROAD, EAST DISTRICT,\nYOUR CITY 00000' --font @neo-grotesque --weight 700 --size 1.1% --tracking 60 --leading 135% --color '#55555a' --at 5.6%,95.4% --anchor l
+pixelox text add midweek.pxo --in-place --name Stream --content $'Streaming live on @yourchannel\nAlso on the app and on satellite TV' --font @neo-grotesque --weight 500 --size 1.1% --leading 135% --align right --color '#3a3a3e' --at 94%,95.3% --anchor r
 pixelox export midweek.pxo -o midweek.png
 ```
 
-Change first: the two headline words and the two `transform scale --size` boxes (keep each
-box 4.5 to 6.5 times wider than tall, or the stretch becomes a distortion), then the red.
-With a real extended italic face registered, drop the scale and skew lines and fit each
-line with `transform scale --size 610x` alone.
+Change first: the two headline words and their `--fit-width` values. Change `--scale-x`
+until each line is 4.5 to 6.5 times wider than tall, and keep it under 150% or the stretch
+becomes a distortion. Then the red. With a real extended italic face installed, drop
+`--scale-x` and keep `--style italic` and `--fit-width`.
 
 ## 10. Variations and pairings
 

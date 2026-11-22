@@ -56,7 +56,7 @@ balance the corners.
    right.
 10. Cross: a solid black Latin cross, 17.6% W wide and 22.3% H tall, bar thickness 4.5%
     W, crossbar 31% of the way down.
-11. Grain: very light, soft-light, 20%.
+11. Grain: very light (`filter grain`, amount 8), over the sky only.
 
 ## 4. Palette
 
@@ -99,10 +99,11 @@ The sky is not a photograph: a six-stop vertical gradient with soft cloud noise 
 
 ## 7. Effects and textures
 
-* Sky: `fill gradient` with six stops; clouds from `clouds.js` (the **T-smoke** recipe
-  with a warm cream `hi`, `scale=2.2`, `warp=0.9`, `bias=-0.05`), blurred sigma 14,
-  `screen` at 30%; a second, mauve cloud layer in `multiply` at 18% for the darker wisps
-  near the top.
+* Sky: `fill gradient` with six stops; clouds from `fill noise --as-layer` (the **T-smoke**
+  command with the default `clouds` kind and warm cream stops, `--scale 45%`, `--warp 36`,
+  `--bias=-10`), `screen` at 30%; a second, mauve noise layer (`--scale 33%`, `--stretch
+  0.6`, `--bias=-36`) in `multiply` at 18% for the darker wisps. Blend mode and opacity
+  are set on the same command.
 * Stencil gaps: with no stencil font installed, cut the gaps with vector masks. `mask add
   --from-path` on each headline layer with a path made of full-height bands that leave
   thin vertical strips uncovered: one 9 px slit through the middle of each letter (none
@@ -110,8 +111,13 @@ The sky is not a photograph: a six-stop vertical gradient with soft cloud noise 
   to x2 is `M x1 0 H x2 V 1528 H x1 Z`; consecutive bands leave the 9 px gaps.
 * **T-label-box**: the yellow pill (radius = half its height).
 * **T-rules**: the short thick rule between headline and body.
-* **T-fit-width**: each headline line fitted to its own width (815 and 626 px).
-* **T-paper-grain**, amount 8, soft-light 20%.
+* **T-fit-width**: each headline line fitted to its own width (`--fit-width 815` and
+  `626`).
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added over the sky and under
+  the type.
+* Mirrored dove: `transform flip illustration.png -o illustration-mirrored.png --h` makes
+  a mirrored copy of the file first, and that copy is placed. Flipping the placed layer
+  instead would rasterize it (warning PXW2003).
 * **T-stencil-type** in [techniques.md](../techniques.md) is the tested library version of the stencil cuts through the letters; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -126,41 +132,27 @@ The two doves and the cross form a triangle around the text column.
 ## 9. Build recipe
 
 `illustration.png` is your image here: a white line-art motif with transparency, wider
-than tall (it is placed twice, once mirrored). Canvas 1080x1528.
+than tall (it is placed twice; the first copy is mirrored as a file before it is
+placed). Canvas 1080x1528.
 
 ```bash
-pixelox render js scripts/clouds.js -o cloud.png --size 1080x1528 --seed 12 --param lo=transparent --param hi='#fff1e0' --param scale=2.2 --param octaves=5 --param warp=0.9 --param bias=-0.05
-pixelox render js scripts/clouds.js -o wisps.png --size 1080x1528 --seed 31 --param lo=transparent --param hi='#9a5a8a' --param scale=3 --param warp=1.1 --param stretch=0.6 --param bias=-0.18
 pixelox new -o sky.pxo --size 1080x1528 --fill '#efc49a'
 pixelox layer add sky.pxo --in-place --name Sunset
 pixelox fill gradient sky.pxo --in-place --layer Sunset --from 0,0 --to 0,100% --stops '#ca73ab@0,#e280b1@0.06,#eeaaa9@0.3,#efc49a@0.5,#f7baac@0.64,#d88237@1'
-pixelox comp place sky.pxo cloud.png --in-place --as Clouds --fit cover
-pixelox filter gaussian sky.pxo --in-place --layer Clouds --sigma 14
-pixelox layer blend sky.pxo --in-place --layer Clouds --mode screen
-pixelox layer opacity sky.pxo --in-place --layer Clouds --value 30
-pixelox comp place sky.pxo wisps.png --in-place --as Wisps --fit cover
-pixelox filter gaussian sky.pxo --in-place --layer Wisps --sigma 18
-pixelox layer blend sky.pxo --in-place --layer Wisps --mode multiply
-pixelox layer opacity sky.pxo --in-place --layer Wisps --value 18
-pixelox layer add sky.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise sky.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend sky.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity sky.pxo --in-place --layer Grain --value 20
+pixelox fill noise sky.pxo --in-place --as-layer --name Clouds --seed 12 --scale 45% --octaves 5 --warp 36 --bias=-10 --stops 'transparent,#fff1e0' --blend screen --opacity 30
+pixelox fill noise sky.pxo --in-place --as-layer --name Wisps --seed 31 --scale 33% --warp 44 --stretch 0.6 --angle 90 --bias=-36 --stops 'transparent,#9a5a8a' --blend multiply --opacity 18
+pixelox filter grain sky.pxo --in-place --as-layer --name Grain --amount 8
 pixelox shape rect sky.pxo --in-place --name Pill --rect 10.3%,15.5%,59.4%x2.9% --radius 22 --fill '#ffd400'
-pixelox text add sky.pxo --in-place --name PillText --content "A WEEKEND OF SONG AND SERVICE" --font "Avenir Next" --weight 500 --size 1.9% --tracking 100 --color '#000000' --at 40%,17% --anchor c
-pixelox text add sky.pxo --in-place --name H1 --content "SPRING" --font "Avenir Next" --weight 900 --size 14% --tracking 10 --color '#000000'
-pixelox transform scale sky.pxo --in-place --layer H1 --size 815x
-pixelox transform move sky.pxo --in-place --layer H1 --to 10.3%,20.5% --anchor tl
+pixelox text add sky.pxo --in-place --name PillText --content "A WEEKEND OF SONG AND SERVICE" --font @geometric-sans --weight 500 --size 1.9% --tracking 100 --color '#000000' --at 40%,17% --anchor c
+pixelox text add sky.pxo --in-place --name H1 --content "SPRING" --font @geometric-sans --weight 900 --fit-width 815 --tracking 10 --color '#000000' --at 10.3%,20.5% --anchor-to ink
 pixelox mask add sky.pxo --in-place --layer H1 --from-path 'M 0 0 H 165 V 1528 H 0 Z M 174 0 H 310 V 1528 H 174 Z M 319 0 H 460 V 1528 H 319 Z M 469 0 H 685 V 1528 H 469 Z M 694 0 H 850 V 1528 H 694 Z M 859 0 H 1080 V 1528 H 859 Z'
-pixelox text add sky.pxo --in-place --name H2 --content "FEAST" --font "Avenir Next" --weight 900 --size 14% --tracking 10 --color '#000000'
-pixelox transform scale sky.pxo --in-place --layer H2 --size 626x
-pixelox transform move sky.pxo --in-place --layer H2 --to 10.3%,33.7% --anchor tl
+pixelox text add sky.pxo --in-place --name H2 --content "FEAST" --font @geometric-sans --weight 900 --fit-width 626 --tracking 10 --color '#000000' --at 10.3%,33.7% --anchor-to ink
 pixelox mask add sky.pxo --in-place --layer H2 --from-path 'M 0 0 H 160 V 1528 H 0 Z M 169 0 H 290 V 1528 H 169 Z M 299 0 H 430 V 1528 H 299 Z M 439 0 H 567 V 1528 H 439 Z M 576 0 H 687 V 1528 H 576 Z M 696 0 H 1080 V 1528 H 696 Z'
 pixelox shape line sky.pxo --in-place --name Rule --from 10.3%,48.7% --to 27.5%,48.7% --stroke '#000000' --stroke-width 6
-pixelox text add sky.pxo --in-place --name Body --content $'Three days of shared meals, music, and practical help for our neighbors.\nCome for one hour or the whole weekend; there is a place for every pair\nof hands, and a seat at the table when the work is done.' --font "Avenir Next" --weight 400 --size 1.7% --leading 141% --color '#000000' --at 10.3%,57.8% --anchor l
-pixelox text add sky.pxo --in-place --name Welcome --content $'WELCOME TO\nTHE COMMUNITY CHURCH' --font "Avenir Next" --weight 700 --size 1.95% --tracking 150 --leading 118% --color '#000000' --at 10.3%,67.2% --anchor l
-pixelox comp place sky.pxo illustration.png --in-place --as DoveA --size 300x --at 79%,9% --anchor c
-pixelox transform flip sky.pxo --in-place --layer DoveA --h
+pixelox text add sky.pxo --in-place --name Body --content $'Three days of shared meals, music, and practical help for our neighbors.\nCome for one hour or the whole weekend; there is a place for every pair\nof hands, and a seat at the table when the work is done.' --font @geometric-sans --weight 400 --size 1.7% --leading 141% --color '#000000' --at 10.3%,57.8% --anchor l
+pixelox text add sky.pxo --in-place --name Welcome --content $'WELCOME TO\nTHE COMMUNITY CHURCH' --font @geometric-sans --weight 700 --size 1.95% --tracking 150 --leading 118% --color '#000000' --at 10.3%,67.2% --anchor l
+pixelox transform flip illustration.png -o illustration-mirrored.png --h
+pixelox comp place sky.pxo illustration-mirrored.png --in-place --as DoveA --size 300x --at 79%,9% --anchor c
 pixelox comp place sky.pxo illustration.png --in-place --as DoveB --size 480x --at 33%,84% --anchor c
 pixelox shape rect sky.pxo --in-place --name CrossPost --rect 883,1125,49x341 --fill '#000000'
 pixelox shape rect sky.pxo --in-place --name CrossBar --rect 815,1196,190x47 --fill '#000000'

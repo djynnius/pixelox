@@ -108,10 +108,10 @@ cutout only, build the backdrop as a gradient, as the recipe does.
   width (**T-gradient-type** used as a hard split, not a blend). The split must fall in
   the gap between the two words.
 * **T-text-behind-subject**: masthead, then the cutout.
-* **T-outline-type**: a duplicate of the name with a transparent fill and a 3 px red
-  stroke, moved 8 px right and down, below the white name. It reads as a misregistered
-  second print pass.
-* **T-fit-width**: masthead and name both scaled to 882 px (81.7% W).
+* **T-outline-type**: a duplicate of the name (`layer dup --below Name`, so it lands under
+  the white name) with a transparent fill and a 3 px red stroke, moved 8 px right and
+  down. It reads as a misregistered second print pass.
+* **T-fit-width**: masthead and name both set with `--fit-width 882` (81.7% W).
 * **T-photo-fade** as a shade: near-black, alpha 0 at 58% H to 90% at 84% H, only needed
   when the subject's clothing is not already dark.
 
@@ -133,32 +133,27 @@ Sizes: name cap height 8.8 : masthead x-height 7 : deck 1.7 : cover lines 1.65, 
 pixelox new -o cover.pxo --size 1080x1400 --fill '#e887a8'
 pixelox layer add cover.pxo --in-place --name Backdrop
 pixelox fill gradient cover.pxo --in-place --layer Backdrop --from 30%,0 --to 95%,75% --stops '#e887a8ff@0,#cf6f90ff@0.55,#b85878ff@1'
-pixelox text add cover.pxo --in-place --name Masthead --content "sortafun." --font "Avenir Next" --weight 700 --size 14% --tracking -20 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 882x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 9.3%,15% --anchor bl
+pixelox text add cover.pxo --in-place --name Masthead --content "sortafun." --font @geometric-sans --weight 700 --fit-width 882 --tracking -20 --color '#ffffff' --at 9.3%,15% --anchor bl --anchor-to ink
 pixelox fx overlay cover.pxo --in-place --layer Masthead --stops '#cc3433@0,#cc3433@0.56,#ffffff@0.56,#ffffff@1' --angle 0
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1750 --at 40%,0% --anchor t
 pixelox layer add cover.pxo --in-place --name Shade
 pixelox fill gradient cover.pxo --in-place --layer Shade --from 0,58% --to 0,84% --stops '#0d110600@0,#0d1106e6@1'
-pixelox text add cover.pxo --in-place --name Issue --content "issue 27" --font "Avenir Next" --weight 700 --size 2.3% --color '#ffffff' --at 9.3%,17.6% --anchor l
-pixelox text add cover.pxo --in-place --name Season --content "spring 2031" --font "Avenir Next" --weight 700 --size 2.3% --color '#ffffff' --at 91%,17.6% --anchor r
-pixelox text add cover.pxo --in-place --name C1a --content $'an open conversation with\nrising film composer' --font "Avenir Next" --weight 400 --size 2.2% --leading 86% --align right --color '#ffe9f0' --at 91%,27.8% --anchor r
-pixelox text add cover.pxo --in-place --name C1b --content "INES MORROW" --font "Avenir Next" --weight 700 --size 2.3% --color '#ffffff' --at 91%,31.2% --anchor r
-pixelox text add cover.pxo --in-place --name C2a --content "chasing the quiet:" --font "Avenir Next" --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,35.7% --anchor r
-pixelox text add cover.pxo --in-place --name C2b --content "TALA REYES" --font "Avenir Next" --weight 700 --size 2.3% --color '#ffffff' --at 91%,38.2% --anchor r
-pixelox text add cover.pxo --in-place --name C2c --content "shares her debut EP" --font "Avenir Next" --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,40.1% --anchor r
-pixelox text add cover.pxo --in-place --name C2d --content "UNDERTOW" --font "Avenir Next" --weight 400 --style italic --size 2.2% --color '#ffe9f0' --at 91%,42.3% --anchor r
-pixelox text add cover.pxo --in-place --name C3a --content "THE LANTERNS" --font "Avenir Next" --weight 700 --size 2.3% --color '#ffffff' --at 91%,47% --anchor r
-pixelox text add cover.pxo --in-place --name C3b --content "open up their new album" --font "Avenir Next" --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,48.9% --anchor r
-pixelox text add cover.pxo --in-place --name C3c --content "slow weather" --font "Avenir Next" --weight 400 --style italic --size 2.2% --color '#ffe9f0' --at 91%,50.9% --anchor r
-pixelox text add cover.pxo --in-place --name Deck --content "turning the page: five years on the road with" --font "Avenir Next" --weight 400 --size 2.4% --color '#ffffff' --at 9%,71% --anchor l
-pixelox text add cover.pxo --in-place --name Name --content $'DOMINIC\nCALLOWAY' --font "Avenir Next" --weight 700 --size 12% --leading 86% --tracking -10 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Name --size 882x
-pixelox transform move cover.pxo --in-place --layer Name --to 9%,73.7% --anchor tl
-pixelox layer dup cover.pxo --in-place --layer Name --name Ghost
+pixelox text add cover.pxo --in-place --name Issue --content "issue 27" --font @geometric-sans --weight 700 --size 2.3% --color '#ffffff' --at 9.3%,17.6% --anchor l
+pixelox text add cover.pxo --in-place --name Season --content "spring 2031" --font @geometric-sans --weight 700 --size 2.3% --color '#ffffff' --at 91%,17.6% --anchor r
+pixelox text add cover.pxo --in-place --name C1a --content $'an open conversation with\nrising film composer' --font @geometric-sans --weight 400 --size 2.2% --leading 86% --align right --color '#ffe9f0' --at 91%,27.8% --anchor r
+pixelox text add cover.pxo --in-place --name C1b --content "INES MORROW" --font @geometric-sans --weight 700 --size 2.3% --color '#ffffff' --at 91%,31.2% --anchor r
+pixelox text add cover.pxo --in-place --name C2a --content "chasing the quiet:" --font @geometric-sans --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,35.7% --anchor r
+pixelox text add cover.pxo --in-place --name C2b --content "TALA REYES" --font @geometric-sans --weight 700 --size 2.3% --color '#ffffff' --at 91%,38.2% --anchor r
+pixelox text add cover.pxo --in-place --name C2c --content "shares her debut EP" --font @geometric-sans --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,40.1% --anchor r
+pixelox text add cover.pxo --in-place --name C2d --content "UNDERTOW" --font @geometric-sans --weight 400 --style italic --size 2.2% --color '#ffe9f0' --at 91%,42.3% --anchor r
+pixelox text add cover.pxo --in-place --name C3a --content "THE LANTERNS" --font @geometric-sans --weight 700 --size 2.3% --color '#ffffff' --at 91%,47% --anchor r
+pixelox text add cover.pxo --in-place --name C3b --content "open up their new album" --font @geometric-sans --weight 400 --size 2.2% --color '#ffe9f0' --at 91%,48.9% --anchor r
+pixelox text add cover.pxo --in-place --name C3c --content "slow weather" --font @geometric-sans --weight 400 --style italic --size 2.2% --color '#ffe9f0' --at 91%,50.9% --anchor r
+pixelox text add cover.pxo --in-place --name Deck --content "turning the page: five years on the road with" --font @geometric-sans --weight 400 --size 2.4% --color '#ffffff' --at 9%,71% --anchor l
+pixelox text add cover.pxo --in-place --name Name --content $'DOMINIC\nCALLOWAY' --font @geometric-sans --weight 700 --fit-width 882 --leading 86% --tracking -10 --color '#ffffff' --at 9%,73.7% --anchor-to ink
+pixelox layer dup cover.pxo --in-place --layer Name --name Ghost --below Name
 pixelox text style cover.pxo --in-place --layer Ghost --color transparent --stroke '#e0514f' --stroke-width 3
 pixelox transform move cover.pxo --in-place --layer Ghost --by 8,8
-pixelox layer reorder cover.pxo --in-place --layer Ghost --below Name
 pixelox export cover.pxo -o cover.png
 ```
 
@@ -186,7 +181,7 @@ lipstick) for the masthead's first word.
 ## 11. Pitfalls
 
 * Masthead and name set to different widths. Their shared left and right edges are the
-  whole structure; fit both to the same pixel width.
+  whole structure; give both the same `--fit-width`.
 * The hair or head hiding more than the lower half of two or three masthead letters. The
   word must still be readable at a glance; move the subject down or left.
 * Cover lines on the face. They belong on clear backdrop beside it; if the head is wide,

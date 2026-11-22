@@ -153,23 +153,21 @@ pixelox shape path conf.pxo --in-place --name Counters --d 'M 400 191 A 113 113 
 pixelox shape path conf.pxo --in-place --name Wedge --d 'M 0 0 H 362 L 270 245 H 0 Z' --fill '#ffffff'
 pixelox shape rect conf.pxo --in-place --name Strip --rect 90%,0,10%x100% --fill '#0b0b0b'
 pixelox shape path conf.pxo --in-place --name Dots --d 'M 133 390 V 497 M 394 795 V 1024 M 394 1238 V 1337 M 1021 168 V 275' --fill none --stroke '#ffffff' --stroke-width 3 --dash 0,9 --cap round --opacity 80
-pixelox text add conf.pxo --in-place --name Logo --content "bode" --font "Avenir Next" --weight 900 --size 6% --tracking -60 --color '#0b0b0b'
-pixelox transform scale conf.pxo --in-place --layer Logo --size 178x
-pixelox transform move conf.pxo --in-place --layer Logo --to 5.5%,3.6% --anchor tl
-pixelox text add conf.pxo --in-place --name Month --content "Oct" --font "Avenir Next" --weight 400 --size 4.2% --color '#ffffff' --at 23.6%,39.8% --anchor r
-pixelox text add conf.pxo --in-place --name Dates --content $'30 —\nNov 01' --font "Avenir Next" --weight 400 --size 4.2% --leading 96% --color '#ffffff' --at 26.5%,41.8% --anchor l
-pixelox text add conf.pxo --in-place --name Label --content "BODE CONFERENCE 2031" --font "Avenir Next" --weight 500 --size 1% --tracking 250 --color '#ffffff' --at 38%,69.8% --anchor l
-pixelox text add conf.pxo --in-place --name Place --content "Harbor City, ST" --font "Avenir Next" --weight 400 --size 2.6% --color '#ffffff' --at 38%,72.6% --anchor l
-pixelox text add conf.pxo --in-place --name Sponsors --content $'Brought to you by:\nFirst Partner Group\nSecond Partner Co.\nThird Media\nFourth Labs\nFifth Studio\nSixth Fund' --font "Avenir Next" --weight 500 --size 0.8% --leading 250% --color '#ffffff'
+pixelox text add conf.pxo --in-place --name Logo --content "bode" --font @geometric-sans --weight 900 --fit-width 178 --tracking -60 --color '#0b0b0b' --at 5.5%,3.6% --anchor-to ink
+pixelox text add conf.pxo --in-place --name Month --content "Oct" --font @geometric-sans --weight 400 --size 4.2% --color '#ffffff' --at 23.6%,39.8% --anchor r
+pixelox text add conf.pxo --in-place --name Dates --content $'30 —\nNov 01' --font @geometric-sans --weight 400 --size 4.2% --leading 96% --color '#ffffff' --at 26.5%,41.8% --anchor l
+pixelox text add conf.pxo --in-place --name Label --content "BODE CONFERENCE 2031" --font @geometric-sans --weight 500 --size 1% --tracking 250 --color '#ffffff' --at 38%,69.8% --anchor l
+pixelox text add conf.pxo --in-place --name Place --content "Harbor City, ST" --font @geometric-sans --weight 400 --size 2.6% --color '#ffffff' --at 38%,72.6% --anchor l
+pixelox text add conf.pxo --in-place --name Sponsors --content $'Brought to you by:\nFirst Partner Group\nSecond Partner Co.\nThird Media\nFourth Labs\nFifth Studio\nSixth Fund' --font @geometric-sans --weight 500 --size 0.8% --leading 250% --color '#ffffff'
 pixelox transform rotate conf.pxo --in-place --layer Sponsors --degrees -90
 pixelox transform move conf.pxo --in-place --layer Sponsors --to 37.8%,97% --anchor bl
-pixelox text add conf.pxo --in-place --name Tag --content "#BODECON" --font "Avenir Next" --weight 500 --size 1% --tracking 400 --color '#8a8a8a'
+pixelox text add conf.pxo --in-place --name Tag --content "#BODECON" --font @geometric-sans --weight 500 --size 1% --tracking 400 --color '#8a8a8a'
 pixelox transform rotate conf.pxo --in-place --layer Tag --degrees -90
 pixelox transform move conf.pxo --in-place --layer Tag --to 94.5%,31% --anchor b
-pixelox text add conf.pxo --in-place --name Speakers --content "First Speaker                      Second Speaker                      Third Speaker" --font "Avenir Next" --weight 700 --size 0.95% --color '#f31d01'
+pixelox text add conf.pxo --in-place --name Speakers --content "First Speaker                      Second Speaker                      Third Speaker" --font @geometric-sans --weight 700 --size 0.95% --color '#f31d01'
 pixelox transform rotate conf.pxo --in-place --layer Speakers --degrees -90
 pixelox transform move conf.pxo --in-place --layer Speakers --to 92.8%,85% --anchor bl
-pixelox text add conf.pxo --in-place --name Roles --content "2031 speakers include:               Founder, Studio Name                      Head of Design, Company                      Partner, Fund Name" --font "Avenir Next" --weight 500 --size 0.72% --color '#ffffff'
+pixelox text add conf.pxo --in-place --name Roles --content "2031 speakers include:               Founder, Studio Name                      Head of Design, Company                      Partner, Fund Name" --font @geometric-sans --weight 500 --size 0.72% --color '#ffffff'
 pixelox transform rotate conf.pxo --in-place --layer Roles --degrees -90
 pixelox transform move conf.pxo --in-place --layer Roles --to 95.2%,97% --anchor bl
 pixelox export conf.pxo -o conf.png

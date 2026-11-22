@@ -97,12 +97,12 @@ poster holds attention longer than plain type would.
   corner; a seam is a `shape line` with `--stroke` in the ground color, 22 to 30 px wide,
   drawn at exactly 45 degrees (equal x and y distance).
 * Row setting follows **T-fit-width** practice: each row is its own text layer, placed by
-  its visible top-left corner with `transform move --anchor tl`; hanging letters are placed
-  by their top-right corner with `--anchor tr`.
+  the top-left corner of its visible letters (`--at X,Y --anchor-to ink`); hanging letters
+  are placed by their top-right corner (`--anchor tr --anchor-to ink`).
 * Stepped lists: one multi-line text layer; each line begins with three more spaces than
   the line above (three spaces are about 2.5% W at this size).
 * **T-rules**: none drawn; the axes are implied by the letter edges. The original is a
-  flat print; **T-paper-grain** at amount 8, opacity 25 is optional.
+  flat print; **T-paper-grain** at amount 8 is optional.
 * **T-sliced-type** in [techniques.md](../techniques.md) is the tested library version of the cut-and-shifted headline; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -119,24 +119,18 @@ Cap-height ratio: title 13.5 : names 1.5 : sub-title 1.35 : fine print 0.75, abo
 ## 9. Build recipe
 
 Needs no images. Cut coordinates belong to this title: after changing the words, read
-each row's `bounds` (add `--json`) and move the wedges to letter corners.
+each row's `bounds` (add `--json`) and move the wedges to letter corners. The cuts are
+shapes laid over live text, so the letters stay editable.
 
 ```bash
 pixelox new -o talk.pxo --size 1080x1528 --fill '#eeeaec'
-pixelox text add talk.pxo --in-place --name Hang1 --content "P" --font "Arial Black" --size 18.6% --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Hang1 --to 23.5%,3.5% --anchor tr
-pixelox text add talk.pxo --in-place --name Row1 --content "RI" --font "Arial Black" --size 18.6% --tracking -50 --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Row1 --to 25%,3.5% --anchor tl
-pixelox text add talk.pxo --in-place --name Row2 --content "NTE" --font "Arial Black" --size 18.6% --tracking -50 --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Row2 --to 25%,18% --anchor tl
-pixelox text add talk.pxo --in-place --name Hang3 --content "D" --font "Arial Black" --size 18.6% --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Hang3 --to 23.5%,32.5% --anchor tr
-pixelox text add talk.pxo --in-place --name Row3 --content "SEN" --font "Arial Black" --size 18.6% --tracking -50 --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Row3 --to 25%,32.5% --anchor tl
-pixelox text add talk.pxo --in-place --name Row4 --content "TEN" --font "Arial Black" --size 18.6% --tracking -50 --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Row4 --to 25%,47% --anchor tl
-pixelox text add talk.pxo --in-place --name Row5 --content "CE" --font "Arial Black" --size 18.6% --tracking -50 --color '#0a0a0a'
-pixelox transform move talk.pxo --in-place --layer Row5 --to 25%,61.5% --anchor tl
+pixelox text add talk.pxo --in-place --name Hang1 --content "P" --font @heavy-wide --size 18.6% --color '#0a0a0a' --at 23.5%,3.5% --anchor tr --anchor-to ink
+pixelox text add talk.pxo --in-place --name Row1 --content "RI" --font @heavy-wide --size 18.6% --tracking -50 --color '#0a0a0a' --at 25%,3.5% --anchor-to ink
+pixelox text add talk.pxo --in-place --name Row2 --content "NTE" --font @heavy-wide --size 18.6% --tracking -50 --color '#0a0a0a' --at 25%,18% --anchor-to ink
+pixelox text add talk.pxo --in-place --name Hang3 --content "D" --font @heavy-wide --size 18.6% --color '#0a0a0a' --at 23.5%,32.5% --anchor tr --anchor-to ink
+pixelox text add talk.pxo --in-place --name Row3 --content "SEN" --font @heavy-wide --size 18.6% --tracking -50 --color '#0a0a0a' --at 25%,32.5% --anchor-to ink
+pixelox text add talk.pxo --in-place --name Row4 --content "TEN" --font @heavy-wide --size 18.6% --tracking -50 --color '#0a0a0a' --at 25%,47% --anchor-to ink
+pixelox text add talk.pxo --in-place --name Row5 --content "CE" --font @heavy-wide --size 18.6% --tracking -50 --color '#0a0a0a' --at 25%,61.5% --anchor-to ink
 pixelox shape path talk.pxo --in-place --name Wedge1 --d 'M 262 412 L 262 487 L 337 487 Z' --fill '#eeeaec'
 pixelox shape line talk.pxo --in-place --name Seam1 --from 50,560 --to 200,710 --stroke '#eeeaec' --stroke-width 26
 pixelox shape line talk.pxo --in-place --name Seam2 --from 340,486 --to 470,616 --stroke '#eeeaec' --stroke-width 30
@@ -144,10 +138,10 @@ pixelox shape path talk.pxo --in-place --name Wedge2 --d 'M 462 636 L 462 712 L 
 pixelox shape line talk.pxo --in-place --name Seam3 --from 505,712 --to 665,872 --stroke '#eeeaec' --stroke-width 22
 pixelox shape path talk.pxo --in-place --name Wedge3 --d 'M 650 856 L 650 928 L 722 928 Z' --fill '#eeeaec'
 pixelox shape path talk.pxo --in-place --name Wedge4 --d 'M 478 1082 L 478 1156 L 552 1156 Z' --fill '#eeeaec'
-pixelox text add talk.pxo --in-place --name Sub --content $'A Series of Open\n   Conversations' --font "Helvetica Neue" --weight 700 --size 1.9% --leading 112% --color '#0a0a0a' --at 68.5%,61% --anchor tl
-pixelox text add talk.pxo --in-place --name When --content $'12 March 2031\n   10:00 - 18:00' --font "Helvetica Neue" --weight 400 --size 1.9% --leading 112% --color '#55505a' --at 73.3%,65.3% --anchor tl
-pixelox text add talk.pxo --in-place --name Names --content $'First Speaker\n   Second Name\n      Third Person\n         Fourth Guest\n            Fifth Speaker\n               Sixth Name\n                  Seventh Person\n                     Eighth Guest' --font "Helvetica Neue" --weight 500 --size 2.05% --leading 102% --color '#55505a' --at 54%,75.6% --anchor tl
-pixelox text add talk.pxo --in-place --name Venue --content $'Main Lecture Hall\nYour College of\nArt and Design\n\nTo book, email:\nhello@example.com' --font "Helvetica Neue" --weight 700 --size 1% --leading 112% --color '#0a0a0a' --at 25.5%,85.6% --anchor tl
+pixelox text add talk.pxo --in-place --name Sub --content $'A Series of Open\n   Conversations' --font @neo-grotesque --weight 700 --size 1.9% --leading 112% --color '#0a0a0a' --at 68.5%,61% --anchor tl
+pixelox text add talk.pxo --in-place --name When --content $'12 March 2031\n   10:00 - 18:00' --font @neo-grotesque --weight 400 --size 1.9% --leading 112% --color '#55505a' --at 73.3%,65.3% --anchor tl
+pixelox text add talk.pxo --in-place --name Names --content $'First Speaker\n   Second Name\n      Third Person\n         Fourth Guest\n            Fifth Speaker\n               Sixth Name\n                  Seventh Person\n                     Eighth Guest' --font @neo-grotesque --weight 500 --size 2.05% --leading 102% --color '#55505a' --at 54%,75.6% --anchor tl
+pixelox text add talk.pxo --in-place --name Venue --content $'Main Lecture Hall\nYour College of\nArt and Design\n\nTo book, email:\nhello@example.com' --font @neo-grotesque --weight 700 --size 1% --leading 112% --color '#0a0a0a' --at 25.5%,85.6% --anchor tl
 pixelox export talk.pxo -o talk.png
 ```
 

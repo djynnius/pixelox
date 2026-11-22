@@ -82,16 +82,17 @@ line.
 
 ## 7. Effects and textures
 
-* **T-vertical-type** with **T-fit-width**: the word is set flat, scaled to
-  `1720x745` px (length by cap height; a non-uniform scale, which rasterizes the text),
-  then rotated 90 degrees and centered at 59.5% W.
+* **T-vertical-type** with **T-fit-width**: the word is set flat and centered at 59.5% W,
+  50% H with `--fit-width 1720` (its length) and `--scale-x 57.3%` (letters narrowed, so the
+  cap height comes out at 745 px), then rotated 90 degrees. The text stays live.
 * Crack: two filled `shape path` polygons in the ground color (main fissure, side branch).
   No library ID; the point lists are in the recipe.
 * **T-distress-type**: grunge in the ground color clipped to the word (`specks=5000`,
   `blotches=25`, `scratches=60`, `clump=0.5`), 70%.
-* Smudges: a soft `clouds.js` layer clipped to the word in multiply at 30%.
+* Smudges: `fill noise --as-layer` (`--scale 20%`, stops `#8f907f` to white) in multiply at
+  30%, clipped to the word.
 * **T-grunge** (dirt only) in cream over the black at 20%.
-* **T-paper-grain**, amount 16, overlay 35%.
+* **T-paper-grain**: `filter grain --as-layer --amount 15`, last.
 * **T-crack** in [techniques.md](../techniques.md) is the tested library version of the jagged crack (`scripts/crack.js` draws one from two points); start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -104,22 +105,18 @@ Size ratio word : author : imprint = 46 : 2 : 1.3 (cap heights in % H).
 
 ## 9. Build recipe
 
-Needs no images. The word should have 5 to 7 letters; with more, lower the length
-(`1720`) no further than 1620 and let the cap height shrink instead.
+Needs no images. The word should have 5 to 7 letters; with more, lower `--fit-width`
+(`1720`, the word's length) no further than 1620 and let the cap height shrink instead
+(or lower `--scale-x` to keep it).
 
 ```bash
 pixelox render js scripts/grunge.js -o wear.png --size 1080x1620 --seed 14 --param color='#0f1414' --param specks=5000 --param blotches=25 --param scratches=60 --param clump=0.5
-pixelox render js scripts/clouds.js -o smudge.png --size 1080x1620 --seed 21 --param lo='#8f907f' --param hi='#ffffff' --param scale=5 --param octaves=6 --param warp=0.5 --param contrast=1.6
 pixelox render js scripts/grunge.js -o scuffs.png --size 1080x1620 --seed 4 --param color='#f2f0de' --param specks=2500 --param blotches=25 --param scratches=30 --param clump=0.7
 pixelox new -o jacket.pxo --size 1080x1620 --fill '#0f1414'
-pixelox text add jacket.pxo --in-place --name Word --content "TREMOR" --font Impact --size 30% --tracking 30 --color '#f2f0de'
-pixelox transform scale jacket.pxo --in-place --layer Word --size 1720x745
+pixelox text add jacket.pxo --in-place --name Word --content "TREMOR" --font @condensed-heavy --scale-x 57.3% --fit-width 1720 --tracking 30 --color '#f2f0de' --at 59.5%,50% --anchor c --anchor-to ink
 pixelox transform rotate jacket.pxo --in-place --layer Word --degrees 90
-pixelox transform move jacket.pxo --in-place --layer Word --to 59.5%,50% --anchor c
-pixelox comp place jacket.pxo smudge.png --in-place --as Smudge --fit cover
+pixelox fill noise jacket.pxo --in-place --as-layer --name Smudge --seed 21 --scale 20% --warp 20 --contrast 10 --stops '#8f907f,#ffffff' --blend multiply --opacity 30
 pixelox layer clip jacket.pxo --in-place --layer Smudge
-pixelox layer blend jacket.pxo --in-place --layer Smudge --mode multiply
-pixelox layer opacity jacket.pxo --in-place --layer Smudge --value 30
 pixelox comp place jacket.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer clip jacket.pxo --in-place --layer Wear
 pixelox layer opacity jacket.pxo --in-place --layer Wear --value 70
@@ -127,12 +124,9 @@ pixelox shape path jacket.pxo --in-place --name Crack --d 'M 600 -6 L 593 49 L 5
 pixelox shape path jacket.pxo --in-place --name Branch --d 'M 622 852 L 685 863 L 730 855 L 775 860 L 820 859 L 865 838 L 910 834 L 985 859 L 910 838 L 865 843 L 820 864 L 775 866 L 730 862 L 685 871 L 622 866 Z' --fill '#0f1414'
 pixelox comp place jacket.pxo scuffs.png --in-place --as Scuffs --fit cover
 pixelox layer opacity jacket.pxo --in-place --layer Scuffs --value 20
-pixelox text add jacket.pxo --in-place --name Author --content "Author Name" --font Baskerville --weight 600 --style italic --size 3.4% --color '#f2f0de' --at 1.2%,8.6% --anchor l
-pixelox text add jacket.pxo --in-place --name Imprint --content "A Midnight Shelf Mystery" --font Baskerville --weight 600 --style italic --size 2.2% --tracking 20 --color '#f2f0de' --at 1.2%,11.4% --anchor l
-pixelox layer add jacket.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise jacket.pxo --in-place --layer Grain --amount 16 --monochrome
-pixelox layer blend jacket.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity jacket.pxo --in-place --layer Grain --value 35
+pixelox text add jacket.pxo --in-place --name Author --content "Author Name" --font @oldstyle --weight 600 --style italic --size 3.4% --color '#f2f0de' --at 1.2%,8.6% --anchor l
+pixelox text add jacket.pxo --in-place --name Imprint --content "A Midnight Shelf Mystery" --font @oldstyle --weight 600 --style italic --size 2.2% --tracking 20 --color '#f2f0de' --at 1.2%,11.4% --anchor l
+pixelox filter grain jacket.pxo --in-place --as-layer --name Grain --amount 15
 pixelox export jacket.pxo -o jacket.png
 ```
 
@@ -158,7 +152,8 @@ swap the two colors' temperature.
 * Fitting the whole word inside the page: it becomes a normal vertical title. The crop at
   both ends is what makes it huge; keep the length at 104 to 108% H.
 * A wide typeface: letters turn into squares and the counters open up. Use the most
-  condensed heavy face available and stretch its height, not its width.
+  condensed heavy face available and narrow it further with `--scale-x` below 100%; never
+  widen it.
 * A crack that is straight, evenly wide, or curved like a wave. Jog it every 60 to 100 px
   and vary the width between 5 and 17 px.
 * Too much distress: when more than about 10% of the cream is eaten, the letters stop

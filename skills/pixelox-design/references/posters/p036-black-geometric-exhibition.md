@@ -105,9 +105,9 @@ anything.
 * **T-geo-shapes**: half rings as `shape path` (outer arc, line in, inner arc back, `Z`);
   `A r r 0 0 0` from left to right draws the lower half, `0 0 1` the upper half. The
   concave bite in the green block is an arc with sweep 0 drawn downward.
-* **T-vertical-type**: add the word, `transform rotate --degrees -90`, then
-  `transform scale --size x803` sets its length to the column height, and `transform move
-  --anchor bl` puts its corner on the grid.
+* **T-vertical-type**: add the word with `--fit-width 803` (its length is the column
+  height), turn it with `transform rotate --degrees -90`, then `transform move --anchor bl`
+  puts its corner on the grid. The word stays live text.
 * **T-fit-width**: the two date lines fitted to 302 px; the event word to 485 px.
 * **T-rules**: one vertical rule between the two detail columns.
 * **T-info-bar**, reduced to a full-bleed strip with one centered line.
@@ -128,9 +128,8 @@ Nothing to supply. Canvas 1080x1528.
 ```bash
 pixelox new -o show.pxo --size 1080x1528 --fill '#000000'
 pixelox text add show.pxo --in-place --name Artist --content "ARTIST NAME" --font "DIN Condensed" --weight 700 --size 4% --tracking 20 --color '#ffffff' --at 50%,7.9% --anchor c
-pixelox text add show.pxo --in-place --name Word --content "NOW" --font "Avenir Next" --weight 900 --size 20% --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add show.pxo --in-place --name Word --content "NOW" --font @geometric-sans --weight 900 --fit-width 803 --color '#ffffff' --at 50%,50% --anchor c --anchor-to ink
 pixelox transform rotate show.pxo --in-place --layer Word --degrees=-90
-pixelox transform scale show.pxo --in-place --layer Word --size x803
 pixelox transform move show.pxo --in-place --layer Word --to 178,1007 --anchor bl
 pixelox shape path show.pxo --in-place --name HalfRing --d 'M 453 214 A 226 226 0 0 0 905 214 L 789 214 A 110 110 0 0 1 569 214 Z' --fill '#fec200'
 pixelox shape rect show.pxo --in-place --name Bar --rect 453,415,66x408 --fill '#ff5280'
@@ -139,16 +138,10 @@ pixelox shape ellipse show.pxo --in-place --name Ring --rect 831,514,64x64 --fil
 pixelox shape ellipse show.pxo --in-place --name Disc --rect 519,637,144x144 --fill '#fd6200'
 pixelox shape path show.pxo --in-place --name Triangle --d 'M 905 692 L 905 880 L 820 786 Z' --fill '#ffffff'
 pixelox shape path show.pxo --in-place --name Arch --d 'M 453 1002 A 190 190 0 0 1 833 1002 L 738 1002 A 95 95 0 0 0 548 1002 Z' --fill '#41d2fb'
-pixelox text add show.pxo --in-place --name Date1 --content "12-15" --font "DIN Condensed" --weight 700 --size 9% --color '#ffffff'
-pixelox transform scale show.pxo --in-place --layer Date1 --size 302x
-pixelox transform move show.pxo --in-place --layer Date1 --to 10%,70% --anchor tl
-pixelox text add show.pxo --in-place --name Date2 --content "MARCH" --font "DIN Condensed" --weight 700 --size 9% --color '#ffffff'
-pixelox transform scale show.pxo --in-place --layer Date2 --size 302x
-pixelox transform move show.pxo --in-place --layer Date2 --to 10%,79.1% --anchor tl
+pixelox text add show.pxo --in-place --name Date1 --content "12-15" --font "DIN Condensed" --weight 700 --fit-width 302 --color '#ffffff' --at 10%,70% --anchor-to ink
+pixelox text add show.pxo --in-place --name Date2 --content "MARCH" --font "DIN Condensed" --weight 700 --fit-width 302 --color '#ffffff' --at 10%,79.1% --anchor-to ink
 pixelox shape line show.pxo --in-place --name Rule --from 41.3%,70.3% --to 41.3%,84.6% --stroke '#ffffff' --stroke-width 2
-pixelox text add show.pxo --in-place --name Event --content "EXHIBITION" --font "DIN Condensed" --weight 700 --size 8% --color '#ffffff'
-pixelox transform scale show.pxo --in-place --layer Event --size 485x
-pixelox transform move show.pxo --in-place --layer Event --to 45.1%,70.3% --anchor tl
+pixelox text add show.pxo --in-place --name Event --content "EXHIBITION" --font "DIN Condensed" --weight 700 --fit-width 485 --color '#ffffff' --at 45.1%,70.3% --anchor-to ink
 pixelox text add show.pxo --in-place --name Entry --content "FREE ENTRY" --font "DIN Condensed" --weight 700 --size 5.2% --tracking 10 --color '#ffffff'
 pixelox transform move show.pxo --in-place --layer Entry --to 45.1%,80.7% --anchor tl
 pixelox shape rect show.pxo --in-place --name RedBar --rect 0,89%,100%x4.6% --fill '#ee1615'
@@ -156,8 +149,8 @@ pixelox text add show.pxo --in-place --name BarText --content "MORE DETAILS: 000
 pixelox export show.pxo -o show.png
 ```
 
-Change first: the vertical word (3 to 4 letters; the scale step sets its length, so a
-longer word gets thinner letters), then the dates and event word, then the six colors.
+Change first: the vertical word (3 to 4 letters; `--fit-width 803` sets its length, so a
+longer word gets smaller letters), then the dates and event word, then the six colors.
 To rearrange the shapes, keep every size a multiple of the unit (226 px here) or its
 half, and keep each shape touching two others.
 

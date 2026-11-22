@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render]
 format: portrait-3x4
 archetype: A-hero-object
 palette: ['#d04441', '#1c4b92', '#e7caaf', '#1d1a30', '#782e2c', '#638dbe']
-techniques: [T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash, T-ghost-type]
+techniques: [T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash, T-condensation, T-ghost-type]
 needs: product-cutout
 ---
 
@@ -93,14 +93,20 @@ color is what separates them from the red ground.
 
 * Split ground: `fill gradient` left to right, three stops; **T-vignette** weighted to the
   bottom.
-* Ghost word: **T-fit-width** to 980 px, `layer opacity` 25.
-* **T-water-splash** (`scripts/splash.js`) in pale blue-white, `dir=-90` (straight up) from the can's base, in
-  `screen` mode, plus `particles.js` rings as flying drops.
+* Ghost word: **T-fit-width** (`--fit-width 980`), `layer opacity` 25.
+* **T-water-splash** in clear water (`render splash`, the default `--liquid water`), three
+  parts. Two `--kind sheet` arcs rise behind the fruit, up-left (`--angle 110`) and
+  up-right (`--angle 70`), `--size 125%` so their drops reach the ghost word. A crown
+  stands at the can's foot (`--at 50%,88% --size 80%`): its back half is drawn before the
+  fruit and the can, its front half after them, with the same `--at`, `--size`, and
+  `--seed`, so water runs over the lower wedges. The clear water takes red on the left and
+  blue on the right from the ground by itself.
 * Whole apples: red ellipses with a radial `fx overlay` and `fx bevel` for gloss. Wedges:
   half-disc `shape path` in cream with a red stroke, each rotated differently.
+* **T-condensation**: `render droplets --layer Can`, run right after the can is placed and
+  before its glow, so no bead lands on the glow.
 * **T-cutout-drop-shadow**, glow variant: a white-blue rim (`fx outer-glow`, blur 50, 40%).
-* **T-paper-grain**, amount 10, soft-light, 30%.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last.
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -119,20 +125,16 @@ more than a 10x step between each.
 apples and wedges with real fruit cutouts when you have them.
 
 ```bash
-pixelox render js scripts/splash.js -o crown.png --size 1300x1300 --seed 12 --param color='#dff0ff' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=22 --param drops=310 --param dir=-90 --param arc=200
-pixelox render js scripts/particles.js -o drops.png --size 1080x1440 --seed 4 --param shape=ring --param colors='#ffffff,#ffe9d0,#cfe6ff' --param count=90 --param min=0.3 --param max=1.6 --param amin=0.4 --param amax=0.9
 pixelox new -o ad.pxo --size 1080x1440 --fill '#1d1a30'
 pixelox layer add ad.pxo --in-place --name Split
 pixelox fill gradient ad.pxo --in-place --layer Split --from 0,0 --to 100%,0 --stops '#ea1e2f@0,#c8283c@0.3,#6a3a70@0.52,#0b47a8@0.75,#0541aa@1'
 pixelox layer add ad.pxo --in-place --name Shade
 pixelox fill gradient ad.pxo --in-place --layer Shade --from 0,70% --to 0,100% --stops '#03040c00@0,#03040ce6@1'
-pixelox text add ad.pxo --in-place --name Ghost --content "brand" --font "Avenir Next" --weight 500 --size 20% --tracking -20 --color '#ffffff'
-pixelox transform scale ad.pxo --in-place --layer Ghost --size 980x
-pixelox transform move ad.pxo --in-place --layer Ghost --to 51.5%,4% --anchor t
+pixelox text add ad.pxo --in-place --name Ghost --content "brand" --font @geometric-sans --weight 500 --fit-width 980 --tracking -20 --color '#ffffff' --at 51.5%,4% --anchor t --anchor-to ink
 pixelox layer opacity ad.pxo --in-place --layer Ghost --value 25
-pixelox comp place ad.pxo crown.png --in-place --as Crown --at 50%,74% --anchor c
-pixelox layer blend ad.pxo --in-place --layer Crown --mode screen
-pixelox layer opacity ad.pxo --in-place --layer Crown --value 80
+pixelox render splash ad.pxo --in-place --name ArcLeft --kind sheet --at 44%,82% --angle 110 --spread 60 --size 125% --drops 110 --seed 12
+pixelox render splash ad.pxo --in-place --name ArcRight --kind sheet --at 56%,82% --angle 70 --spread 60 --size 125% --drops 110 --seed 7
+pixelox render splash ad.pxo --in-place --name CrownBack --part back --at 50%,88% --size 80% --seed 12
 pixelox shape ellipse ad.pxo --in-place --name AppleLeft --rect 55,734,285x270 --fill '#d7322b'
 pixelox fx overlay ad.pxo --in-place --layer AppleLeft --stops '#ff6a5a@0,#d7322b@0.5,#7a1512@1' --style radial
 pixelox shape ellipse ad.pxo --in-place --name AppleRight --rect 765,866,295x275 --fill '#d7322b'
@@ -147,19 +149,20 @@ pixelox shape path ad.pxo --in-place --name WedgeBottomRight --d 'M 710 1190 A 1
 pixelox transform rotate ad.pxo --in-place --layer WedgeBottomRight --degrees 160
 pixelox shape path ad.pxo --in-place --name Leaf --d 'M 190 760 C 200 680 260 640 290 620 C 300 690 270 750 190 760 Z' --fill '#5aa02c'
 pixelox comp place ad.pxo product.png --in-place --as Can --size x1060 --at 50%,90.5% --anchor b
+pixelox render droplets ad.pxo --in-place --layer Can --density 60 --trickles 3
 pixelox fx outer-glow ad.pxo --in-place --layer Can --blur 50 --color '#cfe6ff' --opacity 40
-pixelox comp place ad.pxo drops.png --in-place --as Drops --fit cover
-pixelox text add ad.pxo --in-place --name Flavor --content "APPLE" --font "Arial Black" --size 1.8% --tracking 20 --color '#e8202a' --at 50%,77.5% --anchor c
-pixelox text add ad.pxo --in-place --name FlavorNote --content "FLAVOURED" --font "Helvetica Neue" --weight 700 --size 1% --tracking 60 --color '#ffffff' --at 50%,79.6% --anchor c
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox render splash ad.pxo --in-place --name CrownFront --part front --at 50%,88% --size 80% --seed 12
+pixelox text add ad.pxo --in-place --name Flavor --content "APPLE" --font @heavy-wide --size 1.8% --tracking 20 --color '#e8202a' --at 50%,77.5% --anchor c
+pixelox text add ad.pxo --in-place --name FlavorNote --content "FLAVOURED" --font @neo-grotesque --weight 700 --size 1% --tracking 60 --color '#ffffff' --at 50%,79.6% --anchor c
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the left ground color and the fruit (the flavor), keeping the right side in
-the brand color; then the ghost word; then the two-line flavor label.
+the brand color; then the ghost word; then the two-line flavor label. The droplets copy
+the can when their command runs: after swapping the can, run the recipe again from the
+top. If the crown's spikes cross the label, lower its `--at` or change `--seed` (on both
+halves).
 
 ## 10. Variations and pairings
 
@@ -183,5 +186,5 @@ the brand color; then the ghost word; then the two-line flavor label.
   to the 25% W that the can covers.
 * Fruit all at one angle looks stamped. Rotate every wedge differently and vary sizes by
   20 to 30%.
-* Water splash in opaque white reads as milk. Use `screen` mode at 70 to 85% so the ground
-  colors tint it.
+* Water splash in opaque white reads as milk. Keep `--liquid water`: it is clear, so the
+  ground colors show through it. On a pale ground it vanishes; darken the ground first.

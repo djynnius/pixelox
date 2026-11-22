@@ -7,7 +7,7 @@ style: [photo-composite, minimal, duotone]
 format: portrait-4x5
 archetype: A-split-field
 palette: ['#f30101', '#1a0302', '#470f0d', '#a11612', '#f6f6f6']
-techniques: [T-duotone, T-image-in-type, T-silhouette, T-paper-grain, T-counterchange]
+techniques: [T-duotone, T-image-in-type, T-silhouette, T-paper-grain, T-counterchange, T-condensation]
 needs: product-cutout
 ---
 
@@ -88,6 +88,10 @@ of the picture.
 
 * **T-duotone** on the product: `adjust gradient-map` from `#120101` through `#5a0a0a` and
   `#c81410` to `#ff4a3a`.
+* **T-condensation**: `render droplets --layer Bottle --density 75 --trickles 0 --mist 50
+  --size 3.5% --color '#ff8a7a'`, run after the toning so the beads are red too. It gives
+  a clean cutout the wet, textured surface of the macro photo; skip it when your photo
+  already has drops.
 * A left-edge shade clipped to the bottle (`layer clip`) so the glass falls into black
   away from the split.
   The white script is clipped to the bottle as well, so no letter spills onto the field.
@@ -95,7 +99,9 @@ of the picture.
   white under the ribbon and dark red clipped to the ribbon, so letters change color where
   they cross it.
 * **T-silhouette** thinking for the swimmer: a figure reduced to one flat color.
-* **T-paper-grain** at low strength over the bottle half.
+* The script is placed partly off the canvas in one step: `--at 0-230,31% --anchor-to ink`
+  puts the left end of the letters 230 px left of the canvas edge.
+* **T-paper-grain** at low strength (`filter grain --as-layer --amount 8`).
 * **T-counterchange** in [techniques.md](../techniques.md) is the tested library version of the lettering that changes color where it crosses a shape; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -115,31 +121,26 @@ part is on the canvas.
 pixelox new -o ad.pxo --size 1080x1350 --fill '#f30101'
 pixelox comp place ad.pxo product.png --in-place --as Bottle --size x3000 --at 16%,50% --anchor c
 pixelox adjust gradient-map ad.pxo --in-place --layer Bottle --stops '#120101@0,#5a0a0a@0.45,#c81410@0.8,#ff4a3a@1'
+pixelox render droplets ad.pxo --in-place --layer Bottle --density 75 --trickles 0 --mist 50 --size 3.5% --color '#ff8a7a'
 pixelox layer add ad.pxo --in-place --name BottleShade
 pixelox fill gradient ad.pxo --in-place --layer BottleShade --from 0,0 --to 46%,0 --stops '#100001e6@0,#10000100@1'
 pixelox layer clip ad.pxo --in-place --layer BottleShade
-pixelox text add ad.pxo --in-place --name Script --content "Brand" --font SignPainter --size 36% --color '#f6f6f6'
-pixelox transform move ad.pxo --in-place --layer Script --to 0,31% --anchor tl
-pixelox transform move ad.pxo --in-place --layer Script --by -230,0
+pixelox text add ad.pxo --in-place --name Script --content "Brand" --font @brush --size 36% --color '#f6f6f6' --at 0-230,31% --anchor-to ink
 pixelox layer clip ad.pxo --in-place --layer Script
 pixelox shape path ad.pxo --in-place --name RibbonIn --d 'M 0 640 C 150 590 350 600 522 583 L 522 745 C 350 770 150 720 0 770 Z' --fill '#d7d8d1'
-pixelox text add ad.pxo --in-place --name ScriptRed --content "Brand" --font SignPainter --size 36% --color '#a11612'
-pixelox transform move ad.pxo --in-place --layer ScriptRed --to 0,31% --anchor tl
-pixelox transform move ad.pxo --in-place --layer ScriptRed --by -230,0
+pixelox text add ad.pxo --in-place --name ScriptRed --content "Brand" --font @brush --size 36% --color '#a11612' --at 0-230,31% --anchor-to ink
 pixelox layer clip ad.pxo --in-place --layer ScriptRed
 pixelox shape path ad.pxo --in-place --name RibbonOut --d 'M 520 583 C 700 578 900 556 1080 503 L 1080 520 C 900 610 700 725 520 745 Z' --fill '#ffffff'
 pixelox shape path ad.pxo --in-place --name Swimmer --d 'M 545 652 L 598 648 L 640 640 L 668 644 M 598 648 L 572 664 M 640 640 L 662 628' --fill none --stroke '#f30101' --stroke-width 8 --cap round --join round
 pixelox shape ellipse ad.pxo --in-place --name SwimmerHead --rect 600,634,14x14 --fill '#f30101'
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the product's scale and position until its right edge sits near 48% W (then
-move the two ribbon paths so they meet at that edge: x 520 here), the script word, and the
-pictogram that rides the ribbon.
+move the two ribbon paths so they meet at that edge: x 520 here), the script word (the
+`230` in `--at 0-230,31%` is how far its start hangs off the left edge; use the same value
+on both copies), and the pictogram that rides the ribbon.
 
 ## 10. Variations and pairings
 

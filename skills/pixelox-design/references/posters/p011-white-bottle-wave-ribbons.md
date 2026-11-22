@@ -109,13 +109,11 @@ pixelox new -o ad.pxo --size 1080x1528 --fill '#e61a2b'
 pixelox comp place ad.pxo back.png --in-place --as BackWaves --fit cover
 pixelox comp place ad.pxo product.png --in-place --as Bottle --size x500 --at 48.5%,77.5% --anchor b
 pixelox fx overlay ad.pxo --in-place --layer Bottle --color '#ffffff'
-pixelox text add ad.pxo --in-place --name Mark --content "Brand" --font "Snell Roundhand" --weight 900 --size 5.4% --color '#e61a2b' --at 48.5%,68.5% --anchor c
-pixelox transform scale ad.pxo --in-place --layer Mark --size 96x
+pixelox text add ad.pxo --in-place --name Mark --content "Brand" --font @script-formal --weight 900 --fit-width 96 --color '#e61a2b' --at 49.3%,68.2% --anchor c --anchor-to ink
 pixelox comp place ad.pxo front.png --in-place --as FrontWaves --fit cover
-pixelox text add ad.pxo --in-place --name Tagline --content "a letter from summer" --font "Helvetica Neue" --weight 300 --size 2.25% --color '#ffffff' --at 50%,23% --anchor c
+pixelox text add ad.pxo --in-place --name Tagline --content "a letter from summer" --font @neo-grotesque --weight 300 --size 2.25% --color '#ffffff' --at 50%,23% --anchor c
 pixelox shape ellipse ad.pxo --in-place --name Disc --rect 477,1348,126x126 --fill '#e61a2b'
-pixelox text add ad.pxo --in-place --name DiscMark --content "Brand" --font "Snell Roundhand" --weight 900 --size 2.6% --color '#ffffff' --at 540,1411 --anchor c
-pixelox transform scale ad.pxo --in-place --layer DiscMark --size 100x
+pixelox text add ad.pxo --in-place --name DiscMark --content "Brand" --font @script-formal --weight 900 --fit-width 100 --color '#ffffff' --at 50.4%,92.2% --anchor c --anchor-to ink
 pixelox export ad.pxo -o ad.png
 ```
 

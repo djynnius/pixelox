@@ -100,18 +100,16 @@ variant, drawn as a blurred ellipse). Any single mascot, device render, or produ
 transparent background works; keep it low-saturation so the rims stay the only color.
 
 The two bubbles are drawn, not photographed: a faint white disc, an inner glow that runs
-violet to teal from the edge inward, a thin gradient stroke, and one white highlight arc.
+violet to teal from the edge inward, and one white highlight arc.
 
 ## 7. Effects and textures
 
-* Bubbles, built from three layers: one `shape path` holding both discs in `#f1efdf`;
-  above it a teal ring (stroke 34 px, drawn 30 px inside the edge, rasterized, `filter
-  gaussian` sigma 16) and a violet ring (stroke 22 px, 8 px inside the edge, sigma 7),
-  each clipped to the discs with `layer clip` so nothing glows outside the circle. This
-  works for circles that leave the canvas; `fx inner-glow` does not, because it also
-  glows along the canvas edge where the shape is cut.
+* Bubbles: one `shape path` holding both discs in `#f1efdf`, then one `fx inner-glow` on
+  it with gradient stops read from the edge inward (`--stops`: violet `#7a3fb8` to 12%,
+  teal `#4fb8aa` at 40%, transparent at the end; `--blur 90`, `--blend normal`, opacity
+  100). The glow follows the circles only, also where they leave the canvas.
 * Highlight arcs: one `shape path` with two open arcs, white 14 px round-capped stroke,
-  rasterized and blurred with sigma 6, 60% opacity.
+  blurred with sigma 6, 60% opacity.
 * **T-label-box** (pill form): `shape rect` with `--radius` = half the height, a
   left-to-right `fx overlay` gradient, and a 2 px inside `fx stroke` (a stroke set on the
   shape itself would be hidden by the overlay).
@@ -137,28 +135,16 @@ contrast that size does not.
 ```bash
 pixelox new -o sheet.pxo --size 1080x1528 --fill '#eae7d0'
 pixelox shape path sheet.pxo --in-place --name Bubbles --d 'M 682 235 A 268 268 0 1 1 1218 235 A 268 268 0 1 1 682 235 Z M -56 780 A 290 290 0 1 1 524 780 A 290 290 0 1 1 -56 780 Z' --fill '#f1efdf'
-pixelox shape path sheet.pxo --in-place --name RimTeal --d 'M 712 235 A 238 238 0 1 1 1188 235 A 238 238 0 1 1 712 235 Z M -26 780 A 260 260 0 1 1 494 780 A 260 260 0 1 1 -26 780 Z' --fill none --stroke '#4fb8aa' --stroke-width 34
-pixelox layer rasterize sheet.pxo --in-place --layer RimTeal
-pixelox filter gaussian sheet.pxo --in-place --layer RimTeal --sigma 16
-pixelox layer clip sheet.pxo --in-place --layer RimTeal
-pixelox shape path sheet.pxo --in-place --name RimViolet --d 'M 690 235 A 260 260 0 1 1 1210 235 A 260 260 0 1 1 690 235 Z M -48 780 A 282 282 0 1 1 516 780 A 282 282 0 1 1 -48 780 Z' --fill none --stroke '#7a3fb8' --stroke-width 22
-pixelox layer rasterize sheet.pxo --in-place --layer RimViolet
-pixelox filter gaussian sheet.pxo --in-place --layer RimViolet --sigma 7
-pixelox layer clip sheet.pxo --in-place --layer RimViolet
+pixelox fx inner-glow sheet.pxo --in-place --layer Bubbles --blur 90 --stops '#7a3fb8@0,#7a3fb8@0.12,#4fb8aa@0.4,#4fb8aa00@1' --blend normal --opacity 100
 pixelox shape path sheet.pxo --in-place --name Shine --d 'M 722 190 A 235 235 0 0 1 860 22 M 20 640 A 255 255 0 0 1 190 528' --fill none --stroke '#ffffff' --stroke-width 14 --cap round
-pixelox layer rasterize sheet.pxo --in-place --layer Shine
 pixelox filter gaussian sheet.pxo --in-place --layer Shine --sigma 6
 pixelox layer opacity sheet.pxo --in-place --layer Shine --value 60
 pixelox shape ellipse sheet.pxo --in-place --name Shadow --rect 3%,93.8%,36%x3.4% --fill '#8a8878'
-pixelox layer rasterize sheet.pxo --in-place --layer Shadow
 pixelox filter gaussian sheet.pxo --in-place --layer Shadow --sigma 14
-pixelox comp place sheet.pxo subject.png --in-place --as Mascot --size x800 --at 0,97% --anchor bl
-pixelox transform move sheet.pxo --in-place --layer Mascot --by -110,0
-pixelox text add sheet.pxo --in-place --name Brand --content "GRIDLOOM" --font "Helvetica Neue" --weight 900 --size 2.6% --tracking 60 --color '#262831' --at 10%,6.5% --anchor l
-pixelox text add sheet.pxo --in-place --name H1 --content "MACHINES" --font "Helvetica Neue" --weight 900 --size 6.6% --tracking 60 --color '#262831'
-pixelox transform move sheet.pxo --in-place --layer H1 --to 10%,11.1% --anchor tl
-pixelox text add sheet.pxo --in-place --name H2 --content "THAT LEARN" --font "Helvetica Neue" --weight 900 --size 6.6% --tracking 60 --color '#262831'
-pixelox transform move sheet.pxo --in-place --layer H2 --to 10%,17.9% --anchor tl
+pixelox comp place sheet.pxo subject.png --in-place --as Mascot --size x800 --at 0-110,97% --anchor bl
+pixelox text add sheet.pxo --in-place --name Brand --content "GRIDLOOM" --font "Helvetica Neue" --weight 900 --stretch condensed --size 2.6% --tracking 60 --color '#262831' --at 10%,6.5% --anchor l
+pixelox text add sheet.pxo --in-place --name H1 --content "MACHINES" --font "Helvetica Neue" --weight 900 --stretch condensed --size 6.6% --tracking 60 --color '#262831' --at 10%,11.1% --anchor tl --anchor-to ink
+pixelox text add sheet.pxo --in-place --name H2 --content "THAT LEARN" --font "Helvetica Neue" --weight 900 --stretch condensed --size 6.6% --tracking 60 --color '#262831' --at 10%,17.9% --anchor tl --anchor-to ink
 pixelox text add sheet.pxo --in-place --name Sub --content $'Four Ideas Changing\nHow We Work' --font Avenir --weight 300 --size 2.65% --tracking 20 --leading 150% --color '#4b4a4c' --at 10%,28.1% --anchor l
 pixelox shape rect sheet.pxo --in-place --name Pill1 --rect 47.3%,35.4%,46.1%x5.9% --radius 45 --fill '#776d80'
 pixelox fx overlay sheet.pxo --in-place --layer Pill1 --stops '#776d80@0,#f3f2ee@1' --angle 0
@@ -166,23 +152,24 @@ pixelox fx stroke sheet.pxo --in-place --layer Pill1 --width 2 --position inside
 pixelox shape rect sheet.pxo --in-place --name Pill2 --rect 48.6%,54.1%,46.2%x5.9% --radius 45 --fill '#776d80'
 pixelox shape rect sheet.pxo --in-place --name Pill3 --rect 48.6%,72.9%,46.2%x5.9% --radius 45 --fill '#776d80'
 pixelox fx copy sheet.pxo --in-place --from Pill1 --to Pill2,Pill3
-pixelox text add sheet.pxo --in-place --name T1 --content "ADAPTIVE SOFTWARE" --font "Helvetica Neue" --weight 900 --size 2.9% --tracking 60 --color '#262831' --at 70.4%,38.6% --anchor c
-pixelox text add sheet.pxo --in-place --name T2 --content "ROBOTS ON THE FLOOR" --font "Helvetica Neue" --weight 900 --size 2.9% --tracking 60 --color '#262831' --at 71.7%,57.3% --anchor c
-pixelox text add sheet.pxo --in-place --name T3 --content "CONNECTED THINGS" --font "Helvetica Neue" --weight 900 --size 2.9% --tracking 60 --color '#262831' --at 71.7%,76% --anchor c
+pixelox text add sheet.pxo --in-place --name T1 --content "ADAPTIVE SOFTWARE" --font "Helvetica Neue" --weight 900 --stretch condensed --size 2.9% --tracking 60 --color '#262831' --at 70.4%,38.6% --anchor c
+pixelox text add sheet.pxo --in-place --name T2 --content "ROBOTS ON THE FLOOR" --font "Helvetica Neue" --weight 900 --stretch condensed --size 2.9% --tracking 60 --color '#262831' --at 71.7%,57.3% --anchor c
+pixelox text add sheet.pxo --in-place --name T3 --content "CONNECTED THINGS" --font "Helvetica Neue" --weight 900 --stretch condensed --size 2.9% --tracking 60 --color '#262831' --at 71.7%,76% --anchor c
 pixelox text add sheet.pxo --in-place --name Dots1 --content $'•\n\n•' --font Avenir --weight 400 --size 2.2% --leading 110% --color '#4b4a4c' --at 52.8%,43% --anchor tl
 pixelox text add sheet.pxo --in-place --name B1 --content $'Tools that adjust to\nthe way you work\nHelp that arrives\nbefore you ask' --font Avenir --weight 400 --size 2.2% --tracking 30 --leading 110% --color '#4b4a4c' --at 54.8%,43% --anchor tl
 pixelox text add sheet.pxo --in-place --name Dots2 --content $'•\n\n•' --font Avenir --weight 400 --size 2.2% --leading 110% --color '#4b4a4c' --at 54.2%,61.8% --anchor tl
 pixelox text add sheet.pxo --in-place --name B2 --content $'Safer, steadier\nproduction lines\nPeople freed for\nharder problems' --font Avenir --weight 400 --size 2.2% --tracking 30 --leading 110% --color '#4b4a4c' --at 56.2%,61.8% --anchor tl
 pixelox text add sheet.pxo --in-place --name Dots3 --content $'•\n\n•' --font Avenir --weight 400 --size 2.2% --leading 110% --color '#4b4a4c' --at 54.2%,80.5% --anchor tl
 pixelox text add sheet.pxo --in-place --name B3 --content $'Homes and offices\nthat sense and respond\nLive data from\nevery device' --font Avenir --weight 400 --size 2.2% --tracking 30 --leading 110% --color '#4b4a4c' --at 56.2%,80.5% --anchor tl
-pixelox text add sheet.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Helvetica Neue" --weight 900 --size 2.35% --tracking 100 --color '#262831' --at 55.6%,94.7% --anchor c
+pixelox text add sheet.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Helvetica Neue" --weight 900 --stretch condensed --size 2.35% --tracking 100 --color '#262831' --at 55.6%,94.7% --anchor c
 pixelox export sheet.pxo -o sheet.png
 ```
 
 Change first: the mascot (set `--size` so its head is about 43% W wide and sits inside
-the lower bubble), then the three pill titles (16 to 23 characters) and bullets (two per
-block, 16 to 24 characters per line). With a real squared display font registered
-(`fonts add`), use it for every Helvetica Neue 900 line and drop the tracking to 20.
+the lower bubble; `--at 0-110,97%` starts it 110 px left of the canvas edge), then the
+three pill titles (16 to 23 characters) and bullets (two per block, 16 to 24 characters
+per line). With a real squared display font registered (`fonts add`), use it for every
+Helvetica Neue 900 line and drop the tracking to 20.
 
 ## 10. Variations and pairings
 
@@ -199,7 +186,7 @@ block, 16 to 24 characters per line). With a real squared display font registere
 ## 11. Pitfalls
 
 * Bubbles as flat colored circles. A bubble is a rim, not a disc: keep the fill within
-  3% lightness of the ground and put the color in the blurred rings only.
+  3% lightness of the ground and put the color in the inner glow only.
 * Three pills of different widths or with different left edges. Use one width; the
   original shifts the first pill 1.3% W to the left only because the bubble rim passes
   beside it.

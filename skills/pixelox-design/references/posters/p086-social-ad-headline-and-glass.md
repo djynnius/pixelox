@@ -7,7 +7,7 @@ style: [photo-composite, flat]
 format: square
 archetype: A-text-left-product-right
 palette: ['#520404', '#760907', '#a01610', '#f8f0e5', '#c77252', '#240907']
-techniques: [T-spotlight, T-pill-button, T-rules, T-splatter, T-cutout-drop-shadow]
+techniques: [T-spotlight, T-pill-button, T-rules, T-water-splash, T-cutout-drop-shadow]
 needs: product-cutout
 ---
 
@@ -88,20 +88,27 @@ is what makes the static layout feel fast.
 One product cutout: a glass of iced cola frozen mid-splash, tilted as if just set down
 hard. It is lit from behind so the drink glows amber at the ice, and it casts a short soft
 shadow on an implied floor. In a build the product cutout is rotated 14 degrees and a
-splatter in foam colors is placed at its rim. Any product works if it is tilted and has
-something leaving it (splash, crumbs, steam, sparks).
+rendered sheet of cola (`render splash --kind sheet --liquid cola`) is thrown up and to
+the left from its rim. Any product works if it is tilted and has something leaving it
+(splash, crumbs, steam, sparks).
 
 ## 7. Effects and textures
 
 * **T-spotlight**: radial glow `#b91214` at 62% W, 50% H; a darker shade at the left edge
   under the text.
-* Curved panel: one oversized `shape ellipse` at 50% opacity.
+* Curved panel: one oversized `shape ellipse` at 50% opacity, placed partly above the
+  canvas in one step (`--rect 430,0-220,1100x1250`: its top is 220 px above the top edge).
 * **T-rules**, as a device: five slanted bars drawn as one `shape path` with five closed
   sub-paths, used twice.
 * **T-pill-button**: filled white pill, `--radius` half the height, label at 45% of the
   pill height.
-* **T-splatter** in cola and foam tones with `dir=-110`; **T-cutout-drop-shadow** soft
-  floor ellipse (sigma 18).
+* **T-water-splash**, sheet form: `render splash --kind sheet --liquid cola --at 76%,24%
+  --angle 125 --spread 60 --size 45% --drops 50`. `--at` is the rim of the tilted product;
+  `--angle 125` throws the cola up and to the left, toward the headline but short of it.
+  The splash is added before the text and the product, so its origin hides behind the rim
+  and no drop lands on a letter.
+* **T-cutout-drop-shadow**: soft floor ellipse (`shape ellipse` with `filter gaussian
+  --sigma 18`) plus a drop shadow on the product.
 
 ## 8. Hierarchy and eye path
 
@@ -118,25 +125,21 @@ Cap heights: headline 6.3 : logo 2.9 : button label 2.2 : web address 1.3, about
 `product.png` is your image here: a glass, bottle, or can cutout.
 
 ```bash
-pixelox render js scripts/splatter.js -o splash.png --size 560x560 --seed 3 --param color='#e8c9a8' --param radius=0.1 --param drops=380 --param arms=14 --param reach=3.6 --param dir=-110
 pixelox new -o post.pxo --size 1080x1080 --fill '#520404'
-pixelox shape ellipse post.pxo --in-place --name Panel --rect 430,0,1100x1250 --fill '#8a0c0a' --opacity 50
-pixelox transform move post.pxo --in-place --layer Panel --by 0,-220
+pixelox shape ellipse post.pxo --in-place --name Panel --rect 430,0-220,1100x1250 --fill '#8a0c0a' --opacity 50
 pixelox layer add post.pxo --in-place --name Glow
 pixelox fill gradient post.pxo --in-place --layer Glow --kind radial --from 62%,50% --to 62%,95% --stops '#c01616e6@0,#a0161000@1'
 pixelox layer add post.pxo --in-place --name LeftShade
 pixelox fill gradient post.pxo --in-place --layer LeftShade --from 0,0 --to 45%,0 --stops '#3a000099@0,#3a000000@1'
+pixelox render splash post.pxo --in-place --name Splash --kind sheet --liquid cola --at 76%,24% --angle 125 --spread 60 --size 45% --drops 50 --seed 3
 pixelox shape path post.pxo --in-place --name BarsTop --d 'M 98 124 L 124 124 L 107 172 L 81 172 Z M 135 124 L 161 124 L 144 172 L 118 172 Z M 172 124 L 198 124 L 181 172 L 155 172 Z M 209 124 L 235 124 L 218 172 L 192 172 Z M 246 124 L 272 124 L 255 172 L 229 172 Z' --fill '#ffffff'
-pixelox text add post.pxo --in-place --name Headline --content $'CAPTURE\nTHE\nCOLD' --font "Avenir Next" --weight 800 --style italic --size 8.8% --leading 98% --color '#ffffff'
-pixelox transform move post.pxo --in-place --layer Headline --to 7.5%,19% --anchor tl
+pixelox text add post.pxo --in-place --name Headline --content $'CAPTURE\nTHE\nCOLD' --font @geometric-sans --weight 800 --style italic --size 8.8% --leading 98% --color '#ffffff' --at 7.5%,19% --anchor-to ink
 pixelox shape rect post.pxo --in-place --name Button --rect 7.5%,63%,24%x7% --radius 38 --fill '#ffffff'
-pixelox text add post.pxo --in-place --name ButtonLabel --content "Shop Now" --font "Avenir Next" --weight 700 --style italic --size 3.2% --color '#6a0808' --at 19.5%,66.5% --anchor c
-pixelox text add post.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 700 --size 2.5% --tracking 300 --color '#ffffff' --at 7.5%,92.8% --anchor l
-pixelox text add post.pxo --in-place --name Logo --content "LOGO" --font "Avenir Next" --weight 800 --size 4% --tracking 20 --color '#ffffff' --at 92.5%,7% --anchor r
+pixelox text add post.pxo --in-place --name ButtonLabel --content "Shop Now" --font @geometric-sans --weight 700 --style italic --size 3.2% --color '#6a0808' --at 19.5%,66.5% --anchor c
+pixelox text add post.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 700 --size 2.5% --tracking 300 --color '#ffffff' --at 7.5%,92.8% --anchor l
+pixelox text add post.pxo --in-place --name Logo --content "LOGO" --font @geometric-sans --weight 800 --size 4% --tracking 20 --color '#ffffff' --at 92.5%,7% --anchor r
 pixelox shape ellipse post.pxo --in-place --name FloorShadow --rect 60%,81.5%,30%x4.5% --fill '#240303'
-pixelox layer rasterize post.pxo --in-place --layer FloorShadow
 pixelox filter gaussian post.pxo --in-place --layer FloorShadow --sigma 18
-pixelox comp place post.pxo splash.png --in-place --as Splash --at 60%,27% --anchor c
 pixelox comp place post.pxo product.png --in-place --as Glass --size x720 --at 69%,53% --anchor c
 pixelox transform rotate post.pxo --in-place --layer Glass --degrees 14
 pixelox fx drop-shadow post.pxo --in-place --layer Glass --offset 0,12 --blur 40 --color '#2a0303' --opacity 50
@@ -146,7 +149,9 @@ pixelox export post.pxo -o post.png
 
 Change first: the three headline lines (keep the middle one short), the button label, the
 ground red (then the panel and glow as lighter steps of it), and the device: replace the
-bars with your brand's own repeating mark.
+bars with your brand's own repeating mark. When you move or swap the product, move the
+splash `--at` to its rim; `--liquid` takes `water`, `milk`, `juice`, `coffee`, `wine`,
+or `oil` for other drinks.
 
 ## 10. Variations and pairings
 

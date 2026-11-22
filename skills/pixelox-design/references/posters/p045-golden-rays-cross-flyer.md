@@ -151,28 +151,22 @@ pixelox layer add glory.pxo --in-place --name Floor
 pixelox fill gradient glory.pxo --in-place --layer Floor --from 0,58% --to 0,100% --stops '#9c500a00@0,#9c500ad9@1'
 pixelox comp place glory.pxo sparks.png --in-place --as Sparks --fit cover
 pixelox layer blend glory.pxo --in-place --layer Sparks --mode screen
-pixelox text add glory.pxo --in-place --name Presenter --content "your church presents" --font "Helvetica Neue" --weight 400 --size 2.1% --color '#ffffff' --at 50%,2.7% --anchor c
-pixelox text add glory.pxo --in-place --name H1 --content "FAMILY" --font "Arial Narrow" --weight 700 --size 17% --tracking 15 --color '#523615'
-pixelox transform move glory.pxo --in-place --layer H1 --to 50%,35% --anchor t
-pixelox text add glory.pxo --in-place --name H2 --content "FEAST" --font "Arial Narrow" --weight 700 --size 17% --tracking 15 --color '#523615'
-pixelox transform move glory.pxo --in-place --layer H2 --to 50%,50.9% --anchor t
-pixelox text add glory.pxo --in-place --name Script1 --content "Harvest Sunday" --font "Brush Script MT" --size 7% --color '#523615'
-pixelox transform scale glory.pxo --in-place --layer Script1 --size 594x
-pixelox transform move glory.pxo --in-place --layer Script1 --to 50%,66.5% --anchor t
-pixelox text add glory.pxo --in-place --name Script2 --content "Hope Community" --font "Brush Script MT" --size 9% --color '#ffffff'
-pixelox transform scale glory.pxo --in-place --layer Script2 --size 718x
-pixelox transform move glory.pxo --in-place --layer Script2 --to 50%,78% --anchor t
+pixelox text add glory.pxo --in-place --name Presenter --content "your church presents" --font @neo-grotesque --weight 400 --size 2.1% --color '#ffffff' --at 50%,2.7% --anchor c
+pixelox text add glory.pxo --in-place --name H1 --content "FAMILY" --font "Arial Narrow" --weight 700 --size 17% --tracking 15 --color '#523615' --at 50%,35% --anchor t --anchor-to ink
+pixelox text add glory.pxo --in-place --name H2 --content "FEAST" --font "Arial Narrow" --weight 700 --size 17% --tracking 15 --color '#523615' --at 50%,50.9% --anchor t --anchor-to ink
+pixelox text add glory.pxo --in-place --name Script1 --content "Harvest Sunday" --font "Brush Script MT" --fit-width 594 --color '#523615' --at 50%,66.5% --anchor t --anchor-to ink
+pixelox text add glory.pxo --in-place --name Script2 --content "Hope Community" --font "Brush Script MT" --fit-width 718 --color '#ffffff' --at 50%,78% --anchor t --anchor-to ink
 pixelox fx drop-shadow glory.pxo --in-place --layer Script2 --offset 0,4 --blur 10 --color '#6b3200' --opacity 40
-pixelox text add glory.pxo --in-place --name DateLine --content "SUNDAY OCT 12  2031  YOUR CITY" --font "Helvetica Neue" --weight 700 --size 2.2% --color '#ffffff' --at 50%,88.9% --anchor c
+pixelox text add glory.pxo --in-place --name DateLine --content "SUNDAY OCT 12  2031  YOUR CITY" --font @neo-grotesque --weight 700 --size 2.2% --color '#ffffff' --at 50%,88.9% --anchor c
 pixelox text add glory.pxo --in-place --name FinePrint --content $'A shared table after the morning service: bring one dish, one guest, and one story to tell.\nChildren are welcome, parking is free, and the doors open half an hour before we begin.' --font "Arial Narrow" --weight 400 --size 1.65% --leading 125% --align center --color '#523615' --at 50%,92.9% --anchor c
-pixelox text add glory.pxo --in-place --name Contact --content "MORE INFO: WWW.EXAMPLE.COM" --font "Helvetica Neue" --weight 700 --size 2.2% --color '#ffffff' --at 50%,96.4% --anchor c
+pixelox text add glory.pxo --in-place --name Contact --content "MORE INFO: WWW.EXAMPLE.COM" --font @neo-grotesque --weight 700 --size 2.2% --color '#ffffff' --at 50%,96.4% --anchor c
 pixelox export glory.pxo -o glory.png
 ```
 
 Change first: the two headline words. They share one font size (`--size 17%`), so the
 longer word sets the limit: 6 letters fill about 80% W; for 7 letters use `--size 14.5%`,
 for 8 use `--size 12.5%`, and keep the cap tops at 35% and (35% + cap height + 3.7%) H. Then the
-script lines (the `transform scale` widths are 55% and 66.5% W).
+script lines (their `--fit-width` values, 594 and 718 px, are 55% and 66.5% W).
 
 ## 10. Variations and pairings
 
@@ -185,7 +179,7 @@ script lines (the `transform scale` widths are 55% and 66.5% W).
 * Swap the grotesque headline for a heavy condensed face fitted with T-fit-width when the
   words are longer than 7 letters.
 * Pairs with T-bokeh (larger, fewer discs instead of sparkles), T-arc-type for a roundel
-  at the cross center, and T-paper-grain (amount 10, soft-light 30%) to hide banding in
+  at the cross center, and T-paper-grain (`--amount 10`) to hide banding in
   the big radial field.
 
 ## 11. Pitfalls

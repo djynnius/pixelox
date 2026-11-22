@@ -83,7 +83,7 @@ wordmark and a touch of teal are the only outsiders, both tiny.
 | Credits | "WRITTEN BY", names, "DIRECTED BY", name | caps | ultra-condensed sans (Oswald 300 / Avenir Next Condensed) | 500 | 0.8% | 0 | - | left | `#3a1a05` | 5%, 74.5% |
 | Streaming label | "ONLY ON" | caps | geometric sans (Montserrat 800 / Avenir Next) | 800 | 1.3% | 20 | - | left | `#ffffff` | 4.8%, 96% |
 | Brand | `[BRAND]` wordmark | caps | condensed heavy (Bebas Neue / Impact) | 400 | 2.6% | 20 | - | left | `#e31c2a` | 19.5%, 96% |
-| Date | month + day | caps | geometric sans | 800 | 1.9% | 20 | - | left | `#ffffff` | 43%, 96% |
+| Date | month + day | caps | geometric sans | 800 | 1.9% | 20 | - | left | `#ffffff` | 44.3%, 96% |
 
 One fat slab serif does all the talking. The title is small (cap height 3.6% H, 28% W
 wide): the cascade of faces is the headline, and the title is its caption.
@@ -109,7 +109,7 @@ subjects, add a dark shape behind the heads.
   `scratches=40`, few specks), 45%, plus three straight crease lines drawn with **T-rules**
   hairlines at 35%.
 * **T-vignette** in brown `#7a4a00`, light.
-* **T-paper-grain**, amount 16, overlay 35%.
+* **T-paper-grain**: `filter grain --amount 15` as the top layer.
 
 ## 8. Hierarchy and eye path
 
@@ -139,25 +139,21 @@ pixelox comp place cascade.pxo subject.png --in-place --as C6 --size x1560 --at 
 pixelox layer merge cascade.pxo --in-place --layers C1,C2,C3,C4,C5,C6 --name Heads
 pixelox filter oil-paint cascade.pxo --in-place --layer Heads --brush 7 --sharpness 60 --impasto 35
 pixelox adjust gradient-map cascade.pxo --in-place --layer Heads --stops '#0b0904d9@0,#5a270ad9@0.35,#bb6c1fd9@0.7,#f3c86ad9@1'
-pixelox text add cascade.pxo --in-place --name Exclaim --content "Hold up." --font Superclarendon --weight 900 --size 3.2% --color '#0b0904' --at 4.8%,7.3% --anchor l
-pixelox text add cascade.pxo --in-place --name Cast --content $'First Actor\nSecond Actor\nand Third Actor' --font Superclarendon --weight 700 --size 1.6% --tracking 20 --leading 150% --color '#0b0904' --at 5%,55.2% --anchor l
-pixelox text add cascade.pxo --in-place --name Title --content $'SIX\nTIMES\nMARCUS' --font Superclarendon --weight 900 --size 4.8% --tracking -10 --leading 90% --color '#0b0904'
-pixelox transform move cascade.pxo --in-place --layer Title --to 4.8%,59.6% --anchor tl
-pixelox text add cascade.pxo --in-place --name Credits --content "WRITTEN BY WRITER NAME   DIRECTED BY DIRECTOR NAME" --font "Avenir Next Condensed" --weight 500 --size 1.1% --color '#3a1a05' --at 5%,74.5% --anchor l
+pixelox text add cascade.pxo --in-place --name Exclaim --content "Hold up." --font @fat-display --weight 900 --size 3.2% --color '#0b0904' --at 4.8%,7.3% --anchor l
+pixelox text add cascade.pxo --in-place --name Cast --content $'First Actor\nSecond Actor\nand Third Actor' --font @fat-display --weight 700 --size 1.6% --tracking 20 --leading 150% --color '#0b0904' --at 5%,55.2% --anchor l
+pixelox text add cascade.pxo --in-place --name Title --content $'SIX\nTIMES\nMARCUS' --font @fat-display --weight 900 --size 4.8% --tracking -10 --leading 90% --color '#0b0904' --at 4.8%,59.6% --anchor tl --anchor-to ink
+pixelox text add cascade.pxo --in-place --name Credits --content "WRITTEN BY WRITER NAME   DIRECTED BY DIRECTOR NAME" --font @condensed --weight 500 --size 1.1% --color '#3a1a05' --at 5%,74.5% --anchor l
 pixelox shape rect cascade.pxo --in-place --name RatingBox --rect 5%,75.6%,7%x1.8% --fill none --stroke '#3a1a05' --stroke-width 2
-pixelox text add cascade.pxo --in-place --name Label --content "ONLY ON" --font "Avenir Next" --weight 800 --size 1.8% --tracking 20 --color '#ffffff' --at 4.8%,96% --anchor l
-pixelox text add cascade.pxo --in-place --name Brand --content "STREAMER" --font Impact --size 3.3% --tracking 20 --color '#e31c2a' --at 19.5%,96% --anchor l
-pixelox shape line cascade.pxo --in-place --name Divider --from 40.5%,94.6% --to 40.5%,97.4% --stroke '#e31c2a' --stroke-width 3
-pixelox text add cascade.pxo --in-place --name Date --content "MAY 9" --font "Avenir Next" --weight 800 --size 2.6% --tracking 20 --color '#ffffff' --at 43%,96% --anchor l
+pixelox text add cascade.pxo --in-place --name Label --content "ONLY ON" --font @geometric-sans --weight 800 --size 1.8% --tracking 20 --color '#ffffff' --at 4.8%,96% --anchor l
+pixelox text add cascade.pxo --in-place --name Brand --content "STREAMER" --font @condensed-heavy --size 3.3% --tracking 20 --color '#e31c2a' --at 19.5%,96% --anchor l
+pixelox shape line cascade.pxo --in-place --name Divider --from 42%,94.6% --to 42%,97.4% --stroke '#e31c2a' --stroke-width 3
+pixelox text add cascade.pxo --in-place --name Date --content "MAY 9" --font @geometric-sans --weight 800 --size 2.6% --tracking 20 --color '#ffffff' --at 44.3%,96% --anchor l
 pixelox comp place cascade.pxo creases.png --in-place --as Creases --fit cover
 pixelox layer opacity cascade.pxo --in-place --layer Creases --value 45
 pixelox shape path cascade.pxo --in-place --name Folds --d 'M 0 812 H 1080 M 358 0 V 1620 M 716 0 V 1620' --fill none --stroke '#fff6dc' --stroke-width 2 --opacity 35
 pixelox layer add cascade.pxo --in-place --name Vignette
 pixelox fill gradient cascade.pxo --in-place --layer Vignette --kind radial --from 50%,48% --to 50%,125% --stops '#7a4a0000@0.5,#7a4a0080@1'
-pixelox layer add cascade.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cascade.pxo --in-place --layer Grain --amount 16 --monochrome
-pixelox layer blend cascade.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cascade.pxo --in-place --layer Grain --value 35
+pixelox filter grain cascade.pxo --in-place --as-layer --name Grain --amount 15
 pixelox export cascade.pxo -o cascade.png
 ```
 

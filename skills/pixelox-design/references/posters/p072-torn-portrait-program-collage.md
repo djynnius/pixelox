@@ -109,8 +109,9 @@ with a white fiber rim (the face scrap, the bottom band).
 
 * **T-torn-collage**: `torn.js` with `edges=r` for the face scrap, `edges=t` for the
   bottom band. Tearing a photo: place a torn strip, place the photo above it, `layer
-  clip`. A second white strip of the same seed placed 16 px higher, underneath, gives the
-  white paper rim.
+  clip`. A second white strip of the same seed placed 18 px higher, underneath, gives the
+  white paper rim. Both strips hang below the canvas: a sum in `--at` (`100%+60`,
+  `100%+78`) places them there directly.
 * Letters on the scrap: one text layer, rotated, placed right above the scrap and
   clipped to it, so the scrap's edge crops the letters.
 * **T-vertical-type** for the rotated section heading.
@@ -149,41 +150,40 @@ pixelox layer clip paste.pxo --in-place --layer Portrait
 pixelox comp place paste.pxo scrap.png --in-place --as Scrap --at 35.5%,47% --anchor c
 pixelox transform rotate paste.pxo --in-place --layer Scrap --degrees=-4
 pixelox fx drop-shadow paste.pxo --in-place --layer Scrap --offset 3,6 --blur 12 --opacity 35
-pixelox text add paste.pxo --in-place --name Letters --content $'ix\ncu' --font "Helvetica Neue" --weight 700 --size 21% --tracking=-40 --leading 80% --color '#161616' --at 36%,47% --anchor c
+pixelox text add paste.pxo --in-place --name Letters --content $'ix\ncu' --font @neo-grotesque --weight 700 --size 21% --tracking=-40 --leading 80% --color '#161616' --at 36%,47% --anchor c
 pixelox transform rotate paste.pxo --in-place --layer Letters --degrees=-28
 pixelox layer clip paste.pxo --in-place --layer Letters
 pixelox shape rect paste.pxo --in-place --name Orange --rect 0,28%,31%x32% --fill '#e2611c'
 pixelox shape path paste.pxo --in-place --name Boxes --d 'M 8 540 H 70 V 660 H 8 Z M 82 540 H 140 V 660 H 82 Z M 152 540 H 322 V 660 H 152 Z M 8 690 H 120 V 820 H 8 Z M 132 690 H 200 V 820 H 132 Z M 212 690 H 322 V 820 H 212 Z' --fill '#f1f0ed'
-pixelox text add paste.pxo --in-place --name Workshops --content "WORKSHOPS" --font "Avenir Next" --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 30%,34% --anchor r
+pixelox text add paste.pxo --in-place --name Workshops --content "WORKSHOPS" --font @geometric-sans --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 30%,34% --anchor r
 pixelox shape rect paste.pxo --in-place --name SmallPhoto --rect 0,20.5%,28%x7% --fill '#8f8f90'
 pixelox comp place paste.pxo subject2.png --in-place --as SmallFace --size 300x --at 14%,20.2% --anchor t
 pixelox layer clip paste.pxo --in-place --layer SmallFace
 pixelox adjust bw paste.pxo --in-place --layer SmallFace
-pixelox text add paste.pxo --in-place --name Schedule --content "SCHEDULE" --font "Avenir Next" --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 2.5%,12.6% --anchor l
-pixelox text add paste.pxo --in-place --name Times --content $'10:00  Doors and coffee\n11:00  Opening talk\n12:30  Paper swap\n14:00  Studio sessions\n16:30  Open review\n18:00  Closing party' --font "Helvetica Neue" --weight 500 --size 0.75% --leading 150% --color '#161616' --at 2.5%,13.8% --anchor tl
+pixelox text add paste.pxo --in-place --name Schedule --content "SCHEDULE" --font @geometric-sans --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 2.5%,12.6% --anchor l
+pixelox text add paste.pxo --in-place --name Times --content $'10:00  Doors and coffee\n11:00  Opening talk\n12:30  Paper swap\n14:00  Studio sessions\n16:30  Open review\n18:00  Closing party' --font @neo-grotesque --weight 500 --size 0.75% --leading 150% --color '#161616' --at 2.5%,13.8% --anchor tl
 pixelox shape rect paste.pxo --in-place --name Tape --rect 60%,10.6%,17%x3.4% --fill '#a69b5d' --opacity 75
 pixelox transform rotate paste.pxo --in-place --layer Tape --degrees=-3
-pixelox text add paste.pxo --in-place --name Speakers --content "FEATURED SPEAKERS" --font "Avenir Next" --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 50%,50% --anchor c
+pixelox text add paste.pxo --in-place --name Speakers --content "FEATURED SPEAKERS" --font @geometric-sans --weight 800 --size 1.55% --tracking 20 --color '#161616' --at 50%,50% --anchor c
 pixelox transform rotate paste.pxo --in-place --layer Speakers --degrees=-90
 pixelox transform move paste.pxo --in-place --layer Speakers --to 71.5%,29% --anchor bl
-pixelox text add paste.pxo --in-place --name Bios1 --content $'First Speaker\nCuts old magazines\ninto wall pieces and\nteaches weekend\nclasses in a shared\nstudio.\n\nSecond Speaker\nWorks with maps,\ntickets, and letters\nto tell family\nstories in layers.\n\nThird Speaker\nPrints, tears, and\npastes posters for\nbands and theaters.' --font "Helvetica Neue" --weight 400 --size 0.75% --leading 140% --color '#3a3a3a' --at 75.5%,13% --anchor tl
-pixelox text add paste.pxo --in-place --name Bios2 --content $'Fourth Speaker\nBuilds animated\ncollages from scans\nand shows them on\ncity walls.\n\nFifth Speaker\nCollects packaging\nand turns it into\nportraits of its\nmakers.\n\nSixth Speaker\nRuns a zine library\nand a monthly\ncut-and-paste night.' --font "Helvetica Neue" --weight 400 --size 0.75% --leading 140% --color '#3a3a3a' --at 87.5%,13% --anchor tl
-pixelox comp place paste.pxo tear.png --in-place --as Rim --at 50%,100% --anchor b
-pixelox transform move paste.pxo --in-place --layer Rim --by 0,60
-pixelox comp place paste.pxo tear.png --in-place --as BandShape --at 50%,100% --anchor b
-pixelox transform move paste.pxo --in-place --layer BandShape --by 0,78
+pixelox text add paste.pxo --in-place --name Bios1 --content $'First Speaker\nCuts old magazines\ninto wall pieces and\nteaches weekend\nclasses in a shared\nstudio.\n\nSecond Speaker\nWorks with maps,\ntickets, and letters\nto tell family\nstories in layers.\n\nThird Speaker\nPrints, tears, and\npastes posters for\nbands and theaters.' --font @neo-grotesque --weight 400 --size 0.75% --leading 140% --color '#3a3a3a' --at 75.5%,13% --anchor tl
+pixelox text add paste.pxo --in-place --name Bios2 --content $'Fourth Speaker\nBuilds animated\ncollages from scans\nand shows them on\ncity walls.\n\nFifth Speaker\nCollects packaging\nand turns it into\nportraits of its\nmakers.\n\nSixth Speaker\nRuns a zine library\nand a monthly\ncut-and-paste night.' --font @neo-grotesque --weight 400 --size 0.75% --leading 140% --color '#3a3a3a' --at 87.5%,13% --anchor tl
+pixelox comp place paste.pxo tear.png --in-place --as Rim --at 50%,100%+60 --anchor b
+pixelox comp place paste.pxo tear.png --in-place --as BandShape --at 50%,100%+78 --anchor b
 pixelox comp place paste.pxo photo.png --in-place --as Rock --size 1160x --at 50%,100% --anchor b
 pixelox layer clip paste.pxo --in-place --layer Rock
 pixelox adjust gradient-map paste.pxo --in-place --layer Rock --stops '#161a1a@0,#3f4a4a@0.5,#9aa5a3@1'
-pixelox text add paste.pxo --in-place --name Title --content $'Paper Cuts Weekend\nMarch 14, 2031' --font "Avenir Next" --weight 700 --size 1.95% --leading 125% --color '#d9e021' --at 25%,90.2% --anchor l
-pixelox text add paste.pxo --in-place --name Note --content $'Two days of talks, tables, and scissors for people\nwho make pictures out of other pictures. Bring a\nstack of old paper and something to trade.' --font "Helvetica Neue" --weight 400 --size 0.75% --leading 140% --color '#ffffff' --at 25%,93.6% --anchor tl
-pixelox text add paste.pxo --in-place --name Logotype --content $'Cut\nand\nmix' --font "Avenir Next" --weight 700 --size 3.6% --tracking 20 --leading 92% --color '#e8813a' --at 98%,93.3% --anchor r
+pixelox text add paste.pxo --in-place --name Title --content $'Paper Cuts Weekend\nMarch 14, 2031' --font @geometric-sans --weight 700 --size 1.95% --leading 125% --color '#d9e021' --at 25%,90.2% --anchor l
+pixelox text add paste.pxo --in-place --name Note --content $'Two days of talks, tables, and scissors for people\nwho make pictures out of other pictures. Bring a\nstack of old paper and something to trade.' --font @neo-grotesque --weight 400 --size 0.75% --leading 140% --color '#ffffff' --at 25%,93.6% --anchor tl
+pixelox text add paste.pxo --in-place --name Logotype --content $'Cut\nand\nmix' --font @geometric-sans --weight 700 --size 3.6% --tracking 20 --leading 92% --color '#e8813a' --at 98%,93.3% --anchor r
 pixelox export paste.pxo -o paste.png
 ```
 
 Change first: the portrait (set `--size` and `--at` so the head is 25 to 35% W wide and
-the scrap's torn edge, at about 52% W, crosses the middle of the face), then the letters on the scrap (take them from your logotype),
-then the program text. Keep every scrap either dead straight or clearly torn.
+the scrap's torn edge, at about 52% W, crosses the middle of the face), then the letters
+on the scrap (take them from your logotype), then the program text. Keep every scrap
+either dead straight or clearly torn.
 
 ## 10. Variations and pairings
 

@@ -101,10 +101,12 @@ positions can be judged.
 
 ## 7. Effects and textures
 
-* **T-vertical-type**: every word is added flat, fitted to its length, rotated -90, then
-  moved by its bottom-left corner.
-* **T-fit-width** before rotating: the solid words are fitted to 51% H (688 px on a
-  1350 px canvas), the outline word to 78% H.
+* **T-vertical-type**: every word is added flat at the canvas center with its length set
+  by `--fit-width`, rotated -90 (it stays live text), then moved by its bottom-left
+  corner.
+* **T-fit-width** before rotating: `--fit-width 640` for the solid words (47% H on a
+  1350 px canvas), `--fit-width 1058` for the outline word (78% H). The face is the
+  condensed black cut (`--stretch condensed`), so the letters are tall for their length.
 * **T-outline-type** for the ghost word: `--color transparent`, white stroke 3 px, placed
   below the panel and the product in the stack.
 * **T-pill-button**, filled variant with a small radius (a rounded rectangle, not a full
@@ -131,21 +133,17 @@ are placeholders: replace each with a real ingredient cutout of the same size.
 pixelox new -o drink.pxo --size 1080x1350 --fill '#fcfcfc'
 pixelox layer add drink.pxo --in-place --name Ground
 pixelox fill gradient drink.pxo --in-place --layer Ground --from 0,0 --to 0,100% --stops '#fcfcfc@0,#d0d0d0@1'
-pixelox text add drink.pxo --in-place --name Ghost --content "LAVENDER" --font "Helvetica Neue" --weight 900 --size 14% --color transparent --stroke '#ffffff' --stroke-width 3
-pixelox transform scale drink.pxo --in-place --layer Ghost --size 1058x
+pixelox text add drink.pxo --in-place --name Ghost --content "LAVENDER" --font "Helvetica Neue" --weight 900 --stretch condensed --fit-width 1058 --color transparent --stroke '#ffffff' --stroke-width 3 --at 50%,50% --anchor c
 pixelox transform rotate drink.pxo --in-place --layer Ghost --degrees -90
 pixelox transform move drink.pxo --in-place --layer Ghost --to 64.2%,86.4% --anchor bl
 pixelox shape rect drink.pxo --in-place --name Panel --rect 108,200,454x950 --radius 60 --fill '#a07a93'
-pixelox text add drink.pxo --in-place --name WordWhite --content "LAVENDER" --font "Helvetica Neue" --weight 900 --size 10% --color '#ffffff'
-pixelox transform scale drink.pxo --in-place --layer WordWhite --size 640x
+pixelox text add drink.pxo --in-place --name WordWhite --content "LAVENDER" --font "Helvetica Neue" --weight 900 --stretch condensed --fit-width 640 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate drink.pxo --in-place --layer WordWhite --degrees -90
 pixelox transform move drink.pxo --in-place --layer WordWhite --to 12.8%,90.4% --anchor bl
-pixelox text add drink.pxo --in-place --name WordNavy --content "LAVENDER" --font "Helvetica Neue" --weight 900 --size 10% --color '#1e1f40'
-pixelox transform scale drink.pxo --in-place --layer WordNavy --size 640x
+pixelox text add drink.pxo --in-place --name WordNavy --content "LAVENDER" --font "Helvetica Neue" --weight 900 --stretch condensed --fit-width 640 --color '#1e1f40' --at 50%,50% --anchor c
 pixelox transform rotate drink.pxo --in-place --layer WordNavy --degrees -90
 pixelox transform move drink.pxo --in-place --layer WordNavy --to 25.3%,56.2% --anchor bl
-pixelox text add drink.pxo --in-place --name Tagline --content "SIP THE CALM SIDE" --font "Avenir Next" --weight 500 --size 1.9% --tracking 450 --color '#4a3f52'
-pixelox transform scale drink.pxo --in-place --layer Tagline --size 560x
+pixelox text add drink.pxo --in-place --name Tagline --content "SIP THE CALM SIDE" --font @geometric-sans --weight 500 --fit-width 560 --tracking 450 --color '#4a3f52' --at 50%,50% --anchor c
 pixelox transform rotate drink.pxo --in-place --layer Tagline --degrees -90
 pixelox transform move drink.pxo --in-place --layer Tagline --to 38.4%,70% --anchor bl
 pixelox shape ellipse drink.pxo --in-place --name Berry1 --rect 68,61,81x81 --fill '#5e687e'
@@ -159,14 +157,14 @@ pixelox fx overlay drink.pxo --in-place --layer Berry1 --stops '#2b3350@0,#8a96b
 pixelox fx copy drink.pxo --in-place --from Berry1 --to Berry2,Berry3,Berry4,Berry5,Berry6
 pixelox shape rect drink.pxo --in-place --name Button --rect 414,1166,247x68 --radius 14 --fill '#ffffff'
 pixelox fx drop-shadow drink.pxo --in-place --layer Button --offset 0,6 --blur 14 --opacity 20
-pixelox text add drink.pxo --in-place --name ButtonText --content "ORDER NOW" --font "Helvetica Neue" --weight 900 --size 3.2% --color '#1e1f40' --at 49.8%,88.9% --anchor c
+pixelox text add drink.pxo --in-place --name ButtonText --content "ORDER NOW" --font "Helvetica Neue" --weight 900 --stretch condensed --size 3.2% --color '#1e1f40' --at 49.8%,88.9% --anchor c
 pixelox export drink.pxo -o drink.png
 ```
 
 Change first: the flavor word in all three text layers, then the panel color (sample it
 from the drink) and the navy (sample it from the darkest part of the fruit). A longer
-word needs no other change: `transform scale` keeps each copy at the same length, so the
-letters only get a little narrower.
+word needs no other change: `--fit-width` keeps each copy at the same length, so the
+letters only get a little smaller.
 
 ## 10. Variations and pairings
 
@@ -180,7 +178,8 @@ letters only get a little narrower.
 * Suits any single product with a one-word name or flavor: perfume, sneakers, ice cream,
   a candle; also a speaker's first name beside a portrait cutout.
 * Pairs with T-cutout-drop-shadow (soft studio shadow under the glass) when the ground is
-  darker, T-splatter in the drink's color behind the glass, and T-paper-grain at amount 8.
+  darker, T-water-splash behind the glass (`render splash --liquid milk --color` in the
+  drink's color), and T-paper-grain at amount 8.
 
 ## 11. Pitfalls
 
@@ -188,7 +187,7 @@ letters only get a little narrower.
   (-90); turned the other way the three copies look like a spine label and are harder to
   read.
 * A wide or light font. The word must be condensed and heavy, or 9 letters will not fit
-  in 51% H at a readable size; fit the length with `transform scale` before rotating.
+  in 51% H at a readable size; set the length with `--fit-width` before rotating.
 * The product not touching the panel. Let it overlap the panel's right edge by a third of
   its width; side by side, the layout falls into two halves.
 * An outline word that competes. It is white on near-white on purpose; a dark or thick

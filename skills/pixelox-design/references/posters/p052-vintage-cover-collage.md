@@ -114,11 +114,11 @@ The other covers need no photos: flat fields, a border, big cropped type, one pa
 * Tilted covers: each one is built upright from 4 to 7 layers, baked into one layer with
   `layer merge`, rotated with `transform rotate --around` one of its corners, and pushed
   partly off the canvas with `transform move --by`.
-* Tall masthead: `transform scale --size 690x236` stretches the didone to 1.6x its natural
-  height (the layer is rasterized, warning PXW2003: do it after the wording is final).
+* Tall masthead, **T-stretch-type**: `--scale-x 61.7%` with `--fit-width 690` makes the
+  didone 1.6x as tall as its natural proportions (690 x 236 px) and keeps the text live.
+  `--at 52%,0-18` starts it 18 px above the top edge, so the letters' tops are cut.
 * No shadows between the covers, no grain: the scans lie flat. Depth comes only from
   overlap and the tilt.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -142,15 +142,12 @@ clothing of a bust; with a photo that leaves white paper there, use `#1a1a1a`.
 ```bash
 pixelox new -o collage.pxo --size 1080x1080 --fill '#0b0d0c'
 pixelox shape rect collage.pxo --in-place --name Paper --rect 146,0,762x1080 --fill '#f5f5f4'
-pixelox text add collage.pxo --in-place --name Masthead --content "REVUE" --font Didot --weight 700 --size 24% --tracking -10 --color '#0a0a0a'
-pixelox transform scale collage.pxo --in-place --layer Masthead --size 690x236
-pixelox transform move collage.pxo --in-place --layer Masthead --to 52%,0% --anchor t
-pixelox transform move collage.pxo --in-place --layer Masthead --by 0,-18
+pixelox text add collage.pxo --in-place --name Masthead --content "REVUE" --font @didone --weight 700 --scale-x 61.7% --fit-width 690 --tracking -10 --color '#0a0a0a' --at 52%,0-18 --anchor t --anchor-to ink
 pixelox comp place collage.pxo subject.png --in-place --as Subject --size x900 --at 49%,100% --anchor b
 pixelox adjust bw collage.pxo --in-place --layer Subject
 pixelox adjust levels collage.pxo --in-place --layer Subject --in-black 45 --in-white 190 --gamma 0.85
-pixelox text add collage.pxo --in-place --name Lines --content $'The Return of\nthe Veil' --font Baskerville --weight 700 --style italic --size 2.3% --leading 135% --align right --color '#1a1a1a' --at 83%,37% --anchor tr
-pixelox text add collage.pxo --in-place --name Lines2 --content "Paris Notebook" --font Baskerville --weight 700 --style italic --size 2.3% --color '#1a1a1a' --at 83%,44.5% --anchor tr
+pixelox text add collage.pxo --in-place --name Lines --content $'The Return of\nthe Veil' --font @oldstyle --weight 700 --style italic --size 2.3% --leading 135% --align right --color '#1a1a1a' --at 83%,37% --anchor tr
+pixelox text add collage.pxo --in-place --name Lines2 --content "Paris Notebook" --font @oldstyle --weight 700 --style italic --size 2.3% --color '#1a1a1a' --at 83%,44.5% --anchor tr
 pixelox text add collage.pxo --in-place --name Dateline --content $'MAY 1952\nPRICE 50c' --font "Bodoni 72" --weight 700 --size 1.9% --tracking 20 --leading 130% --align center --color '#f5f5f4' --at 71%,96% --anchor c
 pixelox shape rect collage.pxo --in-place --name YellowCover --rect 0,82%,13.3%x18% --fill '#e9b21e'
 pixelox shape rect collage.pxo --in-place --name YellowInner --rect 0,86%,11.5%x14% --fill '#5c6367'
@@ -161,18 +158,18 @@ pixelox shape ellipse collage.pxo --in-place --name Blob --rect 87%,13%,22%x26% 
 pixelox transform rotate collage.pxo --in-place --layer Blob --degrees -24
 pixelox shape rect collage.pxo --in-place --name BlackCover --rect 700,600,330x440 --fill '#0b0d0c'
 pixelox shape line collage.pxo --in-place --name BlackEdge --from 701,600 --to 701,1040 --stroke '#f2f2f2' --stroke-width 2
-pixelox text add collage.pxo --in-place --name BlackPrice --content "PRICE \$2.50" --font Baskerville --weight 400 --size 1.3% --tracking 60 --color '#f2f2f2' --at 760,640
-pixelox text add collage.pxo --in-place --name BlackMast --content "NORTH" --font Baskerville --weight 400 --size 7% --color '#f2f2f2' --at 792,665
+pixelox text add collage.pxo --in-place --name BlackPrice --content "PRICE \$2.50" --font @oldstyle --weight 400 --size 1.3% --tracking 60 --color '#f2f2f2' --at 760,640
+pixelox text add collage.pxo --in-place --name BlackMast --content "NORTH" --font @oldstyle --weight 400 --size 7% --color '#f2f2f2' --at 792,665
 pixelox layer merge collage.pxo --in-place --layers BlackCover,BlackEdge,BlackPrice,BlackMast --name CoverBR
 pixelox transform rotate collage.pxo --in-place --layer CoverBR --degrees -6 --around 700,600
 pixelox transform move collage.pxo --in-place --layer CoverBR --by 186,135
 pixelox shape rect collage.pxo --in-place --name RedBorder --rect 100,90,640x900 --fill '#e01f26'
 pixelox shape rect collage.pxo --in-place --name RedField --rect 128,118,584x844 --fill '#000000'
 pixelox shape rect collage.pxo --in-place --name RedKeyline --rect 142,132,556x816 --fill none --stroke '#ffffff' --stroke-width 5
-pixelox text add collage.pxo --in-place --name RedMast --content "LEDGER" --font Baskerville --weight 400 --size 17% --color '#ffffff' --at 680,150 --anchor tr
-pixelox text add collage.pxo --in-place --name RedSub --content "MAGAZINE" --font Baskerville --weight 400 --size 2% --tracking 250 --color '#ffffff' --at 676,340 --anchor tr
+pixelox text add collage.pxo --in-place --name RedMast --content "LEDGER" --font @oldstyle --weight 400 --size 17% --color '#ffffff' --at 680,150 --anchor tr
+pixelox text add collage.pxo --in-place --name RedSub --content "MAGAZINE" --font @oldstyle --weight 400 --size 2% --tracking 250 --color '#ffffff' --at 676,340 --anchor tr
 pixelox text add collage.pxo --in-place --name RedQuestion --content "what now?" --font Georgia --weight 700 --size 17% --tracking -10 --color '#e01f26' --at 690,740 --anchor r
-pixelox text add collage.pxo --in-place --name RedIssue --content "VOL. 12  NO. 14" --font "Avenir Next" --weight 500 --size 1.3% --tracking 80 --color '#1a0506' --at 690,976 --anchor r
+pixelox text add collage.pxo --in-place --name RedIssue --content "VOL. 12  NO. 14" --font @geometric-sans --weight 500 --size 1.3% --tracking 80 --color '#1a0506' --at 690,976 --anchor r
 pixelox layer merge collage.pxo --in-place --layers RedBorder,RedField,RedKeyline,RedMast,RedSub,RedQuestion,RedIssue --name CoverL
 pixelox transform rotate collage.pxo --in-place --layer CoverL --degrees -11 --around 740,990
 pixelox transform move collage.pxo --in-place --layer CoverL --by -384,-142

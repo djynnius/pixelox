@@ -89,14 +89,14 @@ slim and tall; a wide can hides too much of the blurred word.
 
 ## 7. Effects and textures
 
-* **T-text-behind-subject** with defocus: the word is rasterized and blurred
-  (`filter gaussian --sigma 16` at 1080 px wide), then the sharp product is placed over its
-  middle. First and last letters stay visible at the sides.
-* **T-fit-width**: the word is scaled to 1130 px, wider than the canvas, so it bleeds.
+* **T-text-behind-subject** with defocus: the word is blurred (`filter gaussian --sigma 16`
+  at 1080 px wide; the blur is live, so the word can still be edited), then the sharp
+  product is placed over its middle. First and last letters stay visible at the sides.
+* **T-fit-width**: `--fit-width 1130` makes the word wider than the canvas, so it bleeds.
 * Ground: vertical `fill gradient`; **T-vignette** weighted to the bottom in plum.
 * **T-rules** spirit in the corner texts: three small anchors at the margins that frame
   the empty field.
-* **T-paper-grain**, amount 12, soft-light, 35%, for the soft editorial finish.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`) for the soft editorial finish.
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -117,31 +117,25 @@ focus (not size) deciding what is read first.
 pixelox new -o ad.pxo --size 1080x1440 --fill '#c80118'
 pixelox layer add ad.pxo --in-place --name Ground
 pixelox fill gradient ad.pxo --in-place --layer Ground --from 0,0 --to 0,100% --stops '#c80118@0,#b60b18@0.55,#5f020e@0.78,#190210@1'
-pixelox text add ad.pxo --in-place --name BlurWord --content "Fizz Club" --font SignPainter --size 40% --color '#ffffff'
-pixelox transform scale ad.pxo --in-place --layer BlurWord --size 1130x
-pixelox transform move ad.pxo --in-place --layer BlurWord --to 51%,51% --anchor c
-pixelox layer rasterize ad.pxo --in-place --layer BlurWord
+pixelox text add ad.pxo --in-place --name BlurWord --content "Fizz Club" --font @brush --fit-width 1130 --color '#ffffff' --at 51%,51% --anchor c --anchor-to ink
 pixelox filter gaussian ad.pxo --in-place --layer BlurWord --sigma 16
 pixelox layer opacity ad.pxo --in-place --layer BlurWord --value 85
 pixelox shape path ad.pxo --in-place --name Arm --d 'M 250 1440 C 300 1240 420 1060 500 930 L 720 930 C 780 1080 820 1260 850 1440 Z' --fill '#6a0812'
-pixelox layer rasterize ad.pxo --in-place --layer Arm
 pixelox filter gaussian ad.pxo --in-place --layer Arm --sigma 14
 pixelox comp place ad.pxo product.png --in-place --as Can --size x900 --at 51.5%,76% --anchor b
 pixelox fx drop-shadow ad.pxo --in-place --layer Can --offset 0,14 --blur 50 --color '#3a0308' --opacity 45
 pixelox layer add ad.pxo --in-place --name BottomShade
 pixelox fill gradient ad.pxo --in-place --layer BottomShade --from 0,72% --to 0,100% --stops '#19021000@0,#190210d9@1'
-pixelox text add ad.pxo --in-place --name Logo --content "Fizz Club" --font SignPainter --size 5.6% --color '#ffffff' --at 10%,12% --anchor l
-pixelox text add ad.pxo --in-place --name Descriptor --content "CLASSIC RECIPE" --font "Helvetica Neue" --weight 700 --size 1.4% --tracking 40 --color '#ffffff' --at 87%,13% --anchor r
-pixelox text add ad.pxo --in-place --name Slogan --content "GOOD TIMES POURED DAILY!" --font "Helvetica Neue" --weight 700 --size 1.25% --tracking 700 --color '#ffffff' --at 10%,92.7% --anchor l
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 35
+pixelox text add ad.pxo --in-place --name Logo --content "Fizz Club" --font @brush --size 5.6% --color '#ffffff' --at 10%,12% --anchor l
+pixelox text add ad.pxo --in-place --name Descriptor --content "CLASSIC RECIPE" --font @neo-grotesque --weight 700 --size 1.4% --tracking 40 --color '#ffffff' --at 87%,13% --anchor r
+pixelox text add ad.pxo --in-place --name Slogan --content "GOOD TIMES POURED DAILY!" --font @neo-grotesque --weight 700 --size 1.25% --tracking 700 --color '#ffffff' --at 10%,92.7% --anchor l
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
-Change first: the blur word and its `--sigma` (12 to 20: lower when the word is long), then
-the ground hue (sample your product), then the three corner texts.
+Change first: the blur word and its `--sigma` (12 to 20: lower when the word is long; the
+`--fit-width` refits a new word by itself), then the ground hue (sample your product),
+then the three corner texts.
 
 ## 10. Variations and pairings
 

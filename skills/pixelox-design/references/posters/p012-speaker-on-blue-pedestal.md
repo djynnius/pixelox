@@ -112,9 +112,9 @@ touches the bottom edge.
   Light comes from the left: left face bright, top palest, right face black.
 * **T-grunge** (dirt layer only), white, `scratches=70`, `specks=1800`, at 12% opacity,
   placed above the planes and below the pedestal.
-* **T-spotlight** contact shadow: ellipse 26% W x 3.5% H, `#04122b`, made as a feathered
-  selection (`select ellipse --feather 12`) filled on an empty layer, so the soft edge is
-  not cut off at the shape's box.
+* **T-spotlight** contact shadow: a `shape ellipse` 26% W x 3.5% H in `#04122b` with
+  `filter gaussian --sigma 6` on it. The blur is live and is not cut off at the shape's
+  box.
 * **T-gradient-type** on the model word, left to right, light blue to mid blue.
 * **T-fit-width** to set the product name to 28% W.
 
@@ -133,7 +133,8 @@ Cap heights: name 5.3 : model word 5.6 : tagline 2.4, about 2.2 : 2.3 : 1. The p
 `product.png` (the device), `subject.png` (your image here: a cutout of a hand or arm
 reaching toward the product), and `logo.png` (a white mark) are your images. The stand-in
 subject is a bust, so the recipe turns it upside down to act as the reaching hand; with a
-real hand, drop the `transform rotate` line and adjust the move. For a round product use
+real hand, drop the `transform rotate` line and adjust `--at` (`0-228` starts the layer
+228 px above the canvas, so the wrist leaves through the top edge). For a round product use
 `--size 460x` instead of `--size x430`.
 
 ```bash
@@ -149,23 +150,16 @@ pixelox shape path promo.pxo --in-place --name FaceLeft --d 'M 252 680 L 770 734
 pixelox fx overlay promo.pxo --in-place --layer FaceLeft --stops '#0358c6@0,#01306c@1' --angle 0
 pixelox shape path promo.pxo --in-place --name FaceTop --d 'M 252 680 L 562 637 L 1282 680 L 770 734 Z' --fill '#3a9fbe'
 pixelox fx overlay promo.pxo --in-place --layer FaceTop --stops '#3a9fbe@0,#14599b@1' --angle 0
-pixelox layer add promo.pxo --in-place --name Shadow
-pixelox select ellipse promo.pxo --in-place --rect 40%,62.5%,26%x3.5% --feather 12
-pixelox fill solid promo.pxo --in-place --layer Shadow --color '#04122b' --mask @sel
-pixelox select none promo.pxo --in-place
+pixelox shape ellipse promo.pxo --in-place --name Shadow --rect 40%,62.5%,26%x3.5% --fill '#04122b'
+pixelox filter gaussian promo.pxo --in-place --layer Shadow --sigma 6
 pixelox comp place promo.pxo product.png --in-place --as Product --size x430 --at 53%,66% --anchor b
-pixelox comp place promo.pxo subject.png --in-place --as Hand --size x600 --at 66%,2% --anchor t
+pixelox comp place promo.pxo subject.png --in-place --as Hand --size x600 --at 66%,0-228 --anchor t
 pixelox transform rotate promo.pxo --in-place --layer Hand --degrees 205
-pixelox transform move promo.pxo --in-place --layer Hand --by 0,-250
 pixelox comp place promo.pxo logo.png --in-place --as Logo --size 58x --at 31%,76.5% --anchor c
-pixelox text add promo.pxo --in-place --name Name --content "OrbTone" --font "Avenir Next" --weight 700 --size 7.4% --color '#ffffff'
-pixelox transform scale promo.pxo --in-place --layer Name --size 403x
-pixelox transform move promo.pxo --in-place --layer Name --to 19.8%,82.3% --anchor tl
-pixelox text add promo.pxo --in-place --name Model --content "LITE" --font "Avenir Next" --weight 600 --size 7.8% --tracking 40 --color '#5fd0f5'
-pixelox transform move promo.pxo --in-place --layer Model --to 19.6%,90.3% --anchor tl
+pixelox text add promo.pxo --in-place --name Name --content "OrbTone" --font @geometric-sans --weight 700 --fit-width 403 --color '#ffffff' --at 19.8%,82.3% --anchor-to ink
+pixelox text add promo.pxo --in-place --name Model --content "LITE" --font @geometric-sans --weight 600 --size 7.8% --tracking 40 --color '#5fd0f5' --at 19.6%,90.3% --anchor tl --anchor-to ink
 pixelox fx overlay promo.pxo --in-place --layer Model --stops '#5fd0f5@0,#1a7fe0@1' --angle 0
-pixelox text add promo.pxo --in-place --name Tagline --content $'ROOM FILLING\nSOUND FOR EVERY\nMORNING' --font "Helvetica Neue" --weight 400 --size 3.3% --tracking 20 --leading 145% --color '#ffffff'
-pixelox transform move promo.pxo --in-place --layer Tagline --to 67%,87% --anchor tl
+pixelox text add promo.pxo --in-place --name Tagline --content $'ROOM FILLING\nSOUND FOR EVERY\nMORNING' --font @neo-grotesque --weight 400 --size 3.3% --tracking 20 --leading 145% --color '#ffffff' --at 67%,87% --anchor tl --anchor-to ink
 pixelox export promo.pxo -o promo.png
 ```
 

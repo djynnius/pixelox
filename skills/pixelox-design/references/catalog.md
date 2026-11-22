@@ -69,74 +69,76 @@ Posters whose recipe shows a technique in use.
 <!-- BEGIN GENERATED: by-technique -->
 | Techniques | Count | IDs |
 | --- | --- | --- |
-| T-fit-width | 59 | p004 p006 p007 p008 p010 p012 p014 p015 p016 p017 p023 p025 p029 p030 p031 p033 p036 p038 p040 p043 p044 p048 p053 p054 p055 p057 p058 p059 p060 p061 p063 p064 p066 p067 p068 p070 p076 p079 p080 p081 p083 p084 p087 p088 p090 p097 p099 p100 p104 p105 p109 p110 p111 p112 p113 p114 p115 p118 p126 |
-| T-paper-grain | 53 | p002 p003 p006 p007 p008 p010 p013 p016 p017 p019 p022 p025 p028 p033 p035 p037 p038 p039 p042 p046 p048 p049 p053 p055 p057 p058 p060 p061 p062 p068 p069 p070 p073 p075 p076 p080 p081 p082 p083 p088 p091 p093 p096 p102 p109 p115 p117 p119 p120 p121 p122 p125 p126 |
+| T-fit-width | 60 | p004 p006 p007 p008 p010 p012 p014 p015 p016 p017 p023 p025 p029 p030 p031 p033 p036 p038 p039 p040 p043 p044 p048 p053 p054 p055 p057 p058 p059 p060 p061 p063 p064 p066 p067 p068 p070 p076 p079 p080 p081 p083 p084 p087 p088 p090 p097 p099 p100 p104 p105 p109 p110 p111 p112 p113 p114 p115 p118 p126 |
+| T-paper-grain | 56 | p002 p003 p006 p007 p008 p010 p013 p016 p017 p019 p022 p025 p028 p033 p035 p037 p038 p039 p042 p046 p048 p049 p053 p055 p057 p058 p060 p061 p062 p068 p069 p070 p073 p075 p076 p077 p080 p081 p082 p083 p084 p085 p088 p091 p093 p096 p102 p109 p115 p117 p119 p120 p121 p122 p125 p126 |
 | T-rules | 41 | p001 p009 p015 p018 p020 p022 p030 p032 p034 p036 p040 p041 p046 p048 p051 p056 p058 p064 p065 p066 p067 p072 p073 p083 p086 p088 p089 p092 p093 p095 p098 p101 p102 p103 p106 p109 p112 p115 p118 p123 p126 |
 | T-cutout-drop-shadow | 29 | p002 p005 p018 p019 p020 p026 p027 p030 p037 p040 p047 p054 p067 p071 p075 p076 p077 p079 p080 p081 p084 p085 p086 p091 p105 p107 p118 p122 p124 |
 | T-text-behind-subject | 23 | p006 p007 p008 p010 p014 p029 p040 p052 p056 p058 p059 p060 p067 p083 p084 p087 p089 p097 p114 p120 p121 p122 p123 |
+| T-photo-fade | 22 | p001 p024 p043 p044 p047 p048 p050 p057 p063 p064 p066 p070 p077 p085 p089 p092 p097 p098 p102 p109 p117 p119 |
 | T-label-box | 21 | p005 p024 p026 p030 p032 p039 p047 p057 p059 p061 p062 p063 p069 p071 p072 p077 p087 p088 p092 p098 p099 |
-| T-photo-fade | 21 | p001 p024 p043 p044 p048 p050 p057 p063 p064 p066 p070 p077 p085 p089 p092 p097 p098 p102 p109 p117 p119 |
 | T-vignette | 21 | p013 p019 p024 p032 p033 p041 p045 p060 p068 p076 p079 p080 p081 p083 p084 p085 p091 p093 p105 p107 p116 |
+| T-icon-row | 19 | p001 p006 p026 p030 p035 p041 p048 p051 p054 p057 p058 p063 p064 p067 p071 p078 p087 p095 p118 |
 | T-spotlight | 19 | p002 p012 p014 p018 p019 p021 p030 p032 p033 p037 p054 p059 p079 p085 p086 p100 p105 p107 p110 |
 | T-geo-shapes | 18 | p009 p022 p026 p034 p035 p036 p051 p068 p071 p074 p096 p100 p104 p106 p108 p111 p112 p115 |
 | T-vertical-type | 17 | p002 p010 p036 p037 p038 p046 p051 p065 p067 p072 p090 p094 p095 p101 p106 p115 p124 |
 | T-script-overlap | 16 | p011 p018 p024 p041 p043 p044 p050 p062 p064 p065 p066 p087 p092 p109 p110 p113 |
 | T-gradient-type | 14 | p007 p012 p042 p045 p047 p054 p062 p070 p073 p079 p084 p097 p109 p117 |
+| T-pattern | 14 | p003 p024 p032 p034 p035 p040 p050 p054 p062 p065 p091 p095 p099 p103 |
 | T-grunge | 13 | p012 p013 p016 p025 p031 p038 p047 p068 p087 p093 p120 p121 p122 |
-| T-pattern | 13 | p003 p024 p032 p034 p035 p040 p050 p054 p062 p091 p095 p099 p103 |
 | T-pill-button | 13 | p003 p014 p015 p026 p041 p054 p071 p077 p086 p090 p105 p110 p113 |
+| T-smoke | 13 | p008 p032 p033 p042 p070 p079 p088 p098 p104 p109 p116 p120 p121 |
+| T-stretch-type | 13 | p004 p014 p023 p027 p052 p056 p058 p059 p060 p065 p067 p087 p092 |
+| T-condensation | 12 | p019 p030 p037 p075 p076 p077 p079 p080 p081 p082 p085 p105 |
 | T-duotone | 12 | p024 p033 p039 p042 p049 p058 p064 p072 p082 p087 p102 p103 |
 | T-frame-border | 12 | p023 p046 p052 p056 p062 p075 p078 p089 p095 p099 p100 p123 |
 | T-image-in-type | 12 | p018 p041 p055 p060 p064 p082 p087 p101 p106 p111 p112 p116 |
 | T-mono-on-color | 12 | p001 p009 p021 p049 p052 p053 p055 p057 p069 p071 p098 p119 |
-| T-smoke | 11 | p032 p033 p042 p070 p088 p098 p104 p109 p116 p120 p121 |
-| T-stretch-type | 10 | p004 p023 p027 p052 p056 p059 p065 p067 p087 p092 |
-| T-water-splash | 9 | p030 p037 p047 p079 p080 p081 p084 p085 p105 |
+| T-water-splash | 10 | p030 p037 p047 p079 p080 p081 p084 p085 p086 p105 |
 | T-gradient-mesh | 8 | p003 p022 p027 p063 p077 p094 p120 p121 |
 | T-neon-glow | 8 | p033 p042 p048 p076 p091 p114 p116 p118 |
+| T-texture-fill | 8 | p016 p018 p060 p064 p070 p111 p112 p116 |
 | T-ghost-type | 7 | p007 p014 p037 p076 p080 p081 p083 |
 | T-shape-crop | 7 | p015 p066 p078 p101 p102 p106 p118 |
-| T-block-shadow | 6 | p027 p061 p062 p079 p104 p117 |
 | T-brush-swash | 6 | p004 p027 p031 p061 p087 p115 |
 | T-distress-type | 6 | p013 p016 p031 p038 p039 p053 |
+| T-ice-cubes | 6 | p030 p075 p077 p079 p080 p105 |
 | T-outline-type | 6 | p007 p014 p029 p090 p097 p100 |
 | T-ring-arcs | 6 | p009 p034 p048 p073 p091 p096 |
 | T-silhouette | 6 | p011 p013 p016 p070 p082 p115 |
 | T-waves | 6 | p011 p029 p035 p095 p108 p113 |
-| T-ice-cubes | 5 | p030 p075 p079 p080 p105 |
+| T-block-shadow | 5 | p027 p061 p062 p104 p117 |
 | T-bokeh | 4 | p033 p076 p077 p104 |
 | T-color-grade | 4 | p006 p010 p050 p075 |
+| T-floor-reflection | 4 | p019 p048 p091 p114 |
 | T-info-bar | 4 | p008 p030 p036 p063 |
 | T-sunburst | 4 | p045 p057 p092 p113 |
 | T-arc-type | 3 | p041 p042 p122 |
-| T-floor-reflection | 3 | p019 p048 p114 |
 | T-halftone-portrait | 3 | p065 p094 p124 |
 | T-light-streaks | 3 | p003 p024 p067 |
 | T-sliced-type | 3 | p017 p063 p126 |
-| T-splatter | 3 | p016 p039 p086 |
 | T-stencil-poster | 3 | p025 p099 p125 |
-| T-texture-fill | 3 | p018 p111 p112 |
 | T-torn-collage | 3 | p031 p072 p117 |
 | T-warp-type | 3 | p039 p057 p058 |
-| T-condensation | 2 | p019 p075 |
+| T-barcode | 2 | p007 p067 |
 | T-counterchange | 2 | p067 p082 |
 | T-crack | 2 | p013 p038 |
 | T-credit-block | 2 | p117 p119 |
 | T-double-exposure | 2 | p042 p102 |
+| T-extrude-type | 2 | p079 p100 |
 | T-floor-type | 2 | p047 p049 |
 | T-fluid-ribbons | 2 | p095 p108 |
 | T-haze-band | 2 | p024 p054 |
 | T-light-leak | 2 | p064 p073 |
-| T-long-shadow | 2 | p065 p100 |
 | T-motion-streak | 2 | p058 p091 |
+| T-splatter | 2 | p016 p039 |
 | T-swoosh-band | 2 | p110 p113 |
 | T-device-mockup | 1 | p026 |
 | T-fire-glow | 1 | p008 |
-| T-glitch | 1 | p017 |
 | T-lens-flare | 1 | p109 |
 | T-newsprint | 1 | p031 |
 | T-object-as-letter | 1 | p020 |
 | T-price-burst | 1 | p004 |
+| T-qr-code | 1 | p092 |
 | T-spoke-burst | 1 | p022 |
 | T-stencil-type | 1 | p088 |
 | T-tile-mosaic | 1 | p074 |
@@ -151,23 +153,23 @@ main hexes, largest area first.
 <!-- BEGIN GENERATED: posters -->
 | ID | Title | Genre | Mood | Format | Archetype | Palette | Key techniques | Needs |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [p001](posters/p001-dark-swiss-conference.md) | Dark Swiss conference poster | conference, corporate, event-flyer | serious, minimal, cool, elegant | a | A-top-photo-bottom-text | `#0b0b0b` `#5e5e5e` `#ffffff` `#bab7b7` | T-photo-fade, T-rules, T-mono-on-color | photo |
+| [p001](posters/p001-dark-swiss-conference.md) | Dark Swiss conference poster | conference, corporate, event-flyer | serious, minimal, cool, elegant | a | A-top-photo-bottom-text | `#0b0b0b` `#5e5e5e` `#ffffff` `#bab7b7` | T-photo-fade, T-rules, T-mono-on-color, T-icon-row | photo |
 | [p002](posters/p002-bean-pours-into-mug.md) | Giant bean pours into red mug | drink-ad, product-ad | warm, minimal, playful, bold | 4x5 | A-hero-object | `#b61e1f` `#c64f4e` `#a81515` `#40190d` `#ffffff` | T-spotlight, T-vertical-type, T-cutout-drop-shadow, T-paper-grain | product-cutout |
 | [p003](posters/p003-blurred-violet-tech-expo.md) | Thin type on blurred violet light | conference, tech-ad, event-flyer | futuristic, cool, dark, minimal | a | A-abstract-title | `#01010f` `#020166` `#3c0ba7` `#614499` `#ffffff` | T-gradient-mesh, T-pill-button, T-pattern, T-paper-grain, T-light-streaks | nothing |
 | [p004](posters/p004-burger-swash-price-burst.md) | Burger ad with brush swash and price burst | food-ad, sale-promo, product-ad | bold, warm, playful, friendly | a | A-hero-object | `#e3c7aa` `#d23200` `#e8a53a` `#ffffff` | T-brush-swash, T-price-burst, T-fit-width, T-stretch-type | product-cutout |
 | [p005](posters/p005-robot-mascot-info-sheet.md) | Robot mascot info sheet with bubbles | tech-ad, corporate, editorial | friendly, calm, futuristic, fresh | a | A-info-sheet | `#eae7d0` `#262831` `#929397` `#77707a` `#7a3fb8` | T-label-box, T-cutout-drop-shadow | subject-cutout |
-| [p006](posters/p006-green-headline-crowd-band.md) | Green block headline over crowd band | church, event-flyer | serious, calm, reverent, bold | a | A-event-stack | `#f4f4f4` `#024422` `#171d24` `#081b3a` `#40454d` | T-fit-width, T-text-behind-subject, T-paper-grain, T-color-grade | subject-cutout, photo |
+| [p006](posters/p006-green-headline-crowd-band.md) | Green block headline over crowd band | church, event-flyer | serious, calm, reverent, bold | a | A-event-stack | `#f4f4f4` `#024422` `#171d24` `#081b3a` `#40454d` | T-fit-width, T-text-behind-subject, T-paper-grain, T-color-grade, T-icon-row | subject-cutout, photo |
 | [p007](posters/p007-ghost-outline-masthead-cover.md) | Fashion cover with ghost-outline masthead | magazine-cover, fashion, editorial | bold, elegant, serious, warm | 4x5 | A-cover-masthead | `#d4babc` `#8f8c5e` `#b60c10` `#571318` `#ffffff` | T-text-behind-subject, T-outline-type, T-gradient-type, T-fit-width, T-paper-grain | subject-cutout |
-| [p008](posters/p008-fiery-revival-flyer.md) | Fiery revival flyer with speaker cutout | church, event-flyer | intense, urgent, warm, dramatic | 4x5 | A-event-stack | `#a93a32` `#351c1c` `#ffffff` `#ff8a2a` `#0a0000` | T-fire-glow, T-fit-width, T-text-behind-subject, T-info-bar, T-paper-grain | subject-cutout, logo |
+| [p008](posters/p008-fiery-revival-flyer.md) | Fiery revival flyer with speaker cutout | church, event-flyer | intense, urgent, warm, dramatic | 4x5 | A-event-stack | `#a93a32` `#351c1c` `#ffffff` `#ff8a2a` `#0a0000` | T-fire-glow, T-smoke, T-fit-width, T-text-behind-subject, T-info-bar | subject-cutout, logo |
 | [p009](posters/p009-teal-ring-corporate-flyer.md) | Teal ring corporate flyer with round photo | corporate, tech-ad, conference | fresh, calm, friendly, cool | a | A-top-photo-bottom-text | `#fafafa` `#7fc4bf` `#ececec` `#121315` `#cdd1d8` | T-geo-shapes, T-rules, T-mono-on-color, T-ring-arcs | photo, logo |
 | [p010](posters/p010-color-block-heavy-masthead-cover.md) | Color-block fashion cover with heavy masthead | magazine-cover, fashion, editorial | bold, energetic, cool, playful | 3x4 | A-cover-masthead | `#0292c2` `#b92630` `#e9d273` `#08154e` `#ffffff` | T-text-behind-subject, T-fit-width, T-vertical-type, T-color-grade, T-paper-grain | subject-cutout |
 | [p011](posters/p011-white-bottle-wave-ribbons.md) | White bottle afloat on wave ribbons | drink-ad, product-ad | minimal, bold, fresh, playful | a | A-centered-title | `#e61a2b` `#ffffff` `#be1c28` | T-waves, T-silhouette, T-script-overlap | product-cutout |
 | [p012](posters/p012-speaker-on-blue-pedestal.md) | Smart speaker on a blue 3D pedestal | tech-ad, product-ad, social-post | cool, dark, futuristic, bold | landscape | A-hero-object | `#183463` `#11162c` `#01050d` `#0354be` `#3a3d3f` | T-spotlight, T-gradient-type, T-grunge, T-fit-width | product-cutout, subject-cutout, logo |
 | [p013](posters/p013-cracked-silhouette-thriller.md) | Cracked profile silhouette thriller poster | film-poster | mysterious, dramatic, gritty, warm | 2x3 | A-centered-title | `#3b3a3a` `#e29650` `#b27847` `#e0deda` | T-silhouette, T-grunge, T-distress-type, T-vignette, T-paper-grain | subject-cutout |
-| [p014](posters/p014-outlined-word-over-sneakers.md) | New-product poster with see-through word | product-ad, fashion, social-post | fresh, minimal, bold, playful | a | A-text-behind-subject | `#e6e7ee` `#1c1d1c` `#fcea0c` `#f4d93a` `#ffffff` | T-text-behind-subject, T-outline-type, T-fit-width, T-pill-button, T-spotlight | product-cutout |
+| [p014](posters/p014-outlined-word-over-sneakers.md) | New-product poster with see-through word | product-ad, fashion, social-post | fresh, minimal, bold, playful | a | A-text-behind-subject | `#e6e7ee` `#1c1d1c` `#fcea0c` `#f4d93a` `#ffffff` | T-text-behind-subject, T-outline-type, T-fit-width, T-stretch-type, T-pill-button | product-cutout |
 | [p015](posters/p015-black-sale-arch-photo.md) | Black sale flyer with arch photo | sale-promo, fashion, product-ad | bold, urgent, dark | a | A-split-field | `#151513` `#f4f2ed` `#fc1c2e` `#e6bb90` `#5b3c2f` | T-fit-width, T-pill-button, T-rules, T-shape-crop | photo |
 | [p016](posters/p016-ink-splatter-profile-cover.md) | Ink-splatter profile book cover | book-cover | minimal, dramatic, moody, serious | 2x3 | A-centered-title | `#f7f7f6` `#24090c` `#6b1c1f` `#a1262d` `#2b2b2b` | T-splatter, T-silhouette, T-grunge, T-distress-type, T-fit-width | subject-cutout |
-| [p017](posters/p017-chrome-rings-talk-poster.md) | Chrome rings behind a sliced headline | conference, tech-ad, event-flyer | dark, futuristic, bold, cool | a | A-abstract-title | `#1e1d20` `#ffffff` `#d2d9e1` `#73787f` `#313338` | T-glitch, T-fit-width, T-paper-grain, T-sliced-type | nothing |
+| [p017](posters/p017-chrome-rings-talk-poster.md) | Chrome rings behind a sliced headline | conference, tech-ad, event-flyer | dark, futuristic, bold, cool | a | A-abstract-title | `#1e1d20` `#ffffff` `#d2d9e1` `#73787f` `#313338` | T-sliced-type, T-fit-width, T-paper-grain | nothing |
 | [p018](posters/p018-magenta-trio-paper-headline.md) | Magenta three-speaker flyer, paper-texture headline | church, event-flyer | festive, energetic, warm, bold | a | A-speakers-over-title | `#300d54` `#9b1965` `#c71872` `#f2ebe5` `#e3c56b` | T-spotlight, T-image-in-type, T-script-overlap, T-cutout-drop-shadow, T-rules | subject-cutout, logo |
 | [p019](posters/p019-white-sculpture-bottle-on-red.md) | White sculpture bottle on red studio | drink-ad, product-ad | minimal, elegant, bold, calm | a | A-hero-object | `#af1012` `#8e0404` `#e9e6e2` `#b5b4af` `#ffffff` | T-spotlight, T-vignette, T-cutout-drop-shadow, T-paper-grain, T-condensation | product-cutout |
 | [p020](posters/p020-product-as-letter-blue.md) | Product replaces a letter on sky blue | tech-ad, product-ad | calm, friendly, fresh, minimal | 3x4 | A-word-with-object | `#7fbfe2` `#ffffff` `#3a3c42` `#d9a583` | T-cutout-drop-shadow, T-rules, T-object-as-letter | product-cutout, subject-cutout |
@@ -185,7 +187,7 @@ main hexes, largest area first.
 | [p032](posters/p032-symbol-object-blue-glow.md) | Corporate symbol object on blue glow | corporate, tech-ad | cool, serious, calm | 3x4 | A-hero-object | `#04426b` `#041c3b` `#0184b4` `#43bbe6` `#f0c020` | T-spotlight, T-pattern, T-smoke, T-vignette, T-rules | product-cutout |
 | [p033](posters/p033-ember-script-fantasy-cover.md) | Ember-orange script fantasy cover | book-cover | dark, mysterious, dramatic, warm | 2x3 | A-scene-title | `#1e2421` `#3f2e27` `#663a2c` `#d3764e` `#e8622f` | T-bokeh, T-smoke, T-duotone, T-spotlight, T-neon-glow | subject-cutout |
 | [p034](posters/p034-gradient-ring-sports-poster.md) | Rainbow gradient ring sports poster | sports, event-flyer | energetic, playful, fresh, bold | a | A-geometric-cluster | `#ffffff` `#000000` `#f6ce00` `#fd4e9b` `#22a0dd` | T-geo-shapes, T-pattern, T-rules, T-ring-arcs | nothing |
-| [p035](posters/p035-whale-tail-host-city-poster.md) | Whale-tail host-city tournament poster | sports, event-flyer, exhibition | fresh, bold, playful, cool | 2x3 | A-scene-title | `#65bda5` `#072c20` `#245b47` `#a5c856` `#f4faf8` | T-waves, T-geo-shapes, T-pattern, T-paper-grain | nothing |
+| [p035](posters/p035-whale-tail-host-city-poster.md) | Whale-tail host-city tournament poster | sports, event-flyer, exhibition | fresh, bold, playful, cool | 2x3 | A-scene-title | `#65bda5` `#072c20` `#245b47` `#a5c856` `#f4faf8` | T-waves, T-geo-shapes, T-pattern, T-paper-grain, T-icon-row | nothing |
 | [p036](posters/p036-black-geometric-exhibition.md) | Black exhibition poster with color shapes | exhibition, event-flyer | bold, playful, dark, retro | a | A-geometric-cluster | `#000000` `#ffffff` `#fec200` `#41d2fb` `#04a404` | T-geo-shapes, T-vertical-type, T-fit-width, T-rules, T-info-bar | nothing |
 | [p037](posters/p037-navy-bottle-ghost-type.md) | Navy bottle ad with ghost type | drink-ad, product-ad | cool, moody, fresh, dark | 3x4 | A-hero-object | `#032765` `#15356f` `#0c0e15` `#b8c4ce` `#6e2c29` | T-spotlight, T-vertical-type, T-cutout-drop-shadow, T-paper-grain, T-water-splash | product-cutout, logo |
 | [p038](posters/p038-cracked-vertical-word-cover.md) | Cracked giant vertical word cover | book-cover, film-poster | dark, intense, gritty, bold | 2x3 | A-type-block | `#0f1414` `#f2f0de` `#e3e0c7` `#3d3f3a` | T-vertical-type, T-fit-width, T-distress-type, T-grunge, T-paper-grain | nothing |
@@ -201,7 +203,7 @@ main hexes, largest area first.
 | [p048](posters/p048-dark-phone-halo-launch.md) | Dark phone launch with halo ring | tech-ad, product-ad | dark, luxurious, minimal, futuristic | 9x16 | A-hero-object | `#050609` `#1a1c1f` `#3e4247` `#84888e` `#ffffff` | T-neon-glow, T-fit-width, T-rules, T-photo-fade, T-paper-grain | product-cutout |
 | [p049](posters/p049-red-queue-of-doubles-poster.md) | Red queue of doubles film poster | film-poster | intense, mysterious, bold, dramatic | a | A-diagonal-repeat | `#b2110f` `#090706` `#230c0b` `#711312` `#ecefc1` | T-duotone, T-mono-on-color, T-paper-grain, T-floor-type | subject-cutout |
 | [p050](posters/p050-navy-concert-orange-script.md) | Navy concert flyer with orange script | church, concert, event-flyer | moody, dark, warm, energetic | 2x3 | A-top-photo-bottom-text | `#02152d` `#141f31` `#1179e0` `#254054` `#e48020` | T-photo-fade, T-script-overlap, T-pattern, T-color-grade | photo, logo |
-| [p051](posters/p051-gradient-spheres-event-flyer.md) | Gradient spheres abstract event flyer | event-flyer, concert, exhibition | futuristic, energetic, playful, cool | 4x5 | A-abstract-title | `#3a1c5b` `#28c4f4` `#f6921f` `#ec2781` `#fcc02c` | T-geo-shapes, T-rules, T-vertical-type | nothing |
+| [p051](posters/p051-gradient-spheres-event-flyer.md) | Gradient spheres abstract event flyer | event-flyer, concert, exhibition | futuristic, energetic, playful, cool | 4x5 | A-abstract-title | `#3a1c5b` `#28c4f4` `#f6921f` `#ec2781` `#fcc02c` | T-geo-shapes, T-rules, T-vertical-type, T-icon-row | nothing |
 | [p052](posters/p052-vintage-cover-collage.md) | Collage of overlapping vintage magazine covers | magazine-cover, fashion, editorial | elegant, bold, retro, serious | square | A-collage-pile | `#0a0a0a` `#f5f5f4` `#e01f26` `#dcd8c8` `#e9b21e` | T-text-behind-subject, T-mono-on-color, T-frame-border, T-stretch-type | subject-cutout |
 | [p053](posters/p053-eyes-strip-statement-poster.md) | Eyes strip over giant statement type | film-poster, editorial | serious, bold, intense, urgent | 2x3 | A-type-block | `#030202` `#f3f3f2` `#8b8b8a` `#d7262c` | T-fit-width, T-distress-type, T-mono-on-color, T-paper-grain | photo |
 | [p054](posters/p054-two-speakers-gold-glow.md) | Two-speaker flyer with gold glow | church, event-flyer | dark, dramatic, serious, warm | 3x4 | A-speakers-over-title | `#1e1e23` `#323135` `#80746c` `#f49f50` `#d5aa70` | T-spotlight, T-gradient-type, T-fit-width, T-pill-button, T-cutout-drop-shadow | subject-cutout |
@@ -215,7 +217,7 @@ main hexes, largest area first.
 | [p062](posters/p062-pattern-frame-praise-night.md) | Wax-print frame with gold headline panel | church, event-flyer, concert | festive, warm, friendly, energetic | 4x5 | A-frame-card | `#16130e` `#583523` `#cfa14a` `#31530a` `#740603` | T-frame-border, T-pattern, T-gradient-type, T-block-shadow, T-script-overlap | subject-cutout, illustration, logo |
 | [p063](posters/p063-cream-brown-ribbon-sermon.md) | Cream and brown sermon flyer with ribbons | church, event-flyer | warm, elegant, bold, friendly | 4x5 | A-side-subject-column | `#f2efea` `#e4d9cf` `#150201` `#370f06` `#a8562a` | T-fit-width, T-gradient-mesh, T-label-box, T-info-bar, T-photo-fade | subject-cutout, logo |
 | [p064](posters/p064-teal-block-gold-script-story.md) | Teal block word with gold script story | church, event-flyer, social-post | energetic, dark, warm, festive | 9x16 | A-top-photo-bottom-text | `#090f0d` `#45d2b6` `#f5a81f` `#b54106` `#214b49` | T-photo-fade, T-duotone, T-light-leak, T-fit-width, T-image-in-type | photo, logo |
-| [p065](posters/p065-engraved-portrait-green-panel.md) | Engraved portrait on green type panel | church, event-flyer | retro, warm, elegant, friendly | 4x5 | A-photo-panel | `#fdf6da` `#065d16` `#361d05` `#ab9471` `#2f8f40` | T-halftone-portrait, T-script-overlap, T-vertical-type, T-rules, T-long-shadow | subject-cutout, logo |
+| [p065](posters/p065-engraved-portrait-green-panel.md) | Engraved portrait on green type panel | church, event-flyer | retro, warm, elegant, friendly | 4x5 | A-photo-panel | `#fdf6da` `#065d16` `#361d05` `#ab9471` `#2f8f40` | T-halftone-portrait, T-script-overlap, T-vertical-type, T-rules, T-pattern | subject-cutout, logo |
 | [p066](posters/p066-night-worship-photo-tiles.md) | Black and amber night flyer with photo tiles | church, concert, event-flyer | dark, elegant, reverent, warm | 3x4 | A-top-photo-bottom-text | `#090707` `#4f3a22` `#efefed` `#e9a33b` `#b64f03` | T-photo-fade, T-fit-width, T-script-overlap, T-rules, T-shape-crop | subject-cutout, photo, illustration, logo |
 | [p067](posters/p067-giant-pink-masthead-cover.md) | Fashion cover with giant two-word pink masthead | magazine-cover, fashion | bold, energetic, fresh | 2x3 | A-text-behind-subject | `#f8d8ce` `#d8436c` `#302329` `#f1ece6` | T-text-behind-subject, T-fit-width, T-vertical-type, T-cutout-drop-shadow, T-rules | subject-cutout |
 | [p068](posters/p068-two-suns-desert-minimal-cover.md) | Two-suns desert minimalist cover | book-cover, film-poster | calm, minimal, retro, warm | a | A-centered-title | `#f1d292` `#f4cc86` `#f4b663` `#342818` | T-geo-shapes, T-fit-width, T-grunge, T-vignette, T-paper-grain | nothing |
@@ -228,20 +230,20 @@ main hexes, largest area first.
 | [p075](posters/p075-macro-can-on-ice.md) | Macro can on ice, retro print ad | drink-ad, product-ad, editorial | retro, fresh, bold, cool | 4x5 | A-macro-crop | `#e3dfda` `#bab5ba` `#2a2d4f` `#d03233` `#7b8592` | T-frame-border, T-color-grade, T-paper-grain, T-cutout-drop-shadow, T-ice-cubes | product-cutout |
 | [p076](posters/p076-neon-sign-can-in-hand.md) | Can in hand before neon sign | drink-ad, product-ad | retro, energetic, bold, cool | a | A-hero-object | `#231f26` `#325379` `#7ea7c6` `#dad6d6` `#c25948` | T-neon-glow, T-fit-width, T-bokeh, T-cutout-drop-shadow, T-vignette | product-cutout |
 | [p077](posters/p077-blue-magenta-lifestyle-ad.md) | Blue and magenta lifestyle drink ad | drink-ad, social-post, product-ad | playful, energetic, friendly, cool | 3x4 | A-text-left-product-right | `#062585` `#0a1036` `#315dbc` `#983578` `#c44c52` | T-gradient-mesh, T-cutout-drop-shadow, T-pill-button, T-label-box, T-bokeh | subject-cutout, product-cutout, logo |
-| [p078](posters/p078-photo-panel-fashion-flyer.md) | Fashion flyer with tall photo panel breakout | fashion, social-post, editorial | elegant, bold, moody | a | A-photo-panel | `#b8b6b5` `#444444` `#8f1a20` `#ffffff` `#5d1919` | T-frame-border, T-shape-crop | subject-cutout |
-| [p079](posters/p079-ice-headline-splash-ad.md) | Ice headline splash ad with model | drink-ad, product-ad, social-post | cool, energetic, bold, dramatic | 4x5 | A-text-left-product-right | `#040819` `#051c54` `#1447a7` `#bdd7f3` `#6596db` | T-spotlight, T-fit-width, T-gradient-type, T-block-shadow, T-cutout-drop-shadow | subject-cutout, product-cutout, logo |
+| [p078](posters/p078-photo-panel-fashion-flyer.md) | Fashion flyer with tall photo panel breakout | fashion, social-post, editorial | elegant, bold, moody | a | A-photo-panel | `#b8b6b5` `#444444` `#8f1a20` `#ffffff` `#5d1919` | T-frame-border, T-shape-crop, T-icon-row | subject-cutout |
+| [p079](posters/p079-ice-headline-splash-ad.md) | Ice headline splash ad with model | drink-ad, product-ad, social-post | cool, energetic, bold, dramatic | 4x5 | A-text-left-product-right | `#040819` `#051c54` `#1447a7` `#bdd7f3` `#6596db` | T-spotlight, T-fit-width, T-gradient-type, T-extrude-type, T-cutout-drop-shadow | subject-cutout, product-cutout, logo |
 | [p080](posters/p080-berry-splash-can-hero.md) | Berry splash can on blue and purple | drink-ad, product-ad, social-post | fresh, energetic, bold, cool | 3x4 | A-hero-object | `#2d246f` `#100b33` `#2850b4` `#813997` `#8d88ca` | T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash | product-cutout |
 | [p081](posters/p081-apple-splash-can-hero.md) | Apple splash can on red and blue | drink-ad, product-ad, social-post | fresh, energetic, bold, playful | 3x4 | A-hero-object | `#d04441` `#1c4b92` `#e7caaf` `#1d1a30` `#782e2c` | T-cutout-drop-shadow, T-vignette, T-fit-width, T-paper-grain, T-water-splash | product-cutout |
 | [p082](posters/p082-ribbon-wave-split-field.md) | Label ribbon becomes a wave | drink-ad, product-ad | bold, minimal, playful, warm | 4x5 | A-split-field | `#f30101` `#1a0302` `#470f0d` `#a11612` `#f6f6f6` | T-duotone, T-image-in-type, T-silhouette, T-paper-grain, T-counterchange | product-cutout |
 | [p083](posters/p083-can-in-hand-blurred-script.md) | Can in hand over blurred script | drink-ad, product-ad, social-post | elegant, warm, bold, moody | 3x4 | A-text-behind-subject | `#ba121f` `#810c11` `#390514` `#190210` `#ebccc6` | T-text-behind-subject, T-fit-width, T-vignette, T-rules, T-paper-grain | product-cutout |
 | [p084](posters/p084-flying-can-splash-giant-word.md) | Flying can, white splash, giant word | drink-ad, product-ad, social-post | dramatic, energetic, dark, bold | square | A-text-behind-subject | `#431212` `#7f1d1d` `#d23939` `#886059` `#c9968e` | T-text-behind-subject, T-fit-width, T-gradient-type, T-cutout-drop-shadow, T-vignette | product-cutout |
 | [p085](posters/p085-bottle-with-chili-splash.md) | Dark red bottle with chili splash | drink-ad, product-ad, social-post | dramatic, dark, intense, warm | square | A-hero-object | `#250101` `#3d0403` `#640f0a` `#942219` `#cb4639` | T-spotlight, T-cutout-drop-shadow, T-vignette, T-photo-fade, T-water-splash | product-cutout |
-| [p086](posters/p086-social-ad-headline-and-glass.md) | Red social ad with headline and glass | drink-ad, social-post, sale-promo | bold, energetic, warm, dark | square | A-text-left-product-right | `#520404` `#760907` `#a01610` `#f8f0e5` `#c77252` | T-spotlight, T-pill-button, T-rules, T-splatter, T-cutout-drop-shadow | product-cutout |
+| [p086](posters/p086-social-ad-headline-and-glass.md) | Red social ad with headline and glass | drink-ad, social-post, sale-promo | bold, energetic, warm, dark | square | A-text-left-product-right | `#520404` `#760907` `#a01610` `#f8f0e5` `#c77252` | T-spotlight, T-pill-button, T-rules, T-water-splash, T-cutout-drop-shadow | product-cutout |
 | [p087](posters/p087-acid-yellow-streetwear-promo.md) | Acid-yellow streetwear promo with photo-filled letters | fashion, product-ad, social-post | bold, energetic, gritty, intense | 4x5 | A-text-behind-subject | `#e8fb01` `#050505` `#2c3212` `#f4f4f4` | T-text-behind-subject, T-image-in-type, T-duotone, T-brush-swash, T-grunge | subject-cutout, photo |
 | [p088](posters/p088-sunset-sky-stencil-church-event.md) | Sunset sky church event with stencil type | church, event-flyer | warm, calm, reverent, friendly | a | A-swiss-asymmetric | `#efc49a` `#ca73ab` `#d88237` `#000000` `#ffffff` | T-smoke, T-label-box, T-rules, T-fit-width, T-paper-grain | illustration |
 | [p089](posters/p089-red-frame-annual-list-cover.md) | Red-frame news cover, annual list issue | magazine-cover, editorial | serious, calm, futuristic | 3x4 | A-cover-masthead | `#f22929` `#bfbcb1` `#a8daea` `#7c7862` `#11120e` | T-frame-border, T-text-behind-subject, T-photo-fade, T-rules | photo, subject-cutout |
 | [p090](posters/p090-vertical-flavor-word-drink.md) | Drink ad with stacked vertical flavor words | drink-ad, food-ad, social-post | fresh, playful, friendly, calm | 4x5 | A-vertical-type | `#e6e6e6` `#a07a93` `#1e1f40` `#ffffff` `#5e687e` | T-vertical-type, T-outline-type, T-fit-width, T-pill-button | product-cutout |
-| [p091](posters/p091-coffee-jar-light-swirl.md) | Coffee jar with orbiting light swirl | drink-ad, product-ad, social-post | warm, dramatic, energetic, bold | 4x5 | A-hero-object | `#b31d11` `#820f06` `#f22b20` `#530604` `#e69470` | T-pattern, T-neon-glow, T-motion-streak, T-cutout-drop-shadow, T-vignette | product-cutout |
+| [p091](posters/p091-coffee-jar-light-swirl.md) | Coffee jar with orbiting light swirl | drink-ad, product-ad, social-post | warm, dramatic, energetic, bold | 4x5 | A-hero-object | `#b31d11` `#820f06` `#f22b20` `#530604` `#e69470` | T-pattern, T-neon-glow, T-motion-streak, T-cutout-drop-shadow, T-floor-reflection | product-cutout |
 | [p092](posters/p092-teal-concert-lineup-story.md) | Teal concert story with artist line-up | concert, church, event-flyer | energetic, festive, cool, dramatic | 9x16 | A-speakers-over-title | `#0a0f1c` `#1a2834` `#2da7bd` `#387386` `#f2d5c4` | T-sunburst, T-photo-fade, T-label-box, T-script-overlap, T-rules | subject-cutout, logo |
 | [p093](posters/p093-cascade-of-profiles-poster.md) | Cascade of painted profiles poster | film-poster | bold, retro, warm, playful | 2x3 | A-diagonal-repeat | `#e6a404` `#0b0904` `#5a270a` `#8d4210` `#bb6c1f` | T-grunge, T-vignette, T-rules, T-paper-grain | subject-cutout |
 | [p094](posters/p094-dark-halftone-vertical-type.md) | Dark halftone poster with vertical type | exhibition, event-flyer, concert | bold, dark, dramatic, energetic | 2x3 | A-vertical-type | `#000000` `#ffa436` `#ff0a00` `#ffffff` `#f3edea` | T-vertical-type, T-halftone-portrait, T-gradient-mesh | subject-cutout |
@@ -250,7 +252,7 @@ main hexes, largest area first.
 | [p097](posters/p097-pink-music-magazine-cover.md) | Pink music-magazine portrait cover | magazine-cover, editorial | bold, playful, energetic, warm | 3x4 | A-cover-masthead | `#e887a8` `#0d1106` `#c61e24` `#ffffff` `#b85878` | T-text-behind-subject, T-gradient-type, T-outline-type, T-fit-width, T-photo-fade | subject-cutout |
 | [p098](posters/p098-neon-stripe-training-club-poster.md) | Neon-stripe training club poster | sports, corporate | bold, energetic, dark, intense | 2x3 | A-side-subject-column | `#07050a` `#797977` `#cecece` `#ffffff` `#c2ea0b` | T-mono-on-color, T-photo-fade, T-smoke, T-label-box, T-rules | subject-cutout |
 | [p099](posters/p099-stencil-portrait-news-cover.md) | Stencil portrait news cover, red frame | magazine-cover, editorial | bold, serious, retro | 3x4 | A-cover-masthead | `#192131` `#cf3630` `#b12a30` `#78939b` `#f0e6c6` | T-stencil-poster, T-frame-border, T-label-box, T-pattern, T-fit-width | subject-cutout |
-| [p100](posters/p100-retro-space-travel-poster.md) | Retro space-travel sun poster | exhibition, editorial, event-flyer | retro, playful, bold, warm | 2x3 | A-scene-title | `#030303` `#fcfdf7` `#9ea19d` `#52585a` `#fbed8d` | T-long-shadow, T-fit-width, T-frame-border, T-geo-shapes, T-spotlight | subject-cutout |
+| [p100](posters/p100-retro-space-travel-poster.md) | Retro space-travel sun poster | exhibition, editorial, event-flyer | retro, playful, bold, warm | 2x3 | A-scene-title | `#030303` `#fcfdf7` `#9ea19d` `#52585a` `#fbed8d` | T-extrude-type, T-fit-width, T-frame-border, T-geo-shapes, T-spotlight | subject-cutout |
 | [p101](posters/p101-striped-letter-floral-program.md) | Striped giant letter with floral fill | concert, event-flyer, exhibition | fresh, elegant, playful, minimal | a | A-swiss-asymmetric | `#ffffff` `#e5e4e4` `#111111` `#b93832` `#405241` | T-image-in-type, T-vertical-type, T-rules, T-shape-crop | illustration |
 | [p102](posters/p102-hat-as-mountain-fantasy-poster.md) | Hat-as-mountain fantasy screen print | film-poster, book-cover, exhibition | dark, mysterious, moody, elegant | 2x3 | A-centered-title | `#11070c` `#1f231d` `#647354` `#a49c71` `#dec893` | T-double-exposure, T-duotone, T-photo-fade, T-rules, T-paper-grain | subject-cutout, photo |
 | [p103](posters/p103-object-mosaic-portrait-poster.md) | Object-mosaic portrait film poster | film-poster, editorial | serious, dramatic, bold, gritty | 2x3 | A-cover-masthead | `#fdfdfc` `#140e0b` `#472b20` `#825742` `#b88e71` | T-duotone, T-pattern, T-rules | subject-cutout |
@@ -266,7 +268,7 @@ main hexes, largest area first.
 | [p113](posters/p113-light-story-blue-wave.md) | Light product story with blue wave | product-ad, tech-ad, social-post | fresh, cool, friendly, calm | 9x16 | A-split-field | `#f1f0f2` `#2488cb` `#24c0e2` `#555457` `#ffffff` | T-sunburst, T-waves, T-script-overlap, T-fit-width, T-pill-button | product-cutout |
 | [p114](posters/p114-neon-wordmark-can-trio.md) | Neon script wordmark behind three cans | drink-ad, product-ad | dark, dramatic, bold, moody | landscape | A-text-behind-subject | `#000000` `#121212` `#e6031c` `#a00414` `#c8c8c8` | T-neon-glow, T-text-behind-subject, T-fit-width, T-floor-reflection | product-cutout |
 | [p115](posters/p115-projector-beam-cinema-poster.md) | Projector-beam outdoor cinema poster | event-flyer, exhibition, concert | bold, energetic, dark, playful | a | A-vertical-type | `#262023` `#d72255` `#961e5f` `#ec8c1d` `#fbf3e8` | T-vertical-type, T-geo-shapes, T-brush-swash, T-silhouette, T-fit-width | subject-cutout |
-| [p116](posters/p116-glowing-sigil-fantasy-cover.md) | Glowing sigil fantasy novel cover | book-cover | dark, mysterious, moody, dramatic | 2x3 | A-centered-title | `#0f131b` `#1a5351` `#1ca489` `#29e3b9` `#b5f5ec` | T-smoke, T-neon-glow, T-image-in-type, T-vignette | nothing |
+| [p116](posters/p116-glowing-sigil-fantasy-cover.md) | Glowing sigil fantasy novel cover | book-cover | dark, mysterious, moody, dramatic | 2x3 | A-centered-title | `#0f131b` `#1a5351` `#1ca489` `#29e3b9` `#b5f5ec` | T-smoke, T-neon-glow, T-image-in-type, T-texture-fill, T-vignette | nothing |
 | [p117](posters/p117-spiral-iris-spy-poster.md) | Spy film poster with spiral iris | film-poster | dramatic, moody, retro, serious | a | A-film-one-sheet | `#3f3230` `#171813` `#795e4e` `#c68520` `#dcd2ce` | T-gradient-type, T-block-shadow, T-photo-fade, T-torn-collage, T-paper-grain | subject-cutout |
 | [p118](posters/p118-neon-diagonal-tech-flyer.md) | Neon tech flyer with diagonal photo panel | tech-ad, product-ad, corporate | futuristic, dark, energetic, bold | a | A-split-field | `#3e033d` `#150038` `#58074a` `#ffffff` `#ff2bd6` | T-neon-glow, T-fit-width, T-rules, T-cutout-drop-shadow, T-shape-crop | product-cutout, logo |
 | [p119](posters/p119-red-city-film-poster.md) | Red city star-vehicle film poster | film-poster | bold, dramatic, energetic | a | A-film-one-sheet | `#c22717` `#0b0b0b` `#1f1c18` `#ffffff` `#f6e80c` | T-mono-on-color, T-photo-fade, T-paper-grain, T-credit-block | subject-cutout, photo |

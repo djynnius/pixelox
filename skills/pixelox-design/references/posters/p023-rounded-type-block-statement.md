@@ -75,13 +75,16 @@ None. The letters are the image: together they cover half of the panel.
 
 ## 7. Effects and textures
 
-* **T-fit-width**: every line is added at any size, then `transform scale --size 782x`
-  sets its visible width to 72.4% W; `transform move --anchor tl` stacks the lines with a
-  fixed gap. Each line's height comes from the `bounds` in the JSON result of the scale
-  step; the next line's top = previous top + previous height + gap.
-* Faux weight: `text add --stroke` in the fill color with `--stroke-width 9%` (percent of
-  the font size) thickens a too-light face by 4.5% of the font size on every side. Add
-  tracking 20 so the fattened letters do not touch.
+* **T-fit-width**: every line is one `text add` with `--fit-width 782`, which sizes the
+  type so its visible letters span 72.4% W; `--at X,Y --anchor-to ink` puts the top-left of
+  the letters at that point, so the lines stack with a fixed gap. Each line's height is
+  the fourth number of `bounds` in the JSON result of its `text add`; the next line's top
+  = previous top + previous height + gap. The lines stay live text.
+* Faux weight: `text add --stroke` in the fill color with `--stroke-width 13.8` (px)
+  thickens a too-light face by about 7 px on every side and keeps the corners round
+  (`--faux-bold` thickens too, but with sharp corners). The fit counts the stroke, so
+  every line is still exactly 782 px wide. Add tracking 20 so the fattened letters do
+  not touch.
 * **T-frame-border**: the border is the white canvas showing around a panel inset by the
   same pixel amount (65 px on a 1080 px wide canvas) on all sides.
 * **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
@@ -96,36 +99,26 @@ shortest.
 ## 9. Build recipe
 
 Nothing to supply. Canvas 1080x1528. The line tops below were computed for these four
-words in this font (heights after fitting: 196, 157, 221, 241 px; gap 47 px; block
+words in this font (heights after fitting: 199, 158, 225, 246 px; gap 47 px; block
 centered). The stand-in face is not heavy enough on its own, so each line carries a
-stroke in its own color, 9% of the font size wide, which fattens the letters and keeps
-the corners round.
+stroke in its own color, 13.8 px wide, which fattens the letters and keeps the corners
+round.
 
 ```bash
 pixelox new -o statement.pxo --size 1080x1528 --fill '#ffffff'
 pixelox shape rect statement.pxo --in-place --name Panel --rect 65,65,950x1398 --fill '#f3472b'
-pixelox text add statement.pxo --in-place --name L1 --content "GOOD" --font "Arial Rounded MT Bold" --size 10% --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 9%
-pixelox transform scale statement.pxo --in-place --layer L1 --size 782x --anchor tl
-pixelox transform move statement.pxo --in-place --layer L1 --to 152,286 --anchor tl
-pixelox text add statement.pxo --in-place --name L2 --content "THINGS" --font "Arial Rounded MT Bold" --size 10% --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 9%
-pixelox transform scale statement.pxo --in-place --layer L2 --size 782x --anchor tl
-pixelox transform move statement.pxo --in-place --layer L2 --to 152,529 --anchor tl
-pixelox text add statement.pxo --in-place --name L3 --content "TAKE" --font "Arial Rounded MT Bold" --size 10% --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 9%
-pixelox transform scale statement.pxo --in-place --layer L3 --size 782x --anchor tl
-pixelox transform move statement.pxo --in-place --layer L3 --to 152,733 --anchor tl
-pixelox text add statement.pxo --in-place --name L4 --content "TIME" --font "Arial Rounded MT Bold" --size 10% --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 9%
-pixelox transform scale statement.pxo --in-place --layer L4 --size 782x --anchor tl
-pixelox transform move statement.pxo --in-place --layer L4 --to 152,1001 --anchor tl
+pixelox text add statement.pxo --in-place --name L1 --content "GOOD" --font @rounded-heavy --fit-width 782 --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 13.8 --at 152,280 --anchor-to ink
+pixelox text add statement.pxo --in-place --name L2 --content "THINGS" --font @rounded-heavy --fit-width 782 --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 13.8 --at 152,526 --anchor-to ink
+pixelox text add statement.pxo --in-place --name L3 --content "TAKE" --font @rounded-heavy --fit-width 782 --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 13.8 --at 152,731 --anchor-to ink
+pixelox text add statement.pxo --in-place --name L4 --content "TIME" --font @rounded-heavy --fit-width 782 --tracking 20 --color '#ffd1e1' --stroke '#ffd1e1' --stroke-width 13.8 --at 152,1003 --anchor-to ink
 pixelox export statement.pxo -o statement.png
 ```
 
-Change first: the four words. After changing them, run each `transform scale` with
-`--json`, read the new height (fourth number of `bounds`), and recompute the tops: first
-top = (1528 - sum of heights - 3 x 47) / 2, then add height + 47 for each next line. With
-a truly heavy rounded face registered (`fonts add` a folder with Rubik 900 or Lilita One),
-drop the `--stroke` flags and set the tracking to -10. With the stroke, the fitted lines
-come out about 1% narrower than the `--size` value and may differ by a few pixels at the
-right edge; that is within tolerance.
+Change first: the four words. After changing them, run each `text add` with `--json`,
+read the new height (fourth number of `bounds`), and recompute the tops: first top =
+(1528 - sum of heights - 3 x 47) / 2, then add height + 47 for each next line, and set
+the Y of each `--at`. With a truly heavy rounded face registered (`fonts add` a folder
+with Rubik 900 or Lilita One), drop the `--stroke` flags and set the tracking to -10.
 
 ## 10. Variations and pairings
 
@@ -145,8 +138,8 @@ right edge; that is within tolerance.
   gone. Fit every line to the same pixel width.
 * A word of 9 or more letters next to a 2-letter word: one line becomes a thin strip and
   the other a wall. Keep word lengths between 3 and 7 letters, or split a long word.
-* Unequal gaps. Lines are positioned by their visible tops (`--anchor tl` after scaling),
-  never by guessing text-box offsets.
+* Unequal gaps. Lines are positioned by their visible tops (`--anchor-to ink`), never by
+  guessing text-box offsets.
 * Thin or condensed type: fitted lines then differ wildly in height. Use the heaviest,
   widest rounded face available.
 * Pure white type on this red reads as a sale sign; pure black reads as a warning. The

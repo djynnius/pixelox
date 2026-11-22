@@ -107,9 +107,9 @@ one masthead letter. No grade, no outline, no shadow: the photo stays natural.
 * **T-rules**: two short amber accent bars that divide headline, name, and deck.
 * Backdrop gradient: `fx overlay` on the backdrop rect at 40 degrees, four stops from
   terracotta to pale peach; no texture.
-* Tall masthead: `transform scale --size 745x222` sets width and cap height at once (the
-  text is rasterized, warning PXW2003).
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
+* Tall masthead: **T-stretch-type**. `--fit-width 745` sets the width and `--scale-x 82.2%`
+  narrows the letters, so the fitted caps come out 222 px tall. The masthead stays live
+  text.
 
 ## 8. Hierarchy and eye path
 
@@ -131,9 +131,7 @@ and slide `--at` until the head covers one masthead letter.
 pixelox new -o cover.pxo --size 1080x1440 --fill '#f22827'
 pixelox shape rect cover.pxo --in-place --name Backdrop --rect 44,44,992x1352 --fill '#e9946b'
 pixelox fx overlay cover.pxo --in-place --layer Backdrop --stops '#6e2414@0,#c8623e@0.35,#eba77f@0.65,#f4d9c6@1' --angle 40
-pixelox text add cover.pxo --in-place --name Masthead --content "NOTE" --font "Times New Roman" --weight 400 --size 20% --tracking 60 --color '#ffffff'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 745x222
-pixelox transform move cover.pxo --in-place --layer Masthead --to 49.5%,6.2% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "NOTE" --font "Times New Roman" --weight 400 --scale-x 82.2% --fit-width 745 --tracking 60 --color '#ffffff' --at 49.5%,6.2% --anchor t --anchor-to ink
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1300 --at 57%,1396 --anchor b
 pixelox text add cover.pxo --in-place --name Headline --content $'VOICES\nOF A NEW\nDECADE' --font "Times New Roman" --weight 700 --size 5.5% --leading 90% --color '#ffffff' --at 8.2%,48.6% --anchor tl
 pixelox shape line cover.pxo --in-place --name Rule1 --from 8.2%,64.9% --to 10.8%,64.9% --stroke '#e0913a' --stroke-width 4
@@ -143,15 +141,16 @@ pixelox text add cover.pxo --in-place --name PlusLine --content "PLUS 11 MORE" -
 pixelox text add cover.pxo --in-place --name Deck --content $'PEOPLE RESHAPING\nHOW WE WORK\nAND LIVE' --font "Times New Roman" --weight 700 --size 1.6% --tracking 60 --leading 125% --color '#ffffff' --at 8.2%,73.6% --anchor tl
 pixelox shape rect cover.pxo --in-place --name Border --rect 0,0,1080x1440 --fill none --stroke '#f22827' --stroke-width 88
 pixelox shape rect cover.pxo --in-place --name Keyline --rect 47,47,986x1346 --fill none --stroke '#ffffff' --stroke-width 6
-pixelox text add cover.pxo --in-place --name Date --content "MARCH 10, 2031" --font "Avenir Next Condensed" --weight 700 --size 1% --tracking 80 --color '#3a0808' --at 4.4%,1.6% --anchor l
-pixelox text add cover.pxo --in-place --name Site --content "example.com" --font "Avenir Next Condensed" --weight 700 --size 1% --tracking 80 --color '#3a0808' --at 95.6%,98.4% --anchor r
+pixelox text add cover.pxo --in-place --name Date --content "MARCH 10, 2031" --font @condensed --weight 700 --size 1% --tracking 80 --color '#3a0808' --at 4.4%,1.6% --anchor l
+pixelox text add cover.pxo --in-place --name Site --content "example.com" --font @condensed --weight 700 --size 1% --tracking 80 --color '#3a0808' --at 95.6%,98.4% --anchor r
 pixelox export cover.pxo -o cover.png
 ```
 
-Change first: the masthead word (3 to 5 letters; keep `745x222`), the headline lines, the
-name. Then the backdrop stops: keep the darkest stop under the text block and the
-lightest behind the head. If the headline falls on a light part of your photo, darken the
-first two stops or move the subject left.
+Change first: the masthead word (3 to 5 letters; keep `--fit-width 745` and change
+`--scale-x` until the caps are about 222 px tall: a smaller value makes them taller), the
+headline lines, the name. Then the backdrop stops: keep the darkest stop under the text
+block and the lightest behind the head. If the headline falls on a light part of your
+photo, darken the first two stops or move the subject left.
 
 ## 10. Variations and pairings
 

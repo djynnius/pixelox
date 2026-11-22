@@ -152,24 +152,18 @@ pixelox comp place wall.pxo lines.png --in-place --as PrintA --size 700x --at 76
 pixelox transform rotate wall.pxo --in-place --layer PrintA --degrees 90
 pixelox comp place wall.pxo lines.png --in-place --as PrintB --size 780x --at 28%,74% --anchor c
 pixelox transform rotate wall.pxo --in-place --layer PrintB --degrees=-14
-pixelox text add wall.pxo --in-place --name Row1 --content "JOY" --font Impact --size 30% --tracking=-10 --color '#0d0c07'
-pixelox transform scale wall.pxo --in-place --layer Row1 --size 648x
-pixelox transform move wall.pxo --in-place --layer Row1 --to 14.3%,11.9% --anchor tl
-pixelox text add wall.pxo --in-place --name Row3 --content "LOUD" --font Impact --size 30% --tracking=-10 --color '#0d0c07'
-pixelox transform scale wall.pxo --in-place --layer Row3 --size 756x
-pixelox transform move wall.pxo --in-place --layer Row3 --to 17%,57.9% --anchor tl
-pixelox text add wall.pxo --in-place --name Mid --content "SUNG" --font "Arial Black" --size 13% --tracking=-30 --color '#0d0c07'
-pixelox transform scale wall.pxo --in-place --layer Mid --size 462x
-pixelox transform move wall.pxo --in-place --layer Mid --to 24.5%,46% --anchor tl
-pixelox text add wall.pxo --in-place --name LeadIn --content "Is" --font "Helvetica Neue" --weight 700 --size 5% --tracking=-20 --color '#0d0c07' --at 24%,45.6% --anchor tr
-pixelox text add wall.pxo --in-place --name LeadOut --content "Best" --font "Helvetica Neue" --weight 700 --size 5% --tracking=-20 --color '#0d0c07' --at 68%,56.7% --anchor bl
+pixelox text add wall.pxo --in-place --name Row1 --content "JOY" --font @condensed-heavy --fit-width 648 --tracking=-10 --color '#0d0c07' --at 14.3%,11.9% --anchor-to ink
+pixelox text add wall.pxo --in-place --name Row3 --content "LOUD" --font @condensed-heavy --fit-width 756 --tracking=-10 --color '#0d0c07' --at 17%,57.9% --anchor-to ink
+pixelox text add wall.pxo --in-place --name Mid --content "SUNG" --font @heavy-wide --fit-width 462 --tracking=-30 --color '#0d0c07' --at 24.5%,46% --anchor-to ink
+pixelox text add wall.pxo --in-place --name LeadIn --content "Is" --font @neo-grotesque --weight 700 --size 5% --tracking=-20 --color '#0d0c07' --at 24%,45.6% --anchor tr
+pixelox text add wall.pxo --in-place --name LeadOut --content "Best" --font @neo-grotesque --weight 700 --size 5% --tracking=-20 --color '#0d0c07' --at 68%,56.7% --anchor bl
 pixelox comp place wall.pxo wear.png --in-place --as Wear --fit cover
-pixelox text add wall.pxo --in-place --name TopL --content "EVERY" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 3%,1.8% --anchor l
-pixelox text add wall.pxo --in-place --name TopC --content "DAY" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 57.5%,1.8% --anchor c
-pixelox text add wall.pxo --in-place --name TopR --content "WE SING" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 97%,1.8% --anchor r
-pixelox text add wall.pxo --in-place --name BotL --content "COME AS YOU ARE" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 3%,98.3% --anchor l
-pixelox text add wall.pxo --in-place --name BotC --content "BRING A FRIEND" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 50%,98.3% --anchor c
-pixelox text add wall.pxo --in-place --name BotR --content "THE DOORS ARE OPEN" --font "Helvetica Neue" --weight 700 --size 2.05% --color '#0d0c07' --at 97%,98.3% --anchor r
+pixelox text add wall.pxo --in-place --name TopL --content "EVERY" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 3%,1.8% --anchor l
+pixelox text add wall.pxo --in-place --name TopC --content "DAY" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 57.5%,1.8% --anchor c
+pixelox text add wall.pxo --in-place --name TopR --content "WE SING" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 97%,1.8% --anchor r
+pixelox text add wall.pxo --in-place --name BotL --content "COME AS YOU ARE" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 3%,98.3% --anchor l
+pixelox text add wall.pxo --in-place --name BotC --content "BRING A FRIEND" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 50%,98.3% --anchor c
+pixelox text add wall.pxo --in-place --name BotR --content "THE DOORS ARE OPEN" --font @neo-grotesque --weight 700 --size 2.05% --color '#0d0c07' --at 97%,98.3% --anchor r
 pixelox shape path wall.pxo --in-place --name Capsules --d 'M 150 16 H 568 a 9 9 0 0 1 0 18 H 150 a 9 9 0 0 1 0 -18 Z M 676 16 H 903 a 9 9 0 0 1 0 18 H 676 a 9 9 0 0 1 0 -18 Z M 319 1318 H 403 a 9 9 0 0 1 0 18 H 319 a 9 9 0 0 1 0 -18 Z M 678 1318 H 707 a 9 9 0 0 1 0 18 H 678 a 9 9 0 0 1 0 -18 Z' --fill none --stroke '#0d0c07' --stroke-width 2.5
 pixelox export wall.pxo -o wall.png
 ```
@@ -201,8 +195,8 @@ one phrase and ends 16 px before the next (`M x1+9 y H x2-9 a 9 9 0 0 1 0 18 H x
 * Paint that looks like a flat sticker: render with `dry` 0.4 or more so bristle gaps
   show, let it run off the canvas, and put print and wear on top of it. Paint in
   `multiply` over mid-gray paper goes brown; use it only on near-white paper.
-* Giant words that do not fit: do not shrink the font size; shorten the word or fit it
-  with `transform scale`. A 3-letter word fitted to 60% W gives the 30% H cap height.
+* Giant words that do not fit: do not guess a font size; shorten the word or set its
+  width with `--fit-width`. A 3-letter word fitted to 60% W gives the 30% H cap height.
 * Too many colors of paint. One paint color; the collage supplies the variety.
 * Small strips set over paint or over busy scraps become unreadable; keep them within
   2.5% H of the top and bottom edges, on paper, and bold.

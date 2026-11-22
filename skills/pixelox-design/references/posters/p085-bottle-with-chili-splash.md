@@ -7,7 +7,7 @@ style: [photo-composite, 3d-render]
 format: square
 archetype: A-hero-object
 palette: ['#250101', '#3d0403', '#640f0a', '#942219', '#cb4639', '#e4c5b9']
-techniques: [T-spotlight, T-cutout-drop-shadow, T-vignette, T-photo-fade, T-water-splash]
+techniques: [T-spotlight, T-cutout-drop-shadow, T-vignette, T-photo-fade, T-water-splash, T-condensation, T-paper-grain]
 needs: product-cutout
 ---
 
@@ -80,7 +80,8 @@ A rendered still life in low-key light: the bottle is frontal and upright, the p
 dynamic. The peppers are the "flames" and are lit to be the brightest red in the frame;
 the bottle is mostly dark so its label band glows. For a build: a bottle cutout over a
 T-spotlight glow, peppers drawn as tapered curved paths with a gradient and a bevel, a
-splash crown at the base, and generated drops.
+rendered splash crown at the base with its own flying drops, and rendered condensation
+on the glass. The far, out-of-focus drops of the original are left out.
 
 ## 7. Effects and textures
 
@@ -89,12 +90,19 @@ splash crown at the base, and generated drops.
 * Peppers: closed `shape path` curves (two cubic edges meeting at a point), `fx overlay`
   from dark red to bright red along their length, `fx bevel` (size 10) for the glossy
   ridge; the styles are copied to all four with `fx copy`.
-* **T-water-splash** (`scripts/splash.js`), dark red, `dir=-90` (upward), placed at the base behind the bottle.
+* **T-water-splash**: a `render splash` crown in clear water recolored dark red (`--color
+  '#b00c06'`) at the bottle's base (`--at 50%,88% --size 85%`). The back half is drawn
+  after the peppers and before the bottle, the front half after the bottle, with the same
+  `--at`, `--size`, and `--seed`, so the liquid rises around both the bottle and the
+  peppers. `--drops 180` on the back half throws the loose drops.
+* **T-condensation**: `render droplets --layer Bottle --density 65 --trickles 4`, run right
+  after the bottle is placed and before its glow, so no bead lands on the glow.
 * **T-cutout-drop-shadow**, glow variant: `fx outer-glow` blur 40, `#ff3a2a`, 35% as rim
   light.
 * Floor: a dark gradient from 86% H down (**T-photo-fade** logic) over the bottle's foot.
-* Drops: `particles.js` rings, two sizes; **T-vignette** in `#0d0000`.
-* **T-water-splash** in [techniques.md](../techniques.md) is the tested library version of the liquid splash; start from it when reusing this idea.
+* **T-vignette** in `#0d0000`.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last; it hides banding in the
+  dark glow.
 
 ## 8. Hierarchy and eye path
 
@@ -110,12 +118,9 @@ all the ranking.
 `product.png` is your image here: a tall bottle cutout, front view.
 
 ```bash
-pixelox render js scripts/splash.js -o crown.png --size 1000x1000 --seed 5 --param color='#8a140e' --param cx=0.5 --param cy=0.5 --param radius=0.4 --param tongues=18 --param drops=210 --param dir=-90 --param arc=200
-pixelox render js scripts/particles.js -o drops.png --size 1080x1080 --seed 8 --param shape=ring --param colors='#ff7a6a,#c8302a,#ffb8a8' --param count=70 --param min=0.4 --param max=2.2 --param amin=0.3 --param amax=0.85
 pixelox new -o post.pxo --size 1080x1080 --fill '#250101'
 pixelox layer add post.pxo --in-place --name Glow
 pixelox fill gradient post.pxo --in-place --layer Glow --kind radial --from 50%,42% --to 50%,84% --stops '#d21c10ff@0,#8a0f0acc@0.45,#25010100@1'
-pixelox comp place post.pxo drops.png --in-place --as Drops --fit cover
 pixelox shape path post.pxo --in-place --name ChiliLeft1 --d 'M 400 860 C 330 700 250 520 180 365 C 280 480 380 660 440 835 Z' --fill '#c8140c'
 pixelox fx overlay post.pxo --in-place --layer ChiliLeft1 --stops '#7a0a06@0,#d21c10@0.6,#ff4a32@1' --angle 90
 pixelox fx bevel post.pxo --in-place --layer ChiliLeft1 --size 10 --depth 140 --soften 4 --highlight '#ffb0a0' --shadow '#3a0402'
@@ -124,22 +129,23 @@ pixelox shape path post.pxo --in-place --name ChiliRight1 --d 'M 680 860 C 760 7
 pixelox shape path post.pxo --in-place --name ChiliRight2 --d 'M 700 880 C 830 800 950 730 1070 660 C 980 760 850 850 730 895 Z' --fill '#c8140c'
 pixelox fx copy post.pxo --in-place --from ChiliLeft1 --to ChiliLeft2,ChiliRight1,ChiliRight2
 pixelox shape path post.pxo --in-place --name Stem --d 'M 893 604 C 905 580 925 566 950 560' --fill none --stroke '#3f7a1c' --stroke-width 12 --cap round
-pixelox comp place post.pxo crown.png --in-place --as Crown --at 50%,86% --anchor c
+pixelox render splash post.pxo --in-place --name CrownBack --part back --color '#b00c06' --at 50%,88% --size 85% --drops 180 --seed 5
 pixelox comp place post.pxo product.png --in-place --as Bottle --size x960 --at 51%,92% --anchor b
+pixelox render droplets post.pxo --in-place --layer Bottle --density 65 --trickles 4
 pixelox fx outer-glow post.pxo --in-place --layer Bottle --blur 40 --color '#ff3a2a' --opacity 35
+pixelox render splash post.pxo --in-place --name CrownFront --part front --color '#b00c06' --at 50%,88% --size 85% --seed 5
 pixelox layer add post.pxo --in-place --name Floor
 pixelox fill gradient post.pxo --in-place --layer Floor --from 0,86% --to 0,100% --stops '#1c000100@0,#1c0001e6@1'
 pixelox layer add post.pxo --in-place --name Vignette
 pixelox fill gradient post.pxo --in-place --layer Vignette --kind radial --from 50%,48% --to 50%,122% --stops '#0d000000@0.5,#0d0000cc@1'
-pixelox layer add post.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise post.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend post.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity post.pxo --in-place --layer Grain --value 30
+pixelox filter grain post.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export post.pxo -o post.png
 ```
 
 Change first: the props (redraw the four paths as your ingredient, or place cutouts), the
-glow color, then the bottle height so the cap keeps 5 to 8% H of air.
+glow color and the splash `--color` (one family), then the bottle height so the cap keeps
+5 to 8% H of air. The droplets copy the bottle when their command runs: after swapping
+the bottle, run the recipe again from the top.
 
 ## 10. Variations and pairings
 

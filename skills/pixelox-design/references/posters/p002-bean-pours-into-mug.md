@@ -50,7 +50,7 @@ only two things that are not red.
 7. Bean: one roasted coffee bean, `47%,12%,33% x 16%`, long axis tilted 12 degrees up to
    the right, crease facing the viewer, glossy highlight along the top. Dark brown
    `#40190d` to mid brown `#6b3b25`.
-8. Fine grain over everything (barely visible).
+8. Fine grain over everything (barely visible): one live grain layer on top.
 
 ## 4. Palette
 
@@ -97,7 +97,8 @@ dark crease).
 * **T-vertical-type** for the brand mark on the product.
 * Gradient and highlight on the bean (`fx overlay` at 60 degrees, plus a blurred light
   ellipse clipped to it) so it reads as a glossy solid.
-* **T-paper-grain**, amount 8, opacity 25: only to stop banding in the red gradient.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`): only to stop banding in the red
+  gradient.
 
 ## 8. Hierarchy and eye path
 
@@ -120,11 +121,10 @@ pixelox fill gradient ad.pxo --in-place --layer Ground --from 0,0 --to 0,100% --
 pixelox layer add ad.pxo --in-place --name FloorGlow
 pixelox fill gradient ad.pxo --in-place --layer FloorGlow --kind radial --from 78%,84% --to 78%,112% --stops '#d47270cc@0,#d4727000@1'
 pixelox shape ellipse ad.pxo --in-place --name Shadow --rect 14%,83.5%,40%x6% --fill '#7a1a1c'
-pixelox layer rasterize ad.pxo --in-place --layer Shadow
 pixelox filter gaussian ad.pxo --in-place --layer Shadow --sigma 22
 pixelox layer opacity ad.pxo --in-place --layer Shadow --value 75
 pixelox comp place ad.pxo product.png --in-place --as Mug --size x560 --at 47.5%,89.5% --anchor b
-pixelox text add ad.pxo --in-place --name Brand --content "BRAND" --font "Avenir Next" --weight 800 --size 4.4% --tracking 20 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add ad.pxo --in-place --name Brand --content "BRAND" --font @geometric-sans --weight 800 --size 4.4% --tracking 20 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate ad.pxo --in-place --layer Brand --degrees -90
 pixelox transform move ad.pxo --in-place --layer Brand --to 51%,70% --anchor c
 pixelox shape path ad.pxo --in-place --name Stream --d 'M 522 345 C 500 400 512 470 506 560 C 502 620 506 680 506 716 L 520 716 C 520 680 518 620 522 560 C 528 470 520 400 546 352 Z' --fill '#2c120b'
@@ -132,7 +132,6 @@ pixelox shape ellipse ad.pxo --in-place --name Ripple --rect 478,706,70x18 --fil
 pixelox shape ellipse ad.pxo --in-place --name Bean --rect 508,162,356x216 --fill '#40190d'
 pixelox fx overlay ad.pxo --in-place --layer Bean --stops '#2c120b@0,#40190d@0.4,#8a5433@1' --angle 60
 pixelox shape ellipse ad.pxo --in-place --name Gloss --rect 560,176,240x60 --fill '#c99367'
-pixelox layer rasterize ad.pxo --in-place --layer Gloss
 pixelox filter gaussian ad.pxo --in-place --layer Gloss --sigma 16
 pixelox layer clip ad.pxo --in-place --layer Gloss
 pixelox layer opacity ad.pxo --in-place --layer Gloss --value 60
@@ -141,10 +140,7 @@ pixelox transform rotate ad.pxo --in-place --layer Bean --degrees -12 --around 6
 pixelox transform rotate ad.pxo --in-place --layer Gloss --degrees -12 --around 686,270
 pixelox transform rotate ad.pxo --in-place --layer Crease --degrees -12 --around 686,270
 pixelox fx drop-shadow ad.pxo --in-place --layer Bean --offset -10,18 --blur 40 --color '#5a0a0c' --opacity 45
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 25
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 

@@ -7,7 +7,7 @@ style: [editorial, photo-composite]
 format: portrait-4x5
 archetype: A-cover-masthead
 palette: ['#d4babc', '#8f8c5e', '#b60c10', '#571318', '#ffffff']
-techniques: [T-text-behind-subject, T-outline-type, T-gradient-type, T-fit-width, T-paper-grain, T-ghost-type]
+techniques: [T-text-behind-subject, T-outline-type, T-gradient-type, T-fit-width, T-paper-grain, T-ghost-type, T-barcode]
 needs: subject-cutout
 ---
 
@@ -107,15 +107,15 @@ middle of the word (**T-text-behind-subject**).
 * **T-text-behind-subject**: masthead first, cutout second.
 * Ghost outline (**T-outline-type** plus a mask): a second copy of the masthead with
   `--color transparent --stroke '#ffffff' --stroke-width 2px`, placed above the cutout
-  and masked with `mask add --from @alpha:Subject`, so the outline exists only on the
-  subject.
+  and masked with `mask add --from-layer Subject`, so the outline exists only on the
+  subject. The mask is live: it follows the cutout when the cutout moves.
 * Per-letter color (**T-gradient-type** with hard stops): `fx overlay --angle 0` and each
   color written twice, at the start and the end of its letter (stops near 0.24, 0.5,
   0.76 for four letters of similar width).
-* **T-fit-width**: the masthead is scaled to 89% W.
-* Barcode: two `pattern.js` stripe renders of different pitch laid over each other on a
-  white plate; the mismatch gives uneven bar widths.
-* **T-paper-grain**, amount 12, soft-light, 35%.
+* **T-fit-width**: the masthead is fitted to 89% W (`--fit-width 962`).
+* **T-barcode**: a real `shape barcode` (`--type code128`, `--text off`, bars in the
+  masthead red) on a white plate with a 4 px red border. It encodes the volume and issue.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`).
 * **T-ghost-type** in [techniques.md](../techniques.md) is the tested library version of the faint, defocused, or outlined giant word; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -133,43 +133,31 @@ poster.
 ## 9. Build recipe
 
 `subject.png` is your image here: a head-and-shoulders cutout, at least 1300 px tall.
-Move it sideways until the head covers the two middle letters.
+Move it sideways until the head covers the two middle letters; the outline's mask is live
+and follows it.
 
 ```bash
-pixelox render js scripts/pattern.js -o bars1.png --size 290x92 --param kind=stripes --param color='#b60c10' --param cell=9 --param weight=0.45
-pixelox render js scripts/pattern.js -o bars2.png --size 290x92 --param kind=stripes --param color='#b60c10' --param cell=23 --param weight=0.3
 pixelox new -o cover.pxo --size 1080x1350 --fill '#d4babc'
-pixelox text add cover.pxo --in-place --name Masthead --content "ECHO" --font Impact --size 30% --color '#b60c10'
-pixelox transform scale cover.pxo --in-place --layer Masthead --size 962x
-pixelox transform move cover.pxo --in-place --layer Masthead --to 50%,7.1% --anchor t
+pixelox text add cover.pxo --in-place --name Masthead --content "ECHO" --font @condensed-heavy --fit-width 962 --color '#b60c10' --at 50%,7.1% --anchor t --anchor-to ink
 pixelox fx overlay cover.pxo --in-place --layer Masthead --stops '#571318@0,#571318@0.24,#7a1418@0.24,#7a1418@0.5,#b60c10@0.5,#b60c10@0.76,#c8101a@0.76,#c8101a@1' --angle 0
-pixelox text add cover.pxo --in-place --name IssueLine --content "Volume 3, Issue 7, March 2031" --font "Avenir Next" --weight 500 --size 1.5% --color '#4a1a1a' --at 5%,3.2% --anchor l
-pixelox text add cover.pxo --in-place --name Tagline --content "Quiet voices that carry the furthest" --font "Avenir Next" --weight 500 --size 1.6% --color '#ffffff' --at 5%,39.2% --anchor l
+pixelox text add cover.pxo --in-place --name IssueLine --content "Volume 3, Issue 7, March 2031" --font @geometric-sans --weight 500 --size 1.5% --color '#4a1a1a' --at 5%,3.2% --anchor l
+pixelox text add cover.pxo --in-place --name Tagline --content "Quiet voices that carry the furthest" --font @geometric-sans --weight 500 --size 1.6% --color '#ffffff' --at 5%,39.2% --anchor l
 pixelox comp place cover.pxo subject.png --in-place --as Subject --size x1300 --at 42%,100% --anchor b
-pixelox text add cover.pxo --in-place --name MastOutline --content "ECHO" --font Impact --size 30% --color transparent --stroke '#ffffff' --stroke-width 2px
-pixelox transform scale cover.pxo --in-place --layer MastOutline --size 962x
-pixelox transform move cover.pxo --in-place --layer MastOutline --to 50%,7.1% --anchor t
-pixelox mask add cover.pxo --in-place --layer MastOutline --from @alpha:Subject
+pixelox text add cover.pxo --in-place --name MastOutline --content "ECHO" --font @condensed-heavy --fit-width 962 --color transparent --stroke '#ffffff' --stroke-width 2px --at 50%,7.1% --anchor t --anchor-to ink
+pixelox mask add cover.pxo --in-place --layer MastOutline --from-layer Subject
 pixelox text add cover.pxo --in-place --name Trio1 --content "UNHURRIED" --font "DIN Condensed" --weight 700 --size 1.9% --tracking 40 --color '#571318' --at 5%,47.8% --anchor l
 pixelox text add cover.pxo --in-place --name Trio2 --content "UNBOTHERED" --font "DIN Condensed" --weight 700 --size 1.9% --tracking 40 --color '#ffffff' --at 5%,50.3% --anchor l
 pixelox text add cover.pxo --in-place --name Trio3 --content "UNMISTAKABLE" --font "DIN Condensed" --weight 700 --size 1.9% --tracking 40 --color '#571318' --at 5%,52.8% --anchor l
-pixelox text add cover.pxo --in-place --name LeftHead --content $'CALM IS\nTHE NEW LOUD' --font "DIN Condensed" --weight 700 --size 3.3% --leading 112% --color '#ffffff'
-pixelox transform move cover.pxo --in-place --layer LeftHead --to 5.1%,74.9% --anchor tl
-pixelox text add cover.pxo --in-place --name LeftSub --content $'Dressing slowly\nin a fast decade' --font "Avenir Next" --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 5.1%,83% --anchor tl
-pixelox text add cover.pxo --in-place --name RightHead1 --content $'IN A YEAR\nOF HASTE' --font "DIN Condensed" --weight 700 --size 4.2% --leading 105% --color '#571318'
-pixelox transform move cover.pxo --in-place --layer RightHead1 --to 78%,49.2% --anchor tl
-pixelox text add cover.pxo --in-place --name RightSub1 --content $'Twelve designers on why\nthey stopped chasing\nthe next big thing' --font "Avenir Next" --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 78%,58% --anchor tl
-pixelox text add cover.pxo --in-place --name RightHead2 --content $'THE UNIFORM\nRETURNS' --font "DIN Condensed" --weight 700 --size 3.7% --leading 105% --color '#571318'
-pixelox transform move cover.pxo --in-place --layer RightHead2 --to 78%,70.2% --anchor tl
-pixelox text add cover.pxo --in-place --name RightSub2 --content $'Khaki, brass buttons,\nand one red accent' --font "Avenir Next" --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 78%,78.3% --anchor tl
+pixelox text add cover.pxo --in-place --name LeftHead --content $'CALM IS\nTHE NEW LOUD' --font "DIN Condensed" --weight 700 --size 3.3% --leading 112% --color '#ffffff' --at 5.1%,74.9% --anchor tl --anchor-to ink
+pixelox text add cover.pxo --in-place --name LeftSub --content $'Dressing slowly\nin a fast decade' --font @geometric-sans --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 5.1%,83% --anchor tl
+pixelox text add cover.pxo --in-place --name RightHead1 --content $'IN A YEAR\nOF HASTE' --font "DIN Condensed" --weight 700 --size 4.2% --leading 105% --color '#571318' --at 78%,49.2% --anchor tl --anchor-to ink
+pixelox text add cover.pxo --in-place --name RightSub1 --content $'Twelve designers on why\nthey stopped chasing\nthe next big thing' --font @geometric-sans --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 78%,58% --anchor tl
+pixelox text add cover.pxo --in-place --name RightHead2 --content $'THE UNIFORM\nRETURNS' --font "DIN Condensed" --weight 700 --size 3.7% --leading 105% --color '#571318' --at 78%,70.2% --anchor tl --anchor-to ink
+pixelox text add cover.pxo --in-place --name RightSub2 --content $'Khaki, brass buttons,\nand one red accent' --font @geometric-sans --weight 500 --size 1.15% --leading 130% --color '#ffffff' --at 78%,78.3% --anchor tl
 pixelox shape rect cover.pxo --in-place --name CodePlate --rect 65%,86%,29.5%x8.4% --fill '#ffffff' --stroke '#b60c10' --stroke-width 4
-pixelox comp place cover.pxo bars1.png --in-place --as Bars1 --at 79.75%,90.2% --anchor c
-pixelox comp place cover.pxo bars2.png --in-place --as Bars2 --at 79.75%,90.2% --anchor c
-pixelox text add cover.pxo --in-place --name Footer --content "Style Journal of the Decade" --font "Avenir Next" --weight 600 --size 1.2% --tracking 300 --color '#ffffff' --at 50%,97.4% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 35
+pixelox shape barcode cover.pxo --in-place --name Bars --type code128 --data 'VOL-3-ISSUE-7' --width 290 --height 92 --text off --color '#b60c10' --at 79.75%,90.2% --anchor c
+pixelox text add cover.pxo --in-place --name Footer --content "Style Journal of the Decade" --font @geometric-sans --weight 600 --size 1.2% --tracking 300 --color '#ffffff' --at 50%,97.4% --anchor c
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export cover.pxo -o cover.png
 ```
 
@@ -197,7 +185,7 @@ only on a mid-tone ground like this one; on a paler ground set them in the maroo
   more it may cover three. First and last letters stay clear.
 * A thick ghost outline. Over 3 px it competes with the face; 2 px white (or the ground
   color) is enough because the eye completes the letters.
-* Outline visible over the ground too. Without the `@alpha:Subject` mask the outline
+* Outline visible over the ground too. Without the `--from-layer Subject` mask the outline
   rings the filled letters and the trick is lost.
 * Cover lines on the face or across the hat. Keep both columns in the outer 22% of the
   width and below the chin line.

@@ -126,10 +126,12 @@ a clean sans (condensed for the two key facts, regular for the rest) for informa
   **T-block-shadow**: `fx stroke` 7 px outside in `#3a1a08`, and a hard shadow offset 7,9.
   The styles are copied to line 2 with `fx copy`. The letters are made chunkier with a
   12 px text stroke in the fill color (`text add --stroke`); the gradient covers it.
+  Each line is fitted with `--fit-width`, placed by the center of its letters (`--anchor c
+  --anchor-to ink`), and then rotated -3 degrees about that center.
 * **T-script-overlap**: the script is about as tall as the headline caps, rotated -8
   degrees, placed over the lower right corner of line 2, with a soft shadow.
 * **T-label-box**: the rust bar behind the invitation line, with a left-to-right gradient.
-* **T-paper-grain**, amount 14, soft-light 45%, for the woven look of the panel.
+* **T-paper-grain**: `filter grain --as-layer`, amount 12, for the woven look of the panel.
 
 ## 8. Hierarchy and eye path
 
@@ -158,40 +160,33 @@ pixelox comp place praise.pxo bars.png --in-place --as Bars --at 100%,0 --anchor
 pixelox comp place praise.pxo zig.png --in-place --as Zig --at 100%,0 --anchor tr
 pixelox shape rect praise.pxo --in-place --name Panel --rect 7%,5.2%,87.5%x94.8% --fill '#16130e'
 pixelox comp place praise.pxo logo.png --in-place --as Logo --size 116x --at 50%,14% --anchor c
-pixelox text add praise.pxo --in-place --name H1 --content "JOYFUL" --font "Marker Felt" --weight 700 --size 12% --color '#f2c40e' --stroke '#f2c40e' --stroke-width 12
-pixelox transform scale praise.pxo --in-place --layer H1 --size 650x
+pixelox text add praise.pxo --in-place --name H1 --content "JOYFUL" --font @marker --weight 700 --fit-width 650 --color '#f2c40e' --stroke '#f2c40e' --stroke-width 12 --at 47%,30.7% --anchor c --anchor-to ink
 pixelox transform rotate praise.pxo --in-place --layer H1 --degrees -3
-pixelox transform move praise.pxo --in-place --layer H1 --to 47%,23.1% --anchor t
-pixelox text add praise.pxo --in-place --name H2 --content "& LOUD" --font "Marker Felt" --weight 700 --size 12% --color '#f2c40e' --stroke '#f2c40e' --stroke-width 12
-pixelox transform scale praise.pxo --in-place --layer H2 --size 630x
+pixelox text add praise.pxo --in-place --name H2 --content "& LOUD" --font @marker --weight 700 --fit-width 630 --color '#f2c40e' --stroke '#f2c40e' --stroke-width 12 --at 46%,45.3% --anchor c --anchor-to ink
 pixelox transform rotate praise.pxo --in-place --layer H2 --degrees -3
-pixelox transform move praise.pxo --in-place --layer H2 --to 46%,37.4% --anchor t
 pixelox fx overlay praise.pxo --in-place --layer H1 --stops '#d9741a@0,#f0a81e@0.5,#f7d42a@1' --angle 90
 pixelox fx stroke praise.pxo --in-place --layer H1 --width 7 --color '#3a1a08' --position outside
 pixelox fx drop-shadow praise.pxo --in-place --layer H1 --offset 7,9 --blur 0 --color '#140a04' --blend normal --opacity 100
 pixelox fx copy praise.pxo --in-place --from H1 --to H2
 pixelox comp place praise.pxo illustration.png --in-place --as Ornament --size 170x --at 77%,38% --anchor c
-pixelox text add praise.pxo --in-place --name Script --content "Sunday" --font "Savoye LET" --size 15% --color '#ffffff' --at 61%,50% --anchor c
+pixelox text add praise.pxo --in-place --name Script --content "Sunday" --font @script-signature --size 15% --color '#ffffff' --at 61%,50% --anchor c
 pixelox transform rotate praise.pxo --in-place --layer Script --degrees -8
 pixelox fx drop-shadow praise.pxo --in-place --layer Script --offset 0,4 --blur 10 --opacity 60
 pixelox comp place praise.pxo subject2.png --in-place --as BackHost --size x620 --at 37%,100% --anchor b
 pixelox comp place praise.pxo subject.png --in-place --as FrontHost --size x690 --at 16%,100% --anchor b
 pixelox shape rect praise.pxo --in-place --name Bar --rect 47.2%,61.1%,42.3%x3.2% --fill '#6a300f'
 pixelox fx overlay praise.pxo --in-place --layer Bar --stops '#5a2a0c@0,#8a4416@1' --angle 0
-pixelox text add praise.pxo --in-place --name BarText --content "SEE YOU THIS SUNDAY" --font "Avenir Next" --weight 700 --size 1.45% --color '#ffffff' --at 49.2%,62.7% --anchor l
-pixelox text add praise.pxo --in-place --name BarDate --content "07 SEP 2031" --font "Avenir Next" --weight 400 --size 1.45% --color '#ffffff' --at 87.8%,62.7% --anchor r
+pixelox text add praise.pxo --in-place --name BarText --content "SEE YOU THIS SUNDAY" --font @geometric-sans --weight 700 --size 1.45% --color '#ffffff' --at 49.2%,62.7% --anchor l
+pixelox text add praise.pxo --in-place --name BarDate --content "07 SEP 2031" --font @geometric-sans --weight 400 --size 1.45% --color '#ffffff' --at 87.8%,62.7% --anchor r
 pixelox shape path praise.pxo --in-place --name Rules --d 'M 792 836 V 856 M 798 836 V 856 M 704 900 V 1007' --fill none --stroke '#d9d2c4' --stroke-width 2
 pixelox text add praise.pxo --in-place --name Time --content "9AM" --font "DIN Condensed" --weight 700 --size 5.6% --color '#ffffff' --at 58.2%,69.9% --anchor c
-pixelox text add praise.pxo --in-place --name Zone --content "(GMT)" --font "Avenir Next" --weight 400 --size 1.6% --color '#d9d2c4' --at 58.2%,73.2% --anchor c
+pixelox text add praise.pxo --in-place --name Zone --content "(GMT)" --font @geometric-sans --weight 400 --size 1.6% --color '#d9d2c4' --at 58.2%,73.2% --anchor c
 pixelox text add praise.pxo --in-place --name Venue --content "CITY AUDITORIUM" --font "DIN Condensed" --weight 700 --size 3.05% --color '#ffffff' --at 67.5%,69% --anchor l
-pixelox text add praise.pxo --in-place --name Address --content $'12 EXAMPLE HILLS, EAST\nSIDE, YOUR CITY' --font "Avenir Next" --weight 400 --size 1.5% --tracking 40 --leading 125% --color '#d9d2c4' --at 67.5%,72.6% --anchor l
-pixelox text add praise.pxo --in-place --name Note1 --content "& AT EVERY" --font "Avenir Next" --weight 400 --size 2% --tracking 250 --color '#e6dfd0' --at 89.8%,79.2% --anchor r
-pixelox text add praise.pxo --in-place --name Note2 --content "CITY CAMPUS" --font "Avenir Next" --weight 700 --size 2.35% --tracking 60 --color '#ffffff' --at 89.4%,82% --anchor r
-pixelox text add praise.pxo --in-place --name Stream --content $'Streaming live on @yourchannel\nAlso on the app and satellite TV' --font "Avenir Next" --weight 500 --size 1.25% --leading 130% --align right --color '#c9c2b4' --at 89.5%,94.1% --anchor r
-pixelox layer add praise.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise praise.pxo --in-place --layer Grain --amount 14 --monochrome
-pixelox layer blend praise.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity praise.pxo --in-place --layer Grain --value 45
+pixelox text add praise.pxo --in-place --name Address --content $'12 EXAMPLE HILLS, EAST\nSIDE, YOUR CITY' --font @geometric-sans --weight 400 --size 1.5% --tracking 40 --leading 125% --color '#d9d2c4' --at 67.5%,72.6% --anchor l
+pixelox text add praise.pxo --in-place --name Note1 --content "& AT EVERY" --font @geometric-sans --weight 400 --size 2% --tracking 250 --color '#e6dfd0' --at 89.8%,79.2% --anchor r
+pixelox text add praise.pxo --in-place --name Note2 --content "CITY CAMPUS" --font @geometric-sans --weight 700 --size 2.35% --tracking 60 --color '#ffffff' --at 89.4%,82% --anchor r
+pixelox text add praise.pxo --in-place --name Stream --content $'Streaming live on @yourchannel\nAlso on the app and satellite TV' --font @geometric-sans --weight 500 --size 1.25% --leading 130% --align right --color '#c9c2b4' --at 89.5%,94.1% --anchor r
+pixelox filter grain praise.pxo --in-place --as-layer --name Grain --amount 12
 pixelox export praise.pxo -o praise.png
 ```
 

@@ -7,7 +7,7 @@ style: [swiss, editorial, minimal]
 format: portrait-a
 archetype: A-top-photo-bottom-text
 palette: ['#0b0b0b', '#5e5e5e', '#ffffff', '#bab7b7']
-techniques: [T-photo-fade, T-rules, T-mono-on-color]
+techniques: [T-photo-fade, T-rules, T-mono-on-color, T-icon-row]
 needs: photo
 ---
 
@@ -35,7 +35,8 @@ black. The broken headline with a trailing underscore is the only playful move.
 1. Ground: near-black `#0b0b0b`, full canvas.
 2. Photo: black-and-white architectural detail (a curved, perforated metal facade seen
    from below), full width, 0 to 47% H, high contrast, brightest at top center.
-3. Fade: ground color from transparent at 26% H to solid at 48% H (T-photo-fade).
+3. Fade: a gradient mask on the photo, whole at 26% H and gone at 48% H, so the ground
+   shows through (T-photo-fade).
 4. Gray square: `6.8%,38.7%,22% W square`, solid `#5e5e5e`, overlapping the photo's
    lower edge and the first two headline lines.
 5. Headline: four lines, white, left at 6.8% W, cap tops at 45.5%, 50.7%, 56%, 61.2% H.
@@ -44,8 +45,8 @@ black. The broken headline with a trailing underscore is the only playful move.
 8. Lead-in sentence (bold italic) at 79.9% H and four body lines below it.
 9. Side column: two blocks at 68.5% and 83.2% H. Each has a small gray square marker
    (3.4% W) behind the first letters of a bold italic sub-heading, then 2 to 3 body lines.
-10. Footer: letterspaced web address at the left margin; three small social icons and a
-    handle line ending at the right margin; both at 95.2% H.
+10. Footer: letterspaced web address at the left margin; three small white outline icons
+    (1.6% H) and a handle line ending at the right margin; all at 95.2% H.
 
 ## 4. Palette
 
@@ -87,8 +88,11 @@ fabric folds, a crowd from above. No people, no horizon.
 
 ## 7. Effects and textures
 
-* **T-photo-fade**, ground color, ramp 26 to 48% H.
+* **T-photo-fade**: `mask add --gradient linear` on the photo, ramp 26 to 48% H.
 * **T-rules**: one short accent rule, two gray square markers.
+* **T-icon-row**, contact variant: three 24 px `shape icon` glyphs (`share-2`,
+  `message-circle`, `at-sign`) 12 px apart, just left of the handle line. They are neutral
+  stand-ins: network logos are not in the icon set and must come from the user.
 * No grain, no shadows, no gradients on type: the flatness is the style.
 
 ## 8. Hierarchy and eye path
@@ -111,30 +115,32 @@ pixelox new -o conf.pxo --size 1080x1528 --fill '#0b0b0b'
 pixelox comp place conf.pxo photo.png --in-place --as Photo --size 1080x --at 0,0
 pixelox adjust bw conf.pxo --in-place --layer Photo
 pixelox adjust levels conf.pxo --in-place --layer Photo --in-black 35 --in-white 215 --gamma 0.9
-pixelox layer add conf.pxo --in-place --name Fade
-pixelox fill gradient conf.pxo --in-place --layer Fade --from 0,26% --to 0,48% --stops '#0b0b0b00@0,#0b0b0bff@1'
+pixelox mask add conf.pxo --in-place --layer Photo --gradient linear --from 0,26% --to 0,48%
 pixelox shape rect conf.pxo --in-place --name Square --rect 73,591,238x238 --fill '#5e5e5e'
-pixelox text add conf.pxo --in-place --name Headline --content $'MA\nKERS\nSUM\nMIT_' --font "Avenir Next" --weight 500 --size 5% --leading 104% --color '#ffffff'
-pixelox transform move conf.pxo --in-place --layer Headline --to 73,695 --anchor tl
-pixelox text add conf.pxo --in-place --name Date --content "14 March 2031" --font "Avenir Next" --weight 400 --size 1.9% --color '#ffffff' --at 6.8%,69.9% --anchor l
-pixelox text add conf.pxo --in-place --name City --content "Your City" --font "Avenir Next" --weight 600 --style italic --size 2% --color '#ffffff' --at 6.8%,72.8% --anchor l
+pixelox text add conf.pxo --in-place --name Headline --content $'MA\nKERS\nSUM\nMIT_' --font @geometric-sans --weight 500 --size 5% --leading 104% --color '#ffffff' --at 73,695 --anchor tl --anchor-to ink
+pixelox text add conf.pxo --in-place --name Date --content "14 March 2031" --font @geometric-sans --weight 400 --size 1.9% --color '#ffffff' --at 6.8%,69.9% --anchor l
+pixelox text add conf.pxo --in-place --name City --content "Your City" --font @geometric-sans --weight 600 --style italic --size 2% --color '#ffffff' --at 6.8%,72.8% --anchor l
 pixelox shape line conf.pxo --in-place --name Rule --from 6.8%,76.4% --to 11.2%,76.4% --stroke '#ffffff' --stroke-width 2
-pixelox text add conf.pxo --in-place --name Lead --content "One line that sells it." --font "Avenir Next" --weight 700 --style italic --size 1.45% --color '#ffffff' --at 6.8%,79.9% --anchor l
-pixelox text add conf.pxo --in-place --name Body --content $'Say who it is for,\nwhat they will leave with,\nand why this year matters.\nThen ask them to come.' --font "Avenir Next" --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 6.8%,81% --anchor tl
+pixelox text add conf.pxo --in-place --name Lead --content "One line that sells it." --font @geometric-sans --weight 700 --style italic --size 1.45% --color '#ffffff' --at 6.8%,79.9% --anchor l
+pixelox text add conf.pxo --in-place --name Body --content $'Say who it is for,\nwhat they will leave with,\nand why this year matters.\nThen ask them to come.' --font @geometric-sans --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 6.8%,81% --anchor tl
 pixelox shape rect conf.pxo --in-place --name Marker1 --rect 674,1047,37x37 --fill '#5e5e5e'
-pixelox text add conf.pxo --in-place --name Sub1 --content "What will you learn?" --font "Avenir Next" --weight 700 --style italic --size 1.6% --color '#ffffff' --at 62.4%,70.3% --anchor l
-pixelox text add conf.pxo --in-place --name Body1 --content $'Two short lines about the\ntalks, the workshops, and\nthe people in the room.' --font "Avenir Next" --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 62.4%,71.9% --anchor tl
+pixelox text add conf.pxo --in-place --name Sub1 --content "What will you learn?" --font @geometric-sans --weight 700 --style italic --size 1.6% --color '#ffffff' --at 62.4%,70.3% --anchor l
+pixelox text add conf.pxo --in-place --name Body1 --content $'Two short lines about the\ntalks, the workshops, and\nthe people in the room.' --font @geometric-sans --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 62.4%,71.9% --anchor tl
 pixelox shape rect conf.pxo --in-place --name Marker2 --rect 674,1271,37x37 --fill '#5e5e5e'
-pixelox text add conf.pxo --in-place --name Sub2 --content "How to join?" --font "Avenir Next" --weight 700 --style italic --size 1.6% --color '#ffffff' --at 62.4%,85.1% --anchor l
-pixelox text add conf.pxo --in-place --name Body2 --content $'Tell them where to sign up\nand when booking closes.' --font "Avenir Next" --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 62.4%,86.7% --anchor tl
-pixelox text add conf.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 700 --size 1.3% --tracking 300 --color '#ffffff' --at 6.8%,95.2% --anchor l
-pixelox text add conf.pxo --in-place --name Handle --content "#yourtag  @yourhandle" --font "Avenir Next" --weight 400 --size 1.45% --tracking 60 --color '#ffffff' --at 93.2%,95.2% --anchor r
+pixelox text add conf.pxo --in-place --name Sub2 --content "How to join?" --font @geometric-sans --weight 700 --style italic --size 1.6% --color '#ffffff' --at 62.4%,85.1% --anchor l
+pixelox text add conf.pxo --in-place --name Body2 --content $'Tell them where to sign up\nand when booking closes.' --font @geometric-sans --weight 400 --size 1.45% --leading 135% --color '#f2f2f2' --at 62.4%,86.7% --anchor tl
+pixelox text add conf.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 700 --size 1.3% --tracking 300 --color '#ffffff' --at 6.8%,95.2% --anchor l
+pixelox shape icon conf.pxo share-2 --in-place --name Icon1 --size 24 --at 630,95.2% --anchor l --color '#ffffff'
+pixelox shape icon conf.pxo message-circle --in-place --name Icon2 --size 24 --at 666,95.2% --anchor l --color '#ffffff'
+pixelox shape icon conf.pxo at-sign --in-place --name Icon3 --size 24 --at 702,95.2% --anchor l --color '#ffffff'
+pixelox text add conf.pxo --in-place --name Handle --content "#yourtag  @yourhandle" --font @geometric-sans --weight 400 --size 1.45% --tracking 60 --color '#ffffff' --at 93.2%,95.2% --anchor r
 pixelox export conf.pxo -o conf.png
 ```
 
 Change first: the headline (keep 2 to 5 letters per line; break mid-word on purpose), then
 the photo. If the headline has a line wider than the gray square, widen the square to the
-longest line of the first two lines, not more.
+longest line of the first two lines, not more. A longer handle line grows to the left:
+move the three icons left by the same amount.
 
 ## 10. Variations and pairings
 

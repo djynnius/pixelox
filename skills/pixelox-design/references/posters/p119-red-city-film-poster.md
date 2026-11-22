@@ -46,8 +46,8 @@ shadow; those are not part of the design.
    tall tower leaning in from the right (78 to 100% W, 8 to 55% H), lower buildings at
    the right (60 to 100% W, 50 to 70% H). The upper middle, where the type sits, is clear
    red.
-3. Top clearing: ground red, solid down to 14% H and gone by 36% H, so no black shape can
-   run behind the quote and the stars.
+3. Top clearing: the city fades into the ground red, whole at 36% H and gone by 14% H, so
+   no black shape can run behind the quote and the stars.
 4. Quote: one line of white bold capitals in curly quotation marks, 13 to 87% W, at 7% H;
    its source in tiny pale capitals at 8.7% H.
 5. Stars: fifteen five-point stars, yellow `#f6e80c`, each 4.6% W across, pitch 5% W, in
@@ -113,14 +113,17 @@ them.
 ## 7. Effects and textures
 
 * **T-mono-on-color** in multiply for the city.
-* **T-photo-fade** twice: ground red from the top (solid to 14% H, clear at 36% H) and
-  black from the bottom (clear at 66% H, solid at 88% H).
+* **T-photo-fade** twice. At the top, a gradient mask on the city (`mask add --gradient
+  linear`, whole at 36% H, gone at 14% H) lets the red ground through. At the bottom, a
+  black gradient layer (clear at 66% H, solid at 88% H): a layer, not a mask, because it
+  must cover the hero and the city together and the ground under them is red.
 * Stars: one text layer of the star glyph in a monospaced face, so the pitch is even and
   one space separates the groups; `shape star` with `--points 5` draws them where the
   font has no star.
 * Title: `fx drop-shadow` offset 0,6, blur 18, opacity 40.
-* Credits: set at natural width, then squeezed with a non-uniform `transform scale`.
-* **T-paper-grain** amount 10, soft-light, 35%.
+* Credits: `--scale-x 51.6%` narrows the letters and `--fit-width 643` sets the block to
+  the tagline's measure; the text stays live.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added last.
 * **T-credit-block** in [techniques.md](../techniques.md) is the tested library version of the billing block and star row; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -135,8 +138,8 @@ about 13.5 : 3.3 : 3 : 2 : 2 : 1. The title is more than four times anything els
 
 ## 9. Build recipe
 
-`subject.png` (the hero cutout) and `photo.png` (the city) are your images here. The credits squeeze rasterizes that layer
-(warning PXW2003), so finish its wording first.
+`subject.png` (the hero cutout) and `photo.png` (the city) are your images here. All the
+type stays live, the squeezed credits included, so wording can change at any time.
 
 ```bash
 pixelox new -o film.pxo --size 1080x1528 --fill '#c22717'
@@ -144,40 +147,27 @@ pixelox comp place film.pxo photo.png --in-place --as City --fit cover
 pixelox adjust bw film.pxo --in-place --layer City
 pixelox adjust levels film.pxo --in-place --layer City --in-black 95 --in-white 150
 pixelox layer blend film.pxo --in-place --layer City --mode multiply
-pixelox layer add film.pxo --in-place --name TopClear
-pixelox fill gradient film.pxo --in-place --layer TopClear --from 0,14% --to 0,36% --stops '#c22717ff@0,#c2271700@1'
-pixelox text add film.pxo --in-place --name Quote --content "“BOLD, WARM AND WILDLY ENTERTAINING. A TRIUMPH”" --font "Trebuchet MS" --weight 700 --size 2% --color '#ffffff'
-pixelox transform scale film.pxo --in-place --layer Quote --size 800x
-pixelox transform move film.pxo --in-place --layer Quote --to 50%,7% --anchor c
+pixelox mask add film.pxo --in-place --layer City --gradient linear --from 0,36% --to 0,14%
+pixelox text add film.pxo --in-place --name Quote --content "“BOLD, WARM AND WILDLY ENTERTAINING. A TRIUMPH”" --font "Trebuchet MS" --weight 700 --fit-width 800 --color '#ffffff' --at 50%,7% --anchor c --anchor-to ink
 pixelox text add film.pxo --in-place --name QuoteSource --content "SOURCE NAME" --font "Trebuchet MS" --weight 400 --size 1% --color '#f3d6d0' --at 50%,8.7% --anchor c
-pixelox text add film.pxo --in-place --name Stars --content "★★★★★ ★★★★★ ★★★★★" --font Menlo --size 5.9% --color '#f6e80c' --at 50%,11.2% --anchor c
+pixelox text add film.pxo --in-place --name Stars --content "★★★★★ ★★★★★ ★★★★★" --font @mono --size 5.9% --color '#f6e80c' --at 50%,11.2% --anchor c
 pixelox text add film.pxo --in-place --name StarSources --content "FIRST PAPER                                      SECOND PAPER                                      THIRD PAPER" --font "Trebuchet MS" --weight 400 --size 1% --color '#f3d6d0' --at 50%,13.7% --anchor c
-pixelox text add film.pxo --in-place --name Actor --content "DANA OKAFOR" --font "Avenir Next" --weight 700 --size 2.9% --tracking 40 --color '#ffffff'
-pixelox transform scale film.pxo --in-place --layer Actor --size 346x
-pixelox transform move film.pxo --in-place --layer Actor --to 50%,16.8% --anchor c
-pixelox text add film.pxo --in-place --name Is --content "IS" --font "Avenir Next" --weight 500 --size 2% --color '#ffffff' --at 50%,20.6% --anchor c
+pixelox text add film.pxo --in-place --name Actor --content "DANA OKAFOR" --font @geometric-sans --weight 700 --fit-width 346 --tracking 40 --color '#ffffff' --at 50%,16.8% --anchor c --anchor-to ink
+pixelox text add film.pxo --in-place --name Is --content "IS" --font @geometric-sans --weight 500 --size 2% --color '#ffffff' --at 50%,20.6% --anchor c
 pixelox comp place film.pxo subject.png --in-place --as Subject --size x1180 --at 50%,100% --anchor b
 pixelox layer add film.pxo --in-place --name Shade
 pixelox fill gradient film.pxo --in-place --layer Shade --from 0,66% --to 0,88% --stops '#00000000@0,#000000ff@1'
-pixelox text add film.pxo --in-place --name Title --content $'THE\nICON' --font "Arial Black" --size 13.2% --leading 83% --align center --color '#ffffff'
-pixelox transform move film.pxo --in-place --layer Title --to 50%,61% --anchor t
+pixelox text add film.pxo --in-place --name Title --content $'THE\nICON' --font @heavy-wide --size 13.2% --leading 83% --align center --color '#ffffff' --at 50%,61% --anchor t --anchor-to ink
 pixelox fx drop-shadow film.pxo --in-place --layer Title --offset 0,6 --blur 18 --opacity 40
-pixelox text add film.pxo --in-place --name Tagline --content "NOBODY RUNS IT BETTER" --font "Avenir Next" --weight 400 --size 3.2% --tracking 40 --color '#ffffff'
-pixelox transform scale film.pxo --in-place --layer Tagline --size 632x
-pixelox transform move film.pxo --in-place --layer Tagline --to 50%,83.3% --anchor c
-pixelox text add film.pxo --in-place --name Credits --content $'STUDIO NAME presents a YOUR COMPANY film produced by ANA REYES executive producer TOM HALE\ncostume design by JO MARSH casting by SAM OKORO directed by LEE VARGA music by THE NIGHT OWLS' --font "Avenir Next Condensed" --weight 500 --size 2.1% --leading 125% --align center --color '#d8d4d0'
-pixelox transform scale film.pxo --in-place --layer Credits --size 643x76
-pixelox transform move film.pxo --in-place --layer Credits --to 50%,87.4% --anchor c
-pixelox text add film.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Avenir Next Condensed" --weight 700 --size 2.2% --tracking 40 --color '#8a8a8a' --at 50%,92.2% --anchor c
-pixelox layer add film.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise film.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend film.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity film.pxo --in-place --layer Grain --value 35
+pixelox text add film.pxo --in-place --name Tagline --content "NOBODY RUNS IT BETTER" --font @geometric-sans --weight 400 --fit-width 632 --tracking 40 --color '#ffffff' --at 50%,83.3% --anchor c --anchor-to ink
+pixelox text add film.pxo --in-place --name Credits --content $'STUDIO NAME presents a YOUR COMPANY film produced by ANA REYES executive producer TOM HALE\ncostume design by JO MARSH casting by SAM OKORO directed by LEE VARGA music by THE NIGHT OWLS' --font @condensed --weight 500 --scale-x 51.6% --fit-width 643 --leading 125% --align center --color '#d8d4d0' --at 50%,87.4% --anchor c --anchor-to ink
+pixelox text add film.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @condensed --weight 700 --size 2.2% --tracking 40 --color '#8a8a8a' --at 50%,92.2% --anchor c
+pixelox filter grain film.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export film.pxo -o film.png
 ```
 
-Change first: actor name and title (line 2 of the title: 4 to 6 letters; with more, fit
-it with `transform scale --size 560x`), then the quote, then the two `levels` points
+Change first: actor name and title (line 2 of the title: 4 to 6 letters; with more,
+replace `--size 13.2%` with `--fit-width 560`), then the quote, then the two `levels` points
 until the city is black shapes with no gray. Role words in the credits are typed in
 lowercase to stand in for the smaller size of a real credit block.
 
@@ -196,8 +186,8 @@ lowercase to stand in for the smaller size of a real credit block.
 
 * Grays in the city layer. Mid-tones in multiply make brown mud on red; push the levels
   points close together until it is ink or nothing.
-* Black shapes behind the top block: the quote and stars need clean red. Keep the top
-  clearing, or pick a photo with open sky in the upper middle.
+* Black shapes behind the top block: the quote and stars need clean red. Keep the gradient
+  mask on the city, or pick a photo with open sky in the upper middle.
 * A condensed title face. The formula wants a wide, ultra-heavy face with almost no
   space between the two lines (gap 1.5% H); Impact reads as a meme here.
 * The title covering the face. It belongs on the arms and chest, cap tops no higher than

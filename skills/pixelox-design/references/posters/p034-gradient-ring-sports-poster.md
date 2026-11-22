@@ -162,12 +162,12 @@ pixelox text add sport.pxo --in-place --name TagRest --content $'               
 pixelox text add sport.pxo --in-place --name Venue --content $'AT RIVERSIDE FIELD\n12 EXAMPLE ROAD' --font "DIN Condensed" --weight 700 --size 1.95% --tracking 20 --leading 115% --color '#000000' --at 73%,9.6% --anchor l
 pixelox text add sport.pxo --in-place --name Headline --content $'ALL\nTEAMS\nONE DAY' --font "DIN Condensed" --weight 700 --size 9.9% --leading 87% --color '#000000'
 pixelox transform move sport.pxo --in-place --layer Headline --to 14%,45.8% --anchor tl
-pixelox text add sport.pxo --in-place --name Date --content "14/06" --font "Avenir Next Condensed" --weight 700 --style italic --size 5.4% --color '#ff0a78'
+pixelox text add sport.pxo --in-place --name Date --content "14/06" --font @condensed --weight 700 --style italic --size 5.4% --color '#ff0a78'
 pixelox transform move sport.pxo --in-place --layer Date --to 33%,45.8% --anchor tl
 pixelox text add sport.pxo --in-place --name Nums --content $'01\n\n\n02' --font "DIN Condensed" --weight 700 --size 3% --leading 87% --color '#9a9a9a' --at 14%,78.6% --anchor tl
 pixelox shape path sport.pxo --in-place --name Underlines --d 'M 151 1244 H 191 M 151 1363 H 191' --fill none --stroke '#ff0a78' --stroke-width 4
-pixelox text add sport.pxo --in-place --name Note1 --content $'Sign up at the welcome tent,\npick a team color, and\ncollect your number before\nthe first whistle. Everyone\nplays, nobody sits out.' --font "Helvetica Neue" --weight 400 --size 0.85% --leading 165% --color '#8a8a8a' --at 19.2%,78% --anchor tl
-pixelox text add sport.pxo --in-place --name Note2 --content $'Bring water, a hat, and\nshoes you can run in.\nFood stalls open at noon\nand the final relay starts\nat four in the afternoon.' --font "Helvetica Neue" --weight 400 --size 0.85% --leading 165% --color '#8a8a8a' --at 19.2%,85.8% --anchor tl
+pixelox text add sport.pxo --in-place --name Note1 --content $'Sign up at the welcome tent,\npick a team color, and\ncollect your number before\nthe first whistle. Everyone\nplays, nobody sits out.' --font @neo-grotesque --weight 400 --size 0.85% --leading 165% --color '#8a8a8a' --at 19.2%,78% --anchor tl
+pixelox text add sport.pxo --in-place --name Note2 --content $'Bring water, a hat, and\nshoes you can run in.\nFood stalls open at noon\nand the final relay starts\nat four in the afternoon.' --font @neo-grotesque --weight 400 --size 0.85% --leading 165% --color '#8a8a8a' --at 19.2%,85.8% --anchor tl
 pixelox export sport.pxo -o sport.png
 ```
 

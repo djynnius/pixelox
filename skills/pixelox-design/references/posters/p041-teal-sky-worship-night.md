@@ -7,7 +7,7 @@ style: [type-led, photo-composite]
 format: square
 archetype: A-centered-title
 palette: ['#9dc7c7', '#f1f6ee', '#71aeb5', '#256d83', '#4b91a1', '#f29a2e']
-techniques: [T-image-in-type, T-script-overlap, T-arc-type, T-pill-button, T-rules, T-vignette]
+techniques: [T-image-in-type, T-script-overlap, T-arc-type, T-pill-button, T-rules, T-icon-row, T-vignette]
 needs: logo
 ---
 
@@ -115,8 +115,9 @@ a real cloud photo treated with T-duotone (`#256d83` to `#f1f6ee`) is a direct u
 
 ## 7. Effects and textures
 
-* Generated sky (`clouds.js`, three teal stops) under a cream radial glow, then
-  **T-vignette** in deep teal instead of black.
+* Generated sky: one `fill noise --as-layer` line (clouds, three teal stops, `--scale
+  42%`, `--stretch 0.7`, `--bias=-8`) under a cream radial glow, then **T-vignette** in deep
+  teal instead of black.
 * **T-image-in-type**: a faceted pattern (a checker turned 45 degrees, white, 14%) is
   clipped into each display word over a vertical teal gradient (`fx overlay`, dark at the
   bottom).
@@ -125,7 +126,10 @@ a real cloud photo treated with T-duotone (`#256d83` to `#f1f6ee`) is a direct u
 * **T-arc-type** for the badge label on its ring; the ring is an open arc drawn with
   `shape path`.
 * **T-pill-button** (outlined, small) as the "THEME" label; **T-rules** for the two
-  hairlines around the verse and the dotted row that stands in for social icons.
+  hairlines around the verse.
+* **T-icon-row**, contact variant: four 24 px `shape icon` glyphs (`phone`, `globe`,
+  `at-sign`, `message-circle`) in dark teal, 30 px apart, above the contact lines. The set
+  has no social-network logos; these neutral glyphs stand in for them.
 * The orange numeral is two round-capped line segments, slightly tilted, 10 px wide.
 
 ## 8. Hierarchy and eye path
@@ -141,50 +145,50 @@ smallest labels 0.9, about 18 : 10 : 1.9 : 1.8 : 1.5 : 1.
 ## 9. Build recipe
 
 `logo.png` is your image here (a small dark or teal line mark). Everything else is
-generated.
+generated. Change the sky's `--seed` until the brightest clouds sit behind the title and
+the lower third is calm.
 
 ```bash
-pixelox render js scripts/clouds.js -o sky.png --size 1080x1080 --seed 17 --param lo='#5aa3b3' --param mid='#b5d6d6' --param hi='#f6faf2' --param scale=2.4 --param octaves=5 --param warp=0.45 --param stretch=0.7 --param contrast=1.7
 pixelox render js scripts/pattern.js -o facets.png --size 1080x1080 --param kind=checker --param color='#ffffff' --param cell=34 --param angle=45 --param alpha=0.14
 pixelox new -o night.pxo --size 1080x1080 --fill '#71aeb5'
-pixelox comp place night.pxo sky.png --in-place --as Sky --fit cover
+pixelox fill noise night.pxo --in-place --as-layer --name Sky --seed 4 --scale 42% --octaves 5 --warp 18 --stretch 0.7 --angle 90 --contrast 12 --bias=-8 --stops '#5aa3b3,#b5d6d6,#f6faf2'
 pixelox layer add night.pxo --in-place --name Glow
 pixelox fill gradient night.pxo --in-place --layer Glow --kind radial --from 50%,36% --to 50%,86% --stops '#f1f6eeff@0,#f1f6eed9@0.4,#f1f6ee00@1'
 pixelox layer add night.pxo --in-place --name Vignette
 pixelox fill gradient night.pxo --in-place --layer Vignette --kind radial --from 50%,38% --to 50%,112% --stops '#17658500@0.45,#176585cc@1'
 pixelox comp place night.pxo logo.png --in-place --as Logo --size 62x --at 50%,5.8% --anchor t
-pixelox text add night.pxo --in-place --name Presenter --content $'RIVERSIDE\nPRAISE TEAM' --font "Avenir Next" --weight 700 --size 1.25% --tracking 40 --leading 115% --align center --color '#256d83' --at 50%,14.8% --anchor c
-pixelox text add night.pxo --in-place --name Presents --content "Presents" --font "Snell Roundhand" --weight 500 --size 5% --color '#256d83' --at 50%,20.3% --anchor c
-pixelox text add night.pxo --in-place --name D1 --content "HIS" --font "DIN Condensed" --weight 700 --size 22.6% --color '#256d83'
-pixelox transform move night.pxo --in-place --layer D1 --to 36%,37% --anchor tl
+pixelox text add night.pxo --in-place --name Presenter --content $'RIVERSIDE\nPRAISE TEAM' --font @geometric-sans --weight 700 --size 1.25% --tracking 40 --leading 115% --align center --color '#256d83' --at 50%,14.8% --anchor c
+pixelox text add night.pxo --in-place --name Presents --content "Presents" --font @script-formal --weight 500 --size 5% --color '#256d83' --at 50%,20.3% --anchor c
+pixelox text add night.pxo --in-place --name D1 --content "HIS" --font "DIN Condensed" --weight 700 --size 22.6% --color '#256d83' --at 36%,37% --anchor tl --anchor-to ink
 pixelox fx overlay night.pxo --in-place --layer D1 --stops '#1b5f78@0,#3f93a8@1' --angle 90
 pixelox comp place night.pxo facets.png --in-place --as Facets1 --fit cover
 pixelox layer clip night.pxo --in-place --layer Facets1
-pixelox text add night.pxo --in-place --name D2 --content "CALL" --font "DIN Condensed" --weight 700 --size 21% --color '#256d83'
-pixelox transform move night.pxo --in-place --layer D2 --to 36.7%,54.3% --anchor tl
+pixelox text add night.pxo --in-place --name D2 --content "CALL" --font "DIN Condensed" --weight 700 --size 21% --color '#256d83' --at 36.7%,54.3% --anchor tl --anchor-to ink
 pixelox fx copy night.pxo --in-place --from D1 --to D2
 pixelox comp place night.pxo facets.png --in-place --as Facets2 --fit cover
 pixelox layer clip night.pxo --in-place --layer Facets2
-pixelox text add night.pxo --in-place --name Script --content "Hear" --font "Snell Roundhand" --weight 500 --size 12.5% --color '#256d83'
-pixelox transform move night.pxo --in-place --layer Script --to 35%,27.5% --anchor tl
+pixelox text add night.pxo --in-place --name Script --content "Hear" --font @script-formal --weight 500 --size 12.5% --color '#256d83' --at 35%,27.5% --anchor tl --anchor-to ink
 pixelox shape path night.pxo --in-place --name Numeral --d 'M 738 692 L 734 762 M 760 688 L 757 758' --fill none --stroke '#f29a2e' --stroke-width 10 --cap round
 pixelox shape ellipse night.pxo --in-place --name Disc --rect 754,336,114x114 --fill '#2a7f96'
 pixelox shape path night.pxo --in-place --name Ring --d 'M 770 455 A 78 78 0 1 1 860 455' --fill none --stroke '#2a7f96' --stroke-width 2
-pixelox text add night.pxo --in-place --name BadgeLabel --content "DATE" --font "Avenir Next" --weight 600 --size 11px --tracking 400 --color '#256d83'
+pixelox text add night.pxo --in-place --name BadgeLabel --content "DATE" --font @geometric-sans --weight 600 --size 11px --tracking 400 --color '#256d83'
 pixelox text on-path night.pxo --in-place --layer BadgeLabel --d 'M 729 393 A 82 82 0 0 1 811 311' --side outside
-pixelox text add night.pxo --in-place --name BadgeDay --content "SUNDAY" --font "Avenir Next" --weight 700 --size 1.5% --tracking 20 --color '#ffffff' --at 75.1%,33.5% --anchor c
-pixelox text add night.pxo --in-place --name BadgeDate --content $'14. 09\n2031' --font "Avenir Next" --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 75.1%,37.7% --anchor c
+pixelox text add night.pxo --in-place --name BadgeDay --content "SUNDAY" --font @geometric-sans --weight 700 --size 1.5% --tracking 20 --color '#ffffff' --at 75.1%,33.5% --anchor c
+pixelox text add night.pxo --in-place --name BadgeDate --content $'14. 09\n2031' --font @geometric-sans --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 75.1%,37.7% --anchor c
 pixelox shape ellipse night.pxo --in-place --name Mono --rect 254,718,66x66 --fill '#2a7f96' --stroke '#ffffff' --stroke-width 3
-pixelox text add night.pxo --in-place --name MonoText --content "Hv" --font "Snell Roundhand" --weight 700 --size 3% --color '#ffffff' --at 26.6%,69.6% --anchor c
-pixelox text add night.pxo --in-place --name Tagline --content "SONG   /   SCRIPTURE   /   PRAYER   /   STILLNESS" --font "Avenir Next" --weight 700 --size 1.2% --tracking 80 --color '#1d5a6e' --at 50%,71.6% --anchor c
+pixelox text add night.pxo --in-place --name MonoText --content "Hv" --font @script-formal --weight 700 --size 3% --color '#ffffff' --at 26.6%,69.6% --anchor c
+pixelox text add night.pxo --in-place --name Tagline --content "SONG   /   SCRIPTURE   /   PRAYER   /   STILLNESS" --font @geometric-sans --weight 700 --size 1.2% --tracking 80 --color '#1d5a6e' --at 50%,71.6% --anchor c
 pixelox shape rect night.pxo --in-place --name Pill --rect 36.7%,74.2%,7%x3% --radius 16 --fill '#ffffff' --stroke '#256d83' --stroke-width 2
-pixelox text add night.pxo --in-place --name PillText --content "THEME" --font "Avenir Next" --weight 700 --size 1% --tracking 60 --color '#256d83' --at 40.2%,75.7% --anchor c
-pixelox text add night.pxo --in-place --name Theme --content $'LISTENING IN\nTHE QUIET PLACE' --font "Avenir Next" --weight 700 --size 2.2% --leading 115% --color '#1d5a6e' --at 45%,75.8% --anchor l
+pixelox text add night.pxo --in-place --name PillText --content "THEME" --font @geometric-sans --weight 700 --size 1% --tracking 60 --color '#256d83' --at 40.2%,75.7% --anchor c
+pixelox text add night.pxo --in-place --name Theme --content $'LISTENING IN\nTHE QUIET PLACE' --font @geometric-sans --weight 700 --size 2.2% --leading 115% --color '#1d5a6e' --at 45%,75.8% --anchor l
 pixelox shape line night.pxo --in-place --name Rule1 --from 35%,79.4% --to 65%,79.4% --stroke '#ffffff' --stroke-width 1
-pixelox text add night.pxo --in-place --name Verse --content $'One short verse goes here, broken into\nthree centered lines of about seven words.\nBook 00:00 (version)' --font "Avenir Next" --weight 400 --style italic --size 1.95% --leading 125% --align center --color '#ffffff' --at 50%,84.2% --anchor c
+pixelox text add night.pxo --in-place --name Verse --content $'One short verse goes here, broken into\nthree centered lines of about seven words.\nBook 00:00 (version)' --font @geometric-sans --weight 400 --style italic --size 1.95% --leading 125% --align center --color '#ffffff' --at 50%,84.2% --anchor c
 pixelox shape line night.pxo --in-place --name Rule2 --from 35%,88.9% --to 65%,88.9% --stroke '#ffffff' --stroke-width 1
-pixelox shape line night.pxo --in-place --name Icons --from 46.4%,91.3% --to 53.8%,91.3% --stroke '#1d3f4d' --stroke-width 15 --dash 0,26 --cap round
-pixelox text add night.pxo --in-place --name Contact --content $'+000 000 000 000\nyourhandle' --font "Avenir Next" --weight 600 --size 1.4% --leading 130% --align center --color '#1d3f4d' --at 50%,94.3% --anchor c
+pixelox shape icon night.pxo phone --in-place --name Icon1 --size 24 --at 495,91.3% --anchor c --color '#1d3f4d' --stroke-width 2.5
+pixelox shape icon night.pxo globe --in-place --name Icon2 --size 24 --at 525,91.3% --anchor c --color '#1d3f4d' --stroke-width 2.5
+pixelox shape icon night.pxo at-sign --in-place --name Icon3 --size 24 --at 555,91.3% --anchor c --color '#1d3f4d' --stroke-width 2.5
+pixelox shape icon night.pxo message-circle --in-place --name Icon4 --size 24 --at 585,91.3% --anchor c --color '#1d3f4d' --stroke-width 2.5
+pixelox text add night.pxo --in-place --name Contact --content $'+000 000 000 000\nyourhandle' --font @geometric-sans --weight 600 --size 1.4% --leading 130% --align center --color '#1d3f4d' --at 50%,94.3% --anchor c
 pixelox export night.pxo -o night.png
 ```
 
@@ -200,8 +204,9 @@ hue, replace every teal with the same lightness in another color and keep the cr
   title, badge in gold `#e3b23c`.
 * A real cloud photo with T-duotone instead of the generated sky; or T-sunburst light
   shafts (`uneven=0.8`, `cy=-0.1`, blurred) falling onto the title.
-* Clip the sky itself into the display words (place `sky.png` again above each word and
-  `layer clip` it) for a stronger window effect.
+* Clip the sky itself into the display words (repeat the `fill noise --as-layer` line
+  above each word and `layer clip` it; the same `--seed` lines up with the sky) for a
+  stronger window effect.
 * Portrait 4:5: stretch the empty sky above the logo and below the contact block; do not
   widen the column.
 * Suits prayer meetings, retreats, choir evenings, memorial services, wellness and
@@ -218,4 +223,7 @@ hue, replace every teal with the same lightness in another color and keep the cr
 * The orange accent growing: more than one orange element (an orange badge, orange rules)
   breaks the single-hue calm. One mark, under 1% of the area.
 * Clouds with hard contrast behind the verse make it unreadable. Keep the lower third
-  soft and mid-toned; move busy clouds up behind the title.
+  soft and mid-toned (another `--seed`, or a lower `--contrast`); busy clouds belong
+  behind the title.
+* Icons larger than the contact text. At 24 px they match the 15 px text; keep them one
+  size and one color.

@@ -90,13 +90,15 @@ the crop stays sharp. Any direct gaze works; closed or averted eyes do not.
 
 ## 7. Effects and textures
 
-* Strip crop: the photo is placed wide and moved until the eyes sit in the top 20.7% H;
-  a black rectangle (the Field layer) covers everything below.
+* Strip crop: the photo is placed wide and 620 px above the top edge (`--at 50%,0-620`),
+  so the eyes sit in the top 20.7% H; a black rectangle (the Field layer) covers
+  everything below.
 * **T-fit-width**, relaxed: one font size for all four lines; the words are chosen so the
   line widths grow, not scaled to equal width.
 * **T-distress-type**: the four lines are merged into one layer; grunge in the ground
   black is clipped to it (`specks=4500`, `blotches=8`, `scratches=120`, `clump=0.35`).
-* **T-paper-grain**, strong: amount 22, overlay, 45%, coarsened with a 0.6 px blur.
+* **T-paper-grain**, strong and coarse: `filter grain --as-layer --amount 22 --size 2.5`
+  (film grain that shows on the photo and in the white letters).
 
 ## 8. Hierarchy and eye path
 
@@ -110,25 +112,21 @@ Cap heights: title 18 : names 2.3 : labels 1.2 : quote 0.8, about 22 : 3 : 1.5 :
 
 ## 9. Build recipe
 
-`photo.png` is your image here: a close portrait; move the Eyes layer so the eyes fall in
-the top strip. Choose title words so that lines 1 and 2 stay under 57% W.
+`photo.png` is your image here: a close portrait; change the `0-620` in the Eyes line
+(how far the photo starts above the top edge) until the eyes fall in the top strip. Choose
+title words so that lines 1 and 2 stay under 57% W.
 
 ```bash
 pixelox render js scripts/grunge.js -o wear.png --size 1080x1620 --seed 14 --param color='#030202' --param specks=4500 --param blotches=8 --param scratches=120 --param clump=0.35
 pixelox new -o doc.pxo --size 1080x1620 --fill '#030202'
-pixelox comp place doc.pxo photo.png --in-place --as Eyes --size 1500x --at 50%,0 --anchor t
-pixelox transform move doc.pxo --in-place --layer Eyes --by 0,-620
+pixelox comp place doc.pxo photo.png --in-place --as Eyes --size 1500x --at 50%,0-620 --anchor t
 pixelox adjust bw doc.pxo --in-place --layer Eyes
 pixelox adjust levels doc.pxo --in-place --layer Eyes --in-black 20 --in-white 225
 pixelox shape rect doc.pxo --in-place --name Field --rect 0,20.7%,100%x79.3% --fill '#030202'
-pixelox text add doc.pxo --in-place --name L1 --content "I DO" --font "Helvetica Neue" --weight 900 --size 24.2% --tracking -10 --color '#f3f3f2'
-pixelox transform move doc.pxo --in-place --layer L1 --to 0,22.5% --anchor tl
-pixelox text add doc.pxo --in-place --name L2 --content "NOT" --font "Helvetica Neue" --weight 900 --size 24.2% --tracking -10 --color '#f3f3f2'
-pixelox transform move doc.pxo --in-place --layer L2 --to 0,40.8% --anchor tl
-pixelox text add doc.pxo --in-place --name L3 --content "FEAR" --font "Helvetica Neue" --weight 900 --size 24.2% --tracking -10 --color '#f3f3f2'
-pixelox transform move doc.pxo --in-place --layer L3 --to 0,61% --anchor tl
-pixelox text add doc.pxo --in-place --name L4 --content "NIGHT" --font "Helvetica Neue" --weight 900 --size 24.2% --tracking -10 --color '#f3f3f2'
-pixelox transform move doc.pxo --in-place --layer L4 --to 0,81.1% --anchor tl
+pixelox text add doc.pxo --in-place --name L1 --content "I DO" --font "Helvetica Neue" --weight 900 --stretch condensed --size 24.2% --tracking -10 --color '#f3f3f2' --at 0,22.5% --anchor tl --anchor-to ink
+pixelox text add doc.pxo --in-place --name L2 --content "NOT" --font "Helvetica Neue" --weight 900 --stretch condensed --size 24.2% --tracking -10 --color '#f3f3f2' --at 0,40.8% --anchor tl --anchor-to ink
+pixelox text add doc.pxo --in-place --name L3 --content "FEAR" --font "Helvetica Neue" --weight 900 --stretch condensed --size 24.2% --tracking -10 --color '#f3f3f2' --at 0,61% --anchor tl --anchor-to ink
+pixelox text add doc.pxo --in-place --name L4 --content "NIGHT" --font "Helvetica Neue" --weight 900 --stretch condensed --size 24.2% --tracking -10 --color '#f3f3f2' --at 0,81.1% --anchor tl --anchor-to ink
 pixelox layer merge doc.pxo --in-place --layers L1,L2,L3,L4 --name Title
 pixelox comp place doc.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer clip doc.pxo --in-place --layer Wear
@@ -140,12 +138,8 @@ pixelox text add doc.pxo --in-place --name Label2 --content "DIRECTED BY" --font
 pixelox text add doc.pxo --in-place --name Name2 --content "DIRECTOR NAME" --font "DIN Condensed" --weight 700 --size 3.15% --tracking 20 --color '#d7262c' --at 59.6%,37.1% --anchor l
 pixelox text add doc.pxo --in-place --name Label3 --content "WITH THE VOICE OF" --font "DIN Condensed" --weight 700 --size 0.75% --tracking 80 --color '#f3f3f2' --at 59.6%,39.5% --anchor l
 pixelox text add doc.pxo --in-place --name Name3 --content "NARRATOR NAME" --font "DIN Condensed" --weight 700 --size 1.8% --tracking 20 --color '#d7262c' --at 59.6%,40.7% --anchor l
-pixelox text add doc.pxo --in-place --name Billing --content $'A STUDIO NAME RELEASE   PRODUCED BY FIRST PRODUCER\nEDITED BY EDITOR NAME   MUSIC BY COMPOSER NAME\nCINEMATOGRAPHY CAMERA NAME   IN CINEMAS THIS SPRING' --font "DIN Condensed" --weight 400 --size 0.62% --tracking 20 --leading 140% --color '#8b8b8a' --at 59.6%,43.4% --anchor l
-pixelox layer add doc.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise doc.pxo --in-place --layer Grain --amount 22 --monochrome
-pixelox filter gaussian doc.pxo --in-place --layer Grain --sigma 0.6
-pixelox layer blend doc.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity doc.pxo --in-place --layer Grain --value 45
+pixelox text add doc.pxo --in-place --name Billing --content $'A STUDIO NAME RELEASE   PRODUCED BY FIRST PRODUCER\nEDITED BY EDITOR NAME   MUSIC BY COMPOSER NAME\nCINEMATOGRAPHY CAMERA NAME   IN CINEMAS THIS SPRING' --font "DIN Condensed" --weight 700 --size 0.62% --tracking 20 --leading 140% --color '#8b8b8a' --at 59.6%,43.4% --anchor l
+pixelox filter grain doc.pxo --in-place --as-layer --name Grain --amount 22 --size 2.5
 pixelox export doc.pxo -o doc.png
 ```
 

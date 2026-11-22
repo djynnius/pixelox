@@ -134,18 +134,16 @@ pixelox shape ellipse flyer.pxo --in-place --name InnerLine --rect 250,180,580x5
 pixelox shape path flyer.pxo --in-place --name SideCircle --d 'M 993 989 A 126 126 0 1 1 1245 989 A 126 126 0 1 1 993 989 Z' --fill none --stroke '#7fc4bf' --stroke-width 1.5
 pixelox shape path flyer.pxo --in-place --name Disc --d 'M 529 1415 A 261 261 0 1 1 1051 1415 A 261 261 0 1 1 529 1415 Z' --fill '#85cbc6'
 pixelox comp place flyer.pxo logo.png --in-place --as Logo --size 60x --at 90%,7.5% --anchor c
-pixelox text add flyer.pxo --in-place --name LogoLabel --content "NORTH DESK" --font "Avenir Next" --weight 700 --size 1.25% --tracking 40 --color '#121315' --at 90%,11.8% --anchor c
-pixelox text add flyer.pxo --in-place --name H1 --content "BUILT FOR" --font "Avenir Next" --weight 900 --size 6% --tracking 10 --color '#121315'
-pixelox transform move flyer.pxo --in-place --layer H1 --to 9.5%,68% --anchor tl
-pixelox text add flyer.pxo --in-place --name H2 --content "BOLD THINKERS" --font "Avenir Next" --weight 900 --size 6% --tracking 10 --color '#121315'
-pixelox transform move flyer.pxo --in-place --layer H2 --to 9.5%,75.3% --anchor tl
+pixelox text add flyer.pxo --in-place --name LogoLabel --content "NORTH DESK" --font @geometric-sans --weight 700 --size 1.25% --tracking 40 --color '#121315' --at 90%,11.8% --anchor c
+pixelox text add flyer.pxo --in-place --name H1 --content "BUILT FOR" --font @geometric-sans --weight 900 --size 6% --tracking 10 --color '#121315' --at 9.5%,68% --anchor tl --anchor-to ink
+pixelox text add flyer.pxo --in-place --name H2 --content "BOLD THINKERS" --font @geometric-sans --weight 900 --size 6% --tracking 10 --color '#121315' --at 9.5%,75.3% --anchor tl --anchor-to ink
 pixelox shape ellipse flyer.pxo --in-place --name Dot1 --rect 7.1%,86.5%,1.2%x0.85% --fill '#7fc4bf'
-pixelox text add flyer.pxo --in-place --name Label1 --content "ABOUT" --font "Avenir Next" --weight 700 --size 2.5% --tracking 10 --color '#7fc4bf' --at 9.5%,86.9% --anchor l
-pixelox text add flyer.pxo --in-place --name Body --content $'We plan, build, and run the software\nthat keeps small teams moving, from\nthe first sketch to the day it ships.' --font "Helvetica Neue" --weight 400 --size 1.25% --leading 168% --color '#121315' --at 9.5%,89.6% --anchor tl
+pixelox text add flyer.pxo --in-place --name Label1 --content "ABOUT" --font @geometric-sans --weight 700 --size 2.5% --tracking 10 --color '#7fc4bf' --at 9.5%,86.9% --anchor l
+pixelox text add flyer.pxo --in-place --name Body --content $'We plan, build, and run the software\nthat keeps small teams moving, from\nthe first sketch to the day it ships.' --font @neo-grotesque --weight 400 --size 1.25% --leading 168% --color '#121315' --at 9.5%,89.6% --anchor tl
 pixelox shape ellipse flyer.pxo --in-place --name Dot2 --rect 55.1%,86.5%,1.2%x0.85% --fill '#ffffff'
-pixelox text add flyer.pxo --in-place --name Label2 --content "CONTACT" --font "Avenir Next" --weight 700 --size 2.5% --tracking 10 --color '#ffffff' --at 57.5%,86.9% --anchor l
-pixelox text add flyer.pxo --in-place --name Fields --content $'Address\nPhone\nWebsite' --font "Helvetica Neue" --weight 700 --size 1.25% --leading 168% --color '#ffffff' --at 57.5%,89.6% --anchor tl
-pixelox text add flyer.pxo --in-place --name Values --content $'12 Example Road, Your City\n000 555 0100\nwww.example.com' --font "Helvetica Neue" --weight 400 --size 1.25% --leading 168% --color '#ffffff' --at 64.8%,89.6% --anchor tl
+pixelox text add flyer.pxo --in-place --name Label2 --content "CONTACT" --font @geometric-sans --weight 700 --size 2.5% --tracking 10 --color '#ffffff' --at 57.5%,86.9% --anchor l
+pixelox text add flyer.pxo --in-place --name Fields --content $'Address\nPhone\nWebsite' --font @neo-grotesque --weight 700 --size 1.25% --leading 168% --color '#ffffff' --at 57.5%,89.6% --anchor tl
+pixelox text add flyer.pxo --in-place --name Values --content $'12 Example Road, Your City\n000 555 0100\nwww.example.com' --font @neo-grotesque --weight 400 --size 1.25% --leading 168% --color '#ffffff' --at 64.8%,89.6% --anchor tl
 pixelox export flyer.pxo -o flyer.png
 ```
 

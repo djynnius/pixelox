@@ -89,19 +89,21 @@ each still outlined, which makes the mass look as if it is coming apart, or asse
 
 ## 7. Effects and textures
 
-* Cells (no library ID): two renders of `scripts/clouds.js` with low `octaves`
-  (2 to 3: smooth, blobby noise), each turned into flat patches with a hard-banded
-  `adjust gradient-map`. The banding rule is the one from **T-stencil-poster**: every
-  color appears twice in `--stops`, at the start and the end of its band. Band colors
-  alternate dark and light so neighbors differ.
-* Dissolve (no library ID): a third noise render plus a left-to-right white-to-black
-  gradient in `linear-light` mode (which adds the gradient to the noise), merged and cut
-  with `adjust threshold` into a pure black-and-white layer; set to `screen`, its black
-  part vanishes and its white part hides the cells. The gradient's start and end
-  (`--from 18%,0 --to 96%,0`) set where the break-up zone lies.
+* Cells (no library ID): two `fill noise --as-layer` lines with low `--octaves`
+  (2 to 3: smooth, blobby noise), each drawn straight into flat patches by hard-banded
+  `--stops`. The banding rule is the one from **T-stencil-poster**: every color appears
+  twice in `--stops`, at the start and the end of its band. Band colors alternate dark
+  and light so neighbors differ. The second layer (grays, `soft-light`) is created with
+  its blend mode on the same line.
+* Dissolve (no library ID): a third noise layer (black to white, `--contrast 22`) plus a
+  left-to-right white-to-black gradient in `linear-light` mode (which adds the gradient
+  to the noise), merged and cut with `adjust threshold` into a pure black-and-white
+  layer; set to `screen`, its black part vanishes and its white part hides the cells. The
+  gradient's start and end (`--from 24%,0 --to 100%,0`) set where the break-up zone lies:
+  it runs from a quarter to three quarters of the way between them.
 * Outlines: `layer stamp`, `filter find-edges`, `adjust bw`, then `adjust levels` to
   darken the lines, in `multiply`.
-* The original is perfectly flat. **T-paper-grain** (amount 8, opacity 25) is optional.
+* The original is perfectly flat. **T-paper-grain** (amount 8) is optional.
 
 ## 8. Hierarchy and eye path
 
@@ -114,21 +116,15 @@ on the canvas is where the words are. Mass 35% of the area; title cap height 3.6
 
 ## 9. Build recipe
 
-Needs no images. Change `--seed` on any of the three renders for a different mosaic.
+Needs no images. Change `--seed` on any of the three noise layers for a different mosaic.
 
 ```bash
-pixelox render js scripts/clouds.js -o cells.png --size 1080x1080 --seed 12 --param scale=6 --param octaves=3 --param warp=0.5 --param contrast=1.1 --param res=2
-pixelox render js scripts/clouds.js -o patch.png --size 1080x1080 --seed 31 --param scale=8 --param octaves=2 --param warp=0.3 --param contrast=1.1 --param res=2
-pixelox render js scripts/clouds.js -o break.png --size 1080x1080 --seed 9 --param scale=14 --param octaves=2 --param warp=0.7 --param contrast=1.5 --param res=2
 pixelox new -o mosaic.pxo --size 1080x1080 --fill '#ffffff'
-pixelox comp place mosaic.pxo cells.png --in-place --as Cells --fit cover
-pixelox adjust gradient-map mosaic.pxo --in-place --layer Cells --stops '#0b5abe@0,#0b5abe@0.38,#1d78d3@0.38,#1d78d3@0.5,#0a4fa8@0.5,#0a4fa8@0.6,#2a8ede@0.6,#2a8ede@1'
-pixelox comp place mosaic.pxo patch.png --in-place --as Patch --fit cover
-pixelox adjust gradient-map mosaic.pxo --in-place --layer Patch --stops '#303030@0,#303030@0.36,#8a8a8a@0.36,#8a8a8a@0.5,#5a5a5a@0.5,#5a5a5a@0.62,#c8c8c8@0.62,#c8c8c8@1'
-pixelox layer blend mosaic.pxo --in-place --layer Patch --mode soft-light
-pixelox comp place mosaic.pxo break.png --in-place --as Break --fit cover
+pixelox fill noise mosaic.pxo --in-place --as-layer --name Cells --seed 12 --scale 24% --octaves 3 --warp 20 --stops '#0b5abe@0,#0b5abe@0.38,#1d78d3@0.38,#1d78d3@0.5,#0a4fa8@0.5,#0a4fa8@0.6,#2a8ede@0.6,#2a8ede@1'
+pixelox fill noise mosaic.pxo --in-place --as-layer --name Patch --seed 31 --scale 16% --octaves 2 --warp 12 --stops '#303030@0,#303030@0.36,#8a8a8a@0.36,#8a8a8a@0.5,#5a5a5a@0.5,#5a5a5a@0.62,#c8c8c8@0.62,#c8c8c8@1' --blend soft-light
+pixelox fill noise mosaic.pxo --in-place --as-layer --name Break --seed 9 --scale 10% --octaves 2 --warp 28 --contrast 22
 pixelox layer add mosaic.pxo --in-place --name Ramp
-pixelox fill gradient mosaic.pxo --in-place --layer Ramp --from 18%,0 --to 96%,0 --stops '#ffffff@0,#000000@1'
+pixelox fill gradient mosaic.pxo --in-place --layer Ramp --from 24%,0 --to 100%,0 --stops '#ffffff@0,#000000@1'
 pixelox layer blend mosaic.pxo --in-place --layer Ramp --mode linear-light
 pixelox layer merge mosaic.pxo --in-place --layers Break,Ramp --name Cover
 pixelox adjust threshold mosaic.pxo --in-place --layer Cover --level 128
@@ -139,21 +135,23 @@ pixelox filter find-edges mosaic.pxo --in-place --layer Lines
 pixelox adjust bw mosaic.pxo --in-place --layer Lines
 pixelox adjust levels mosaic.pxo --in-place --layer Lines --in-black 190 --in-white 250
 pixelox layer blend mosaic.pxo --in-place --layer Lines --mode multiply
-pixelox text add mosaic.pxo --in-place --name Title --content "Mosaic" --font "Avenir Next Condensed" --weight 700 --size 5.6% --color '#111111' --at 13%,49.2% --anchor l
-pixelox text add mosaic.pxo --in-place --name Sub --content "background" --font "Avenir Next" --weight 300 --size 3.4% --color '#333333' --at 13%,53.3% --anchor l
+pixelox text add mosaic.pxo --in-place --name Title --content "Mosaic" --font @condensed --weight 700 --size 5.6% --color '#111111' --at 13%,49.2% --anchor l
+pixelox text add mosaic.pxo --in-place --name Sub --content "background" --font @thin-sans --size 3.4% --color '#333333' --at 13%,53.3% --anchor l
 pixelox export mosaic.pxo -o mosaic.png
 ```
 
 Change first: the four band colors in the Cells gradient map (keep two mid tones, one
 darker, one lighter). To move the mass, move the Ramp's `--from` and `--to` (swap them
-to put the mass on the left; use `0,18%` and `0,96%` for a mass at the bottom). Cell
-size follows `scale` on cells.png (4 = big slabs, 10 = pebbles); fragment size follows
-`scale` on break.png. Keep `contrast` on break.png at 1.5 or less: higher values give
-the islands straight vertical cuts. Add the type after the Lines layer, or the edge
-filter will outline the letters too.
+to put the mass on the left; use `0,24%` and `0,100%` for a mass at the bottom). Cell
+size follows `--scale` on `Cells` (35% = big slabs, 10% = pebbles); fragment size follows
+`--scale` on `Break`. Keep `--contrast` on `Break` between 15 and 25: lower values shrink
+the break-up zone to a ragged line, higher values give the islands straight vertical
+cuts. Add the type after the Lines layer, or the edge filter will outline the letters
+too.
 
 Limit: noise gives nested, contour-like patches; the original's cells are hand-drawn
-shards with sharper corners. For that exact look, draw 30 to 50 `shape path` polygons.
+shards with sharper corners (`--kind cells` does not help: it draws round, ringed cells).
+For that exact look, draw 30 to 50 `shape path` polygons.
 
 ## 10. Variations and pairings
 

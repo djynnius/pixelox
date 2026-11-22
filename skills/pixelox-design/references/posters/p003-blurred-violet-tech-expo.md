@@ -51,7 +51,7 @@ up close" without showing any actual device.
 8. Button: outlined pill `30.6%,66.1%,38.8% x 4.5%`, 2 px white stroke, label plus a thin
    arrow pointing right.
 9. Footer: one centered line of small caps at 90.7% H.
-10. Grain: fine monochrome noise, soft-light, 30%.
+10. Grain: one live grain layer (fine, monochrome) under the type.
 
 ## 4. Palette
 
@@ -98,7 +98,8 @@ diagonal motion blur.
 * **T-pattern**: `kind=dots`, `cell=13`, `weight=0.3`, `fade=out`, rendered as a small
   patch, rotated to the streak angle, 25% opacity.
 * **T-pill-button** (outlined) with `shape arrow`.
-* **T-paper-grain**, amount 10, soft-light 30%: needed to hide banding in the dark blur.
+* **T-paper-grain** (`filter grain --as-layer --amount 8`, added before the type so the
+  thin letters stay clean): needed to hide banding in the dark blur.
 * **T-light-streaks** in [techniques.md](../techniques.md) is the tested library version of the defocused light streaks; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -128,17 +129,12 @@ pixelox fill gradient expo.pxo --in-place --layer TopBand --from 0,11% --to 0,19
 pixelox comp place expo.pxo dots.png --in-place --as Dots --at 31%,58% --anchor c
 pixelox transform rotate expo.pxo --in-place --layer Dots --degrees 20
 pixelox layer opacity expo.pxo --in-place --layer Dots --value 25
-pixelox layer add expo.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise expo.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend expo.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity expo.pxo --in-place --layer Grain --value 30
+pixelox filter grain expo.pxo --in-place --as-layer --name Grain --amount 8
 pixelox text add expo.pxo --in-place --name LabelL --content $'OPEN\nDATA' --font Avenir --weight 400 --size 1.65% --tracking 20 --leading 125% --color '#ffffff' --at 10%,9.7% --anchor l
 pixelox text add expo.pxo --in-place --name LabelC --content $'MACHINE\nVISION' --font Avenir --weight 400 --size 1.65% --tracking 20 --leading 125% --align center --color '#ffffff' --at 50%,9.7% --anchor c
 pixelox text add expo.pxo --in-place --name LabelR --content $'EDGE\nCLOUD' --font Avenir --weight 400 --size 1.65% --tracking 20 --leading 125% --align right --color '#ffffff' --at 90%,9.7% --anchor r
-pixelox text add expo.pxo --in-place --name H1 --content "CODE" --font Avenir --weight 300 --size 12.4% --tracking 30 --color '#ffffff'
-pixelox transform move expo.pxo --in-place --layer H1 --to 50%,31.2% --anchor t
-pixelox text add expo.pxo --in-place --name H2 --content "FAIR" --font Avenir --weight 300 --size 12.4% --tracking 30 --color '#ffffff'
-pixelox transform move expo.pxo --in-place --layer H2 --to 50%,43.1% --anchor t
+pixelox text add expo.pxo --in-place --name H1 --content "CODE" --font Avenir --weight 300 --size 12.4% --tracking 30 --color '#ffffff' --at 50%,31.2% --anchor t --anchor-to ink
+pixelox text add expo.pxo --in-place --name H2 --content "FAIR" --font Avenir --weight 300 --size 12.4% --tracking 30 --color '#ffffff' --at 50%,43.1% --anchor t --anchor-to ink
 pixelox text add expo.pxo --in-place --name Sub --content $'WHERE BUILDERS SHOW\nWHAT COMES NEXT' --font Avenir --weight 400 --size 1.95% --tracking 40 --leading 180% --align center --color '#ffffff' --at 50%,59.9% --anchor c
 pixelox shape rect expo.pxo --in-place --name Pill --rect 30.6%,66.1%,38.8%x4.5% --radius 34 --fill none --stroke '#ffffff' --stroke-width 2
 pixelox text add expo.pxo --in-place --name PillText --content "RESERVE A PASS" --font Avenir --weight 400 --size 1.8% --tracking 20 --color '#ffffff' --at 47.5%,68.35% --anchor c
@@ -159,8 +155,8 @@ streak runs behind the headline.
   for example `#0f0802`).
 * Change the streak angle: `--angle 0` gives horizontal light bars (a calmer, "scanner"
   look); `--angle 90` gives vertical shafts.
-* Landscape banner: put the headline on one line (`transform scale --size 760x` on a
-  1600x900 canvas) and keep one streak per side.
+* Landscape banner: put the headline on one line (`--fit-width 760` on a 1600x900 canvas)
+  and keep one streak per side.
 * Suits product launches, hackathons, AI meetups, webinar covers, album art.
 * Pairs with T-neon-glow on one short word, T-rules for a hairline under the labels, and
   the A-swiss-asymmetric archetype if the headline is hung from the left margin instead.

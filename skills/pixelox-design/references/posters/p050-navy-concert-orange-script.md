@@ -102,7 +102,9 @@ keyboard, a singer at a microphone, a choir row.
 
 ## 7. Effects and textures
 
-* **T-photo-fade**: ground navy, ramp 34 to 56% H, so the title sits on flat color.
+* **T-photo-fade**, as a gradient layer (`Fade`) instead of a mask, because it has to
+  cover the photo, the tint, and the dot screen at once: ground navy, ramp 34 to 56% H, so
+  the title sits on flat color.
 * **T-pattern**: `kind=dots`, `cell=8`, `fade=down`, black at 35%, over the photo only.
 * **T-script-overlap**: here the script is the larger partner (about 3.5x the block word's
   cap height), rotated -6 degrees, placed over the block word so that its lower loops
@@ -150,20 +152,17 @@ pixelox transform rotate concert.pxo --in-place --layer Spatter --degrees 3
 pixelox comp place concert.pxo pits.png --in-place --as Pits --at 50%,83.5% --anchor t
 pixelox transform rotate concert.pxo --in-place --layer Pits --degrees 3
 pixelox comp place concert.pxo logo.png --in-place --as Logo --size 62x --at 23%,1%
-pixelox text add concert.pxo --in-place --name Presenter --content "YOUR CHURCH NAME" --font Rockwell --weight 400 --size 2.7% --color '#ffffff' --at 31%,2.9% --anchor l
-pixelox text add concert.pxo --in-place --name Block --content "CONCERT" --font Rockwell --weight 400 --size 7% --color '#ffffff'
-pixelox transform scale concert.pxo --in-place --layer Block --size 502x
-pixelox transform move concert.pxo --in-place --layer Block --to 54.2%,58.7% --anchor t
-pixelox text add concert.pxo --in-place --name Script --content "Spring" --font "Snell Roundhand" --weight 900 --size 20% --color '#f28a1e'
-pixelox transform scale concert.pxo --in-place --layer Script --size 880x
+pixelox text add concert.pxo --in-place --name Presenter --content "YOUR CHURCH NAME" --font @slab --weight 400 --size 2.7% --color '#ffffff' --at 31%,2.9% --anchor l
+pixelox text add concert.pxo --in-place --name Block --content "CONCERT" --font @slab --weight 400 --fit-width 502 --color '#ffffff' --at 54.2%,58.7% --anchor t --anchor-to ink
+pixelox text add concert.pxo --in-place --name Script --content "Spring" --font @script-formal --weight 900 --fit-width 880 --color '#f28a1e' --at 48.1%,14.8% --anchor c --anchor-to ink
 pixelox transform rotate concert.pxo --in-place --layer Script --degrees -6
 pixelox transform move concert.pxo --in-place --layer Script --to 52.7%,55% --anchor c
 pixelox fx drop-shadow concert.pxo --in-place --layer Script --offset 8,10 --blur 14 --opacity 55
-pixelox text add concert.pxo --in-place --name Date --content "9TH MAY" --font Rockwell --weight 400 --size 2.75% --color '#ffffff' --at 43.3%,73.6% --anchor r
-pixelox text add concert.pxo --in-place --name Time --content "FROM 6:00PM" --font Rockwell --weight 400 --size 2.75% --color '#f28a1e' --at 48%,73.6% --anchor l
-pixelox text add concert.pxo --in-place --name Venue --content "TOWN HALL" --font Rockwell --weight 400 --size 4.2% --color '#ffffff' --at 50%,90% --anchor c
-pixelox text add concert.pxo --in-place --name Address --content "12 EXAMPLE ROAD, 1234, YOUR CITY" --font Rockwell --weight 400 --size 1.4% --color '#ffffff' --at 50%,93.5% --anchor c
-pixelox text add concert.pxo --in-place --name Web --content "www.example.com" --font Rockwell --weight 400 --size 2% --color '#ffffff' --at 50%,97.7% --anchor c
+pixelox text add concert.pxo --in-place --name Date --content "9TH MAY" --font @slab --weight 400 --size 2.75% --color '#ffffff' --at 43.3%,73.6% --anchor r
+pixelox text add concert.pxo --in-place --name Time --content "FROM 6:00PM" --font @slab --weight 400 --size 2.75% --color '#f28a1e' --at 48%,73.6% --anchor l
+pixelox text add concert.pxo --in-place --name Venue --content "TOWN HALL" --font @slab --weight 400 --size 4.2% --color '#ffffff' --at 50%,90% --anchor c
+pixelox text add concert.pxo --in-place --name Address --content "12 EXAMPLE ROAD, 1234, YOUR CITY" --font @slab --weight 400 --size 1.4% --color '#ffffff' --at 50%,93.5% --anchor c
+pixelox text add concert.pxo --in-place --name Web --content "www.example.com" --font @slab --weight 400 --size 2% --color '#ffffff' --at 50%,97.7% --anchor c
 pixelox export concert.pxo -o concert.png
 ```
 

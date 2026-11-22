@@ -41,8 +41,8 @@ bursts say "celebration" with the simplest possible drawing: sixteen round-cappe
    glow reaches about 35% of the canvas inward; the area 15 to 60% W, 35 to 80% H stays
    near black.
 3. Dark core: a soft radial patch of the ground color centered at 38% W, 52% H, radius
-   44% H, which keeps the type area near black. Then grain: fine noise, overlay, 25%
-   (hides banding in the long gradients).
+   44% H, which keeps the type area near black. Then grain: one fine grain layer over
+   the glow (hides banding in the long gradients).
 4. Header hairline: 1 px white at 45% opacity, 10 to 90% W, at 7% H.
 5. Header labels: organizer name at 10% W and "PRESENTS" right-aligned at 90% W, 9.2% H.
 6. Yellow burst `#f5b324`: center 39.4% W, 24.1% H, radius 11% W, 16 rays, stroke 0.7% W.
@@ -107,7 +107,8 @@ The largest carries the thickest stroke.
   per ray, with `--cap round`. For ray k of n at angle a = k x 360 / n: inner point =
   center + 0.13 x radius x (cos a, sin a), outer point = center + radius x (cos a, sin a).
 * **T-rules**: the header hairline; `shape arrow` for the pointer.
-* **T-paper-grain**, amount 12, overlay 25%, below the bursts and type.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added before the bursts and type,
+  so it grains the glow below it and leaves the flat shapes and letters clean.
 * **T-spoke-burst** in [techniques.md](../techniques.md) is the tested library version of the firework bursts (`rays.js` with `style=spokes`); start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -129,25 +130,22 @@ pixelox comp place fest.pxo glow.png --in-place --as Glow --fit cover
 pixelox filter gaussian fest.pxo --in-place --layer Glow --sigma 55
 pixelox layer add fest.pxo --in-place --name Core
 pixelox fill gradient fest.pxo --in-place --layer Core --kind radial --from 38%,52% --to 38%,96% --stops '#17131200@1,#171312f2@0,#171312cc@0.45'
-pixelox layer add fest.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise fest.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend fest.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity fest.pxo --in-place --layer Grain --value 25
+pixelox filter grain fest.pxo --in-place --as-layer --name Grain --amount 8
 pixelox shape line fest.pxo --in-place --name Hairline --from 10%,7% --to 90%,7% --stroke '#ffffff' --stroke-width 1 --opacity 45
-pixelox text add fest.pxo --in-place --name Organizer --content "HARBOR ARTS TRUST" --font "Avenir Next" --weight 400 --size 2.1% --tracking 30 --color '#ffffff' --at 10%,9.2% --anchor l
-pixelox text add fest.pxo --in-place --name Presents --content "PRESENTS" --font "Avenir Next" --weight 400 --size 2.1% --tracking 30 --color '#ffffff' --at 90%,9.2% --anchor r
+pixelox text add fest.pxo --in-place --name Organizer --content "HARBOR ARTS TRUST" --font @geometric-sans --weight 400 --size 2.1% --tracking 30 --color '#ffffff' --at 10%,9.2% --anchor l
+pixelox text add fest.pxo --in-place --name Presents --content "PRESENTS" --font @geometric-sans --weight 400 --size 2.1% --tracking 30 --color '#ffffff' --at 90%,9.2% --anchor r
 pixelox shape path fest.pxo --in-place --name BurstYellow --d 'M 444 371 L 543 391 M 441 378 L 525 434 M 436 383 L 493 467 M 430 386 L 450 485 M 423 386 L 403 485 M 416 383 L 360 467 M 411 378 L 327 435 M 408 372 L 309 392 M 408 365 L 309 345 M 411 358 L 327 302 M 416 353 L 359 269 M 422 350 L 402 251 M 429 350 L 449 251 M 436 353 L 492 269 M 441 358 L 525 301 M 444 364 L 543 344' --fill none --stroke '#f5b324' --stroke-width 8 --cap round
 pixelox shape path fest.pxo --in-place --name BurstPink --d 'M 845 519 L 1036 539 M 842 527 L 1011 619 M 836 535 L 957 684 M 828 539 L 882 723 M 818 540 L 798 731 M 810 537 L 718 706 M 802 531 L 653 652 M 798 523 L 614 577 M 797 513 L 606 493 M 800 505 L 631 413 M 806 497 L 685 348 M 814 493 L 760 309 M 824 492 L 844 301 M 832 495 L 924 326 M 840 501 L 989 380 M 844 509 L 1028 455' --fill none --stroke '#f0609e' --stroke-width 18 --cap round
 pixelox shape path fest.pxo --in-place --name BurstViolet --d 'M 81 969 L 172 969 M 80 974 L 164 1009 M 77 979 L 141 1043 M 72 982 L 107 1066 M 67 983 L 67 1074 M 62 982 L 27 1066 M 57 979 L -7 1043 M 54 974 L -30 1009 M 53 969 L -38 969 M 54 964 L -30 929 M 57 959 L -7 895 M 62 956 L 27 872 M 67 955 L 67 864 M 72 956 L 107 872 M 77 959 L 141 895 M 80 964 L 164 929' --fill none --stroke '#7b4fe0' --stroke-width 8 --cap round
-pixelox text add fest.pxo --in-place --name T1 --content "OPEN" --font Luminari --size 11% --color '#ffffff'
+pixelox text add fest.pxo --in-place --name T1 --content "OPEN" --font @uncial --size 11% --color '#ffffff'
 pixelox transform move fest.pxo --in-place --layer T1 --to 10%,30.4% --anchor tl
-pixelox text add fest.pxo --in-place --name T2 --content "STUDIOS" --font Luminari --size 11% --color '#ffffff'
+pixelox text add fest.pxo --in-place --name T2 --content "STUDIOS" --font @uncial --size 11% --color '#ffffff'
 pixelox transform move fest.pxo --in-place --layer T2 --to 10%,41% --anchor tl
-pixelox text add fest.pxo --in-place --name Intro --content $'Three days of paint, clay, print,\nand sound across the old harbor.' --font "Avenir Next" --weight 400 --size 2.4% --tracking 10 --leading 146% --color '#ffffff' --at 10%,56.6% --anchor l
+pixelox text add fest.pxo --in-place --name Intro --content $'Three days of paint, clay, print,\nand sound across the old harbor.' --font @geometric-sans --weight 400 --size 2.4% --tracking 10 --leading 146% --color '#ffffff' --at 10%,56.6% --anchor l
 pixelox shape arrow fest.pxo --in-place --name Arrow --from 28.8%,80% --to 40.3%,80% --stroke '#ffffff' --stroke-width 4 --head-size 34
-pixelox text add fest.pxo --in-place --name Date --content $'21 SEPTEMBER\n2031' --font "Avenir Next" --weight 700 --size 4.3% --leading 121% --color '#ffffff' --at 43.3%,80% --anchor l
-pixelox text add fest.pxo --in-place --name Doors --content "DOORS OPEN 10AM" --font "Avenir Next" --weight 400 --size 2.75% --tracking 20 --color '#ffffff' --at 43.3%,87.9% --anchor l
-pixelox text add fest.pxo --in-place --name Address --content "12 Example Road, Your City" --font "Avenir Next" --weight 400 --size 2.75% --tracking 10 --color '#ffffff' --at 43.3%,91.4% --anchor l
+pixelox text add fest.pxo --in-place --name Date --content $'21 SEPTEMBER\n2031' --font @geometric-sans --weight 700 --size 4.3% --leading 121% --color '#ffffff' --at 43.3%,80% --anchor l
+pixelox text add fest.pxo --in-place --name Doors --content "DOORS OPEN 10AM" --font @geometric-sans --weight 400 --size 2.75% --tracking 20 --color '#ffffff' --at 43.3%,87.9% --anchor l
+pixelox text add fest.pxo --in-place --name Address --content "12 Example Road, Your City" --font @geometric-sans --weight 400 --size 2.75% --tracking 10 --color '#ffffff' --at 43.3%,91.4% --anchor l
 pixelox export fest.pxo -o fest.png
 ```
 

@@ -104,15 +104,18 @@ sparks drifting away from it.
 
 * **T-bokeh**: one layer of large discs, `edge=0.8` so they stay out of the middle,
   `--sigma 10`, screen.
-* **T-smoke**: warm haze (`hi='#8a5a44'`), screen, 35%.
+* **T-smoke**: warm haze, `fill noise --as-layer --kind smoke --angle 0` (it drifts
+  sideways) with stops `transparent` to `#8a5a44`, screen, 45%.
 * **T-duotone** on the subject (four stops, above).
 * Glow: `fill gradient --kind radial` from `#ffd9a0` (opaque) to `#f08a3c` (alpha 0),
   screen; rim: `shape ellipse` with a 3 px stroke and `fx outer-glow`.
 * Sparks: `particles.js` with `shape=glow` and `focus` beside the sphere, screen.
 * Title glow (**T-neon-glow**, tight glow only): `fx outer-glow --blur 18 --opacity 45` in
   `#ff7a3c` on every title layer, so the letters seem to emit light.
-* **T-vignette** (black, strong) and **T-paper-grain** (amount 12, soft-light 40%).
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-vignette** (black, strong) and **T-paper-grain** (`filter grain --as-layer --amount
+  8`, last).
+* **T-fit-width**: the author line is one `text add --fit-width 850`, centered on its
+  visible letters with `--anchor c --anchor-to ink`.
 
 ## 8. Hierarchy and eye path
 
@@ -132,15 +135,12 @@ capital and loops through the gap between the words.
 
 ```bash
 pixelox render js scripts/blobs.js -o bokeh.png --size 1080x1620 --seed 4 --param bg=transparent --param colors='#c8401f,#e0683a,#8a2414' --param count=40 --param size=0.1 --param soft=0.3 --param alpha=0.55 --param edge=0.8 --param mode=screen
-pixelox render js scripts/clouds.js -o haze.png --size 1080x1620 --seed 3 --param lo=transparent --param hi='#8a5a44' --param scale=2.5 --param warp=1.2 --param stretch=0.7 --param bias=-0.1
 pixelox render js scripts/particles.js -o sparks.png --size 1080x1620 --seed 5 --param shape=glow --param colors='#ffd27a,#ff8a3c,#fff1c9' --param count=160 --param min=0.1 --param max=0.6 --param focus='0.34,0.5,0.22'
 pixelox new -o cover.pxo --size 1080x1620 --fill '#1e2421'
 pixelox comp place cover.pxo bokeh.png --in-place --as Bokeh --fit cover
 pixelox filter gaussian cover.pxo --in-place --layer Bokeh --sigma 10
 pixelox layer blend cover.pxo --in-place --layer Bokeh --mode screen
-pixelox comp place cover.pxo haze.png --in-place --as Haze --fit cover
-pixelox layer blend cover.pxo --in-place --layer Haze --mode screen
-pixelox layer opacity cover.pxo --in-place --layer Haze --value 35
+pixelox fill noise cover.pxo --in-place --as-layer --name Haze --kind smoke --angle 0 --seed 3 --stops 'transparent,#8a5a44' --blend screen --opacity 45
 pixelox comp place cover.pxo subject.png --in-place --as Hand --size x1000 --at 60%,101% --anchor b
 pixelox adjust gradient-map cover.pxo --in-place --layer Hand --stops '#120b08@0,#5a2e1c@0.4,#c9703f@0.75,#f1ba8e@1'
 pixelox layer add cover.pxo --in-place --name Glow
@@ -152,7 +152,7 @@ pixelox comp place cover.pxo sparks.png --in-place --as Sparks --fit cover
 pixelox layer blend cover.pxo --in-place --layer Sparks --mode screen
 pixelox layer add cover.pxo --in-place --name Vignette
 pixelox fill gradient cover.pxo --in-place --layer Vignette --kind radial --from 58%,50% --to 58%,118% --stops '#00000000@0.4,#000000b3@1'
-pixelox text add cover.pxo --in-place --name Series --content "The Hollow Court Series  Book 2" --font Baskerville --style italic --size 1.6% --tracking 150 --color '#d3764e' --at 50%,3.1% --anchor c
+pixelox text add cover.pxo --in-place --name Series --content "The Hollow Court Series  Book 2" --font @oldstyle --style italic --size 1.6% --tracking 150 --color '#d3764e' --at 50%,3.1% --anchor c
 pixelox shape path cover.pxo --in-place --name Flourish1 --d 'M -20 200 C 160 120 330 250 470 150 S 760 60 1100 170' --fill none --stroke '#e8622f' --stroke-width 3
 pixelox shape path cover.pxo --in-place --name Flourish2 --d 'M -20 470 C 150 380 300 560 420 470 S 330 330 300 430 S 520 600 680 520 S 930 430 1100 500' --fill none --stroke '#e8622f' --stroke-width 2.5
 pixelox shape path cover.pxo --in-place --name Flourish3 --d 'M 60 330 C 20 250 150 220 180 300 S 60 420 250 400 S 520 250 700 330' --fill none --stroke '#e8622f' --stroke-width 2.5
@@ -166,13 +166,8 @@ pixelox text add cover.pxo --in-place --name Rest2 --content "oon" --font "Bodon
 pixelox transform move cover.pxo --in-place --layer Rest2 --to 56%,41% --anchor bl
 pixelox fx outer-glow cover.pxo --in-place --layer Cap1 --blur 18 --color '#ff7a3c' --opacity 45
 pixelox fx copy cover.pxo --in-place --from Cap1 --to Rest1,Cap2,Rest2
-pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font "Avenir Next" --weight 400 --size 7% --tracking 80 --color '#e8622f'
-pixelox transform scale cover.pxo --in-place --layer Author --size 850x
-pixelox transform move cover.pxo --in-place --layer Author --to 50%,89.5% --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 40
+pixelox text add cover.pxo --in-place --name Author --content "AUTHOR NAME" --font @geometric-sans --weight 400 --fit-width 850 --tracking 80 --color '#e8622f' --at 50%,89.5% --anchor c --anchor-to ink
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export cover.pxo -o cover.png
 ```
 

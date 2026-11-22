@@ -7,7 +7,7 @@ style: [duotone, photo-composite, retro]
 format: portrait-2x3
 archetype: A-scene-title
 palette: ['#f6ec18', '#dc2113', '#e56114', '#398f42', '#1a1b1a', '#c3d421']
-techniques: [T-duotone, T-splatter, T-distress-type, T-label-box, T-paper-grain, T-warp-type]
+techniques: [T-duotone, T-splatter, T-distress-type, T-label-box, T-paper-grain, T-warp-type, T-fit-width]
 needs: subject-cutout
 ---
 
@@ -107,14 +107,16 @@ recipe does for the stand-in.
 * Ink change: `layer add`, `fill gradient` with green from alpha 0 to 1, `layer blend
   --mode hue`, `layer clip`.
 * **T-splatter** as a painted disc (`radius=0.44`, `drops=25`, `arms=0`) for the hair mass.
-* Warped type: each title line is set flat and pushed into a four-point shape with
-  `transform perspective --quad` (the corners are top-left, top-right, bottom-right,
-  bottom-left). A true flag or arc warp needs `transform warp` with a points file.
+* **T-warp-type**: both title lines are warped on `text add` and stay live. Line 1 is
+  `--warp arc --bend 14`, then rotated -8 degrees, so it follows the top of the hair. Line
+  2 is `--warp rise --bend 35 --h-distort=-50`: the rise lifts the right end and the
+  negative horizontal distortion grows the left end, which gives the wedge. Each line is
+  sized with **T-fit-width** (`--fit-width`, with `--scale-x` to make the letters wider or
+  narrower).
 * **T-distress-type**, shared: one grunge layer in the ground yellow above everything
   except the small type, 45%.
 * **T-label-box** for the sticker strips.
-* **T-paper-grain**, amount 14, overlay 30%.
-* **T-warp-type** in [techniques.md](../techniques.md) is the tested library version of the growing, rising, or wedge-warped headline; start from it when reusing this idea.
+* **T-paper-grain**: `filter grain --as-layer --amount 10`, last.
 
 ## 8. Hierarchy and eye path
 
@@ -145,32 +147,31 @@ pixelox layer add cover.pxo --in-place --name GreenInk
 pixelox fill gradient cover.pxo --in-place --layer GreenInk --from 0,76% --to 0,90% --stops '#2f8f3a00@0,#2f8f3aff@1'
 pixelox layer blend cover.pxo --in-place --layer GreenInk --mode hue
 pixelox layer clip cover.pxo --in-place --layer GreenInk
-pixelox text add cover.pxo --in-place --name Title1 --content "LOUD" --font Impact --size 16% --color '#1a1b1a'
-pixelox transform perspective cover.pxo --in-place --layer Title1 --quad '235,544 694,492 718,694 229,740'
-pixelox text add cover.pxo --in-place --name Title2 --content "TIDE" --font Impact --size 16% --color '#1a1b1a'
-pixelox transform perspective cover.pxo --in-place --layer Title2 --quad '155,752 718,700 724,822 155,983'
-pixelox text add cover.pxo --in-place --name Author --content $'AUTHOR\nNAME' --font Impact --size 6.2% --tracking 20 --leading 110% --color '#1a1b1a' --at 18%,67% --anchor l
+pixelox text add cover.pxo --in-place --name Title1 --content "LOUD" --font @condensed-heavy --fit-width 470 --scale-x 95% --color '#1a1b1a' --at 46.5%,36.3% --anchor c --anchor-to ink --warp arc --bend 14
+pixelox transform rotate cover.pxo --in-place --layer Title1 --degrees -8
+pixelox text add cover.pxo --in-place --name Title2 --content "TIDE" --font @condensed-heavy --fit-width 565 --scale-x 138% --color '#1a1b1a' --at 40.3%,52% --anchor c --anchor-to ink --warp rise --bend 35 --h-distort=-50
+pixelox text add cover.pxo --in-place --name Author --content $'AUTHOR\nNAME' --font @condensed-heavy --size 6.2% --tracking 20 --leading 110% --color '#1a1b1a' --at 18%,67% --anchor l
 pixelox transform rotate cover.pxo --in-place --layer Author --degrees -6
 pixelox comp place cover.pxo wear.png --in-place --as Wear --fit cover
 pixelox layer opacity cover.pxo --in-place --layer Wear --value 45
-pixelox text add cover.pxo --in-place --name Quote1 --content "'LUMINOUS.'" --font "Avenir Next" --weight 800 --size 2.2% --tracking 20 --color '#d21a1a' --at 5.7%,4.9% --anchor l
-pixelox text add cover.pxo --in-place --name Source1 --content $'FIRST REVIEWER\nNAME' --font "Avenir Next" --weight 500 --size 1.65% --tracking 40 --leading 140% --color '#d21a1a' --at 6.9%,8.6% --anchor l
-pixelox text add cover.pxo --in-place --name Quote2 --content "'ELECTRIC.'" --font "Avenir Next" --weight 800 --size 2.2% --tracking 20 --color '#d21a1a' --at 5.7%,13.6% --anchor l
-pixelox text add cover.pxo --in-place --name Source2 --content $'SECOND REVIEWER\nNAME' --font "Avenir Next" --weight 500 --size 1.65% --tracking 40 --leading 140% --color '#d21a1a' --at 6.9%,17.3% --anchor l
+pixelox text add cover.pxo --in-place --name Quote1 --content "'LUMINOUS.'" --font @geometric-sans --weight 800 --size 2.2% --tracking 20 --color '#d21a1a' --at 5.7%,4.9% --anchor l
+pixelox text add cover.pxo --in-place --name Source1 --content $'FIRST REVIEWER\nNAME' --font @geometric-sans --weight 500 --size 1.65% --tracking 40 --leading 140% --color '#d21a1a' --at 6.9%,8.6% --anchor l
+pixelox text add cover.pxo --in-place --name Quote2 --content "'ELECTRIC.'" --font @geometric-sans --weight 800 --size 2.2% --tracking 20 --color '#d21a1a' --at 5.7%,13.6% --anchor l
+pixelox text add cover.pxo --in-place --name Source2 --content $'SECOND REVIEWER\nNAME' --font @geometric-sans --weight 500 --size 1.65% --tracking 40 --leading 140% --color '#d21a1a' --at 6.9%,17.3% --anchor l
 pixelox shape ellipse cover.pxo --in-place --name Sticker --rect 774,29,266x266 --fill '#c3d421'
 pixelox shape rect cover.pxo --in-place --name Strip --rect 842,62,132x152 --fill '#ffffff'
 pixelox text add cover.pxo --in-place --name Prize --content $'Readers\nPrize for\nFiction' --font "Gill Sans" --weight 600 --size 2% --leading 118% --color '#1a1b1a' --at 848,118 --anchor l
 pixelox text add cover.pxo --in-place --name Year --content "2031" --font "Gill Sans" --weight 400 --size 2% --color '#a9b81c' --at 848,194 --anchor l
 pixelox text add cover.pxo --in-place --name Status --content "Shortlisted" --font "Gill Sans" --weight 400 --size 2.5% --color '#1a1b1a' --at 907,244 --anchor c
-pixelox layer add cover.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise cover.pxo --in-place --layer Grain --amount 14 --monochrome
-pixelox layer blend cover.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity cover.pxo --in-place --layer Grain --value 30
+pixelox filter grain cover.pxo --in-place --as-layer --name Grain --amount 10
 pixelox export cover.pxo -o cover.png
 ```
 
-Change first: the two title words (3 to 5 letters each) and their quads: keep the left
-edge of line 2 about 1.7 times as tall as its right edge. Then the three inks.
+Change first: the two title words (3 to 5 letters each) and their `--fit-width` values
+(line 1 about 44% W, line 2 about 52% W). For a stronger wedge on line 2 lower
+`--h-distort` toward -70; keep its left end about 1.7 times as tall as its right end. A
+longer word needs a lower `--scale-x`, or the line gets too short to read. Then the three
+inks.
 
 ## 10. Variations and pairings
 
@@ -189,8 +190,10 @@ edge of line 2 about 1.7 times as tall as its right edge. Then the three inks.
 
 * Ending the gradient map in white instead of the sheet color: the face gets a white mask
   and the screen-print illusion is gone.
-* Title set straight and flat on the hair: it looks stuck on. Tilt and taper each line so
-  its edges run roughly parallel to the outline of the mass it sits in.
+* Title set straight and flat on the hair: it looks stuck on. Arc and taper each line
+  (`--warp`) so its edges run roughly parallel to the outline of the mass it sits in.
+* Line 2 touching the author's name. The wedge's left end is its tallest point: check that
+  its foot stays above the author block, and raise `--scale-x` if it does not.
 * Title over the face. Keep it in the hair, ending at the hairline, with only the author
   allowed to touch the cheek.
 * The green shift as a hard horizontal cut. Blend it over at least 10% H, and clip it to

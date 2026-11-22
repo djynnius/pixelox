@@ -95,10 +95,12 @@ bird and a storm cloud.
 * Caravan: `shape line` with `--stroke-width 24 --dash 7,14` (ticks 7 px wide every 21 px)
   and, 16 px higher, a second line with `--stroke-width 10 --dash 0,21 --cap round` (the
   heads). No library ID.
-* **T-fit-width**: each of the three text lines is scaled to 907 px (84% W).
-* **T-grunge**, light: mottle in multiply at 35%, dirt at 20% (aged paper).
+* **T-fit-width**: each of the three text lines is fitted to 907 px (84% W) with
+  `--fit-width`.
+* **T-grunge**, light: a brown-to-white cloud mottle (`fill noise --as-layer`) in multiply
+  at 30%, and `grunge.js` dirt at 20% (aged paper).
 * **T-vignette** in brown `#8a5a20`, alpha 0 to 45%.
-* **T-paper-grain**, amount 14, overlay 35%.
+* **T-paper-grain**: `filter grain --as-layer`, amount 12.
 
 ## 8. Hierarchy and eye path
 
@@ -112,7 +114,6 @@ bird and a storm cloud.
 Needs no images.
 
 ```bash
-pixelox render js scripts/clouds.js -o mottle.png --size 1080x1528 --seed 21 --param lo='#b9905a' --param hi='#ffffff' --param scale=3 --param octaves=6 --param warp=0.4
 pixelox render js scripts/grunge.js -o dirt.png --size 1080x1528 --seed 9 --param color='#6b4a1c' --param specks=4000 --param blotches=20 --param scratches=15 --param clump=0.7
 pixelox new -o desert.pxo --size 1080x1528 --fill '#f1d292'
 pixelox layer add desert.pxo --in-place --name Warmth
@@ -123,26 +124,15 @@ pixelox shape path desert.pxo --in-place --name Ridge --d 'M 0 1190 L 1080 1262 
 pixelox shape line desert.pxo --in-place --name Bodies --from 56,1178 --to 1018,1246 --stroke '#342818' --stroke-width 24 --dash 7,14
 pixelox shape line desert.pxo --in-place --name Heads --from 59.5,1162 --to 1021.5,1230 --stroke '#342818' --stroke-width 10 --dash 0,21 --cap round
 pixelox shape path desert.pxo --in-place --name Lone --d 'M 508 1276 L 536 1268 L 538 1276 L 510 1284 Z M 540 1262 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0 Z' --fill '#342818'
-pixelox comp place desert.pxo mottle.png --in-place --as Mottle --fit cover
-pixelox layer blend desert.pxo --in-place --layer Mottle --mode multiply
-pixelox layer opacity desert.pxo --in-place --layer Mottle --value 35
+pixelox fill noise desert.pxo --in-place --as-layer --name Mottle --seed 21 --scale 33% --octaves 6 --warp 16 --stops '#b9905a,#ffffff' --blend multiply --opacity 30
 pixelox comp place desert.pxo dirt.png --in-place --as Dirt --fit cover
 pixelox layer opacity desert.pxo --in-place --layer Dirt --value 20
 pixelox layer add desert.pxo --in-place --name Vignette
 pixelox fill gradient desert.pxo --in-place --layer Vignette --kind radial --from 50%,50% --to 50%,125% --stops '#8a5a2000@0.5,#8a5a2073@1'
-pixelox text add desert.pxo --in-place --name Author --content "AUTHOR SURNAME" --font Georgia --weight 400 --size 8% --tracking 20 --color '#342818'
-pixelox transform scale desert.pxo --in-place --layer Author --size 907x
-pixelox transform move desert.pxo --in-place --layer Author --to 50%,4.4% --anchor t
-pixelox text add desert.pxo --in-place --name Title --content "DUSK" --font Georgia --weight 700 --size 18% --color '#342818'
-pixelox transform scale desert.pxo --in-place --layer Title --size 907x
-pixelox transform move desert.pxo --in-place --layer Title --to 50%,11.6% --anchor t
-pixelox text add desert.pxo --in-place --name Tagline --content "TWO SUNS, ONE ROAD, AND NO WATER FOR A THOUSAND MILES" --font Georgia --weight 400 --size 1.7% --tracking 40 --color '#342818'
-pixelox transform scale desert.pxo --in-place --layer Tagline --size 907x
-pixelox transform move desert.pxo --in-place --layer Tagline --to 50%,28.6% --anchor c
-pixelox layer add desert.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise desert.pxo --in-place --layer Grain --amount 14 --monochrome
-pixelox layer blend desert.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity desert.pxo --in-place --layer Grain --value 35
+pixelox text add desert.pxo --in-place --name Author --content "AUTHOR SURNAME" --font Georgia --weight 400 --fit-width 907 --tracking 20 --color '#342818' --at 50%,4.4% --anchor t --anchor-to ink
+pixelox text add desert.pxo --in-place --name Title --content "DUSK" --font Georgia --weight 700 --fit-width 907 --color '#342818' --at 50%,11.6% --anchor t --anchor-to ink
+pixelox text add desert.pxo --in-place --name Tagline --content "TWO SUNS, ONE ROAD, AND NO WATER FOR A THOUSAND MILES" --font Georgia --weight 400 --fit-width 907 --tracking 40 --color '#342818' --at 50%,28.6% --anchor c --anchor-to ink
+pixelox filter grain desert.pxo --in-place --as-layer --name Grain --amount 12
 pixelox export desert.pxo -o desert.png
 ```
 

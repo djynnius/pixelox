@@ -168,8 +168,7 @@ pixelox shape path flow.pxo --in-place --name HairWarm --d 'M 240 400 C 340 460 
 pixelox shape path flow.pxo --in-place --name HairCool --d 'M 310 1500 C 420 1440 500 1340 560 1260 C 640 1200 800 1260 880 1080 C 900 1000 960 960 980 900' --fill none --stroke '#3ab8ff' --stroke-width 3 --cap round
 pixelox shape path flow.pxo --in-place --name Glints --d 'M 230 398 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 10 1010 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 240 1262 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 400 1242 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 310 862 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 290 1500 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 540 1258 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 860 1082 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z M 960 900 a 20 3 0 1 0 40 0 a 20 3 0 1 0 -40 0 Z' --fill '#ffffff'
 pixelox fx outer-glow flow.pxo --in-place --layer Glints --blur 12 --spread 0 --color '#ffffff' --opacity 90
-pixelox text add flow.pxo --in-place --name Headline --content $'ANNUAL\nPARTNER SUMMIT\nPROGRAM' --font "Avenir Next" --weight 900 --size 3.9% --leading 102% --color '#f2f3f9'
-pixelox transform move flow.pxo --in-place --layer Headline --to 3.8%,3% --anchor tl
+pixelox text add flow.pxo --in-place --name Headline --content $'ANNUAL\nPARTNER SUMMIT\nPROGRAM' --font @geometric-sans --weight 900 --size 3.9% --leading 102% --color '#f2f3f9' --at 3.8%,3% --anchor tl --anchor-to ink
 pixelox export flow.pxo -o flow.png
 ```
 
@@ -190,7 +189,7 @@ together.
   to right along the lower half, headline top left.
 * Use as a background plate: export without the headline and place it under an
   A-frame-card or A-type-block layout with a navy panel for the text.
-* Pairs with T-paper-grain (amount 10, soft-light) to hide gradient banding, with
+* Pairs with T-paper-grain (`--amount 10`) to hide gradient banding, with
   T-pill-button under the headline, and with T-vignette to push the corners darker.
 
 ## 11. Pitfalls

@@ -90,10 +90,11 @@ near-black (**T-mono-on-color** settings: `adjust bw`, `adjust levels --in-black
 * **T-image-in-type**: all window shapes (two text letters, two `shape ellipse` discs,
   the article) are merged into one layer; the photo is placed above it and clipped with
   `layer clip`.
-* **T-fit-width**: each straight letter is its own text layer scaled to an exact box
-  (`transform scale --size 419x452`, a non-uniform scale that makes the letter a little
-  taller than the font draws it).
-* **T-paper-grain**, amount 8, soft-light 25%. No shadows, no outlines on the letters.
+* **T-fit-width**: each straight letter is its own live text layer fitted to its grid
+  cell: `--fit-width 419` sets the width and `--scale-x 101.6%` brings the height to the
+  row (452 px). The article, subtitle, and author are fitted to their widths the same way.
+* **T-paper-grain**: `filter grain --as-layer`, amount 8. No shadows, no outlines on the
+  letters.
 
 ## 8. Hierarchy and eye path
 
@@ -106,37 +107,25 @@ near-black (**T-mono-on-color** settings: `adjust bw`, `adjust levels --in-black
 
 `photo.png` is your image here: a textured surface with strong side light. The recipe
 spells a different 4-letter word with two round middle letters; for other words, any
-letter can be text (scale it to its grid cell) and any round letter a disc.
+letter can be text (fit it to its grid cell with `--fit-width`) and any round letter a
+disc.
 
 ```bash
 pixelox new -o grid.pxo --size 1080x1620 --fill '#f1f1ef'
-pixelox text add grid.pxo --in-place --name LetterA --content "N" --font "Avenir Next" --weight 700 --size 30% --color '#383735'
-pixelox transform scale grid.pxo --in-place --layer LetterA --size 419x452
-pixelox transform move grid.pxo --in-place --layer LetterA --to 7.6%,22.2% --anchor tl
+pixelox text add grid.pxo --in-place --name LetterA --content "N" --font @geometric-sans --weight 700 --scale-x 101.6% --fit-width 419 --color '#383735' --at 7.6%,22.2% --anchor-to ink
 pixelox shape ellipse grid.pxo --in-place --name DiscA --rect 543,356,464x464 --fill '#383735'
 pixelox shape ellipse grid.pxo --in-place --name DiscB --rect 61,892,468x468 --fill '#383735'
-pixelox text add grid.pxo --in-place --name LetterB --content "N" --font "Avenir Next" --weight 700 --size 30% --color '#383735'
-pixelox transform scale grid.pxo --in-place --layer LetterB --size 419x449
-pixelox transform move grid.pxo --in-place --layer LetterB --to 53.6%,55.5% --anchor tl
-pixelox text add grid.pxo --in-place --name Article --content "THE" --font "Avenir Next" --weight 800 --size 6.5% --tracking 400 --color '#383735'
-pixelox transform scale grid.pxo --in-place --layer Article --size 318x
-pixelox transform move grid.pxo --in-place --layer Article --to 49.7%,14.6% --anchor c
+pixelox text add grid.pxo --in-place --name LetterB --content "N" --font @geometric-sans --weight 700 --scale-x 102.2% --fit-width 419 --color '#383735' --at 53.6%,55.5% --anchor-to ink
+pixelox text add grid.pxo --in-place --name Article --content "THE" --font @geometric-sans --weight 800 --fit-width 318 --tracking 400 --color '#383735' --at 49.7%,14.6% --anchor c --anchor-to ink
 pixelox layer merge grid.pxo --in-place --layers LetterA,DiscA,DiscB,LetterB,Article --name Window
 pixelox comp place grid.pxo photo.png --in-place --as Surface --fit cover
 pixelox layer clip grid.pxo --in-place --layer Surface
 pixelox adjust bw grid.pxo --in-place --layer Surface
 pixelox adjust levels grid.pxo --in-place --layer Surface --in-black 30 --in-white 215 --out-white 205
-pixelox text add grid.pxo --in-place --name Subtitle --content "A FIELD GUIDE TO THE SKY" --font "Avenir Next" --weight 600 --size 2.3% --tracking 350 --color '#383735'
-pixelox transform scale grid.pxo --in-place --layer Subtitle --size 907x
-pixelox transform move grid.pxo --in-place --layer Subtitle --to 50%,6.2% --anchor c
-pixelox text add grid.pxo --in-place --name Author --content "AUTHOR NAME" --font "Avenir Next" --weight 400 --size 3.7% --tracking 300 --color '#383735'
-pixelox transform scale grid.pxo --in-place --layer Author --size 786x
-pixelox transform move grid.pxo --in-place --layer Author --to 50%,89.8% --anchor c
-pixelox text add grid.pxo --in-place --name SmallLine --content "author of  EARLIER BOOK" --font "Avenir Next" --weight 500 --size 1.9% --tracking 150 --color '#383735' --at 50%,96.1% --anchor c
-pixelox layer add grid.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise grid.pxo --in-place --layer Grain --amount 8 --monochrome
-pixelox layer blend grid.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity grid.pxo --in-place --layer Grain --value 25
+pixelox text add grid.pxo --in-place --name Subtitle --content "A FIELD GUIDE TO THE SKY" --font @geometric-sans --weight 600 --fit-width 907 --tracking 350 --color '#383735' --at 50%,6.2% --anchor c --anchor-to ink
+pixelox text add grid.pxo --in-place --name Author --content "AUTHOR NAME" --font @geometric-sans --weight 400 --fit-width 786 --tracking 300 --color '#383735' --at 50%,89.8% --anchor c --anchor-to ink
+pixelox text add grid.pxo --in-place --name SmallLine --content "author of  EARLIER BOOK" --font @geometric-sans --weight 500 --size 1.9% --tracking 150 --color '#383735' --at 50%,96.1% --anchor c
+pixelox filter grain grid.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export grid.pxo -o grid.png
 ```
 

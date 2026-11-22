@@ -114,11 +114,13 @@ should move up so that most of it sits on the white field.
   band of even thickness that widens at both ends; `fx overlay` gradient on the blue at
   315 degrees (upper left to lower right). **T-waves** (`scripts/waves.js`, `count=2`,
   `chaos=0.3`) gives the same look when the exact curve does not matter.
-* Product shadow: a feathered ellipse painted through `select ellipse --feather` on its
-  own layer under the product (a blurred shape layer would be clipped at its bounds).
+* Product shadow: a dark-blue `shape ellipse` under the product, blurred with `filter
+  gaussian --sigma 6` (the blur is live and spreads past the shape's edge).
 * **T-script-overlap** pairing without the overlap: script 2% H above the block word,
   tilted -5 degrees.
-* **T-fit-width** on the headline (67% W) and the script (45% W).
+* **T-fit-width** on the headline (67% W) and the script (45% W): `--fit-width` on `text
+  add`, placed by the visible letters (`--anchor-to ink`). The script is placed first, then
+  rotated about its own center.
 * **T-pill-button**, filled charcoal, 2.6% H tall, in the contact strip.
 * No grain, no vignette: the surface is clean and bright.
 * **T-swoosh-band** in [techniques.md](../techniques.md) is the tested library version of the curved color band; start from it when reusing this idea.
@@ -148,35 +150,30 @@ pixelox comp place story.pxo rays.png --in-place --as Rays --fit cover
 pixelox shape path story.pxo --in-place --name Lip --d 'M 0 1148 C 200 1165 420 1190 560 1150 C 720 1060 950 950 1080 896 L 1080 1920 L 0 1920 Z' --fill '#24c0e2'
 pixelox shape path story.pxo --in-place --name Field --d 'M 0 1375 C 70 1325 190 1292 330 1275 C 570 1248 850 1160 1080 1072 L 1080 1920 L 0 1920 Z' --fill '#2488cb'
 pixelox fx overlay story.pxo --in-place --layer Field --stops '#2496d0@0,#2366bb@1' --angle 315
-pixelox layer add story.pxo --in-place --name ProductShadow
-pixelox select ellipse story.pxo --in-place --rect 36%,64.2%,32%x2.6% --feather 12
-pixelox fill solid story.pxo --in-place --layer ProductShadow --color '#16506e' --mask @sel
-pixelox select none story.pxo --in-place
+pixelox shape ellipse story.pxo --in-place --name ProductShadow --rect 36%,64.2%,32%x2.6% --fill '#16506e'
+pixelox filter gaussian story.pxo --in-place --layer ProductShadow --sigma 6
 pixelox comp place story.pxo product.png --in-place --as Product --size x480 --at 50.5%,65.5% --anchor b
 pixelox transform rotate story.pxo --in-place --layer Product --degrees 10
-pixelox text add story.pxo --in-place --name DiscountNote --content "save up to" --font "Avenir Next Condensed" --weight 700 --size 0.9% --color '#3a393b' --at 18.1%,47.5% --anchor c
+pixelox text add story.pxo --in-place --name DiscountNote --content "save up to" --font @condensed --weight 700 --size 0.9% --color '#3a393b' --at 18.1%,47.5% --anchor c
 pixelox text add story.pxo --in-place --name DiscountFigure --content "40%" --font "DIN Condensed" --weight 700 --size 3.4% --color '#3a393b' --at 18.1%,49.9% --anchor c
-pixelox text add story.pxo --in-place --name Logo --content "LOGO" --font "Avenir Next" --weight 900 --size 2.1% --color '#555457' --at 9.4%,6.3% --anchor l
+pixelox text add story.pxo --in-place --name Logo --content "LOGO" --font @geometric-sans --weight 900 --size 2.1% --color '#555457' --at 9.4%,6.3% --anchor l
 pixelox shape ellipse story.pxo --in-place --name Dot1 --rect 845,111,28x28 --fill '#555457'
 pixelox shape ellipse story.pxo --in-place --name Dot2 --rect 899,111,28x28 --fill '#555457'
 pixelox shape ellipse story.pxo --in-place --name Dot3 --rect 953,111,28x28 --fill '#555457'
-pixelox text add story.pxo --in-place --name Script --content "Feel Lighter" --font "Savoye LET" --size 9% --color '#555457'
-pixelox transform scale story.pxo --in-place --layer Script --size 490x
+pixelox text add story.pxo --in-place --name Script --content "Feel Lighter" --font @script-signature --fit-width 490 --color '#555457' --at 51%,16.8% --anchor c --anchor-to ink
 pixelox transform rotate story.pxo --in-place --layer Script --degrees -5
-pixelox transform move story.pxo --in-place --layer Script --to 51%,16.8% --anchor c
-pixelox text add story.pxo --in-place --name Headline --content "EARCUPS" --font "Arial Black" --size 7% --color '#555457'
-pixelox transform scale story.pxo --in-place --layer Headline --size 725x
-pixelox transform move story.pxo --in-place --layer Headline --to 51%,22.5% --anchor t
-pixelox text add story.pxo --in-place --name Body --content $'Feather-weight frame, clear open sound,\nand a fold-flat hinge for every commute' --font "Avenir Next" --weight 600 --size 1.12% --leading 150% --align center --color '#6a696c' --at 50%,31.6% --anchor c
+pixelox text add story.pxo --in-place --name Headline --content "EARCUPS" --font @heavy-wide --fit-width 725 --color '#555457' --at 51%,22.5% --anchor t --anchor-to ink
+pixelox text add story.pxo --in-place --name Body --content $'Feather-weight frame, clear open sound,\nand a fold-flat hinge for every commute' --font @geometric-sans --weight 600 --size 1.12% --leading 150% --align center --color '#6a696c' --at 50%,31.6% --anchor c
 pixelox shape ellipse story.pxo --in-place --name ContactDisc --rect 72,1743,70x70 --fill '#ffffff'
-pixelox text add story.pxo --in-place --name ContactLabel --content "More Information" --font "Avenir Next" --weight 500 --size 1.25% --tracking 20 --color '#ffffff' --at 16.4%,91.6% --anchor l
-pixelox text add story.pxo --in-place --name Phone --content "00 555 010 2030" --font "Avenir Next" --weight 900 --size 1.8% --color '#ffffff' --at 16.4%,93.5% --anchor l
+pixelox text add story.pxo --in-place --name ContactLabel --content "More Information" --font @geometric-sans --weight 500 --size 1.25% --tracking 20 --color '#ffffff' --at 16.4%,91.6% --anchor l
+pixelox text add story.pxo --in-place --name Phone --content "00 555 010 2030" --font @geometric-sans --weight 900 --size 1.8% --color '#ffffff' --at 16.4%,93.5% --anchor l
 pixelox shape rect story.pxo --in-place --name Pill --rect 762,1762,207x50 --radius 25 --fill '#23262d'
-pixelox text add story.pxo --in-place --name PillText --content "ORDER NOW" --font "Avenir Next" --weight 700 --size 1.5% --tracking 20 --color '#ffffff' --at 80.2%,93.1% --anchor c
+pixelox text add story.pxo --in-place --name PillText --content "ORDER NOW" --font @geometric-sans --weight 700 --size 1.5% --tracking 20 --color '#ffffff' --at 80.2%,93.1% --anchor c
 pixelox export story.pxo -o story.png
 ```
 
-Change first: the headline word (6 to 8 letters), the script phrase, then the two blues
+Change first: the headline word (6 to 8 letters; `--fit-width 725` keeps it at 67% W),
+the script phrase, then the two blues
 (`Lip` fill and the `Field` gradient stops; keep the lip lighter and greener than the
 field). To move the boundary, shift every y value in both paths by the same amount and
 move the product and its shadow with it.

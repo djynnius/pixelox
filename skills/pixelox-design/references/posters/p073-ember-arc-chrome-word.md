@@ -46,7 +46,8 @@ the metal type looks lit by the arc, so the two belong to the same scene.
    W, the brightest spot on the page.
 6. Bottom-right ember: a second orange `#fd8803` blurred band curving from the right edge
    at 75% H down to the bottom edge at 82% W.
-7. Grain: fine noise, soft-light, 30%.
+7. Grain: fine film grain over the light, under the type (`filter grain --as-layer`,
+   amount 8).
 8. Web address: small bold white at 6% W, 8.9% H.
 9. Tagline: three lines of bold, wide-tracked white caps at 60% W, 9.7 to 16% H.
 10. Facts column at 74% W: "FREE EVENT" on two lines (22.8 and 25.5% H); two speaker
@@ -98,17 +99,17 @@ is not part of the design.
 ## 7. Effects and textures
 
 * Light arc (a drawn version of **T-light-leak**): a `shape path` cubic curve with a
-  thick stroke and round caps, rasterized, `filter gaussian` (sigma 50 for the 150 px
-  glow, sigma 14 for the 34 px core), `screen` blend. Two strokes on the same curve, wide
-  and dim under narrow and bright, give a glow with a defined hot edge.
+  thick stroke and round caps, `filter gaussian` (sigma 50 for the 150 px glow, sigma 14
+  for the 34 px core; the blur is live on the shape), `screen` blend. Two strokes on the
+  same curve, wide and dim under narrow and bright, give a glow with a defined hot edge.
 * Corner flare and haze: radial `fill gradient` layers with alpha stops; the flare in
   `screen` mode.
 * **T-gradient-type**: `fx overlay --stops '#f2f2f2@0,#dbdbdb@0.3,#999999@0.62,#3a3838@1'
   --angle 0` on the word, plus `fx drop-shadow` (offset 0,10, blur 30, 60%).
 * **T-rules**: one short horizontal rule closing the facts column, one vertical rule
   opening the footer.
-* **T-paper-grain**, amount 12, soft-light 30%, below the type: essential on blurred
-  orange over black, which bands badly.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added before the type so the
+  small text stays clean: essential on blurred orange over black, which bands badly.
 * **T-ring-arcs** in [techniques.md](../techniques.md) is the tested library version of the ring, halo, or arc shapes; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -127,42 +128,35 @@ pixelox new -o code.pxo --size 1080x1440 --fill '#171516'
 pixelox layer add code.pxo --in-place --name Haze
 pixelox fill gradient code.pxo --in-place --layer Haze --kind radial --from 25%,30% --to 25%,90% --stops '#4a1a14e6@0,#3d171480@0.5,#3d171400@1'
 pixelox shape path code.pxo --in-place --name Glow --d 'M -80 330 C 280 300 560 420 640 770 M 1160 1080 C 1000 1130 900 1290 880 1520' --fill none --stroke '#da3c05' --stroke-width 150 --cap round
-pixelox layer rasterize code.pxo --in-place --layer Glow
 pixelox filter gaussian code.pxo --in-place --layer Glow --sigma 50
 pixelox layer blend code.pxo --in-place --layer Glow --mode screen
 pixelox shape path code.pxo --in-place --name Core --d 'M -80 300 C 280 270 540 380 610 640 M 1160 1050 C 1010 1100 920 1230 890 1420' --fill none --stroke '#ff8a1a' --stroke-width 34 --cap round
-pixelox layer rasterize code.pxo --in-place --layer Core
 pixelox filter gaussian code.pxo --in-place --layer Core --sigma 14
 pixelox layer blend code.pxo --in-place --layer Core --mode screen
 pixelox layer add code.pxo --in-place --name Flare
 pixelox fill gradient code.pxo --in-place --layer Flare --kind radial --from 4%,0 --to 36%,0 --stops '#ffb21aff@0,#ff8a1a99@0.4,#da3c0500@1'
 pixelox layer blend code.pxo --in-place --layer Flare --mode screen
-pixelox layer add code.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise code.pxo --in-place --layer Grain --amount 12 --monochrome
-pixelox layer blend code.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity code.pxo --in-place --layer Grain --value 30
-pixelox text add code.pxo --in-place --name Site --content "Example.com" --font "Helvetica Neue" --weight 700 --size 2.2% --color '#ffffff' --at 6%,8.9% --anchor l
-pixelox text add code.pxo --in-place --name Tagline --content $'SHIP IDEAS\nNOT JUST\nSLIDES' --font "Helvetica Neue" --weight 700 --size 3% --tracking 150 --leading 100% --color '#ffffff' --at 60%,12.9% --anchor l
-pixelox text add code.pxo --in-place --name Entry --content $'FREE\nEVENT' --font "Helvetica Neue" --weight 400 --size 2.1% --tracking 120 --leading 125% --color '#ffffff' --at 74%,24.2% --anchor l
-pixelox text add code.pxo --in-place --name Label1 --content "Speaker 1 :" --font "Helvetica Neue" --weight 700 --size 1.65% --color '#ffffff' --at 74%,32.1% --anchor l
-pixelox text add code.pxo --in-place --name Name1 --content "Guest Engineer" --font "Helvetica Neue" --weight 500 --size 2.6% --tracking=-10 --color '#ffffff' --at 74%,34.6% --anchor l
-pixelox text add code.pxo --in-place --name Label2 --content "Speaker 2 :" --font "Helvetica Neue" --weight 700 --size 1.65% --color '#ffffff' --at 74%,38.8% --anchor l
-pixelox text add code.pxo --in-place --name Name2 --content "Local Founder" --font "Helvetica Neue" --weight 500 --size 2.6% --tracking=-10 --color '#ffffff' --at 74%,41.3% --anchor l
+pixelox filter grain code.pxo --in-place --as-layer --name Grain --amount 8
+pixelox text add code.pxo --in-place --name Site --content "Example.com" --font @neo-grotesque --weight 700 --size 2.2% --color '#ffffff' --at 6%,8.9% --anchor l
+pixelox text add code.pxo --in-place --name Tagline --content $'SHIP IDEAS\nNOT JUST\nSLIDES' --font @neo-grotesque --weight 700 --size 3% --tracking 150 --leading 100% --color '#ffffff' --at 60%,12.9% --anchor l
+pixelox text add code.pxo --in-place --name Entry --content $'FREE\nEVENT' --font @neo-grotesque --weight 400 --size 2.1% --tracking 120 --leading 125% --color '#ffffff' --at 74%,24.2% --anchor l
+pixelox text add code.pxo --in-place --name Label1 --content "Speaker 1 :" --font @neo-grotesque --weight 700 --size 1.65% --color '#ffffff' --at 74%,32.1% --anchor l
+pixelox text add code.pxo --in-place --name Name1 --content "Guest Engineer" --font @neo-grotesque --weight 500 --size 2.6% --tracking=-10 --color '#ffffff' --at 74%,34.6% --anchor l
+pixelox text add code.pxo --in-place --name Label2 --content "Speaker 2 :" --font @neo-grotesque --weight 700 --size 1.65% --color '#ffffff' --at 74%,38.8% --anchor l
+pixelox text add code.pxo --in-place --name Name2 --content "Local Founder" --font @neo-grotesque --weight 500 --size 2.6% --tracking=-10 --color '#ffffff' --at 74%,41.3% --anchor l
 pixelox shape line code.pxo --in-place --name FactsRule --from 74%,46.4% --to 81%,46.4% --stroke '#ffffff' --stroke-width 2
-pixelox text add code.pxo --in-place --name Word --content "Loop" --font "Helvetica Neue" --weight 700 --size 24% --tracking=-40 --color '#dbdbdb'
-pixelox transform scale code.pxo --in-place --layer Word --size 896x
-pixelox transform move code.pxo --in-place --layer Word --to 5.3%,52.3% --anchor tl
+pixelox text add code.pxo --in-place --name Word --content "Loop" --font @neo-grotesque --weight 700 --fit-width 896 --tracking=-40 --color '#dbdbdb' --at 5.3%,52.3% --anchor-to ink
 pixelox fx overlay code.pxo --in-place --layer Word --stops '#f2f2f2@0,#dbdbdb@0.3,#999999@0.62,#3a3838@1' --angle 0
 pixelox fx drop-shadow code.pxo --in-place --layer Word --offset 0,10 --blur 30 --opacity 60
 pixelox shape line code.pxo --in-place --name FooterRule --from 6.3%,81% --to 6.3%,86.5% --stroke '#ffffff' --stroke-width 2
-pixelox text add code.pxo --in-place --name FootTag --content $'YOUR\nTAGLINE\nHERE' --font "Helvetica Neue" --weight 700 --size 2.05% --tracking 150 --leading 125% --color '#ffffff' --at 12.1%,84% --anchor l
-pixelox text add code.pxo --in-place --name Quote --content $'"Spend one evening with people who\nbuild things for a living. See what\nthey are trying next, ask how it works,\nand leave with something to start."' --font "Helvetica Neue" --weight 700 --size 1.5% --leading 125% --color '#ffffff' --at 34.5%,84.6% --anchor l
+pixelox text add code.pxo --in-place --name FootTag --content $'YOUR\nTAGLINE\nHERE' --font @neo-grotesque --weight 700 --size 2.05% --tracking 150 --leading 125% --color '#ffffff' --at 12.1%,84% --anchor l
+pixelox text add code.pxo --in-place --name Quote --content $'"Spend one evening with people who\nbuild things for a living. See what\nthey are trying next, ask how it works,\nand leave with something to start."' --font @neo-grotesque --weight 700 --size 1.5% --leading 125% --color '#ffffff' --at 34.5%,84.6% --anchor l
 pixelox export code.pxo -o code.png
 ```
 
-Change first: the giant word (3 to 5 letters; it is fitted to 896 px, so shorter words
-get taller), then the glow color pair (`#da3c05` and `#ff8a1a`), then the curve: the
-first two numbers after each `C` pull the arc's shoulder up or down.
+Change first: the giant word (3 to 5 letters; `--fit-width 896` fits it to 896 px, so
+shorter words get taller), then the glow color pair (`#da3c05` and `#ff8a1a`), then the
+curve: the first two numbers after each `C` pull the arc's shoulder up or down.
 
 ## 10. Variations and pairings
 

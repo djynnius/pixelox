@@ -7,7 +7,7 @@ style: [photo-composite, gradient-mesh]
 format: portrait-3x4
 archetype: A-text-left-product-right
 palette: ['#062585', '#0a1036', '#315dbc', '#983578', '#c44c52', '#ffffff']
-techniques: [T-gradient-mesh, T-cutout-drop-shadow, T-pill-button, T-label-box, T-bokeh, T-photo-fade]
+techniques: [T-gradient-mesh, T-cutout-drop-shadow, T-pill-button, T-label-box, T-bokeh, T-photo-fade, T-condensation, T-ice-cubes, T-paper-grain]
 needs: [subject-cutout, product-cutout, logo]
 ---
 
@@ -93,7 +93,8 @@ words) is the only headline, and it is modest: cap height 2.9% H.
   at a hard crop. The expression (a kiss toward the bottle, eyes closed) is the emotional
   hook; a build needs any warm, unposed moment with the product held near the face.
 * Can: a separate, much larger cutout in the front plane, sharper and more saturated than
-  the person, overlapping her arm.
+  the person, overlapping her arm. Its condensation and the ice at its foot are rendered
+  (`render droplets`, `render ice`).
 * The bottle she holds belongs to the person photo. If your portrait has no product in it,
   place a small product cutout at the hand, as the recipe does.
 
@@ -101,13 +102,21 @@ words) is the only headline, and it is modest: cap height 2.9% H.
 
 * **T-gradient-mesh**: `blobs.js` with fixed centers (light blue top-left, navy top-right,
   magenta left-middle, pink bottom-center), blurred sigma 60.
-* **T-bokeh** idea with a twist: the out-of-focus discs are blurred copies of the logo.
-* **T-photo-fade**: a ground-color gradient from 62% H to 88% H over the person's torso,
-  then a small pink radial glow on top of it at the bottom center (60% W, 99% H).
+* **T-bokeh** idea with a twist: the out-of-focus disc is a blurred copy of the logo,
+  placed in front of the faded torso.
+* **T-photo-fade**: a gradient mask on the person (`mask add --gradient linear`, whole at
+  60% H, gone at 84% H, where the cutout ends), so the torso melts into the haze; then a
+  small pink radial glow at the bottom center (60% W, 99% H).
+* **T-condensation**: `render droplets --layer Can --density 60 --trickles 4`, run right
+  after the can is placed and before its glow and shadow, so no bead lands on the glow.
 * **T-cutout-drop-shadow**, glow variant on the can (`fx outer-glow`, blur 50, `#4f8cff`,
   50%) and a soft dark shadow to its right.
+* **T-ice-cubes**: `render ice`, five cubes at the can's foot, tinted the ground blue
+  (`--tint '#2b55c0' --frost 40`), half off the bottom edge.
 * **T-pill-button** shapes used as labels: a solid navy pill for the wordmark, an outlined,
   glowing rounded box for the caption (**T-label-box** with `--radius`).
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, last; it hides banding in the
+  blurred haze.
 
 ## 8. Hierarchy and eye path
 
@@ -129,38 +138,38 @@ pixelox render js scripts/blobs.js -o haze.png --size 1080x1440 --seed 2 --param
 pixelox new -o ad.pxo --size 1080x1440 --fill '#04229a'
 pixelox comp place ad.pxo haze.png --in-place --as Haze --fit cover
 pixelox filter gaussian ad.pxo --in-place --layer Haze --sigma 60
+pixelox comp place ad.pxo subject.png --in-place --as Person --size x1010 --at 60%,84% --anchor b
+pixelox mask add ad.pxo --in-place --layer Person --gradient linear --from 0,60% --to 0,84%
 pixelox comp place ad.pxo logo.png --in-place --as FarEmblem --size 150x --at 76%,74% --anchor c
 pixelox filter gaussian ad.pxo --in-place --layer FarEmblem --sigma 7
 pixelox layer opacity ad.pxo --in-place --layer FarEmblem --value 80
-pixelox comp place ad.pxo subject.png --in-place --as Person --size x1010 --at 60%,84% --anchor b
-pixelox layer add ad.pxo --in-place --name TorsoFade
-pixelox fill gradient ad.pxo --in-place --layer TorsoFade --from 0,62% --to 0,88% --stops '#06259000@0,#062590ff@1'
 pixelox layer add ad.pxo --in-place --name PinkGlow
 pixelox fill gradient ad.pxo --in-place --layer PinkGlow --kind radial --from 60%,99% --to 60%,84% --stops '#ff8fc0e6@0,#f06aa800@1'
 pixelox comp place ad.pxo product.png --in-place --as Bottle --size x570 --at 34.5%,31% --anchor c
 pixelox transform rotate ad.pxo --in-place --layer Bottle --degrees -5
 pixelox comp place ad.pxo product.png --in-place --as Can --size x700 --at 21.5%,94% --anchor b
+pixelox render droplets ad.pxo --in-place --layer Can --density 60 --trickles 4
 pixelox fx outer-glow ad.pxo --in-place --layer Can --blur 50 --color '#4f8cff' --opacity 50
 pixelox fx drop-shadow ad.pxo --in-place --layer Can --offset 18,10 --blur 40 --color '#020a30' --opacity 60
-pixelox text add ad.pxo --in-place --name SloganBrand --content "BRAND" --font "Helvetica Neue" --weight 700 --size 4% --color '#e8202a' --at 34%,4.6% --anchor r
-pixelox text add ad.pxo --in-place --name SloganWords --content "OWN THE DAY" --font "Helvetica Neue" --weight 400 --size 4% --tracking 20 --color '#ffffff' --at 38%,4.6% --anchor l
+pixelox render ice ad.pxo --in-place --name Ice --at 22%,97% --count 5 --size 12% --spread 20% --tint '#2b55c0' --frost 40 --seed 4
+pixelox text add ad.pxo --in-place --name SloganBrand --content "BRAND" --font @neo-grotesque --weight 700 --size 4% --color '#e8202a' --at 34%,4.6% --anchor r
+pixelox text add ad.pxo --in-place --name SloganWords --content "OWN THE DAY" --font @neo-grotesque --weight 400 --size 4% --tracking 20 --color '#ffffff' --at 38%,4.6% --anchor l
 pixelox comp place ad.pxo logo.png --in-place --as Emblem --size 92x --at 86.2%,25.5% --anchor c
 pixelox shape rect ad.pxo --in-place --name Pill --rect 76%,29.8%,21%x4.4% --radius 32 --fill '#050a2a'
 pixelox fx outer-glow ad.pxo --in-place --layer Pill --blur 24 --color '#ffffff' --opacity 35
-pixelox text add ad.pxo --in-place --name PillWord --content "BRAND" --font "Helvetica Neue" --weight 700 --size 3.2% --tracking 20 --color '#ffffff' --at 86.5%,32% --anchor c
+pixelox text add ad.pxo --in-place --name PillWord --content "BRAND" --font @neo-grotesque --weight 700 --size 3.2% --tracking 20 --color '#ffffff' --at 86.5%,32% --anchor c
 pixelox shape rect ad.pxo --in-place --name CaptionBox --rect 38%,78.5%,56.5%x10.5% --radius 60 --fill '#0a2fa0' --stroke '#7fb8ff' --stroke-width 2 --opacity 85
 pixelox fx outer-glow ad.pxo --in-place --layer CaptionBox --blur 26 --color '#3f8cff' --opacity 60
-pixelox text add ad.pxo --in-place --name Caption --content $'Open One And Make Any Break\nFeel Like A Small Party' --font "Helvetica Neue" --weight 700 --size 2.2% --tracking 80 --leading 135% --color '#ffffff' --at 43%,83.8% --anchor l
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 30
+pixelox text add ad.pxo --in-place --name Caption --content $'Open One And Make Any Break\nFeel Like A Small Party' --font @neo-grotesque --weight 700 --size 2.2% --tracking 80 --leading 135% --color '#ffffff' --at 43%,83.8% --anchor l
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the haze colors (the brand's main color for `bg`, its neighbor on the color
 wheel for the two warm blobs), then the slogan pair and the caption, then the person's
-position so the face sits in the upper-middle third.
+position so the face sits in the upper-middle third (move the mask's `--to` with it: the
+fade must end where the cutout ends). Droplets and ice show what is behind them when
+their command runs: after swapping the can, run the recipe again from the top.
 
 ## 10. Variations and pairings
 
@@ -177,8 +186,11 @@ position so the face sits in the upper-middle third.
 
 * Person and can at similar sizes compete. One is big and near (the can, sharp), the other
   mid-distance and emotional; overlap them.
-* A hard bottom edge on the person cutout. Fade the torso into the ground or hide the crop
-  behind the can and the caption box.
+* A hard bottom edge on the person cutout. The gradient mask must reach zero at or above
+  the cutout's bottom edge (`--to 0,84%` here); or hide the crop behind the can and the
+  caption box.
+* Pale ice on a saturated ground looks pasted on. Tint the cubes with a darker shade of
+  the ground color.
 * Haze in a complementary color (orange on blue) turns the middle gray-brown. Use the
   ground's neighbor (magenta, violet, cyan).
 * Caption text touching the rounded corners: with a large radius, inset the text by at

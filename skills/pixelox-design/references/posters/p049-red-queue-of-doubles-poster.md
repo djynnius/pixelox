@@ -113,7 +113,10 @@ further along the line.
   bottom-right and bottom-left displaced toward the lower right, the near end (left)
   twice as tall as the far end.
 * Billing block: `transform skew --x -35 --y 12`.
-* **T-paper-grain**, amount 10, soft-light 30%. Nothing else: the flatness matters.
+* `transform perspective` and `transform skew` turn the text into pixels (warning
+  PXW2003): set the wording first.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`. Nothing else: the flatness
+  matters.
 * **T-floor-type** in [techniques.md](../techniques.md) is the tested library version of the type lying in perspective on the floor; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -152,19 +155,16 @@ pixelox adjust gradient-map queue.pxo --in-place --layer Doubles --stops '#06050
 pixelox comp place queue.pxo subject.png --in-place --as Hero --size x464 --at 597,769 --anchor b
 pixelox adjust bw queue.pxo --in-place --layer Hero
 pixelox adjust gradient-map queue.pxo --in-place --layer Hero --stops '#060505@0,#7a1512@0.5,#d98a70@1'
-pixelox text add queue.pxo --in-place --name Star --content "LEAD ACTOR NAME" --font "Avenir Next Condensed" --weight 600 --size 2.3% --color '#ecefc1' --at 71%,5.2% --anchor c
+pixelox text add queue.pxo --in-place --name Star --content "LEAD ACTOR NAME" --font @condensed --weight 600 --size 2.3% --color '#ecefc1' --at 71%,5.2% --anchor c
 pixelox text add queue.pxo --in-place --name Cast --content "FIRST COSTAR   SECOND COSTAR   AND   THIRD COSTAR" --font Futura --weight 500 --size 3% --color '#ecefc1'
 pixelox transform perspective queue.pxo --in-place --layer Cast --quad '337,1099 765,766 781,775 364,1109'
 pixelox text add queue.pxo --in-place --name Title --content "RIVAL" --font Futura --weight 700 --size 14% --tracking -20 --color '#090706'
 pixelox transform perspective queue.pxo --in-place --layer Title --quad '381,1111 786,778 909,825 635,1171'
 pixelox text add queue.pxo --in-place --name Tagline --content "YOU CANNOT OUTRUN YOUR OWN SHADOW." --font Futura --weight 500 --size 3% --color '#ecefc1'
 pixelox transform perspective queue.pxo --in-place --layer Tagline --quad '653,1173 883,868 913,876 707,1184'
-pixelox text add queue.pxo --in-place --name Billing --content $'A FILM BY DIRECTOR NAME   STUDIO NAME PRESENTS\nPRODUCED BY FIRST PRODUCER AND SECOND PRODUCER\nSCREENPLAY BY WRITER NAME   MUSIC BY COMPOSER NAME\nDIRECTOR OF PHOTOGRAPHY CAMERA NAME   EDITED BY EDITOR NAME' --font "Avenir Next Condensed" --weight 500 --size 0.95% --leading 130% --color '#230c0b' --at 22%,74% --anchor tl
+pixelox text add queue.pxo --in-place --name Billing --content $'A FILM BY DIRECTOR NAME   STUDIO NAME PRESENTS\nPRODUCED BY FIRST PRODUCER AND SECOND PRODUCER\nSCREENPLAY BY WRITER NAME   MUSIC BY COMPOSER NAME\nDIRECTOR OF PHOTOGRAPHY CAMERA NAME   EDITED BY EDITOR NAME' --font @condensed --weight 500 --size 0.95% --leading 130% --color '#230c0b' --at 22%,74% --anchor tl
 pixelox transform skew queue.pxo --in-place --layer Billing --x -35 --y 12
-pixelox layer add queue.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise queue.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend queue.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity queue.pxo --in-place --layer Grain --value 30
+pixelox filter grain queue.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export queue.pxo -o queue.png
 ```
 

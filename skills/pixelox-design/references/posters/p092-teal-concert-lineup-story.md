@@ -7,7 +7,7 @@ style: [photo-composite]
 format: portrait-9x16
 archetype: A-speakers-over-title
 palette: ['#0a0f1c', '#1a2834', '#2da7bd', '#387386', '#f2d5c4', '#dfdcd9']
-techniques: [T-sunburst, T-photo-fade, T-label-box, T-script-overlap, T-rules, T-stretch-type]
+techniques: [T-sunburst, T-photo-fade, T-label-box, T-script-overlap, T-rules, T-stretch-type, T-qr-code]
 needs: [subject-cutout, logo]
 ---
 
@@ -119,8 +119,8 @@ smiling toward the camera, scaled so their heads are the same size (10% H) and l
 one eye line at 41% H. Each guest overlaps the next by about a fifth of its width, outer
 ones behind, the center one in front. Everyone is graded slightly cool and contrasty so
 the teal light seems to fall on them; no outlines or drop shadows. A round metallic
-emblem (the host's seal) anchors the venue plate. The scan code is a real QR image on a
-white tile; the recipe draws a checker as a stand-in.
+emblem (the host's seal) anchors the venue plate. The scan code is a QR code on a white
+rounded tile, drawn by `shape qr` from the ticket address.
 
 ## 7. Effects and textures
 
@@ -133,9 +133,11 @@ white tile; the recipe draws a checker as a stand-in.
 * **T-label-box** for the date tile; **T-rules** for the outlined venue pill.
 * **T-script-overlap**, miniature: two script words (the article above, the connective
   inside a letter) soften the serif lockup; neither is rotated or colored.
-* Extended event type: `transform scale` with an unequal size stretches Arial Black to
-  145% width (this rasterizes the layer, warning PXW2003).
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
+* **T-stretch-type** for the extended event type: `--scale-x` widens the heavy wide face
+  (165% on line 1, 127% on line 2) and `--fit-width` sets each line to 89 to 90% W. The
+  text stays live.
+* **T-qr-code**: `shape qr` with `--background-color white --radius 10` draws the code and
+  its tile as one group, 15% W across.
 
 ## 8. Hierarchy and eye path
 
@@ -152,29 +154,25 @@ separates the levels here is typeface and color, not size.
 
 `subject.png` (lead artist), `subject2.png` (a guest artist), and `logo.png` (a round
 emblem) are your images here. The recipe alternates the two cutouts across the guest row
-to show the layout: place five different guest cutouts in their place, and your own scan
-code image instead of `code.png`.
+to show the layout: place five different guest cutouts in their place, and put your own
+ticket address in `--data` on the `shape qr` line.
 
 ```bash
 pixelox render js scripts/rays.js -o beams.png --size 1080x1920 --param color='#9af0ff' --param cx=0.5 --param cy=-0.15 --param count=44 --param spread=80 --param uneven=0.8 --param alpha=0.3 --param fade=0.8
-pixelox render js scripts/pattern.js -o code.png --size 130x130 --param kind=checker --param color='#0a0f1c' --param cell=13
 pixelox new -o concert.pxo --size 1080x1920 --fill '#060a1c'
 pixelox layer add concert.pxo --in-place --name Glow
 pixelox fill gradient concert.pxo --in-place --layer Glow --kind radial --from 50%,23% --to 50%,62% --stops '#08b2c6ff@0,#0a7f93e6@0.35,#07405acc@0.62,#060a1c00@1'
 pixelox comp place concert.pxo beams.png --in-place --as Beams --fit cover
 pixelox layer blend concert.pxo --in-place --layer Beams --mode screen
-pixelox text add concert.pxo --in-place --name Presenter --content "Your Name and Friends presents" --font "Avenir Next" --weight 500 --size 1.8% --color '#b9c6c9' --at 50%,3% --anchor c
-pixelox text add concert.pxo --in-place --name Title1 --content "JUBILEE 75" --font "Arial Black" --size 4.6% --color '#f2d5c4' --at 50%,7.25% --anchor c
-pixelox transform scale concert.pxo --in-place --layer Title1 --size 963x67
-pixelox text add concert.pxo --in-place --name Title2 --content "PRAISE CONCERT" --font "Arial Black" --size 4% --color '#e6f3f5' --at 50%,11.7% --anchor c
-pixelox transform scale concert.pxo --in-place --layer Title2 --size 973x58
+pixelox text add concert.pxo --in-place --name Presenter --content "Your Name and Friends presents" --font @geometric-sans --weight 500 --size 1.8% --color '#b9c6c9' --at 50%,3% --anchor c
+pixelox text add concert.pxo --in-place --name Title1 --content "JUBILEE 75" --font @heavy-wide --scale-x 165.1% --fit-width 963 --color '#f2d5c4' --at 50%,7.5% --anchor c --anchor-to ink
+pixelox text add concert.pxo --in-place --name Title2 --content "PRAISE CONCERT" --font @heavy-wide --scale-x 127.2% --fit-width 973 --color '#e6f3f5' --at 50.1%,11.8% --anchor c --anchor-to ink
 pixelox shape rect concert.pxo --in-place --name DateTile --rect 4%,19.5%,15%x13.5% --fill '#081220'
-pixelox text add concert.pxo --in-place --name DateTop --content $'SATURDAY\nNOVEMBER' --font "Avenir Next" --weight 800 --size 1.25% --leading 125% --align center --color '#ffffff' --at 11.5%,22.4% --anchor c
-pixelox text add concert.pxo --in-place --name Day --content "14TH" --font Impact --size 5% --color '#f2d5c4' --at 11.5%,26.9% --anchor c
-pixelox text add concert.pxo --in-place --name Hour --content "6PM" --font "Arial Black" --size 1.9% --color '#ffffff' --at 11.5%,31% --anchor c
-pixelox shape rect concert.pxo --in-place --name CodeTile --rect 81%,19.5%,15%x8.45% --radius 10 --fill '#ffffff'
-pixelox comp place concert.pxo code.png --in-place --as Code --at 88.5%,23.72% --anchor c
-pixelox text add concert.pxo --in-place --name Scan --content "SCAN ME" --font "Avenir Next" --weight 700 --size 1.3% --color '#ffffff' --at 88.5%,29.2% --anchor c
+pixelox text add concert.pxo --in-place --name DateTop --content $'SATURDAY\nNOVEMBER' --font @geometric-sans --weight 800 --size 1.25% --leading 125% --align center --color '#ffffff' --at 11.5%,22.4% --anchor c
+pixelox text add concert.pxo --in-place --name Day --content "14TH" --font @condensed-heavy --size 5% --color '#f2d5c4' --at 11.5%,26.9% --anchor c
+pixelox text add concert.pxo --in-place --name Hour --content "6PM" --font @heavy-wide --size 1.9% --color '#ffffff' --at 11.5%,31% --anchor c
+pixelox shape qr concert.pxo --in-place --name Code --data 'www.example.com/tickets' --size 162 --background-color white --radius 10 --at 88.5%,23.72% --anchor c
+pixelox text add concert.pxo --in-place --name Scan --content "SCAN ME" --font @geometric-sans --weight 700 --size 1.3% --color '#ffffff' --at 88.5%,29.2% --anchor c
 pixelox comp place concert.pxo subject.png --in-place --as Hero --size x800 --at 52%,53% --anchor b
 pixelox comp place concert.pxo subject2.png --in-place --as Artist1 --size x600 --at 10%,64% --anchor b
 pixelox comp place concert.pxo subject.png --in-place --as Artist5 --size x600 --at 91%,64% --anchor b
@@ -183,30 +181,27 @@ pixelox comp place concert.pxo subject2.png --in-place --as Artist4 --size x600 
 pixelox comp place concert.pxo subject2.png --in-place --as Artist3 --size x640 --at 50%,65% --anchor b
 pixelox layer add concert.pxo --in-place --name Fade
 pixelox fill gradient concert.pxo --in-place --layer Fade --from 0,52% --to 0,63% --stops '#060a1c00@0,#060a1cff@1'
-pixelox text add concert.pxo --in-place --name The --content "The" --font "Snell Roundhand" --weight 500 --size 5% --color '#f4ece6' --at 50%,57.2% --anchor c
-pixelox text add concert.pxo --in-place --name Serif1 --content "SONGS" --font "Big Caslon" --size 8% --tracking 120 --color '#f1e6dc'
-pixelox transform scale concert.pxo --in-place --layer Serif1 --size 520x
-pixelox transform move concert.pxo --in-place --layer Serif1 --to 50%,60% --anchor t
-pixelox text add concert.pxo --in-place --name Serif2 --content "GLORY" --font "Big Caslon" --size 8% --tracking 120 --color '#f1e6dc'
-pixelox transform scale concert.pxo --in-place --layer Serif2 --size 620x
-pixelox transform move concert.pxo --in-place --layer Serif2 --to 50%,67.4% --anchor t
-pixelox text add concert.pxo --in-place --name Of --content "of" --font "Snell Roundhand" --weight 700 --size 2.6% --color '#f1e6dc' --at 50%,70% --anchor c
-pixelox text add concert.pxo --in-place --name Featuring --content "FEATURING" --font "Avenir Next" --weight 500 --size 1.5% --tracking 500 --color '#c9d3da' --at 50.8%,75.3% --anchor c
+pixelox text add concert.pxo --in-place --name The --content "The" --font @script-formal --weight 500 --size 5% --color '#f4ece6' --at 50%,57.2% --anchor c
+pixelox text add concert.pxo --in-place --name Serif1 --content "SONGS" --font "Big Caslon" --fit-width 520 --tracking 120 --color '#f1e6dc' --at 50%,60% --anchor t --anchor-to ink
+pixelox text add concert.pxo --in-place --name Serif2 --content "GLORY" --font "Big Caslon" --fit-width 620 --tracking 120 --color '#f1e6dc' --at 50%,67.4% --anchor t --anchor-to ink
+pixelox text add concert.pxo --in-place --name Of --content "of" --font @script-formal --weight 700 --size 2.6% --color '#f1e6dc' --at 50%,70% --anchor c
+pixelox text add concert.pxo --in-place --name Featuring --content "FEATURING" --font @geometric-sans --weight 500 --size 1.5% --tracking 500 --color '#c9d3da' --at 50.8%,75.3% --anchor c
 pixelox text add concert.pxo --in-place --name Names1 --content "ARTIST ONE  x  ARTIST TWO  x  ARTIST THREE" --font "DIN Condensed" --weight 700 --size 3.3% --color '#f0d2c3' --at 50%,78.6% --anchor c
 pixelox text add concert.pxo --in-place --name Names2 --content "ARTIST FOUR  x  ARTIST FIVE  x  ARTIST SIX  x  THE CHOIR" --font "DIN Condensed" --weight 700 --size 3.3% --color '#f0d2c3' --at 50%,82.4% --anchor c
 pixelox shape rect concert.pxo --in-place --name Pill --rect 12%,85.8%,77.5%x4% --radius 38 --fill none --stroke '#8fa3b5' --stroke-width 2
 pixelox comp place concert.pxo logo.png --in-place --as Emblem --size 118x --at 17%,87.7% --anchor c
-pixelox text add concert.pxo --in-place --name Venue --content "THE HOUSE OF EXAMPLE FELLOWSHIP" --font "Avenir Next" --weight 400 --size 1.6% --tracking 80 --color '#a9b7c6' --at 55.5%,87.8% --anchor c
-pixelox text add concert.pxo --in-place --name Address --content "12 EXAMPLE AVE, YOUR CITY ST" --font "Avenir Next" --weight 600 --size 1.35% --tracking 300 --color '#b4c0cc' --at 50.5%,91.8% --anchor c
-pixelox text add concert.pxo --in-place --name Tickets --content "TICKETS AVAILABLE AT" --font "Avenir Next" --weight 700 --size 1.5% --color '#ffffff' --at 49.5%,94.8% --anchor r
-pixelox text add concert.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Avenir Next" --weight 700 --size 1.5% --color '#2da7bd' --at 51%,94.8% --anchor l
+pixelox text add concert.pxo --in-place --name Venue --content "THE HOUSE OF EXAMPLE FELLOWSHIP" --font @geometric-sans --weight 400 --size 1.6% --tracking 80 --color '#a9b7c6' --at 55.5%,87.8% --anchor c
+pixelox text add concert.pxo --in-place --name Address --content "12 EXAMPLE AVE, YOUR CITY ST" --font @geometric-sans --weight 600 --size 1.35% --tracking 300 --color '#b4c0cc' --at 50.5%,91.8% --anchor c
+pixelox text add concert.pxo --in-place --name Tickets --content "TICKETS AVAILABLE AT" --font @geometric-sans --weight 700 --size 1.5% --color '#ffffff' --at 49.5%,94.8% --anchor r
+pixelox text add concert.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @geometric-sans --weight 700 --size 1.5% --color '#2da7bd' --at 51%,94.8% --anchor l
 pixelox export concert.pxo -o concert.png
 ```
 
-Change first: the two event lines (keep each between 10 and 14 characters so the stretch
-stays near 145%), then the two title words. After changing the second title word, move the
-`Of` layer onto the center of its round letter (read the build, then set `--at`). Size
-every guest cutout so the heads match (`--size x600` assumes the same framing for all).
+Change first: the two event lines (keep each between 10 and 14 characters and adjust
+`--scale-x` until the two cap heights are about 3.5% and 3% H), then the two title words.
+After changing the second title word, move the `Of` layer onto the center of its round
+letter (read the build, then set `--at`). Size every guest cutout so the heads match
+(`--size x600` assumes the same framing for all).
 
 ## 10. Variations and pairings
 
@@ -231,5 +226,7 @@ every guest cutout so the heads match (`--size x600` assumes the same framing fo
 * A fifth typeface, or names set in the title's serif: the bands blur. One face per band.
 * Names in pure white compete with the title lockup. Keep them in the peach accent and
   one step smaller than the title.
-* Stretching type by more than 150% distorts the round letters. For a wider line, add
+* Stretching past the 165% of line 1 distorts the round letters. For a wider line, add
   letters or tracking instead.
+* A scan code without a white tile will not scan on the teal glow. Keep
+  `--background-color white`.

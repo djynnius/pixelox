@@ -80,9 +80,9 @@ each is used exactly once. Everything else is white.
 | Role | Content pattern | Case | Font class (look-alike / local) | Weight | Cap height | Tracking | Leading | Align | Color | Position |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Address | street / landmark / district, 3 lines | sentence | extended sans italic (Syne, Unbounded 400 / Avenir Next italic) | 500 | 1.6% | 20 | 125% | left | `#ffffff` | 58%, 13% |
-| Headline 1 | "Hello" | title | extended bold italic (Unbounded 700, Syne 800 / Arial Black skewed) | 700 | 6% | 0 | - | left | `#ffffff` | 28%, cap top 21% |
+| Headline 1 | "Hello" | title | extended bold italic (Unbounded 700, Syne 800 / Arial Black slanted) | 700 | 6% | 0 | - | left | `#ffffff` | 28%, cap top 21% |
 | Headline 2 | `[PLACE NAME]`, 9 letters | title | same | 700 | 6% | 0 | - | left | `#ffffff` | 17%, cap top 27.3% |
-| Headline 3 | `[BRAND]`, 4 letters | caps | ultra-extended black italic (Unbounded 900, Dela Gothic One / Arial Black stretched and skewed) | 900 | 11% | 0 | - | left | `#fbea49`, shadow `#ffffff` | 10%, cap top 35% |
+| Headline 3 | `[BRAND]`, 4 letters | caps | ultra-extended black italic (Unbounded 900, Dela Gothic One / Arial Black widened and slanted) | 900 | 11% | 0 | - | left | `#fbea49`, shadow `#ffffff` | 10%, cap top 35% |
 | Tag | 2 short words, one per line | lower | extended bold italic (same as headline 1) | 700 | 3.2% | 0 | 105% | center | `#ffffff` | 76.5%, 40% |
 | Weekday note | "Every / Sunday" | title | same | 700 | 1.9% | 0 | 110% | center | `#ffffff` | 13%, 73% |
 | Time | "9am" | lower | same | 700 | 3% | 0 | - | center | `#ffffff` | 85%, 62.5% |
@@ -102,17 +102,18 @@ white logo sits top left.
 
 ## 7. Effects and textures
 
-* **T-gradient-mesh** with fixed blob centers (`at=`), blurred at sigma 42, then a streaky
-  cloud layer in soft-light at 40% to pull the blobs into fluid bands.
-* Slanted extended type: there is no extended italic among the system fonts, so each line
-  is set in a heavy wide face and sheared with `transform skew --x -12`; line 3 is first
-  stretched to 1.45x its width with `transform scale --size 620x119`. Both steps turn the
-  text into pixels: do them last, after the wording is final.
+* **T-gradient-mesh** with fixed blob centers (`at=`), blurred at sigma 42, then one
+  streaky cloud layer (`fill noise --as-layer`, 2 octaves, `--warp 76`, `--stretch 0.5`) in
+  soft-light at 40% to pull the blobs into fluid bands.
+* Slanted extended type (**T-stretch-type**): there is no extended italic among the system
+  fonts, so each line is set in a heavy wide face with `--style italic`. The face has no
+  italic, so pixelox slants it about 12 degrees and warns PXW4002; that is expected. Line
+  3 is also widened with `--scale-x 125.8%` and sized with `--fit-width 625`. Every line
+  stays live text.
 * **T-block-shadow** on line 3: a flat white copy at offset -8,8 px, no stroke.
 * **T-brush-swash** in cyan, 20% W wide, tilted -4 degrees, as the tag.
 * Scribble: one `shape path` with a loop and a long tail, stroke only.
 * No grain and no vignette: the surface is glossy.
-* **T-stretch-type** in [techniques.md](../techniques.md) is the tested library version of the stretched, slanted, or fattened lettering; start from it when reusing this idea.
 * **T-cutout-drop-shadow**: the cutouts carry a soft drop shadow (see the recipe).
 
 ## 8. Hierarchy and eye path
@@ -133,52 +134,32 @@ round logo) are your images here.
 
 ```bash
 pixelox render js scripts/blobs.js -o mesh.png --size 1080x1080 --param bg='#de4fa5' --param colors='#6762e0,#7d50ce,#6621a9,#6762e0,#f03481,#fda4b9,#d235dc,#f5438b,#f7dfd5,#c03bb2' --param at='0.4,0.0;0.0,0.0;1.0,0.05;0.7,0.02;0.0,0.42;0.5,0.6;0.95,0.55;0.95,0.82;0.05,1.0;1.0,1.0' --param size=0.55 --param vary=0 --param alpha=1
-pixelox render js scripts/clouds.js -o flow.png --size 1080x1080 --seed 9 --param lo='#3a1a9a' --param hi='#ffd9ec' --param scale=1.6 --param octaves=2 --param warp=1.9 --param stretch=0.5 --param contrast=1.6
 pixelox render js scripts/brush.js -o tag.png --size 230x150 --seed 5 --param color='#04cae5' --param bristles=160 --param passes=3 --param rough=0.6 --param dry=0.2
 pixelox new -o launch.pxo --size 1080x1080 --fill '#de4fa5'
 pixelox comp place launch.pxo mesh.png --in-place --as Mesh --fit cover
 pixelox filter gaussian launch.pxo --in-place --layer Mesh --sigma 42
-pixelox comp place launch.pxo flow.png --in-place --as Flow --fit cover
-pixelox filter gaussian launch.pxo --in-place --layer Flow --sigma 14
-pixelox layer blend launch.pxo --in-place --layer Flow --mode soft-light
-pixelox layer opacity launch.pxo --in-place --layer Flow --value 40
+pixelox fill noise launch.pxo --in-place --as-layer --name Flow --seed 9 --scale 62% --octaves 2 --warp 76 --stretch 0.5 --angle 90 --contrast 10 --stops '#3a1a9a,#ffd9ec' --blend soft-light --opacity 40
 pixelox comp place launch.pxo logo.png --in-place --as Logo --size 92x --at 7%,6.4%
-pixelox text add launch.pxo --in-place --name Address --content $'12 Example Close,\nopposite the town hall,\nYour District 00000.' --font "Avenir Next" --weight 500 --style italic --size 2.3% --tracking 20 --leading 125% --color '#ffffff' --at 58%,13% --anchor l
-pixelox text add launch.pxo --in-place --name H1 --content "Hello" --font "Arial Black" --size 8.2% --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer H1 --x -12
-pixelox transform move launch.pxo --in-place --layer H1 --to 28%,21% --anchor tl
-pixelox text add launch.pxo --in-place --name H2 --content "Riverside" --font "Arial Black" --size 8.2% --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer H2 --x -12
-pixelox transform scale launch.pxo --in-place --layer H2 --size 635x
-pixelox transform move launch.pxo --in-place --layer H2 --to 17%,27.3% --anchor tl
-pixelox text add launch.pxo --in-place --name H3 --content "HOPE" --font "Arial Black" --size 14% --color '#fbea49'
-pixelox transform scale launch.pxo --in-place --layer H3 --size 600x119
-pixelox transform skew launch.pxo --in-place --layer H3 --x -12
+pixelox text add launch.pxo --in-place --name Address --content $'12 Example Close,\nopposite the town hall,\nYour District 00000.' --font @geometric-sans --weight 500 --style italic --size 2.3% --tracking 20 --leading 125% --color '#ffffff' --at 58%,13% --anchor l
+pixelox text add launch.pxo --in-place --name H1 --content "Hello" --font @heavy-wide --style italic --size 8.2% --color '#ffffff' --at 28%,21% --anchor tl --anchor-to ink
+pixelox text add launch.pxo --in-place --name H2 --content "Riverside" --font @heavy-wide --style italic --fit-width 635 --color '#ffffff' --at 17%,27.3% --anchor tl --anchor-to ink
+pixelox text add launch.pxo --in-place --name H3 --content "HOPE" --font @heavy-wide --style italic --scale-x 125.8% --fit-width 625 --color '#fbea49' --at 10%,35% --anchor tl --anchor-to ink
 pixelox fx drop-shadow launch.pxo --in-place --layer H3 --offset=-8,8 --blur 0 --color '#ffffff' --blend normal --opacity 100
-pixelox transform move launch.pxo --in-place --layer H3 --to 10%,35% --anchor tl
 pixelox comp place launch.pxo tag.png --in-place --as Tag --at 77%,40% --anchor c
 pixelox transform rotate launch.pxo --in-place --layer Tag --degrees -4
-pixelox text add launch.pxo --in-place --name TagText --content $'now\nopen' --font "Arial Black" --size 4.4% --leading 105% --align center --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer TagText --x -12
-pixelox transform move launch.pxo --in-place --layer TagText --to 77%,40% --anchor c
+pixelox text add launch.pxo --in-place --name TagText --content $'now\nopen' --font @heavy-wide --style italic --size 4.4% --leading 105% --align center --color '#ffffff' --at 77%,40% --anchor c --anchor-to ink
 pixelox shape path launch.pxo --in-place --name Scribble --d 'M 90 960 C 40 880 190 820 330 850 C 440 875 330 960 190 950 C 120 945 150 900 260 905 C 480 915 700 900 900 940' --fill none --stroke '#ffffff' --stroke-width 5
 pixelox comp place launch.pxo subject2.png --in-place --as Woman --size x560 --at 67%,100% --anchor b
 pixelox comp place launch.pxo subject.png --in-place --as Man --size x560 --at 41%,100% --anchor b
-pixelox text add launch.pxo --in-place --name Weekday --content $'Every\nSunday' --font "Arial Black" --size 2.6% --leading 110% --align center --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer Weekday --x -12
-pixelox transform move launch.pxo --in-place --layer Weekday --to 13%,73% --anchor c
-pixelox text add launch.pxo --in-place --name Time --content "9am" --font "Arial Black" --size 4.2% --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer Time --x -12
-pixelox transform move launch.pxo --in-place --layer Time --to 85%,62.5% --anchor c
-pixelox text add launch.pxo --in-place --name TimeWord --content "sharp" --font "Arial Black" --size 3.3% --color '#ffffff'
-pixelox transform skew launch.pxo --in-place --layer TimeWord --x -12
-pixelox transform move launch.pxo --in-place --layer TimeWord --to 85%,66.5% --anchor c
+pixelox text add launch.pxo --in-place --name Weekday --content $'Every\nSunday' --font @heavy-wide --style italic --size 2.6% --leading 110% --align center --color '#ffffff' --at 13%,73% --anchor c --anchor-to ink
+pixelox text add launch.pxo --in-place --name Time --content "9am" --font @heavy-wide --style italic --size 4.2% --color '#ffffff' --at 85%,62.5% --anchor c --anchor-to ink
+pixelox text add launch.pxo --in-place --name TimeWord --content "sharp" --font @heavy-wide --style italic --size 3.3% --color '#ffffff' --at 85%,66.5% --anchor c --anchor-to ink
 pixelox export launch.pxo -o launch.png
 ```
 
-Change first: the three headline strings (keep line 3 at 3 to 5 letters; it is stretched
-to a fixed 600 px), then the nine mesh colors. With a registered extended face (Unbounded
-or Syne), set all lines in it with `--style italic` and drop the scale and skew steps.
+Change first: the three headline strings (keep line 3 at 3 to 5 letters; it is fitted to
+a fixed 625 px), then the nine mesh colors. With a registered extended face (Unbounded or
+Syne), set all lines in it, keep `--style italic`, and drop `--scale-x` from line 3.
 
 ## 10. Variations and pairings
 
@@ -200,8 +181,6 @@ or Syne), set all lines in it with `--style italic` and drop the scale and skew 
   keep the flow layer; the boundaries must be long curves.
 * Yellow on the pale pink center has low contrast. Keep line 3 over the saturated pink
   (left of center) and keep the white offset shadow; it is what holds the edge.
-* Skewing before the wording is final: skew and non-uniform scale rasterize the text. Set
-  the copy first, slant last.
 * Faces of very different sizes or heights. Scale both heads to the same height (about
   17% H from chin to hair) and line up the eyes.
 * Adding a third accent color. Yellow and cyan are already at the limit; the time and

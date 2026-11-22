@@ -117,7 +117,8 @@ at once, so no cutout needs a clean bottom.
 * Tiles: a photo placed over a rectangle and clipped to it (`layer clip`), then
   `adjust bw`. One path with two sub-rectangles makes both side tiles.
 * **T-photo-fade**: ground color, 43 to 56.5% H, above tiles and performers, below the
-  names and the headline.
+  names and the headline. It is the gradient-layer form, not a mask, because one layer
+  fades all five pictures at once.
 * Top glow: a linear gradient layer, amber with 95% alpha at the top edge, brown with 60%
   at 10% H, transparent at 24% H.
 * **T-fit-width** for the headline (71% W); **T-script-overlap** in its centered, upright
@@ -167,28 +168,24 @@ pixelox fx overlay vespers.pxo --in-place --layer Dove1 --color '#f4f4f2'
 pixelox comp place vespers.pxo illustration.png --in-place --as Dove2 --size 175x --at 87.5%,28% --anchor c
 pixelox fx copy vespers.pxo --in-place --from Dove1 --to Dove2
 pixelox comp place vespers.pxo logo.png --in-place --as Logo --size 66x --at 50%,3.7% --anchor c
-pixelox text add vespers.pxo --in-place --name Brand --content "YOUR CHURCH" --font "Avenir Next" --weight 700 --size 2.2% --color '#ffffff' --at 50%,8.3% --anchor c
+pixelox text add vespers.pxo --in-place --name Brand --content "YOUR CHURCH" --font @geometric-sans --weight 700 --size 2.2% --color '#ffffff' --at 50%,8.3% --anchor c
 pixelox shape path vespers.pxo --in-place --name Pills --d 'M 130 89 H 216 A 22 22 0 0 1 216 133 H 130 A 22 22 0 0 1 130 89 Z M 864 89 H 950 A 22 22 0 0 1 950 133 H 864 A 22 22 0 0 1 864 89 Z' --fill none --stroke '#e9a33b' --stroke-width 2
 pixelox shape path vespers.pxo --in-place --name PillDots --d 'M 136 111 H 212 M 870 111 H 946' --fill none --stroke '#e9a33b' --stroke-width 9 --dash 0,25 --cap round
 pixelox shape path vespers.pxo --in-place --name SideDots --d 'M 90 1188 V 1312 M 988 1188 V 1312' --fill none --stroke '#e9a33b' --stroke-width 8 --dash 0,61 --cap round
 pixelox shape star vespers.pxo --in-place --name Spark1 --center 72%,2.5% --points 4 --outer 22 --inner 5 --fill '#ffffff'
 pixelox shape star vespers.pxo --in-place --name Spark2 --center 7.5%,28.5% --points 4 --outer 26 --inner 6 --fill '#f0a030'
 pixelox shape star vespers.pxo --in-place --name Spark3 --center 86%,74.5% --points 4 --outer 20 --inner 5 --fill '#ffffff'
-pixelox text add vespers.pxo --in-place --name NameL --content $'Firstname\nLastname' --font "Avenir Next" --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 18%,50.2% --anchor c
-pixelox text add vespers.pxo --in-place --name NameR --content $'Firstname\nLastname' --font "Avenir Next" --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 81.5%,50.2% --anchor c
-pixelox text add vespers.pxo --in-place --name Headline --content "GRACE" --font Didot --weight 700 --size 12% --color '#ffffff'
-pixelox transform scale vespers.pxo --in-place --layer Headline --size 767x
-pixelox transform move vespers.pxo --in-place --layer Headline --to 50%,55.2% --anchor t
-pixelox text add vespers.pxo --in-place --name Script --content "Vespers" --font "Snell Roundhand" --weight 700 --size 12% --color '#e3a54c'
-pixelox transform scale vespers.pxo --in-place --layer Script --size 520x
-pixelox transform move vespers.pxo --in-place --layer Script --to 50%,70.5% --anchor c
-pixelox text add vespers.pxo --in-place --name Date --content "18.09.2031" --font "Avenir Next" --weight 700 --size 3.6% --color '#e9a33b' --at 13.4%,82.6% --anchor l
-pixelox text add vespers.pxo --in-place --name Info --content $'Doors open 06.30 PM - 09.00 PM\nAt 12 Example Road, Your City' --font "Avenir Next" --weight 500 --size 1.9% --leading 165% --color '#ffffff' --at 13.4%,89.4% --anchor l
+pixelox text add vespers.pxo --in-place --name NameL --content $'Firstname\nLastname' --font @geometric-sans --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 18%,50.2% --anchor c
+pixelox text add vespers.pxo --in-place --name NameR --content $'Firstname\nLastname' --font @geometric-sans --weight 700 --size 2.3% --leading 110% --align center --color '#ffffff' --at 81.5%,50.2% --anchor c
+pixelox text add vespers.pxo --in-place --name Headline --content "GRACE" --font @didone --weight 700 --fit-width 767 --color '#ffffff' --at 50%,55.2% --anchor t --anchor-to ink
+pixelox text add vespers.pxo --in-place --name Script --content "Vespers" --font @script-formal --weight 700 --fit-width 520 --color '#e3a54c' --at 50%,70.5% --anchor c --anchor-to ink
+pixelox text add vespers.pxo --in-place --name Date --content "18.09.2031" --font @geometric-sans --weight 700 --size 3.6% --color '#e9a33b' --at 13.4%,82.6% --anchor l
+pixelox text add vespers.pxo --in-place --name Info --content $'Doors open 06.30 PM - 09.00 PM\nAt 12 Example Road, Your City' --font @geometric-sans --weight 500 --size 1.9% --leading 165% --color '#ffffff' --at 13.4%,89.4% --anchor l
 pixelox shape line vespers.pxo --in-place --name Rule --from 61.5%,80.7% --to 67.5%,80.7% --stroke '#e9a33b' --stroke-width 3
-pixelox text add vespers.pxo --in-place --name Blurb --content $'An evening of sung prayer,\nshort readings, and quiet\nfor the whole city. Come\nas you are and bring\na friend along with you.' --font "Avenir Next" --weight 500 --size 1.45% --leading 138% --color '#ffffff' --at 61.5%,82.2% --anchor tl
+pixelox text add vespers.pxo --in-place --name Blurb --content $'An evening of sung prayer,\nshort readings, and quiet\nfor the whole city. Come\nas you are and bring\na friend along with you.' --font @geometric-sans --weight 500 --size 1.45% --leading 138% --color '#ffffff' --at 61.5%,82.2% --anchor tl
 pixelox shape rect vespers.pxo --in-place --name Band --rect 0,95.5%,100%x4.5% --fill '#f8a119'
 pixelox fx overlay vespers.pxo --in-place --layer Band --stops '#fc881c@0,#f8a119@0.4,#f7a01a@1' --angle 0
-pixelox text add vespers.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Avenir Next" --weight 500 --size 1.7% --tracking 120 --color '#3a2208' --at 50%,97.8% --anchor c
+pixelox text add vespers.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @geometric-sans --weight 500 --size 1.7% --tracking 120 --color '#3a2208' --at 50%,97.8% --anchor c
 pixelox export vespers.pxo -o vespers.png
 ```
 
@@ -209,7 +206,7 @@ band together). With real white dove cutouts, delete the two `fx` lines after `D
 * Jazz night, gospel concert, candlelight carols, gala dinner, memorial service. A 4:5
   version drops the blurb and puts the date and place on one centered line.
 * Pairs with T-bokeh behind the tiles, T-light-leak instead of the linear glow,
-  T-paper-grain (soft-light, 35%) over the photos, and T-frame-border as a thin gold
+  T-paper-grain (amount 12) over everything, and T-frame-border as a thin gold
   keyline when there are no doves to break the edges.
 
 ## 11. Pitfalls

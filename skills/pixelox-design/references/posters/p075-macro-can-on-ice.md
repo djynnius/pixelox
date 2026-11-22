@@ -38,7 +38,8 @@ margin frames it on three sides.
 
 1. Paper: warm cream `#e8e0d6`, full canvas (shows only as the margin).
 2. Ice: crushed ice and clear cubes in blue-gray `#7b8592` to white, filling the photo
-   area `4.5%,3%,90.5% x 97%`; soft focus.
+   area `4.5%,3%,90.5% x 97%`; large cubes at the top right, the left edge, and the
+   bottom left.
 3. Can: white `#e3dfda` aluminum can, lower third printed red `#d03233`, lying at -18
    degrees, about 85% W wide, cropped by the frame at the top-left and bottom-right. Lit
    from the upper left; the lower right falls into deep red-brown shadow `#45222f`.
@@ -79,22 +80,26 @@ A single macro product photograph: studio flash from the upper left, the can wet
 frosted, ice around it. The crop is the idea: the product is bigger than the page, tilted,
 and cut on two sides, so it feels close enough to grab. For a build, a product cutout is
 scaled until its body is 80 to 90% W wide, rotated -18 degrees, and laid over a cold,
-marbled ground; the paper margin is drawn last so it trims the oversized cutout.
+marbled ground with rendered ice cubes and beads of condensation; the paper margin is
+drawn last so it trims the oversized cutout. The ice and the beads are rendered, not
+photographed: clean cubes and round drops, not the crushed ice of the original.
 
 ## 7. Effects and textures
 
 * **T-frame-border**: the margin is three cream bars drawn on top (left, right, top), not a
   rectangle underneath, so they crop the photo and the oversized product.
-* Ice: `clouds.js` in blue-gray to white (`scale=5`, `warp=1.4`, `contrast=1.8`) blurred a
-  little; translucent `rect` shards from `particles.js` over it for cube facets.
-* Condensation: `particles.js` rings and dots in white over the product, clipped to it.
+* Crushed ice ground: `fill noise --as-layer` in blue-gray to white (`--scale 20%`,
+  `--warp 56`, `--contrast 14`).
+* **T-ice-cubes**: `render ice`, three groups of large cubes (20% of the short side,
+  `--frost 40`): two before the can, at the top right and the left edge, and one after it
+  at the bottom left, so the can lies in the ice, not on it.
+* **T-condensation**: `render droplets --layer Can --density 70 --trickles 0 --mist 45`,
+  run after the can is placed and rotated. No trickles: the can is lying down.
 * **T-cutout-drop-shadow**, soft, under the can onto the ice.
 * **T-color-grade** for age: lifted blacks and a warm cast (`adjust curves` with the black
   point at 14; `adjust color-balance` 8,0,-14 in the highlights).
-* **T-paper-grain**, amount 18, overlay, 35%.
+* **T-paper-grain**: `filter grain --as-layer --amount 15`, last.
 * A soft dark gradient in the bottom-right corner keeps the white slogan readable.
-* **T-ice-cubes** in [techniques.md](../techniques.md) is the tested library version of the ice cubes (`particles.js` with `shape=cube` draws fuller cubes than the shards here); start from it when reusing this idea.
-* **T-condensation** in [techniques.md](../techniques.md) is the tested library version of the beads of condensation on the product (`particles.js` with `shape=drop`); start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
 
@@ -112,19 +117,15 @@ headline at almost four times the size of the type.
 `x1900`).
 
 ```bash
-pixelox render js scripts/clouds.js -o ice.png --size 1080x1350 --seed 5 --param lo='#6f8296' --param hi='#f6f8fa' --param scale=5 --param octaves=5 --param warp=1.4 --param contrast=1.8
-pixelox render js scripts/particles.js -o cubes.png --size 1080x1350 --seed 3 --param shape=rect --param colors='#ffffff,#dbe7f0,#b6c6d6' --param count=60 --param min=5 --param max=11 --param jitter=180 --param amin=0.25 --param amax=0.6
-pixelox render js scripts/particles.js -o beads.png --size 1080x1350 --seed 9 --param shape=ring --param colors='#ffffff,#eef3f7' --param count=260 --param min=0.5 --param max=2.6 --param amin=0.5 --param amax=0.95
 pixelox new -o ad.pxo --size 1080x1350 --fill '#e8e0d6'
-pixelox comp place ad.pxo ice.png --in-place --as Ice --fit cover
-pixelox filter gaussian ad.pxo --in-place --layer Ice --sigma 3
-pixelox comp place ad.pxo cubes.png --in-place --as Cubes --fit cover
+pixelox fill noise ad.pxo --in-place --as-layer --name Ice --seed 5 --scale 20% --octaves 5 --warp 56 --contrast 14 --stops '#6f8296,#f6f8fa'
+pixelox render ice ad.pxo --in-place --name IceRight --at 90%,28% --count 6 --size 20% --spread 26% --frost 40 --seed 11
+pixelox render ice ad.pxo --in-place --name IceLeft --at 6%,62% --count 5 --size 20% --spread 24% --frost 40 --seed 14
 pixelox comp place ad.pxo product.png --in-place --as Can --size x3300 --at 50%,52% --anchor c
 pixelox transform rotate ad.pxo --in-place --layer Can --degrees -18
 pixelox fx drop-shadow ad.pxo --in-place --layer Can --offset 30,40 --blur 80 --color '#1c2233' --opacity 50
-pixelox comp place ad.pxo beads.png --in-place --as Beads --fit cover
-pixelox layer clip ad.pxo --in-place --layer Beads
-pixelox layer opacity ad.pxo --in-place --layer Beads --value 70
+pixelox render droplets ad.pxo --in-place --layer Can --density 70 --trickles 0 --mist 45 --seed 9
+pixelox render ice ad.pxo --in-place --name IceFront --at 10%,90% --count 3 --size 21% --spread 14% --frost 40 --seed 14
 pixelox layer add ad.pxo --in-place --name CornerShade
 pixelox fill gradient ad.pxo --in-place --layer CornerShade --kind radial --from 72%,96% --to 72%,60% --stops '#2a0f1acc@0,#2a0f1a00@1'
 pixelox adjust curves ad.pxo --in-place --points '0,14 64,62 128,130 192,200 255,246' --as-layer --name Faded
@@ -132,20 +133,17 @@ pixelox adjust color-balance ad.pxo --in-place --highlights 8,0,-14 --as-layer -
 pixelox shape rect ad.pxo --in-place --name MarginLeft --rect 0,0,4.5%x100% --fill '#e8e0d6'
 pixelox shape rect ad.pxo --in-place --name MarginRight --rect 95.5%,0,4.5%x100% --fill '#e8e0d6'
 pixelox shape rect ad.pxo --in-place --name MarginTop --rect 0,0,100%x3% --fill '#e8e0d6'
-pixelox text add ad.pxo --in-place --name Slogan --content $'BRAND.\nMADE FOR THE\nLONGEST SUMMERS.' --font "Avenir Next" --weight 400 --size 3.3% --tracking -30 --leading 112% --align center --color '#ffffff'
-pixelox transform scale ad.pxo --in-place --layer Slogan --size 540x
-pixelox transform move ad.pxo --in-place --layer Slogan --to 64%,92.4% --anchor c
+pixelox text add ad.pxo --in-place --name Slogan --content $'BRAND.\nMADE FOR THE\nLONGEST SUMMERS.' --font @geometric-sans --weight 400 --fit-width 540 --tracking -30 --leading 112% --align center --color '#ffffff' --at 64%,92.4% --anchor c --anchor-to ink
 pixelox fx drop-shadow ad.pxo --in-place --layer Slogan --offset 0,2 --blur 10 --color '#200a10' --opacity 45
-pixelox layer add ad.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise ad.pxo --in-place --layer Grain --amount 18 --monochrome
-pixelox layer blend ad.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity ad.pxo --in-place --layer Grain --value 35
+pixelox filter grain ad.pxo --in-place --as-layer --name Grain --amount 15
 pixelox export ad.pxo -o ad.png
 ```
 
 Change first: the product scale and angle (the logo on the pack should land near the
 center of the canvas), then the slogan lines, then how old it looks (the `Faded` curve and
-the grain amount).
+the grain amount). Ice and droplets show what is behind them when their command runs:
+after changing the product, its scale, or its angle, run the recipe again from the top.
+If a cube covers the logo, change that group's `--seed`.
 
 ## 10. Variations and pairings
 
@@ -168,5 +166,8 @@ the grain amount).
   the darkest area and add the corner shade.
 * Pure white paper and pure white highlights make it look new. Use cream `#e8e0d6` for the
   margin and lift the blacks.
-* Beads drawn at one size look like a dot pattern. Use a wide size range (0.5 to 2.6% of
-  the short side) and clip them to the product.
+* Beads added before the can is rotated, or kept after it is swapped: they no longer
+  match the pack. `render droplets` goes after `transform rotate`; run it again when the
+  product changes.
+* Ice cubes on a flat pale ground look like gray stickers. The marbled blue-gray noise
+  under them gives them something to refract.

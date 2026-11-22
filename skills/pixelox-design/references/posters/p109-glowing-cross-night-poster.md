@@ -51,7 +51,8 @@ main word of the title is colored by it.
    3.2% W thick, 19% H tall, crossbar 17% W wide at one third of its height.
 6. Light streak: a thin orange anamorphic flare through the cross's center, running from
    18% W, 6.5% H down to 81% W, 33.5% H (about 31 degrees), with faint parallel echoes.
-7. Mist: pale gray-blue wisps drifting around the rocks, 30%.
+7. Mist: pale gray-blue cloud drifting across the sky and around the rocks, 30% (in the
+   recipe it sits under the fade so it sinks into black with the scene).
 8. Tagline: one line of tiny, very widely tracked serif caps in pale gray-blue at the top.
 9. Rules: two white 2 px lines at 54% H, from 23 to 40% W and from 59 to 78% W.
 10. Script word: a white bold script article between the rules, 4.5% H tall.
@@ -105,18 +106,21 @@ the `movie` lens for the streak. Darken and cool the rest first (`adjust levels 
 
 ## 7. Effects and textures
 
-* **T-photo-fade** to black, ramp 40 to 58% H.
+* **T-photo-fade** to black, ramp 40 to 58% H: here a black gradient layer above the scene
+  and the mist, so both sink into the ground together.
 * Glow: `fill gradient --kind radial`, `#ffe2b0` to `#e3883a` at alpha 0, screen.
 * Cross: one `shape path` (two bars) in dark brown with `fx outer-glow` (orange, blur 46)
   and a 2 px orange `fx stroke` for the burning edge.
 * **T-lens-flare**: `--lens movie`, tinted `#ffb060`, then the flare layer rotated 31
   degrees about the light's center.
-* **T-smoke** wisps (cool gray), screen, 30%.
+* **T-smoke** as low cloud: one `fill noise --as-layer` line (clouds kind, `--scale 33%`,
+  `--warp 56`, `--stretch 0.6` so it drifts sideways, `--bias=-36` to thin it), cool gray
+  `#c9d2e0`, screen, 30%.
 * **T-script-overlap**, without the overlap: script word centered between two **T-rules**
   lines.
 * **T-gradient-type** on the big word: `fx overlay --style radial`, peach center to dark
   brown edge; **T-fit-width** makes the big word and the spaced line equally wide.
-* **T-paper-grain**, amount 10, soft-light 35%.
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added last.
 
 ## 8. Hierarchy and eye path
 
@@ -133,14 +137,11 @@ is a mountain dusk). The cross is drawn; replace it with your own object or dele
 the photo already has one.
 
 ```bash
-pixelox render js scripts/clouds.js -o wisps.png --size 1080x1528 --seed 8 --param lo=transparent --param hi='#c9d2e0' --param scale=3 --param warp=1.4 --param stretch=0.6 --param bias=-0.18
 pixelox new -o night.pxo --size 1080x1528 --fill '#000000'
 pixelox comp place night.pxo photo.png --in-place --as Scene --size 1080x --at 0,0
 pixelox adjust levels night.pxo --in-place --layer Scene --gamma 0.45 --out-white 170
 pixelox adjust color-balance night.pxo --in-place --layer Scene --shadows=-8,0,14 --midtones=-6,0,8
-pixelox comp place night.pxo wisps.png --in-place --as Mist --fit cover
-pixelox layer blend night.pxo --in-place --layer Mist --mode screen
-pixelox layer opacity night.pxo --in-place --layer Mist --value 30
+pixelox fill noise night.pxo --in-place --as-layer --name Mist --seed 8 --scale 33% --warp 56 --stretch 0.6 --bias=-36 --stops 'transparent,#c9d2e0' --blend screen --opacity 30
 pixelox layer add night.pxo --in-place --name Fade
 pixelox fill gradient night.pxo --in-place --layer Fade --from 0,40% --to 0,58% --stops '#00000000@0,#000000ff@1'
 pixelox layer add night.pxo --in-place --name Glow
@@ -152,31 +153,25 @@ pixelox fx stroke night.pxo --in-place --layer Cross --width 2 --color '#ffb968'
 pixelox render lens-flare night.pxo --in-place --at 50%,18.4% --lens movie --brightness 90 --color '#ff9a3c' --name Flare
 pixelox transform rotate night.pxo --in-place --layer Flare --degrees 31 --around 540,281
 pixelox layer opacity night.pxo --in-place --layer Flare --value 75
-pixelox text add night.pxo --in-place --name Tagline --content "A NIGHT TO WATCH AND HOPE" --font Baskerville --weight 400 --size 1.25% --tracking 400 --color '#b9c0cc' --at 50%,5.6% --anchor c
+pixelox text add night.pxo --in-place --name Tagline --content "A NIGHT TO WATCH AND HOPE" --font @oldstyle --weight 400 --size 1.25% --tracking 400 --color '#b9c0cc' --at 50%,5.6% --anchor c
 pixelox shape line night.pxo --in-place --name RuleL --from 23%,54% --to 40%,54% --stroke '#ffffff' --stroke-width 2
 pixelox shape line night.pxo --in-place --name RuleR --from 59%,54% --to 78%,54% --stroke '#ffffff' --stroke-width 2
-pixelox text add night.pxo --in-place --name Script --content "The" --font "Snell Roundhand" --weight 900 --size 6.4% --color '#ffffff' --at 49.7%,53.6% --anchor c
-pixelox text add night.pxo --in-place --name Big --content "RISEN" --font "DIN Condensed" --weight 700 --size 15% --tracking 180 --color '#f0c29a'
-pixelox transform scale night.pxo --in-place --layer Big --size 583x
-pixelox transform move night.pxo --in-place --layer Big --to 50%,58.2% --anchor t
+pixelox text add night.pxo --in-place --name Script --content "The" --font @script-formal --weight 900 --size 6.4% --color '#ffffff' --at 49.7%,53.6% --anchor c
+pixelox text add night.pxo --in-place --name Big --content "RISEN" --font "DIN Condensed" --weight 700 --fit-width 583 --tracking 180 --color '#f0c29a' --at 50%,58.2% --anchor t --anchor-to ink
 pixelox fx overlay night.pxo --in-place --layer Big --style radial --stops '#f6cfa6@0,#d99a66@0.45,#4a3327@1'
-pixelox text add night.pxo --in-place --name Spaced --content "FOR ALL OF US" --font "Avenir Next Condensed" --weight 400 --size 3.4% --tracking 350 --color '#ffffff'
-pixelox transform scale night.pxo --in-place --layer Spaced --size 583x
-pixelox transform move night.pxo --in-place --layer Spaced --to 50%,73.4% --anchor c
-pixelox text add night.pxo --in-place --name Org --content $'YOUR CHURCH NAME\nCITY NAME' --font Baskerville --weight 400 --size 1.4% --tracking 200 --leading 150% --align center --color '#ffffff' --at 50%,81.4% --anchor c
-pixelox text add night.pxo --in-place --name Date --content "APRIL 9, 2031" --font Baskerville --weight 400 --size 1.65% --tracking 200 --color '#ffffff' --at 49%,84.8% --anchor r
+pixelox text add night.pxo --in-place --name Spaced --content "FOR ALL OF US" --font @condensed --weight 400 --fit-width 583 --tracking 350 --color '#ffffff' --at 50%,73.4% --anchor c --anchor-to ink
+pixelox text add night.pxo --in-place --name Org --content $'YOUR CHURCH NAME\nCITY NAME' --font @oldstyle --weight 400 --size 1.4% --tracking 200 --leading 150% --align center --color '#ffffff' --at 50%,81.4% --anchor c
+pixelox text add night.pxo --in-place --name Date --content "APRIL 9, 2031" --font @oldstyle --weight 400 --size 1.65% --tracking 200 --color '#ffffff' --at 49%,84.8% --anchor r
 pixelox shape line night.pxo --in-place --name Bar --from 50.6%,84.1% --to 50.6%,85.5% --stroke '#ffffff' --stroke-width 2
-pixelox text add night.pxo --in-place --name Time --content "8AM" --font Baskerville --weight 400 --size 1.65% --tracking 200 --color '#ffffff' --at 52.4%,84.8% --anchor l
-pixelox text add night.pxo --in-place --name FinePrint --content "ALL ARE WELCOME. DOORS OPEN HALF AN HOUR BEFORE THE SERVICE. PARKING IS FREE ON THE NORTH SIDE. CHILDREN MEET IN THE HALL. COFFEE AND BREAD ARE SHARED AFTERWARD." --font Baskerville --weight 400 --size 0.6% --tracking 40 --leading 140% --align center --box 230x110 --color '#e6e6e6' --at 50%,87.2% --anchor t
-pixelox layer add night.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise night.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend night.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity night.pxo --in-place --layer Grain --value 35
+pixelox text add night.pxo --in-place --name Time --content "8AM" --font @oldstyle --weight 400 --size 1.65% --tracking 200 --color '#ffffff' --at 52.4%,84.8% --anchor l
+pixelox text add night.pxo --in-place --name FinePrint --content "ALL ARE WELCOME. DOORS OPEN HALF AN HOUR BEFORE THE SERVICE. PARKING IS FREE ON THE NORTH SIDE. CHILDREN MEET IN THE HALL. COFFEE AND BREAD ARE SHARED AFTERWARD." --font @oldstyle --weight 400 --size 0.6% --tracking 40 --leading 140% --align center --box 230x110 --color '#e6e6e6' --at 50%,87.2% --anchor t
+pixelox filter grain night.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export night.pxo -o night.png
 ```
 
 Change first: the photo, then the glow and cross position (keep them on the axis), then
-the three title parts. The big word wants 4 to 6 letters.
+the three title parts. The big word wants 4 to 6 letters. Change the mist's `--seed` if a
+bright patch lands behind the tagline.
 
 ## 10. Variations and pairings
 

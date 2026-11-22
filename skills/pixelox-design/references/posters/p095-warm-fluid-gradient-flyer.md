@@ -7,7 +7,7 @@ style: [gradient-mesh, flat, minimal]
 format: portrait-4x5
 archetype: A-abstract-title
 palette: ['#f89a1e', '#f05e36', '#e03c75', '#ba468a', '#5c53a2', '#ffffff']
-techniques: [T-waves, T-pattern, T-frame-border, T-rules, T-vertical-type, T-fluid-ribbons]
+techniques: [T-waves, T-pattern, T-frame-border, T-rules, T-vertical-type, T-fluid-ribbons, T-icon-row]
 needs: nothing
 ---
 
@@ -58,7 +58,7 @@ The frame is what turns a loose pile of text lines into a poster.
 9. Inside the frame, centered: kicker, title line 1, title line 2, kind of event.
 10. Body rule: vertical, at 21.5% W from 72.5 to 89.5% H. Body text, five lines, indented
     to 24.7% W, top at 72.5% H. A "MORE INFO" label at 83.2% H followed by three small
-    outlined circles (social icons), 2.4% W each.
+    round outline icons (social links), 2.4% W each.
 11. Sideways line: lowercase, widely tracked, rotated -90, at 5% W from 76.5% up to 44% H.
 12. Right rule: vertical, at 95% W from 49 to 81% H.
 13. Web address, right-aligned to 94% W at 95% H.
@@ -105,8 +105,10 @@ inside the frame.
 
 None. The background is the image: a diagonal gradient under translucent wave bands
 (**T-waves** in fill mode, rendered on a 2000 px square and rotated 32 degrees so the band
-edges run diagonally and the square still covers the canvas). There are no photographs,
-icons, or logos apart from three small outlined circles that stand for social icons.
+edges run diagonally and the square still covers the canvas). There are no photographs
+or logos. The only icons are three small round glyphs after the "MORE INFO" label, drawn
+with `shape icon` (`globe`, `message-circle`, `at-sign`: neutral stand-ins, because brand
+logos are not in the icon set).
 
 ## 7. Effects and textures
 
@@ -122,6 +124,8 @@ icons, or logos apart from three small outlined circles that stand for social ic
 * **T-frame-border**, keyline variant: 5 px stroke, no fill.
 * **T-rules**: one short horizontal connector, two vertical rules. **T-vertical-type** for
   the sideways line.
+* **T-icon-row**, contact variant: three 26 px `shape icon` glyphs in white after the
+  "MORE INFO" label.
 * No grain and no shadows. Add T-paper-grain at low strength only if the gradient bands.
 * **T-fluid-ribbons** in [techniques.md](../techniques.md) is the tested library version of the flowing gradient ribbons (`scripts/ribbons.js` draws them directly); start from it when reusing this idea.
 
@@ -155,40 +159,36 @@ pixelox fill gradient flyer.pxo --in-place --layer Corner --kind radial --from 0
 pixelox comp place flyer.pxo dots1.png --in-place --as DotsTL --size 84x --at 5.5%,8% --anchor tl
 pixelox comp place flyer.pxo dots2.png --in-place --as DotsR --size 252x --at 70%,24% --anchor tl
 pixelox comp place flyer.pxo dots3.png --in-place --as DotsB --size 308x --at 29.5%,91.5% --anchor tl
-pixelox text add flyer.pxo --in-place --name Day --content "14" --font "Avenir Next" --weight 400 --size 10.4% --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer Day --to 21.5%,8.5% --anchor tl
-pixelox text add flyer.pxo --in-place --name Month --content "JUNE" --font "Avenir Next" --weight 700 --size 3.6% --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer Month --to 21.5%,18.8% --anchor tl
-pixelox text add flyer.pxo --in-place --name Tag --content "Open air on the river stage" --font "Avenir Next" --weight 700 --size 1.6% --tracking 60 --color '#ffffff' --at 21.5%,23.4% --anchor l
+pixelox text add flyer.pxo --in-place --name Day --content "14" --font @geometric-sans --weight 400 --size 10.4% --color '#ffffff' --at 21.5%,8.5% --anchor tl --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Month --content "JUNE" --font @geometric-sans --weight 700 --size 3.6% --color '#ffffff' --at 21.5%,18.8% --anchor tl --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Tag --content "Open air on the river stage" --font @geometric-sans --weight 700 --size 1.6% --tracking 60 --color '#ffffff' --at 21.5%,23.4% --anchor l
 pixelox shape line flyer.pxo --in-place --name RuleTop --from 42.5%,12% --to 62%,12% --stroke '#ffffff' --stroke-width 2
-pixelox text add flyer.pxo --in-place --name Weekday --content "SATURDAY" --font "Avenir Next" --weight 400 --size 2.9% --tracking 60 --color '#ffffff' --at 65%,12.2% --anchor l
-pixelox text add flyer.pxo --in-place --name Hours --content "18.00 - 02.00" --font "Avenir Next" --weight 600 --size 1.9% --color '#ffffff' --at 65%,15.4% --anchor l
+pixelox text add flyer.pxo --in-place --name Weekday --content "SATURDAY" --font @geometric-sans --weight 400 --size 2.9% --tracking 60 --color '#ffffff' --at 65%,12.2% --anchor l
+pixelox text add flyer.pxo --in-place --name Hours --content "18.00 - 02.00" --font @geometric-sans --weight 600 --size 1.9% --color '#ffffff' --at 65%,15.4% --anchor l
 pixelox shape rect flyer.pxo --in-place --name Frame --rect 21.5%,32.5%,57%x35% --fill none --stroke '#ffffff' --stroke-width 5
-pixelox text add flyer.pxo --in-place --name Kicker --content "LIVE" --font "Avenir Next" --weight 400 --size 2.2% --tracking 520 --color '#ffffff' --at 50.6%,38% --anchor c
-pixelox text add flyer.pxo --in-place --name H1 --content "GOLDEN" --font "Avenir Next" --weight 700 --size 7.6% --tracking 40 --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer H1 --to 50%,42% --anchor t
-pixelox text add flyer.pxo --in-place --name H2 --content "HOURS" --font "Avenir Next" --weight 700 --size 7.6% --tracking 40 --color '#ffffff'
-pixelox transform move flyer.pxo --in-place --layer H2 --to 50%,51% --anchor t
-pixelox text add flyer.pxo --in-place --name Kind --content "FESTIVAL" --font "Avenir Next" --weight 400 --size 2.2% --tracking 520 --color '#ffffff' --at 50.6%,61.5% --anchor c
+pixelox text add flyer.pxo --in-place --name Kicker --content "LIVE" --font @geometric-sans --weight 400 --size 2.2% --tracking 520 --color '#ffffff' --at 50%,38% --anchor c --anchor-to ink
+pixelox text add flyer.pxo --in-place --name H1 --content "GOLDEN" --font @geometric-sans --weight 700 --size 7.6% --tracking 40 --color '#ffffff' --at 50%,42% --anchor t --anchor-to ink
+pixelox text add flyer.pxo --in-place --name H2 --content "HOURS" --font @geometric-sans --weight 700 --size 7.6% --tracking 40 --color '#ffffff' --at 50%,51% --anchor t --anchor-to ink
+pixelox text add flyer.pxo --in-place --name Kind --content "FESTIVAL" --font @geometric-sans --weight 400 --size 2.2% --tracking 520 --color '#ffffff' --at 50%,61.5% --anchor c --anchor-to ink
 pixelox shape line flyer.pxo --in-place --name RuleBody --from 21.5%,72.5% --to 21.5%,89.5% --stroke '#ffffff' --stroke-width 3
-pixelox text add flyer.pxo --in-place --name Body --content $'Six bands and four DJs across two stages, from the first\nwarm-up set at sunset to the last record after midnight.\nFood trucks, a lakeside bar, and free water all night.\nGates open one hour before the first act. Bring a jacket:\nit gets cool once the sun is down.' --font "Avenir Next" --weight 600 --size 1.5% --leading 118% --color '#ffffff' --at 24.7%,72.2% --anchor tl
-pixelox text add flyer.pxo --in-place --name More --content "MORE INFO :" --font "Avenir Next" --weight 400 --size 1.5% --tracking 160 --color '#ffffff' --at 24.7%,83.2% --anchor l
-pixelox shape ellipse flyer.pxo --in-place --name Icon1 --rect 40.3%,82.25%,2.4%x1.9% --fill none --stroke '#ffffff' --stroke-width 2
-pixelox shape ellipse flyer.pxo --in-place --name Icon2 --rect 43.7%,82.25%,2.4%x1.9% --fill none --stroke '#ffffff' --stroke-width 2
-pixelox shape ellipse flyer.pxo --in-place --name Icon3 --rect 47.1%,82.25%,2.4%x1.9% --fill none --stroke '#ffffff' --stroke-width 2
-pixelox text add flyer.pxo --in-place --name SideLine --content "sound from dusk to dawn" --font "Avenir Next" --weight 600 --size 1.6% --tracking 300 --color '#ffffff' --at 50%,50% --anchor c
+pixelox text add flyer.pxo --in-place --name Body --content $'Six bands and four DJs across two stages, from the first\nwarm-up set at sunset to the last record after midnight.\nFood trucks, a lakeside bar, and free water all night.\nGates open one hour before the first act. Bring a jacket:\nit gets cool once the sun is down.' --font @geometric-sans --weight 600 --size 1.5% --leading 118% --color '#ffffff' --at 24.7%,72.2% --anchor tl
+pixelox text add flyer.pxo --in-place --name More --content "MORE INFO :" --font @geometric-sans --weight 400 --size 1.5% --tracking 160 --color '#ffffff' --at 24.7%,83.2% --anchor l
+pixelox shape icon flyer.pxo globe --in-place --name Icon1 --size 26 --at 41.5%,83.2% --anchor c --color '#ffffff'
+pixelox shape icon flyer.pxo message-circle --in-place --name Icon2 --size 26 --at 44.9%,83.2% --anchor c --color '#ffffff'
+pixelox shape icon flyer.pxo at-sign --in-place --name Icon3 --size 26 --at 48.3%,83.2% --anchor c --color '#ffffff'
+pixelox text add flyer.pxo --in-place --name SideLine --content "sound from dusk to dawn" --font @geometric-sans --weight 600 --size 1.6% --tracking 300 --color '#ffffff' --at 50%,50% --anchor c
 pixelox transform rotate flyer.pxo --in-place --layer SideLine --degrees -90
 pixelox transform move flyer.pxo --in-place --layer SideLine --to 5%,76.5% --anchor bl
 pixelox shape line flyer.pxo --in-place --name RuleRight --from 95%,49% --to 95%,81% --stroke '#ffffff' --stroke-width 3
-pixelox text add flyer.pxo --in-place --name Site --content "www.example.com" --font "Avenir Next" --weight 600 --size 1.6% --tracking 160 --color '#ffffff' --at 94%,95.1% --anchor r
+pixelox text add flyer.pxo --in-place --name Site --content "www.example.com" --font @geometric-sans --weight 600 --size 1.6% --tracking 160 --color '#ffffff' --at 94%,95.1% --anchor r
 pixelox export flyer.pxo -o flyer.png
 ```
 
 Change first: the two title words (5 to 7 letters each; the longer one must stay under 47%
 W, which leaves 5% W of air inside the frame on both sides), then the eight band colors,
 then `--seed` on the waves render until no band edge runs through the middle of a word.
-The tracked center lines are placed at 50.6% W, not 50%: wide tracking adds space after the
-last letter, and the 0.6% shift puts the visible letters back on the axis.
+The tracked center lines use `--anchor-to ink`: wide tracking adds space after the last
+letter, and anchoring by the ink puts the visible letters on the 50% W axis.
 
 ## 10. Variations and pairings
 

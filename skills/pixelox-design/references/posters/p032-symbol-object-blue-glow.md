@@ -47,7 +47,7 @@ headline and nothing competes with it.
    35% W, 29% H, dissolving to nothing at its lower edge and to the right; a few thin
    wisps continue to 78% W at 33% H, behind the object.
 5. Floor glow: a flat, bright cyan ellipse `#43bbe6`, `28%,63.5%,44% x 6%`, heavily
-   feathered: the light the object "stands" on.
+   blurred: the light the object "stands" on.
 6. Object: `29.3%,36%,42% x 29.5%`. A glossy yellow hard hat `#f0c020` (36.8 to 57.4% H)
    on a globe (blue ocean, green land `#3aa23a`, 30 to 67% W, 44 to 65% H); a black
    headset band arcs over the hat from the top to the right ear and its microphone boom
@@ -100,7 +100,8 @@ worn over it. It is rendered or retouched to look like one studio object with on
 (top left) and one soft ground reflection. For a build, supply the finished composite as
 one cutout, or use any single object that sums up the company (a tool, a device, a
 model building). The cloud is a real sky photo cut out softly; the recipe draws a
-stand-in cloud with the fractal noise generator of **T-smoke** at high contrast.
+stand-in cloud with `fill noise` (the generator behind **T-smoke**, here in its default
+`clouds` kind at raised contrast).
 
 ## 7. Effects and textures
 
@@ -109,11 +110,12 @@ stand-in cloud with the fractal noise generator of **T-smoke** at high contrast.
   same gradient.
 * **T-pattern**, `kind=grid`, `cell=12`, `weight=0.1`, black at alpha 0.35, placed under a
   second, smaller radial glow so it only shows toward the edges.
-* Cloud: `clouds.js` with `lo=transparent`, `hi='#ffffff'`, `contrast=2.2`,
-  `bias=-0.1`, masked with a feathered ellipse (`select ellipse --feather 60`, then
-  `mask add --from @sel`) and softened with `--sigma 3`.
-* Floor glow: feathered ellipse filled on an empty layer (the unclipped form of the
-  **T-spotlight** shadow, here used as light).
+* Cloud: `fill noise --as-layer` with `--stops 'transparent,#ffffff'`, `--scale 25%`,
+  `--contrast 23`, `--bias 5`, masked with a feathered ellipse (`select ellipse --feather
+  60`, then `mask add --from @sel`). A gradient mask would be round; the ellipse keeps the
+  cloud bank wide and flat.
+* Floor glow: a `shape ellipse` in `#5cc8ee` at 75%, blurred with `filter gaussian --sigma
+  23` (the **T-spotlight** shadow, here used as light).
 * Object: `fx drop-shadow --offset 0,18 --blur 40 --color '#021a33' --opacity 45`.
 * **T-label-box** for the logo badge; **T-rules** for the underline and the accent bar.
 
@@ -134,42 +136,38 @@ is wider than tall, use `--size 450x` instead of `--size x420`.
 
 ```bash
 pixelox render js scripts/pattern.js -o grid.png --size 1080x1440 --param kind=grid --param color='#000000' --param cell=12 --param weight=0.1 --param alpha=0.35
-pixelox render js scripts/clouds.js -o cloud.png --size 1080x1440 --seed 5 --param lo=transparent --param hi='#ffffff' --param scale=4 --param octaves=6 --param warp=0.5 --param contrast=2.2 --param bias=-0.1 --param res=2
 pixelox new -o corp.pxo --size 1080x1440 --fill '#041c3b'
 pixelox layer add corp.pxo --in-place --name Field
 pixelox fill gradient corp.pxo --in-place --layer Field --kind radial --from 50%,58% --to 50%,126% --stops '#1a9fd0ff@0,#0184b4ff@0.3,#04507aff@0.6,#041c3bff@1'
 pixelox comp place corp.pxo grid.png --in-place --as Grid --fit cover
 pixelox layer add corp.pxo --in-place --name CenterGlow
 pixelox fill gradient corp.pxo --in-place --layer CenterGlow --kind radial --from 50%,56% --to 50%,96% --stops '#1a9fd0ff@0,#1392c4b3@0.3,#0a7fb055@0.6,#0184b414@0.85,#0184b400@1'
-pixelox comp place corp.pxo cloud.png --in-place --as Cloud --fit cover
+pixelox fill noise corp.pxo --in-place --as-layer --name Cloud --seed 5 --scale 25% --octaves 6 --warp 20 --contrast 23 --bias 5 --stops 'transparent,#ffffff'
 pixelox select ellipse corp.pxo --in-place --rect 0%,25%,54%x21% --feather 60
 pixelox mask add corp.pxo --in-place --layer Cloud --from @sel
 pixelox select none corp.pxo --in-place
-pixelox filter gaussian corp.pxo --in-place --layer Cloud --sigma 3
-pixelox layer add corp.pxo --in-place --name FloorGlow
-pixelox select ellipse corp.pxo --in-place --rect 26%,63%,48%x6.5% --feather 46
-pixelox fill solid corp.pxo --in-place --layer FloorGlow --color '#5cc8ee' --mask @sel
-pixelox select none corp.pxo --in-place
-pixelox layer opacity corp.pxo --in-place --layer FloorGlow --value 75
+pixelox shape ellipse corp.pxo --in-place --name FloorGlow --rect 26%,63%,48%x6.5% --fill '#5cc8ee' --opacity 75
+pixelox filter gaussian corp.pxo --in-place --layer FloorGlow --sigma 23
 pixelox comp place corp.pxo product.png --in-place --as Object --size x420 --at 50%,65.5% --anchor b
 pixelox fx drop-shadow corp.pxo --in-place --layer Object --offset 0,18 --blur 40 --color '#021a33' --opacity 45
 pixelox shape rect corp.pxo --in-place --name Badge --rect 74.2%,1.5%,21.1%x3.9% --radius 8 --fill '#1b5cb8'
-pixelox text add corp.pxo --in-place --name Logo --content "NetWorks" --font "Avenir Next" --weight 400 --size 2.4% --tracking 160 --color '#ffffff'
+pixelox text add corp.pxo --in-place --name Logo --content "NetWorks" --font @geometric-sans --weight 400 --size 2.4% --tracking 160 --color '#ffffff'
 pixelox transform move corp.pxo --in-place --layer Logo --to 84.9%,3.1% --anchor c
 pixelox shape line corp.pxo --in-place --name Under1 --from 76.4%,4.55% --to 90%,4.55% --stroke '#ffffff' --stroke-width 2
 pixelox shape line corp.pxo --in-place --name Under2 --from 90%,4.55% --to 93.2%,4.55% --stroke '#6fb6f2' --stroke-width 2
 pixelox shape rect corp.pxo --in-place --name AccentBar --rect 21.5%,81.6%,0.5%x4% --fill '#d9603c'
-pixelox text add corp.pxo --in-place --name Para --content "NetWorks Group runs field engineering and customer support for carriers in nine countries. Our crews build and maintain the towers, and our service desks answer for them, day and night, in six languages, under one contract." --font "Avenir Next" --weight 400 --size 1.12% --leading 118% --box 602x80 --align justify --color '#cfe3ee'
+pixelox text add corp.pxo --in-place --name Para --content "NetWorks Group runs field engineering and customer support for carriers in nine countries. Our crews build and maintain the towers, and our service desks answer for them, day and night, in six languages, under one contract." --font @geometric-sans --weight 400 --size 1.12% --leading 118% --box 602x80 --align justify --color '#cfe3ee'
 pixelox transform move corp.pxo --in-place --layer Para --to 22.8%,81.6% --anchor tl
-pixelox text add corp.pxo --in-place --name Tag1 --content "Always" --font "Avenir Next" --weight 400 --size 2.45% --color '#ffffff' --at 46.5%,92.2% --anchor r
-pixelox text add corp.pxo --in-place --name Tag2 --content "Reachable" --font "Avenir Next" --weight 700 --size 2.45% --color '#ffffff' --at 47.6%,92.2% --anchor l
+pixelox text add corp.pxo --in-place --name Tag1 --content "Always" --font @geometric-sans --weight 400 --size 2.45% --color '#ffffff' --at 46.5%,92.2% --anchor r
+pixelox text add corp.pxo --in-place --name Tag2 --content "Reachable" --font @geometric-sans --weight 700 --size 2.45% --color '#ffffff' --at 47.6%,92.2% --anchor l
 pixelox export corp.pxo -o corp.png
 ```
 
 Change first: the object, then the hue of the field (keep four stops running from a
-light center to a near-black corner of the same hue), then the tagline. The bold lead-in
-of the paragraph is left out of the recipe: add it as a separate bold text layer over
-the first two words if you need it.
+light center to a near-black corner of the same hue), then the tagline. For another cloud
+shape change the `--seed` of the `fill noise` line. The bold lead-in of the paragraph is
+left out of the recipe: add it as a separate bold text layer over the first two words if
+you need it.
 
 ## 10. Variations and pairings
 

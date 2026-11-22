@@ -103,12 +103,16 @@ and the title can cross it. No outline, no shadow, no glow.
   W to 160% W over 205 degrees, drawn as cubic curves, stroked 13 px with round caps.
 * Tan field: a **T-torn-collage** scrap (`torn.js`, top edge torn, `rough=0.9`, no rim)
   rotated -9 degrees: a quick way to get a ragged painted edge.
-* **T-photo-fade** at the bottom: ground black from 60 to 79% H, above the figure.
+* **T-photo-fade** at the bottom, as a shade layer: near-black `#171813` from clear at 60%
+  H to solid at 79% H, above the figure. A gradient layer, not a mask on the figure,
+  because it must darken the figure, the tan field, and the spiral arms together.
 * **T-gradient-type**: gold `fx overlay`, dark `#8a5c14` at the bottom through `#c98a1f`
   to `#f0b03a` at the top; `fx bevel` size 4 at 50%.
 * **T-block-shadow** without the stroke: `fx drop-shadow` offset 5,5, blur 0, color
-  `#24180a`.
-* **T-paper-grain** amount 10, soft-light 35%.
+  `#24180a`. `fx copy` carries the three title styles to the initial.
+* Squeezed type: `--scale-x` 61 to 66% narrows the title letters and the credits, and
+  `--fit-width` then sets each line's width (400, 150, and 600 px).
+* **T-paper-grain**: `filter grain --as-layer --amount 8`, added last.
 * **T-credit-block** in [techniques.md](../techniques.md) is the tested library version of the billing block and star row; start from it when reusing this idea.
 
 ## 8. Hierarchy and eye path
@@ -123,9 +127,9 @@ Cap heights: title 13.5 and 9.3 : tagline 2 : name 1.9 : credits 1.6, about 8 : 
 
 ## 9. Build recipe
 
-`subject.png` is your image here (a waist-up cutout in dark clothes). The squeezes
-(`transform scale` with both a width and a height) rasterize the text (warning PXW2003):
-type the final words first.
+`subject.png` is your image here (a waist-up cutout in dark clothes). The squeezed lines
+(`--scale-x` with `--fit-width`: title, initial, credits) stay live text, so the words can
+be retyped at any time and the fit is redone.
 
 ```bash
 pixelox render js scripts/torn.js -o tan.png --size 1500x900 --seed 6 --param color='#7c6150' --param rim=none --param edges=t --param rough=0.9 --param detail=0.8
@@ -138,28 +142,17 @@ pixelox comp place film.pxo subject.png --in-place --as Subject --size x980 --at
 pixelox layer add film.pxo --in-place --name Shade
 pixelox fill gradient film.pxo --in-place --layer Shade --from 0,60% --to 0,79% --stops '#17181300@0,#171813ff@1'
 pixelox shape path film.pxo --in-place --name Reticle --d 'M 157 1073 A 97 97 0 1 1 351 1073 A 97 97 0 1 1 157 1073 M 205 1073 A 49 49 0 1 1 303 1073 A 49 49 0 1 1 205 1073 M 108 1073 L 400 1073 M 254 924 L 254 1207' --fill none --stroke '#c68520' --stroke-width 3
-pixelox text add film.pxo --in-place --name Initial --content "D" --font Copperplate --weight 700 --size 24% --color '#c98a1f'
-pixelox transform scale film.pxo --in-place --layer Initial --size 150x200
-pixelox transform move film.pxo --in-place --layer Initial --to 23.5%,76.7% --anchor bl
-pixelox text add film.pxo --in-place --name Title --content "ECOY" --font Copperplate --weight 700 --size 16.6% --color '#c98a1f'
-pixelox transform scale film.pxo --in-place --layer Title --size 400x142
-pixelox transform move film.pxo --in-place --layer Title --to 39%,76.7% --anchor bl
+pixelox text add film.pxo --in-place --name Initial --content "D" --font @engraved --weight 700 --scale-x 65.5% --fit-width 150 --color '#c98a1f' --at 23.5%,76.7% --anchor bl --anchor-to ink
+pixelox text add film.pxo --in-place --name Title --content "ECOY" --font @engraved --weight 700 --scale-x 60.9% --fit-width 400 --color '#c98a1f' --at 39%,76.7% --anchor bl --anchor-to ink
 pixelox fx overlay film.pxo --in-place --layer Title --stops '#8a5c14@0,#c98a1f@0.5,#f0b03a@1' --angle 90
 pixelox fx bevel film.pxo --in-place --layer Title --size 4 --depth 80 --opacity 50
 pixelox fx drop-shadow film.pxo --in-place --layer Title --offset 5,5 --blur 0 --color '#24180a' --blend normal --opacity 100
 pixelox fx copy film.pxo --in-place --from Title --to Initial
-pixelox text add film.pxo --in-place --name Actor --content "Jordan Ellis" --font Copperplate --weight 700 --size 2.9% --tracking 30 --color '#dcd2ce' --at 49%,8.2% --anchor c
-pixelox text add film.pxo --in-place --name Tagline --content "QUIET HANDS. LOUD SECRETS." --font Copperplate --weight 700 --size 3.4% --color '#ffffff'
-pixelox transform scale film.pxo --in-place --layer Tagline --size 740x
-pixelox transform move film.pxo --in-place --layer Tagline --to 50%,79.2% --anchor c
-pixelox text add film.pxo --in-place --name Credits --content $'STUDIO NAME presents a YOUR COMPANY film\nproduced by ANA REYES  executive producer TOM HALE  costume design by JO MARSH\ncasting by SAM OKORO  directed by LEE VARGA  music by THE NIGHT OWLS' --font "Avenir Next Condensed" --weight 500 --size 2.1% --leading 125% --align center --color '#b9b5b0'
-pixelox transform scale film.pxo --in-place --layer Credits --size 600x112
-pixelox transform move film.pxo --in-place --layer Credits --to 50%,86% --anchor c
-pixelox text add film.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font "Avenir Next Condensed" --weight 700 --size 2.2% --tracking 40 --color '#8a8580' --at 50%,92% --anchor c
-pixelox layer add film.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise film.pxo --in-place --layer Grain --amount 10 --monochrome
-pixelox layer blend film.pxo --in-place --layer Grain --mode soft-light
-pixelox layer opacity film.pxo --in-place --layer Grain --value 35
+pixelox text add film.pxo --in-place --name Actor --content "Jordan Ellis" --font @engraved --weight 700 --size 2.9% --tracking 30 --color '#dcd2ce' --at 49%,8.2% --anchor c
+pixelox text add film.pxo --in-place --name Tagline --content "QUIET HANDS. LOUD SECRETS." --font @engraved --weight 700 --fit-width 740 --color '#ffffff' --at 50%,79.2% --anchor c --anchor-to ink
+pixelox text add film.pxo --in-place --name Credits --content $'STUDIO NAME presents a YOUR COMPANY film\nproduced by ANA REYES  executive producer TOM HALE  costume design by JO MARSH\ncasting by SAM OKORO  directed by LEE VARGA  music by THE NIGHT OWLS' --font @condensed --weight 500 --scale-x 61.1% --fit-width 600 --leading 125% --align center --color '#b9b5b0' --at 50%,86% --anchor c --anchor-to ink
+pixelox text add film.pxo --in-place --name Site --content "WWW.EXAMPLE.COM" --font @condensed --weight 700 --size 2.2% --tracking 40 --color '#8a8580' --at 50%,92% --anchor c
+pixelox filter grain film.pxo --in-place --as-layer --name Grain --amount 8
 pixelox export film.pxo -o film.png
 ```
 

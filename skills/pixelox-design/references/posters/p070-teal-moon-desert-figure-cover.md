@@ -7,7 +7,7 @@ style: [illustration, retro, flat]
 format: portrait-2x3
 archetype: A-centered-title
 palette: ['#ee9a1e', '#552301', '#af4b1f', '#019c87', '#782b11', '#d9c24e']
-techniques: [T-silhouette, T-gradient-type, T-fit-width, T-photo-fade, T-smoke, T-paper-grain]
+techniques: [T-silhouette, T-gradient-type, T-fit-width, T-photo-fade, T-smoke, T-paper-grain, T-texture-fill]
 needs: subject-cutout
 ---
 
@@ -95,15 +95,19 @@ head at the disc's center: the disc then works as a halo.
 ## 7. Effects and textures
 
 * Sky: `fill gradient` with nine stops sampled down the sheet.
-* Streaks: **T-smoke** clouds with `stretch=0.2` (flat bands), amber, screen, 30%.
-* Moon surface: a high-contrast `clouds.js` render (`contrast=2.6`, `warp=1.5`) clipped to
-  the disc in multiply at 25%.
+* Streaks: the cloud-noise cousin of **T-smoke**, pulled into flat bands (`fill noise
+  --as-layer --stretch 8 --angle 0`), amber, screen, 30%.
+* Moon surface: **T-texture-fill**, a high-contrast noise layer (`fill noise --as-layer
+  --warp 60 --contrast 32`) clipped to the disc in multiply at 25%. The contrast gives
+  the hard-edged contour patches.
 * **T-silhouette** with a gradient on the figure; **T-photo-fade** as a haze band
   (orange-gold from alpha 0 at 58% H to 85% at 67% H and back to 0 at 72% H).
 * **T-gradient-type** on the title (`--angle 90`, the bottom color first).
-* **T-paper-grain**, heavy: amount 34, overlay 55%, then `filter motion-blur --angle 0
-  --distance 3` on the grain for the sand-blast streak.
-* **T-fit-width**: headline lines are set to exact widths with `transform scale` in the recipe.
+* **T-paper-grain**, heavy and coarse: `filter grain --as-layer --amount 35 --size 2`. The
+  original's slight sideways smear is left out: a grain layer is a live adjustment and
+  cannot be blurred.
+* **T-fit-width**: the title and the author line are set to exact widths with
+  `--fit-width`.
 
 ## 8. Hierarchy and eye path
 
@@ -120,41 +124,27 @@ Sizes: moon 47% H across, figure 44% H tall, title cap height 17.3% H, author 3.
 silhouette.
 
 ```bash
-pixelox render js scripts/clouds.js -o streaks.png --size 1080x1620 --seed 8 --param lo=transparent --param hi='#f7c860' --param scale=3 --param warp=0.6 --param stretch=0.2 --param bias=-0.15
-pixelox render js scripts/clouds.js -o surface.png --size 1080x1620 --seed 12 --param lo='#0b3d3a' --param hi='#ffffff' --param scale=5 --param octaves=6 --param warp=1.5 --param contrast=2.6
 pixelox new -o saga.pxo --size 1080x1620 --fill '#ee9a1e'
 pixelox layer add saga.pxo --in-place --name Sky
 pixelox fill gradient saga.pxo --in-place --layer Sky --from 0,0 --to 0,100% --stops '#701c01@0,#782502@0.08,#af4b1f@0.19,#c56021@0.32,#ee9a1e@0.44,#f4a521@0.55,#d77a27@0.69,#9a4c15@0.76,#6b2b03@0.84,#552301@1'
-pixelox comp place saga.pxo streaks.png --in-place --as Streaks --fit cover
-pixelox layer blend saga.pxo --in-place --layer Streaks --mode screen
-pixelox layer opacity saga.pxo --in-place --layer Streaks --value 30
+pixelox fill noise saga.pxo --in-place --as-layer --name Streaks --seed 8 --scale 18% --octaves 5 --warp 20 --stretch 8 --angle 0 --bias=-12 --contrast 10 --stops 'transparent,#f7c860' --blend screen --opacity 30
 pixelox shape ellipse saga.pxo --in-place --name Moon --rect 178,162,767x767 --fill '#429370'
 pixelox fx overlay saga.pxo --in-place --layer Moon --stops '#f09c20@0,#e0a030@0.3,#82ab51@0.62,#02917d@1' --angle 90
-pixelox comp place saga.pxo surface.png --in-place --as Surface --fit cover
+pixelox fill noise saga.pxo --in-place --as-layer --name Surface --seed 12 --scale 20% --octaves 6 --warp 60 --contrast 32 --stops '#0b3d3a,#ffffff' --blend multiply --opacity 25
 pixelox layer clip saga.pxo --in-place --layer Surface
-pixelox layer blend saga.pxo --in-place --layer Surface --mode multiply
-pixelox layer opacity saga.pxo --in-place --layer Surface --value 25
 pixelox comp place saga.pxo subject.png --in-place --as Figure --size x720 --at 48%,69.5% --anchor b
 pixelox fx overlay saga.pxo --in-place --layer Figure --stops '#5a2303@0,#a04a1e@1' --angle 90
 pixelox layer add saga.pxo --in-place --name Haze
 pixelox fill gradient saga.pxo --in-place --layer Haze --from 0,58% --to 0,72% --stops '#ee9a1e00@0,#ee9a1ed9@0.65,#d77a2700@1'
-pixelox text add saga.pxo --in-place --name Title --content "MESA" --font Phosphate --size 24% --tracking 20 --color '#019c87'
-pixelox transform scale saga.pxo --in-place --layer Title --size 940x
-pixelox transform move saga.pxo --in-place --layer Title --to 50%,71% --anchor t
+pixelox text add saga.pxo --in-place --name Title --content "MESA" --font @deco --fit-width 940 --tracking 20 --color '#019c87' --at 50%,71% --anchor t --anchor-to ink
 pixelox fx overlay saga.pxo --in-place --layer Title --stops '#b69b58@0,#5fa37a@0.5,#019c87@1' --angle 90
-pixelox text add saga.pxo --in-place --name Author --content "AUTHOR NAME" --font "Avenir Next" --weight 700 --size 4.9% --tracking 150 --color '#f0b862'
-pixelox transform scale saga.pxo --in-place --layer Author --size 660x
-pixelox transform move saga.pxo --in-place --layer Author --to 50%,94% --anchor c
-pixelox layer add saga.pxo --in-place --name Grain --fill '#808080'
-pixelox filter add-noise saga.pxo --in-place --layer Grain --amount 34 --monochrome
-pixelox filter motion-blur saga.pxo --in-place --layer Grain --angle 0 --distance 3
-pixelox layer blend saga.pxo --in-place --layer Grain --mode overlay
-pixelox layer opacity saga.pxo --in-place --layer Grain --value 55
+pixelox text add saga.pxo --in-place --name Author --content "AUTHOR NAME" --font @geometric-sans --weight 700 --fit-width 660 --tracking 150 --color '#f0b862' --at 50%,94% --anchor c --anchor-to ink
+pixelox filter grain saga.pxo --in-place --as-layer --name Grain --amount 35 --size 2
 pixelox export saga.pxo -o saga.png
 ```
 
 Change first: the cutout (scale it so the head sits at the moon's center), the title word
-(3 to 5 letters; the scale to 940 px sets its height), then the pair of color families.
+(3 to 5 letters; `--fit-width 940` sets its height), then the pair of color families.
 
 ## 10. Variations and pairings
 
