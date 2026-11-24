@@ -1030,6 +1030,12 @@
       return new Document(w, h);
     },
     random() { return N.random(); },
+    // bundled maps (ADR 0018): TopoJSON, a fresh copy per call; `pixelox docs atlas` lists them
+    atlas(name) {
+      if (typeof name !== 'string') throw new TypeError("px.atlas(name) takes an atlas name such as 'us-states' or 'world-110m'");
+      return JSON.parse(N.atlas(name));
+    },
+    atlases() { return JSON.parse(N.atlases()); },
     log(...args) {
       N.log(args.map((a) => {
         if (typeof a === 'string') return a;
@@ -1160,33 +1166,70 @@
   // ---------------------------------------------------------------------------------
   // hooks for the host
 
+  // exports of a plugin or addon join an already loaded library (new names only)
+  function mergeInto(target, src) {
+    if (!target || target === src || (typeof target !== 'object' && typeof target !== 'function') || !Object.isExtensible(target)) return;
+    for (const k of Object.keys(src)) if (k !== 'default' && !(k in target)) target[k] = src[k];
+  }
+  function requireBundled(name) {
+    name = String(name);
+    const g = name === 'three' ? 'THREE' : name === 'topojson-client' || name === 'topojson' ? 'topojson'
+      : name === 'd3' || name.startsWith('d3-') ? 'd3' : null;
+    if (g && G[g] !== undefined) return G[g];
+    throw new Error("require('" + name + "'): a library can only require the bundled d3, three, or topojson-client"
+      + (g ? ' (load it first with --with ' + (g === 'THREE' ? 'three' : g) + ')' : ''));
+  }
+
   return {
     // presets: a DOM-lite `document` for libraries that create elements globally
     defineDocument() {
       const doc = new Document(cfg.width, cfg.height);
       defineProperty(G, 'document', { value: doc, writable: true, enumerable: false, configurable: true });
     },
-    // CommonJS shim while loading a preset library bundle
+    // d3-timer (transitions, force simulations, d3.timeout) schedules callbacks; there is no
+    // event loop, so they never run. Inert timers let d3 load; layouts run synchronously
+    // (simulation.stop(); simulation.tick(300)). Each scheduled callback is counted.
+    defineTimers() {
+      let next = 1;
+      const set = function () { N.timer(); return next++; };
+      const clear = function () {};
+      for (const [name, f] of [['setTimeout', set], ['setInterval', set], ['clearTimeout', clear], ['clearInterval', clear]]) {
+        defineProperty(G, name, { value: f, writable: true, enumerable: false, configurable: true });
+      }
+    },
+    // CommonJS shim while loading a library bundle: `require` serves only the bundled
+    // libraries, so UMD plugins (d3-sankey: require('d3-array')) extend the loaded d3
     beginLib() {
       const module = { exports: {} };
       defineProperty(G, 'module', { value: module, writable: true, configurable: true });
       defineProperty(G, 'exports', { value: module.exports, writable: true, configurable: true });
+      defineProperty(G, 'require', { value: requireBundled, writable: true, configurable: true });
     },
     endLib(name) {
       const m = G.module;
       delete G.module;
       delete G.exports;
-      if (name && G[name] === undefined && m && m.exports && Object.keys(m.exports).length) {
-        defineProperty(G, name, { value: m.exports, writable: true, enumerable: false, configurable: true });
+      delete G.require;
+      if (name && m && m.exports && Object.keys(m.exports).length) {
+        const cur = G[name];
+        if (cur === undefined) defineProperty(G, name, { value: m.exports, writable: true, enumerable: false, configurable: true });
+        else mergeInto(cur, m.exports);
       }
       return name ? G[name] !== undefined : true;
     },
     exposeModule(name, ns) {
       if (name) {
         if (G[name] === undefined) defineProperty(G, name, { value: ns, writable: true, enumerable: false, configurable: true });
+        else mergeInto(G[name], ns);
       } else {
         for (const k of Object.keys(ns)) if (k !== 'default' && !(k in G)) G[k] = ns[k];
       }
+    },
+    // a bundled ES-module library (three.js core and its addons) as one global object
+    exposeBundle(name, namespaces) {
+      const out = {};
+      for (const ns of namespaces) mergeInto(out, ns);
+      defineProperty(G, name, { value: out, writable: true, enumerable: false, configurable: true });
     },
     outputs() { return outputs; },
   };

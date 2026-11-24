@@ -166,6 +166,9 @@ pub struct Sidecar {
     pub models: Vec<Value>,
     #[serde(default)]
     pub fonts: Vec<Value>,
+    /// Bundled JavaScript libraries and map data the op used (ADR 0018).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub bundled: Vec<Value>,
     pub output: OutputInfo,
     pub env: Value,
     pub determinism: Value,

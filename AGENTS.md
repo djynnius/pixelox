@@ -69,6 +69,10 @@ prints any command's reference page.
     before it is added), `shape barcode --type ean13 --data 12DIGITS`. Depth is live:
     `fx long-shadow`, `fx extrude`, `fx reflection`
     (`docs/guides/cookbook/icons-codes-and-3d-type.md`).
+13. Charts and maps: `pixelox render d3 chart.js --data rows=sales.csv -o chart.png` runs
+    the bundled d3 7.9 (no `--lib`); `px.atlas('us-states' | 'world-110m' | ...)` gives map
+    outlines with join codes (`pixelox docs atlas`); `render three` has three.js r187
+    (`docs/guides/cookbook/charts-and-maps-with-d3.md`).
 
 ## Addressing
 

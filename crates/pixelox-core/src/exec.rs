@@ -444,6 +444,7 @@ fn write_sidecars(spec: &OpSpec, args: &Args, ctx: &mut OpCtx, argv: &[String]) 
             inputs,
             models: ctx.models.clone(),
             fonts: ctx.fonts.clone(),
+            bundled: ctx.bundled.clone(),
             output,
             env: json!({"threads": ctx.threads(), "mem_budget_mb": ctx.globals.mem_budget_mb, "locale": "C"}),
             determinism: Sidecar::determinism_block(),

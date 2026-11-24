@@ -17,7 +17,8 @@ every command with a JSON envelope, a JSON Schema, a provenance sidecar, and an 
   [blend a photo composite](cookbook/photo-composite.md), [extract a subject](cookbook/extract-a-subject.md),
   [lens flares, fire, and art filters](cookbook/effects-and-art.md),
   [clouds, grain, distortion, liquid, and ice](cookbook/textures-and-liquids.md),
-  [icons, QR codes, barcodes, and 3D type](cookbook/icons-codes-and-3d-type.md).
+  [icons, QR codes, barcodes, and 3D type](cookbook/icons-codes-and-3d-type.md),
+  [charts and maps with d3 and three.js](cookbook/charts-and-maps-with-d3.md).
 * **Looking up a command?** Every command has a page under *Command reference*;
   `pixelox docs <command>` prints the same page offline.
 * **Something wrong?** The [error catalog](errors.md) lists every code with what to do.

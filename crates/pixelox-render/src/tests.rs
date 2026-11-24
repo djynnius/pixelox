@@ -60,6 +60,10 @@ impl ImageIo for MockIo {
 struct Run {
     value: Value,
     warnings: Vec<String>,
+    /// Values the op recorded for its recipe step (`with`, `size`).
+    resolved: Map<String, Value>,
+    /// Bundled files the op recorded for the sidecar.
+    bundled: Vec<Value>,
 }
 
 fn run_with(name: &str, inputs: Vec<PathBuf>, pairs: &[(&str, &str)], g: Globals, io: &MockIo) -> Result<Run> {
@@ -70,7 +74,21 @@ fn run_with(name: &str, inputs: Vec<PathBuf>, pairs: &[(&str, &str)], g: Globals
         Runner::Custom(f) => f(&a, &mut ctx)?,
         _ => panic!("{name} is not a custom op"),
     };
-    Ok(Run { value, warnings: ctx.warnings.iter().map(|w| w.code.clone()).collect() })
+    Ok(Run {
+        value,
+        warnings: ctx.warnings.iter().map(|w| w.code.clone()).collect(),
+        resolved: ctx.resolved.clone(),
+        bundled: ctx.bundled.clone(),
+    })
+}
+
+/// Run `cmd` (`render d3`, `render three`, `render js`) on an inline script.
+fn script_run(dir: &TempDir, cmd: &str, script: &str, out: &str, pairs: &[(&str, &str)], io: &MockIo) -> Result<Run> {
+    let sp = dir.path("s.js");
+    std::fs::write(&sp, script).unwrap();
+    let out = dir.path(out);
+    let _ = std::fs::remove_file(&out);
+    run_with(cmd, vec![sp], pairs, globals(&out), io)
 }
 
 fn globals(out: &Path) -> Globals {
@@ -415,23 +433,85 @@ fn allow_time_warns_and_data_kinds_parse() {
 }
 
 #[test]
-fn presets_need_a_local_bundle() {
+fn presets_load_the_bundled_libraries_and_lib_overrides_them() {
     let dir = TempDir::new("render-preset");
     let io = MockIo::default();
-    std::fs::write(dir.path("s.js"), "px.output(px.canvas(1, 1));").unwrap();
-    for (cmd, lib) in [("render d3", "d3.v7.min.js"), ("render three", "three.module.js")] {
-        let e = run_with(cmd, vec![dir.path("s.js")], &[], globals(&dir.path("o.svg")), &io).err().unwrap();
-        assert_eq!(e.code, "PX1520");
-        assert_eq!(e.exit_code, 12);
-        assert!(e.hint.as_deref().unwrap().contains(&format!("--lib {lib}")), "{:?}", e.hint);
+    let probe = "px.log(typeof d3, typeof THREE, typeof topojson, typeof document);\npx.output(px.canvas(1, 1));";
+    // defaults: d3 + topojson, three + topojson, nothing for render js
+    let r = script_run(&dir, "render d3", probe, "a.png", &[], &io).unwrap();
+    assert_eq!(r.value["logs"][0], "object undefined object object");
+    assert_eq!(r.resolved["with"], "d3@7.9.0,topojson@3.1.0");
+    assert_eq!(r.value["libraries"][0]["version"], "7.9.0");
+    assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+    let files: Vec<&str> = r.bundled.iter().map(|b| b["file"].as_str().unwrap()).collect();
+    assert_eq!(files, ["d3/d3.min.js", "topojson-client/topojson-client.min.js"]);
+    assert_eq!(r.bundled[0]["sha256"], bundled::info("d3/d3.min.js").unwrap().sha256);
+    let r = script_run(&dir, "render three", probe, "b.png", &[], &io).unwrap();
+    assert_eq!(r.value["logs"][0], "undefined object object object");
+    assert_eq!(
+        r.resolved["with"],
+        format!("three@{},topojson@3.1.0", bundled::Library::find("three").unwrap().version())
+    );
+    let r = script_run(&dir, "render js", probe, "c.png", &[], &io).unwrap();
+    assert_eq!(r.value["logs"][0], "undefined undefined undefined undefined");
+    assert!(!r.resolved.contains_key("with") && r.bundled.is_empty() && r.value.get("libraries").is_none());
+    // render js opts in; a pinned version must match the bundled one
+    let r = script_run(&dir, "render js", probe, "d.png", &[("with", "d3@7.9.0")], &io).unwrap();
+    assert_eq!(r.value["logs"][0], "object undefined undefined object");
+    let e = script_run(&dir, "render d3", probe, "e.png", &[("with", "d3@6.0.0")], &io).err().unwrap();
+    assert_eq!((e.code.as_str(), e.exit_code), ("PX1552", 9));
+    let e = script_run(&dir, "render js", probe, "e.png", &[("with", "lodash")], &io).err().unwrap();
+    assert_eq!((e.code.as_str(), e.exit_code), ("PX1550", 2));
+    // leaving the preset library out with nothing else defining it is PX1520
+    for cmd in ["render d3", "render three"] {
+        let e = script_run(&dir, cmd, probe, "f.png", &[("with", "none")], &io).err().unwrap();
+        assert_eq!((e.code.as_str(), e.exit_code), ("PX1520", 12), "{cmd}");
+        assert!(e.hint.as_deref().unwrap().contains("--with"), "{:?}", e.hint);
     }
-    // a bundle that defines nothing is reported too
+    // --lib alone replaces the bundled d3 (PXW1550); a bundle that defines nothing is reported
     std::fs::write(dir.path("empty.js"), "var nothing = 1;").unwrap();
     let lib = dir.path("empty.js").display().to_string();
-    let e = run_with("render d3", vec![dir.path("s.js")], &[("lib", &lib)], globals(&dir.path("o.svg")), &io)
-        .err()
-        .unwrap();
+    let e = script_run(&dir, "render d3", probe, "g.png", &[("lib", &lib)], &io).err().unwrap();
     assert_eq!(e.code, "PX1520");
+    std::fs::write(dir.path("mine.js"), "globalThis.d3 = { version: 'mine' };").unwrap();
+    let lib = dir.path("mine.js").display().to_string();
+    let r = script_run(
+        &dir,
+        "render d3",
+        "px.log(d3.version);\npx.output(px.canvas(1, 1));",
+        "h.png",
+        &[("lib", &lib)],
+        &io,
+    )
+    .unwrap();
+    assert_eq!(r.value["logs"][0], "mine");
+    assert_eq!(r.warnings, ["PXW1550"]);
+    assert_eq!(r.resolved["with"], "topojson@3.1.0");
+}
+
+#[test]
+fn umd_plugins_extend_the_bundled_d3() {
+    let dir = TempDir::new("render-plugin");
+    let io = MockIo::default();
+    // the shape of d3-sankey's UMD header: CommonJS first, requiring d3 modules by name
+    let plugin = r#"(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-array'), require('d3-shape')) :
+  factory(global.d3 = global.d3 || {}, global.d3, global.d3);
+}(this, function (exports, d3Array, d3Shape) {
+  exports.doubleSum = (xs) => 2 * d3Array.sum(xs);
+  exports.hasLine = typeof d3Shape.line === 'function';
+}));"#;
+    std::fs::write(dir.path("plugin.js"), plugin).unwrap();
+    let lib = dir.path("plugin.js").display().to_string();
+    let script = "px.log(d3.doubleSum([1, 2]), d3.hasLine, typeof d3.scaleLinear, typeof require, typeof module);\npx.output(px.canvas(1, 1));";
+    let r = script_run(&dir, "render d3", script, "p.png", &[("with", "d3,topojson"), ("lib", &lib)], &io).unwrap();
+    assert_eq!(r.value["logs"][0], "6 true function undefined undefined");
+    assert!(r.warnings.is_empty());
+    // without the bundled d3 the plugin's require says what to load
+    let e = script_run(&dir, "render js", script, "q.png", &[("lib", &lib)], &io).err().unwrap();
+    assert_eq!(e.code, "PX6001");
+    let e = script_run(&dir, "render d3", script, "q.png", &[("with", "topojson"), ("lib", &lib)], &io).err().unwrap();
+    assert!(e.message.contains("--with d3"), "{}", e.message);
 }
 
 #[test]
@@ -661,8 +741,8 @@ fn op_specs_follow_the_authoring_contract() {
 }
 
 // ---------------------------------------------------------------------------------------
-// Real-library smoke tests (skipped unless the bundles are supplied):
-//   PIXELOX_D3_JS=/path/to/d3.min.js (7.9)       PIXELOX_THREE_JS=/path/to/three.core.js
+// The bundled d3 and three.js (ADR 0018). PIXELOX_D3_JS / PIXELOX_THREE_JS run the first two
+// tests against another build through --lib as well.
 //   PIXELOX_RENDER_DUMP=/dir writes the gallery below as PNG/SVG for a visual check.
 
 const E9: &str = r#"
@@ -691,9 +771,16 @@ fn dump_png(name: &str, img: &Image) {
     }
 }
 
+/// `--lib` pairs for the real-library tests: the bundled build, or the one the env var names.
+fn lib_pairs(var: &str) -> Vec<(&'static str, String)> {
+    match std::env::var(var) {
+        Ok(p) => vec![("lib", p)],
+        Err(_) => vec![],
+    }
+}
+
 #[test]
 fn real_d3_bundle_runs_prd_example_e9() {
-    let Ok(d3) = std::env::var("PIXELOX_D3_JS") else { return };
     let dir = TempDir::new("render-real-d3");
     let io = MockIo::default();
     std::fs::write(dir.path("sales.csv"), "month,sales\nJan,120\nFeb,95\nMar,140\nApr,180\nMay,160\nJun,210\n")
@@ -701,15 +788,11 @@ fn real_d3_bundle_runs_prd_example_e9() {
     std::fs::write(dir.path("chart.js"), E9).unwrap();
     let data = format!("rows={}", dir.path("sales.csv").display());
     let out = dir.path("chart.svg");
+    let libs = lib_pairs("PIXELOX_D3_JS");
+    let mut pairs: Vec<(&str, &str)> = libs.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    pairs.extend([("data", data.as_str()), ("size", "960x540")]);
     let t = Instant::now();
-    let r = run_with(
-        "render d3",
-        vec![dir.path("chart.js")],
-        &[("lib", &d3), ("data", &data), ("size", "960x540")],
-        globals(&out),
-        &io,
-    )
-    .unwrap();
+    let r = run_with("render d3", vec![dir.path("chart.js")], &pairs, globals(&out), &io).unwrap();
     eprintln!("E9 with real d3: {:?}", t.elapsed());
     let svg = std::fs::read_to_string(&out).unwrap();
     assert_eq!(svg.matches("<rect").count(), 6, "{svg}");
@@ -730,22 +813,16 @@ fn real_d3_bundle_runs_prd_example_e9() {
     )
     .unwrap();
     let data = format!("rows={}", dir.path("big.csv").display());
+    let mut pairs: Vec<(&str, &str)> = libs.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    pairs.push(("data", data.as_str()));
     let t = Instant::now();
-    run_with(
-        "render d3",
-        vec![dir.path("big.js")],
-        &[("lib", &d3), ("data", &data)],
-        globals(&dir.path("big.svg")),
-        &io,
-    )
-    .unwrap();
+    run_with("render d3", vec![dir.path("big.js")], &pairs, globals(&dir.path("big.svg")), &io).unwrap();
     eprintln!("10k-element d3 chart: {:?}", t.elapsed());
     assert_eq!(std::fs::read_to_string(dir.path("big.svg")).unwrap().matches("<rect").count(), 10_000);
 }
 
 #[test]
 fn real_three_bundle_projects_geometry() {
-    let Ok(three) = std::env::var("PIXELOX_THREE_JS") else { return };
     let dir = TempDir::new("render-real-three");
     let io = MockIo::default();
     let script = r#"
@@ -768,14 +845,193 @@ fn real_three_bundle_projects_geometry() {
         px.output(c);
     "#;
     std::fs::write(dir.path("knot.js"), script).unwrap();
+    let libs = lib_pairs("PIXELOX_THREE_JS");
+    let pairs: Vec<(&str, &str)> = libs.iter().map(|(k, v)| (*k, v.as_str())).collect();
     let t = Instant::now();
-    let r =
-        run_with("render three", vec![dir.path("knot.js")], &[("lib", &three)], globals(&dir.path("knot.png")), &io)
-            .unwrap();
+    let r = run_with("render three", vec![dir.path("knot.js")], &pairs, globals(&dir.path("knot.png")), &io).unwrap();
     eprintln!("three.js knot: {:?} {}", t.elapsed(), r.value["logs"]);
+    if libs.is_empty() {
+        assert_eq!(
+            r.value["logs"][0],
+            format!("{} 1024", bundled::Library::find("three").unwrap().version().split('.').nth(1).unwrap())
+        );
+    }
     let img = last_image(&io);
     dump_png("three-knot.png", &img);
     assert!(testing::mean(&img, 0) < 0.99, "lines were drawn");
+}
+
+/// A lit box and a rounded box through the bundled THREE.SVGRenderer: flat-shaded paths whose
+/// faces get different shades, a label added to the renderer's SVG, and identical reruns.
+#[test]
+fn bundled_three_svg_renderer_shades_a_scene() {
+    let dir = TempDir::new("render-three-svg");
+    let io = MockIo::default();
+    let script = r#"
+        const scene = new THREE.Scene();
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.0); sun.position.set(-2, 5, 3); scene.add(sun);
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0x2563eb }));
+        box.position.x = -0.9; scene.add(box);
+        const round = new THREE.Mesh(new THREE.RoundedBoxGeometry(1, 1, 1, 2, 0.15), new THREE.MeshLambertMaterial({ color: 0xdb2777 }));
+        round.position.x = 0.9; scene.add(round);
+        const cam = new THREE.PerspectiveCamera(35, 4 / 3, 0.1, 50); cam.position.set(2.5, 2.5, 4); cam.lookAt(0, 0, 0);
+        const r = new THREE.SVGRenderer(); r.setSize(400, 300); r.setPrecision(2); r.render(scene, cam);
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('y', -120); t.textContent = 'boxes'; r.domElement.appendChild(t);
+        px.log(THREE.REVISION, typeof THREE.Projector, r.domElement.querySelectorAll('path').length > 6);
+        px.output(r.domElement);
+    "#;
+    let run = |out: &str| script_run(&dir, "render three", script, out, &[], &io).unwrap();
+    let r = run("scene.svg");
+    let v = bundled::Library::find("three").unwrap().version().split('.').nth(1).unwrap().to_string();
+    assert_eq!(r.value["logs"][0], format!("{v} function true"));
+    let svg = std::fs::read_to_string(dir.path("scene.svg")).unwrap();
+    assert!(svg.starts_with("<svg") && svg.contains("viewBox=\"-200 -150 400 300\""), "{}", &svg[..200.min(svg.len())]);
+    let shades: std::collections::BTreeSet<&str> =
+        svg.split("fill:").skip(1).filter_map(|s| s.split(';').next()).collect();
+    assert!(shades.len() >= 4, "lit faces differ in shade: {shades:?}");
+    assert!(svg.contains(">boxes</text>"));
+    let pm = rasterize_svg(&svg, None).unwrap();
+    assert_eq!((pm.width(), pm.height()), (400, 300));
+    run("again.svg");
+    assert_eq!(svg, std::fs::read_to_string(dir.path("again.svg")).unwrap());
+}
+
+/// The atlases: a U.S. map draws the 50 states and DC with Alaska and Hawaii as insets, a
+/// world map has every country, join codes are present, and the atlases used are recorded.
+#[test]
+fn atlases_draw_maps_and_are_recorded() {
+    let dir = TempDir::new("render-atlas");
+    let io = MockIo::default();
+    let us = r#"
+        const us = px.atlas('us-states');
+        const states = topojson.feature(us, us.objects.states);
+        const path = d3.geoPath(d3.geoAlbersUsa().fitSize([960, 600], states));
+        const doc = px.svg(960, 600);
+        const drawn = states.features.filter(f => path(f));
+        d3.select(doc.documentElement).selectAll('path').data(drawn).join('path')
+          .attr('d', path).attr('data-postal', f => f.properties.postal).attr('fill', '#888');
+        const box = (p) => path.bounds(states.features.find(f => f.properties.postal === p));
+        px.log(drawn.length, drawn.map(f => f.properties.postal).sort().join(''), JSON.stringify([box('AK'), box('HI'), box('ME')]));
+        px.output(doc);
+    "#;
+    let r = script_run(&dir, "render d3", us, "us.svg", &[], &io).unwrap();
+    let logs = r.value["logs"][0].as_str().unwrap();
+    let (n, rest) = logs.split_once(' ').unwrap();
+    assert_eq!(n, "51", "{logs}");
+    let (postals, boxes) = rest.split_once(' ').unwrap();
+    assert_eq!(postals.len(), 102);
+    for p in ["AK", "HI", "DC", "CA", "TX", "ME", "FL"] {
+        assert!(postals.as_bytes().chunks(2).any(|c| c == p.as_bytes()), "{p} drawn");
+    }
+    let b: Vec<[[f64; 2]; 2]> = serde_json::from_str(boxes).unwrap();
+    let (ak, hi, me) = (b[0], b[1], b[2]);
+    // Alaska and Hawaii are insets at the bottom left, inside the frame; Maine is top right
+    assert!(ak[0][0] >= 0.0 && ak[1][1] <= 600.5 && ak[0][1] > 300.0 && ak[1][0] < 400.0, "AK {ak:?}");
+    assert!(hi[0][0] > ak[1][0] - 50.0 && hi[0][1] > 400.0 && hi[1][0] < 500.0, "HI {hi:?}");
+    assert!(me[0][0] > 800.0 && me[1][1] < 250.0, "ME {me:?}");
+    assert_eq!(std::fs::read_to_string(dir.path("us.svg")).unwrap().matches("<path").count(), 51);
+    assert_eq!(r.value["atlases"][0]["name"], "us-states");
+    let kinds: Vec<&str> = r.bundled.iter().map(|b| b["kind"].as_str().unwrap()).collect();
+    assert_eq!(kinds, ["library", "library", "atlas", "codes"]);
+
+    // the world, joined on ISO alpha-3, in plain render js opting into the libraries
+    let world = r#"
+        const w = px.atlas('world-110m');
+        const countries = topojson.feature(w, w.objects.countries).features;
+        const path = d3.geoPath(d3.geoEqualEarth().fitSize([800, 400], { type: 'Sphere' }));
+        const pick = new Set(['BRA', 'NGA', 'IND']);
+        const doc = px.svg(800, 400);
+        d3.select(doc.documentElement).selectAll('path').data(countries).join('path')
+          .attr('d', path).attr('fill', f => pick.has(f.properties.iso_a3) ? 'red' : '#ccc');
+        px.log(countries.length, countries.filter(f => pick.has(f.properties.iso_a3)).map(f => f.properties.name).join('|'),
+          px.atlases().map(a => a.name).join(','));
+        px.output(doc);
+    "#;
+    let r = script_run(&dir, "render js", world, "w.svg", &[("with", "d3,topojson")], &io).unwrap();
+    let logs: Vec<&str> = r.value["logs"][0].as_str().unwrap().split(' ').collect();
+    assert_eq!(logs[0], "177");
+    let mut names: Vec<&str> = logs[1].split('|').collect();
+    names.sort();
+    assert_eq!(names, ["Brazil", "India", "Nigeria"]);
+    assert_eq!(logs[2], bundled::atlas_names().join(","));
+    assert_eq!(std::fs::read_to_string(dir.path("w.svg")).unwrap().matches("fill=\"red\"").count(), 3);
+
+    // px.atlas works without topojson too; an unknown name is PX1551 with the list
+    let r = script_run(
+        &dir,
+        "render js",
+        "const t = px.atlas('us-nation'); px.log(t.type, Object.keys(t.objects).join());\npx.output(px.canvas(1, 1));",
+        "n.png",
+        &[],
+        &io,
+    )
+    .unwrap();
+    assert_eq!(r.value["logs"][0], "Topology nation");
+    let e = script_run(&dir, "render d3", "px.atlas('mars');", "m.png", &[], &io).err().unwrap();
+    assert_eq!((e.code.as_str(), e.exit_code), ("PX1551", 2));
+    assert!(e.hint.as_deref().unwrap().contains("us-states-albers"), "{:?}", e.hint);
+}
+
+/// Math.random and d3's random generators draw from --seed; d3-force and d3-hierarchy use
+/// d3's own fixed LCG (the same layout every run, as in a browser).
+#[test]
+fn d3_randomness_follows_the_seed() {
+    let dir = TempDir::new("render-d3-seed");
+    let io = MockIo::default();
+    let script = r#"
+        const nodes = d3.range(20).map(i => ({ id: i }));
+        const links = d3.range(19).map(i => ({ source: i, target: (i * 7 + 3) % 20 }));
+        const sim = d3.forceSimulation(nodes).force('link', d3.forceLink(links)).force('charge', d3.forceManyBody())
+          .force('center', d3.forceCenter(100, 100)).stop();
+        sim.tick(120);
+        px.log(nodes.map(n => n.x.toFixed(9) + ',' + n.y.toFixed(9)).join(' '));
+        px.log(d3.randomUniform(0, 1)(), d3.randomNormal()(), d3.shuffle(d3.range(10)).join(''), Math.random());
+        const doc = px.svg(200, 200);
+        d3.select(doc.documentElement).selectAll('circle').data(nodes).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 3);
+        px.output(doc);
+    "#;
+    let run = |seed: u64, out: &str| {
+        let sp = dir.path("seed.js");
+        std::fs::write(&sp, script).unwrap();
+        let g = Globals { seed, ..globals(&dir.path(out)) };
+        run_with("render d3", vec![sp], &[], g, &io).unwrap()
+    };
+    let a = run(1, "a.svg");
+    let b = run(1, "b.svg");
+    let c = run(2, "c.svg");
+    assert_eq!(a.value["logs"], b.value["logs"]);
+    assert_eq!(std::fs::read(dir.path("a.svg")).unwrap(), std::fs::read(dir.path("b.svg")).unwrap());
+    assert_eq!(a.value["logs"][0], c.value["logs"][0], "the force layout does not depend on the seed");
+    assert_ne!(a.value["logs"][1], c.value["logs"][1], "random draws follow the seed");
+    assert!(a.value["timers_ignored"].as_u64().unwrap() > 0);
+}
+
+#[test]
+fn timers_never_fire_and_the_missing_output_says_why() {
+    let dir = TempDir::new("render-timers");
+    let io = MockIo::default();
+    let script = "const sim = d3.forceSimulation([{}, {}]);\nsim.on('end', () => px.output(px.svg(10, 10)));\n";
+    let e = script_run(&dir, "render d3", script, "t.svg", &[], &io).err().unwrap();
+    assert_eq!(e.code, "PX6020");
+    assert!(e.hint.as_deref().unwrap().contains("simulation.stop()"), "{:?}", e.hint);
+    let e = script_run(&dir, "render js", "px.canvas(2, 2);", "u.png", &[], &io).err().unwrap();
+    assert!(!e.hint.as_deref().unwrap().contains("timer"));
+}
+
+#[test]
+fn an_svg_result_rasterizes_at_its_own_size_on_replay() {
+    let dir = TempDir::new("render-size");
+    let io = MockIo::default();
+    // without --size the recipe records size: null, so a replay does not force 800x600
+    let r = script_run(&dir, "render js", "px.output(px.svg(300, 100));", "s.png", &[], &io).unwrap();
+    assert_eq!(r.resolved["size"], Value::Null);
+    assert_eq!(r.value["size"], json!([300, 100]));
+    let r =
+        script_run(&dir, "render js", "px.output(px.svg(300, 100));", "s.png", &[("size", "600x200")], &io).unwrap();
+    assert!(!r.resolved.contains_key("size"));
+    assert_eq!(r.value["size"], json!([600, 200]));
 }
 
 #[test]

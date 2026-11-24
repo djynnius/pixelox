@@ -1,6 +1,7 @@
 //! The QuickJS sandbox: one runtime per run, on its own thread, with a memory limit, a
 //! wall-clock interrupt, a minimal set of intrinsics, and the `px` API from `prelude.js`.
 
+use super::bundled;
 use super::canvas::{self, Canvas, Gradient};
 use pixelox_core::error::{Error, Result};
 use rand_core::RngCore;
@@ -31,11 +32,21 @@ pub struct Lib {
     pub module: bool,
 }
 
+/// A bundled library (`--with`, ADR 0018) loaded before the `--lib` files.
+#[derive(Clone, Debug)]
+pub struct BundledLib {
+    /// The global it defines (`d3`, `THREE`, `topojson`).
+    pub global: &'static str,
+    /// (stack-trace name, source, ES module name) in load order.
+    pub files: Vec<(String, Arc<str>, Option<&'static str>)>,
+}
+
 /// Everything one sandboxed run needs. Plain data, so it can move to the sandbox thread.
 #[derive(Clone, Debug)]
 pub struct JsJob {
     pub script: String,
     pub script_name: String,
+    pub bundled: Vec<BundledLib>,
     pub libs: Vec<Lib>,
     /// Global a preset library must define (`d3`, `THREE`).
     pub preset: Option<&'static str>,
@@ -67,6 +78,10 @@ pub struct JsResult {
     /// The script read the clock (only possible with `--allow-time`).
     pub time_read: bool,
     pub canvases: usize,
+    /// Atlases the script read with `px.atlas()`, in first-use order.
+    pub atlases: Vec<String>,
+    /// Timer callbacks scheduled (they never run).
+    pub timers: usize,
 }
 
 #[derive(Default)]
@@ -82,6 +97,8 @@ struct State {
     mem_limit: u64,
     pixel_limit: u64,
     rejection: Option<String>,
+    atlases: Vec<String>,
+    timers: usize,
 }
 
 /// Run a job on a dedicated thread (QuickJS needs a deep native stack).
@@ -167,8 +184,41 @@ fn run_here(job: JsJob) -> Result<JsResult> {
         let hooks: Object = prelude.call((natives, cfg)).map_err(|e| fail(e, "pixelox:prelude"))?;
         let hook = |name: &str| -> Result<Function> { hooks.get(name).map_err(|e| fail(e, "pixelox:prelude")) };
 
-        if job.preset.is_some() {
+        let has = |g: &str| job.bundled.iter().any(|b| b.global == g);
+        if job.preset.is_some() || has("d3") || has("THREE") {
             hook("defineDocument")?.call::<_, ()>(()).map_err(|e| fail(e, "pixelox:prelude"))?;
+        }
+        if job.preset == Some("d3") || has("d3") {
+            hook("defineTimers")?.call::<_, ()>(()).map_err(|e| fail(e, "pixelox:prelude"))?;
+        }
+        for b in &job.bundled {
+            let mut namespaces: Vec<Object> = Vec::new();
+            for (name, source, module) in &b.files {
+                match module {
+                    // modules are declared in dependency order, so `import ... from 'three'`
+                    // and './Projector.js' find the already declared module by name
+                    Some(m) => {
+                        let ns = (|| -> rquickjs::Result<Object> {
+                            let decl = Module::declare(ctx.clone(), *m, source.as_bytes().to_vec())?;
+                            let (decl, done) = decl.eval()?;
+                            done.finish::<()>()?;
+                            decl.namespace()
+                        })()
+                        .map_err(|e| fail(e, m))?;
+                        namespaces.push(ns);
+                    }
+                    None => {
+                        hook("beginLib")?.call::<_, ()>(()).map_err(|e| fail(e, name))?;
+                        ctx.eval_with_options::<(), _>(source.as_bytes(), opts(name)).map_err(|e| fail(e, name))?;
+                        hook("endLib")?.call::<_, bool>((b.global,)).map_err(|e| fail(e, name))?;
+                    }
+                }
+            }
+            if !namespaces.is_empty() {
+                hook("exposeBundle")?
+                    .call::<_, ()>((b.global, namespaces))
+                    .map_err(|e| fail(e, "pixelox:prelude"))?;
+            }
         }
         for lib in &job.libs {
             if lib.module {
@@ -197,12 +247,24 @@ fn run_here(job: JsJob) -> Result<JsResult> {
                 .map_err(|e| fail(e, "pixelox:prelude"))?;
             if !defined {
                 let libs: Vec<&str> = job.libs.iter().map(|l| l.name.as_str()).collect();
+                let with = if global == "d3" { "d3" } else { "three" };
+                if libs.is_empty() {
+                    return Err(Error::new(
+                        "PX1520",
+                        format!("nothing defines `{global}`: --with leaves out the bundled {with} and no --lib was given"),
+                    )
+                    .with_hint(format!(
+                        "add {with} to --with (or drop --with: the bundled {with} loads by default), or pass --lib {}",
+                        preset_file(global)
+                    ))
+                    .with_context("global", global));
+                }
                 return Err(Error::new(
                     "PX1520",
                     format!("the --lib bundle(s) {} did not define a global `{global}`", libs.join(", ")),
                 )
                 .with_hint(format!(
-                    "pass a UMD/CommonJS or ES-module build that defines `{global}`, e.g. --lib {}",
+                    "pass a UMD/CommonJS or ES-module build that defines `{global}`, e.g. --lib {}, or drop --lib to use the bundled {with}",
                     preset_file(global)
                 ))
                 .with_context("global", global));
@@ -228,8 +290,17 @@ fn run_here(job: JsJob) -> Result<JsResult> {
             return Err(Error::new("PX6001", format!("{}: unhandled promise rejection: {reason}", job.script_name))
                 .with_context("file", &job.script_name));
         }
+        let hint = if st.timers > 0 {
+            format!(
+                "the script scheduled {} timer callback(s) (a d3 transition, force simulation, or d3.timeout), and timers never fire in the sandbox: run layouts synchronously (simulation.stop(); simulation.tick(300)), draw, and end the script with px.output(svgDocument)",
+                st.timers
+            )
+        } else {
+            "end the script with px.output(canvas) or px.output(svgDocument)".to_string()
+        };
         return Err(Error::new("PX6020", format!("{} finished without calling px.output()", job.script_name))
-            .with_hint("end the script with px.output(canvas) or px.output(svgDocument)"));
+            .with_hint(hint)
+            .with_context("timers", st.timers));
     };
     Ok(JsResult {
         output,
@@ -238,6 +309,8 @@ fn run_here(job: JsJob) -> Result<JsResult> {
         text_calls: st.text_calls,
         time_read: st.time_read,
         canvases,
+        atlases: std::mem::take(&mut st.atlases),
+        timers: st.timers,
     })
 }
 
@@ -326,10 +399,15 @@ fn map_error(ctx: &Ctx, e: rquickjs::Error, file: &str, interrupted: &AtomicBool
     if message.contains("out of memory") || message.starts_with("PX6003") {
         return mem_error(message.trim_start_matches("PX6003: "));
     }
-    for code in ["PX6010", "PX1104"] {
+    for code in ["PX6010", "PX1104", "PX1551", "PX1553"] {
         if let Some(rest) = message.strip_prefix(code) {
             let msg = rest.trim_start_matches(':').trim();
             let mut err = Error::new(code, msg.to_string()).with_context("file", file);
+            if code == "PX1551" {
+                let e = bundled::unknown_atlas("");
+                err.hint = e.hint;
+                err = err.with_context("available", bundled::atlas_names());
+            }
             if let Some((l, c)) = locate(&stack, file) {
                 err = err.with_context("line", l).with_context("column", c);
             }
@@ -551,6 +629,31 @@ fn natives<'js>(
 
     let s = st.clone();
     n.set("timeRead", Function::new(ctx.clone(), move || s.borrow_mut().time_read = true)?)?;
+
+    let s = st.clone();
+    n.set("timer", Function::new(ctx.clone(), move || s.borrow_mut().timers += 1)?)?;
+
+    let s = st.clone();
+    n.set(
+        "atlas",
+        Function::new(ctx.clone(), move |ctx: Ctx<'js>, name: String| -> rquickjs::Result<String> {
+            let Some(atlas) = bundled::Atlas::find(&name) else {
+                return Err(Exception::throw_message(
+                    &ctx,
+                    &format!("PX1551: px.atlas('{name}'): no such atlas; use {}", bundled::atlas_names().join(", ")),
+                ));
+            };
+            let text = bundled::atlas_json(atlas)
+                .map_err(|e| Exception::throw_message(&ctx, &format!("{}: {}", e.code, e.message)))?;
+            let mut s = s.borrow_mut();
+            if !s.atlases.iter().any(|a| a == atlas.name) {
+                s.atlases.push(atlas.name.to_string());
+            }
+            Ok(text.to_string())
+        })?,
+    )?;
+
+    n.set("atlases", Function::new(ctx.clone(), move || bundled::atlas_list().to_string())?)?;
 
     n.set(
         "random",

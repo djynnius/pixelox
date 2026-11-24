@@ -1,7 +1,7 @@
 {
   "command": "render.three",
   "cli": "pixelox render three",
-  "summary": "Run a three.js script (bundle via --lib) to SVG/PNG",
+  "summary": "Run a three.js script (r187 bundled) to SVG or PNG",
   "category": "render",
   "mode": "mutate",
   "milestone": null,
@@ -10,7 +10,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://djynnius.github.io/pixelox/schema/v1/render.three.params.json",
     "title": "pixelox render.three parameters",
-    "description": "Run a three.js script (bundle via --lib) to SVG/PNG",
+    "description": "Run a three.js script (r187 bundled) to SVG or PNG",
     "type": "object",
     "properties": {
       "input": {
@@ -66,19 +66,37 @@
           }
         ]
       },
-      "lib": {
-        "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path. Repeatable.",
+      "with": {
+        "description": "Bundled libraries to load first: d3, three, topojson (comma-separated, each optionally name@version), or none. Default: d3,topojson for render d3, three,topojson for render three, none for render js; a --lib file replaces the bundled d3/three unless --with names it. The versions that ran are pinned in the recipe (ADR 0018) Type: list. Repeatable.",
         "oneOf": [
           {
             "type": "string",
-            "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
+            "description": "Bundled libraries to load first: d3, three, topojson (comma-separated, each optionally name@version), or none. Default: d3,topojson for render d3, three,topojson for render three, none for render js; a --lib file replaces the bundled d3/three unless --with names it. The versions that ran are pinned in the recipe (ADR 0018) Type: list.",
+            "x-pixelox-kind": "list"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Bundled libraries to load first: d3, three, topojson (comma-separated, each optionally name@version), or none. Default: d3,topojson for render d3, three,topojson for render three, none for render js; a --lib file replaces the bundled d3/three unless --with names it. The versions that ran are pinned in the recipe (ADR 0018) Type: list.",
+              "x-pixelox-kind": "list"
+            }
+          }
+        ]
+      },
+      "lib": {
+        "description": "Local JavaScript library to load after the bundled ones and before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path. Repeatable.",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Local JavaScript library to load after the bundled ones and before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
             "x-pixelox-kind": "path"
           },
           {
             "type": "array",
             "items": {
               "type": "string",
-              "description": "Local JavaScript library to load before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
+              "description": "Local JavaScript library to load after the bundled ones and before the script (a classic/UMD script, or a self-contained ES module: .mjs, *.module.js, or top-level export); repeatable Type: path.",
               "x-pixelox-kind": "path"
             }
           }

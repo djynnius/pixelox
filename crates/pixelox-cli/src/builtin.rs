@@ -32,7 +32,7 @@ pub fn ops() -> Vec<OpSpec> {
             .example("pixelox describe --format markdown", "The catalog as Markdown"),
         OpSpec::custom("docs", Category::Agents, "Offline reference for a command, topic, or error", docs)
             .inputs(Inputs::NONE)
-            .about("Prints a command's full page (synopsis, every flag, examples, errors), a topic (contract, addressing, masking, pipelines, sidecars, mcp), the error catalog (`errors`), or one code (`errors/PX1401`). With no argument, lists everything.")
+            .about("Prints a command's full page (synopsis, every flag, examples, errors), a topic (contract, addressing, masking, pipelines, sidecars, mcp, fonts, text-warp, atlas), the error catalog (`errors`), or one code (`errors/PX1401`). With no argument, lists everything.")
             .param(param("topic", ParamKind::List).help("Command (dotted id or words), topic, `errors`, or `errors/PX####`"))
             .positional("topic")
             .example("pixelox docs filter.gaussian", "The Gaussian blur page")
@@ -144,6 +144,7 @@ fn sidecar_schema() -> Value {
             "inputs": {"type": "array"},
             "models": {"type": "array"},
             "fonts": {"type": "array"},
+            "bundled": {"type": "array", "items": {"type": "object", "required": ["kind", "name", "file", "sha256"]}},
             "output": {"type": "object", "required": ["path", "sha256", "bytes"]},
             "env": {"type": "object"},
             "determinism": {"type": "object"},
@@ -243,7 +244,11 @@ fn docs(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     let what = a.list("topic").join(" ");
     let what = what.trim();
     let text = if what.is_empty() {
-        let mut s = String::from("pixelox documentation (offline). `pixelox docs <command|topic>`.\n\nTopics: contract, addressing, masking, pipelines, sidecars, mcp, errors\n\nCommands:\n");
+        let topics: Vec<&str> = docgen::TOPICS.iter().map(|(n, _)| *n).collect();
+        let mut s = format!(
+            "pixelox documentation (offline). `pixelox docs <command|topic>`.\n\nTopics: {}, errors\n\nCommands:\n",
+            topics.join(", ")
+        );
         for (_, l) in agent_catalog(r) {
             s.push_str("  ");
             s.push_str(&l);
@@ -416,6 +421,28 @@ fn verify(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         ok &= good;
         files.push(json!({"kind": "input", "role": i.role, "path": i.path, "expected": i.sha256, "actual": actual, "match": good}));
     }
+    // bundled libraries and atlases (ADR 0018): reported, not failed on; a --full replay
+    // shows whether a different bundle changes the output
+    let mut bundled = Vec::new();
+    for b in &sc.bundled {
+        let file = b["file"].as_str().unwrap_or_default();
+        let expected = b["sha256"].as_str().unwrap_or_default();
+        let actual = pixelox_render::bundled::info(file).map(|f| f.sha256);
+        let good = actual == Some(expected);
+        if !good {
+            ctx.warn_ctx(
+                "PXW1551",
+                format!(
+                    "this build bundles a different {} than the recipe used ({} {}); a replay will not be bit-identical",
+                    file,
+                    b["package"].as_str().unwrap_or_default(),
+                    b["version"].as_str().unwrap_or_default()
+                ),
+                json!({"file": file, "expected": expected, "actual": actual}),
+            );
+        }
+        bundled.push(json!({"kind": "bundled", "name": b["name"], "file": file, "version": b["version"], "expected": expected, "actual": actual, "match": good}));
+    }
     let mut full = Value::Null;
     if a.flag("full") && ok {
         let dir = std::env::temp_dir().join(format!(
@@ -483,7 +510,9 @@ fn verify(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
         }
         return Err(e);
     }
-    Ok(json!({"verified": true, "mode": if a.flag("full") { "full" } else { "fast" }, "files": files, "full": full}))
+    Ok(
+        json!({"verified": true, "mode": if a.flag("full") { "full" } else { "fast" }, "files": files, "bundled": bundled, "full": full}),
+    )
 }
 
 // ---------------------------------------------------------------------------------------
@@ -547,7 +576,13 @@ pub fn features() -> Value {
         "webp_lossy_write": false,
         "color_management": false,
         "js_render": true,
-        "vendored_d3_three": false,
+        "vendored_d3_three": true,
+        // bundled JavaScript libraries and atlases (ADR 0018)
+        "bundled_js": pixelox_render::bundled::LIBRARIES
+            .iter()
+            .map(|l| (l.name.to_string(), json!(l.version())))
+            .collect::<Map<String, Value>>(),
+        "atlases": pixelox_render::bundled::atlas_names(),
         "self_update": true,
     })
 }
@@ -624,7 +659,6 @@ fn doctor(a: &Args, ctx: &mut OpCtx) -> Result<Value> {
     }
     issues.push("no color-management engine: ICC profiles are kept and re-embedded, not converted; export --profile other than srgb exits 12");
     issues.push("WebP is written lossless only; JPEG is written baseline (no progressive)");
-    issues.push("render d3/three need a local bundle passed with --lib (not vendored in this build)");
     let text = format!(
         "pixelox {PIXELOX_VERSION} (git:{BUILD_GIT}, {BUILD_TARGET}, {BUILD_PROFILE})\ncommands: {}\nread: {}\nwrite: {}\nrenderers: {}\nfonts: {}\nconfig: {}\nstate: {}\nmodels: {}\nnotes:\n  - {}\n",
         r.ops().len(),

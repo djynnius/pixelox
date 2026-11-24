@@ -151,6 +151,11 @@ catalog! {
     "PX1532", Runtime, "Release information is unreadable", "Retry later, or open the releases page.";
     "PX1540", ConsentRequired, "Font absent; consent required to download it", "Run the `pixelox fonts get <family> -y` command in the hint, or pass -y.";
     "PX1541", Runtime, "Font file SHA-256 mismatch", "Retry `pixelox fonts get <family> -y`; a repeated mismatch means a corrupted mirror.";
+    // PX155x — bundled JavaScript libraries and map data (ADR 0018)
+    "PX1550", Usage, "Unknown bundled library", "Use --with d3, three, topojson (comma-separated), or none; other libraries go in --lib.";
+    "PX1551", Usage, "Unknown atlas", "Use a name from `pixelox docs atlas` (world-110m, world-50m, land-110m, us-states, us-states-albers, us-nation).";
+    "PX1552", Verification, "Bundled library version differs from the requested one", "Drop the @version to use the bundled one, replay with the pixelox release that bundled it, or pass that version with --lib.";
+    "PX1553", Runtime, "Bundled file failed its integrity check", "Reinstall pixelox; the binary does not match its manifest.";
     // PX16xx — provenance
     "PX1601", Verification, "Input hash drift on replay", "Restore the recorded input, map a new one with `--input role=path`, or pass `--allow-input-drift`.";
     "PX1602", Verification, "Output does not match its sidecar", "The file changed after it was written; re-create it with `pixelox replay`.";
@@ -233,6 +238,8 @@ pub const WARNINGS: &[(&str, &str)] = &[
     ("PXW1203", "a PSD feature was rendered from the PSD composite"),
     ("PXW1204", "PSD text was imported as raster; the text is kept in the layer's properties"),
     ("PXW1205", "a layer kind was rasterized when writing PSD"),
+    ("PXW1550", "a --lib file replaced the bundled library (name it in --with to extend the bundled one instead)"),
+    ("PXW1551", "this build bundles a different library or atlas than the recipe used; a replay will differ"),
     ("PXW2001", "the target layer is hidden"),
     ("PXW2002", "the mask or selection is empty"),
     ("PXW2003", "a live layer (text, shape, placed) was rasterized to apply a transform"),

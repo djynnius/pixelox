@@ -670,3 +670,56 @@ fn update_flag_is_the_update_command() {
     let (code, v) = run_in(d, &["info", "--update"]);
     assert_eq!((code, v["error"]["code"].as_str()), (2, Some("PX1002")), "{v}");
 }
+
+/// `render d3` with the bundled d3 and an atlas: the sidecar pins and hashes what ran, a
+/// replay is bit-identical, and verify reports the bundled files (ADR 0018).
+#[test]
+fn bundled_d3_maps_replay_and_verify() {
+    let t = TempDir::new("cli-bundled-d3");
+    let d = t.0.as_path();
+    std::fs::write(t.path("rates.csv"), "state,rate\nCA,5.3\nTX,4.1\nNY,4.4\nAK,4.6\nHI,3.0\n").unwrap();
+    std::fs::write(
+        t.path("map.js"),
+        "const rate = new Map(px.data.rates.map(d => [d.state, +d.rate]));\n\
+         const us = px.atlas('us-states');\n\
+         const states = topojson.feature(us, us.objects.states);\n\
+         const path = d3.geoPath(d3.geoAlbersUsa().fitSize([480, 300], states));\n\
+         const color = d3.scaleSequential([2, 6], d3.interpolateBlues);\n\
+         const doc = px.svg(480, 300);\n\
+         d3.select(doc.documentElement).selectAll('path').data(states.features.filter(f => path(f))).join('path')\n\
+           .attr('d', path).attr('fill', f => rate.has(f.properties.postal) ? color(rate.get(f.properties.postal)) : '#eee');\n\
+         d3.select(doc.documentElement).append('text').attr('x', 10).attr('y', 20).text('rates');\n\
+         px.output(doc);\n",
+    )
+    .unwrap();
+    let v = ok(d, &["render", "d3", "map.js", "--data", "rates=rates.csv", "-o", "map.png"]);
+    assert_eq!(v["result"]["size"], serde_json::json!([480, 300]));
+    assert_eq!(v["result"]["atlases"][0]["name"], "us-states");
+    let sc: Value = serde_json::from_slice(&std::fs::read(t.path("map.png.pixelox.json")).unwrap()).unwrap();
+    assert_eq!(sc["command"]["params"]["with"], "d3@7.9.0,topojson@3.1.0");
+    assert_eq!(sc["command"]["params"]["size"], Value::Null);
+    let files: Vec<&str> = sc["bundled"].as_array().unwrap().iter().map(|b| b["file"].as_str().unwrap()).collect();
+    assert_eq!(
+        files,
+        ["d3/d3.min.js", "topojson-client/topojson-client.min.js", "us-atlas/states-10m.json", "us-states.tsv"]
+    );
+    assert!(sc["bundled"].as_array().unwrap().iter().all(|b| b["sha256"].as_str().unwrap().len() == 64));
+    let v = ok(d, &["replay", "map.png.pixelox.json", "-o", "again.png", "--strict"]);
+    assert_eq!(v["result"]["identical"], true);
+    let v = ok(d, &["verify", "map.png.pixelox.json", "--full"]);
+    assert_eq!(v["result"]["full"]["identical"], true);
+    assert!(
+        v["result"]["bundled"].as_array().unwrap().iter().all(|b| b["match"] == true),
+        "{}",
+        v["result"]["bundled"]
+    );
+    // a recipe pinned to another d3 stops with PX1552 instead of drawing something else
+    let mut old = sc.clone();
+    old["recipe"][0]["params"]["with"] = Value::String("d3@7.8.5,topojson@3.1.0".into());
+    std::fs::write(t.path("old.pixelox.json"), serde_json::to_vec(&old).unwrap()).unwrap();
+    let (code, v) = run_in(d, &["replay", "old.pixelox.json", "-o", "old.png"]);
+    assert_eq!((code, v["error"]["code"].as_str()), (9, Some("PX1552")), "{v}");
+    // the atlas topic lists every state with its codes
+    let v = ok(d, &["docs", "atlas"]);
+    assert!(v["result"]["text"].as_str().unwrap().contains("| 06 | CA | California | yes |"));
+}

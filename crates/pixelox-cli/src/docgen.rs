@@ -168,6 +168,8 @@ pub const TOPICS: &[(&str, &str)] = &[
     ("mcp", include_str!("../topics/mcp.md")),
     ("fonts", include_str!("../topics/fonts.md")),
     ("text-warp", include_str!("../topics/text-warp.md")),
+    // generated from the bundled data (pixelox_render::bundled::atlas_topic; contract test keeps it in sync)
+    ("atlas", include_str!("../topics/atlas.md")),
 ];
 
 pub fn topic(name: &str) -> Option<&'static str> {

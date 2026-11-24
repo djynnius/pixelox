@@ -79,6 +79,23 @@ fn agent_briefing_under_budget_and_in_sync() {
     }
 }
 
+/// `pixelox docs atlas` is generated from the bundled map data (ADR 0018).
+#[test]
+fn atlas_topic_in_sync() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("topics/atlas.md");
+    let generated = pixelox_render::bundled::atlas_topic().unwrap();
+    if updating() {
+        std::fs::write(&path, &generated).unwrap();
+    } else {
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap_or_default(),
+            generated,
+            "topics/atlas.md is stale; run with UPDATE_SNAPSHOTS=1"
+        );
+    }
+    assert_eq!(docgen::topic("atlas").map(str::len), Some(generated.len()));
+}
+
 #[test]
 fn skill_under_budget() {
     let skill = std::fs::read_to_string(repo_root().join("skills/pixelox/SKILL.md")).unwrap();
