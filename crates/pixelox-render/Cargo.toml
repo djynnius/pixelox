@@ -9,6 +9,8 @@ authors.workspace = true
 
 [dependencies]
 pixelox-core.workspace = true
+# SVG <text> draws with the font database `text add` uses (ADR 0015, 0018)
+pixelox-text.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 rayon.workspace = true
@@ -19,3 +21,9 @@ rand_core.workspace = true
 rand_chacha.workspace = true
 # QuickJS-ng (MIT); compiles the vendored C engine with `cc`.
 rquickjs = { version = "0.14", default-features = false, features = ["std"] }
+# Inflates the vendored JavaScript libraries and map data (ADR 0018).
+miniz_oxide = "0.8"
+
+[build-dependencies]
+# Compresses vendor/ into the binary (ADR 0018).
+miniz_oxide = "0.8"

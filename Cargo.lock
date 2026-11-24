@@ -1143,7 +1143,9 @@ dependencies = [
 name = "pixelox-render"
 version = "0.5.1"
 dependencies = [
+ "miniz_oxide 0.8.9",
  "pixelox-core",
+ "pixelox-text",
  "rand_chacha",
  "rand_core",
  "rayon",

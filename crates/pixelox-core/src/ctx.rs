@@ -269,6 +269,8 @@ pub struct OpCtx<'a> {
     pub resolved: Map<String, Value>,
     pub models: Vec<Value>,
     pub fonts: Vec<Value>,
+    /// Bundled libraries and data files the op used (sidecar `bundled`, ADR 0018).
+    pub bundled: Vec<Value>,
     /// Dry-run plan additions (`models_required`, `consent_required`, ...).
     pub plan: Map<String, Value>,
     /// Bytes for stdout (`-o -`).
@@ -306,6 +308,7 @@ impl<'a> OpCtx<'a> {
             resolved: Map::new(),
             models: Vec::new(),
             fonts: Vec::new(),
+            bundled: Vec::new(),
             plan: Map::new(),
             stdout: None,
             op_index: 0,
@@ -339,6 +342,11 @@ impl<'a> OpCtx<'a> {
         for f in child.fonts {
             if !self.fonts.contains(&f) {
                 self.fonts.push(f);
+            }
+        }
+        for b in child.bundled {
+            if !self.bundled.contains(&b) {
+                self.bundled.push(b);
             }
         }
     }
@@ -756,6 +764,13 @@ impl<'a> OpCtx<'a> {
     pub fn font_used(&mut self, font: Value) {
         if !self.fonts.contains(&font) {
             self.fonts.push(font);
+        }
+    }
+
+    /// Record a bundled library or data file the op used (name, version, SHA-256; ADR 0018).
+    pub fn bundled_used(&mut self, item: Value) {
+        if !self.bundled.contains(&item) {
+            self.bundled.push(item);
         }
     }
 
