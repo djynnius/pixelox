@@ -62,7 +62,8 @@ pixelox verify cutout.png.pixelox.json                             # prove how i
 * **Composition**: place files, align, distribute, guides, grids, canvas presets, and
   templates with typed slots: data in, finished poster out.
 * **Vector and generative**: author SVG element by element, rasterize it, trace bitmaps to
-  SVG, run sandboxed JavaScript (Canvas2D and a DOM for d3-style data graphics), and render
+  SVG, run sandboxed JavaScript (Canvas2D and a DOM), draw charts and maps with the bundled
+  d3 7.9, three.js r187, and world and U.S. atlases (`render d3`, `render three`), and render
   3D-lite wireframes and shaded mockups.
 * **Automation**: pipeline files, batches over globs, background jobs, replay, verify.
 
@@ -211,16 +212,14 @@ are not in this build, and the commands say so with exit code 12 and a remedy:
   run locally; see below.) Builds for Intel macOS and musl Linux have no ML runtime at all.
 * **Color-management conversions**: ICC profiles are kept and re-embedded, not converted.
 * **Lossy WebP and progressive JPEG** encoding; HEIC and RAW input (PRD stretch items).
-* **Vendored d3 and three.js**: `render d3` and `render three` load a local copy given with
-  `--lib`.
 
 `pixelox doctor` lists the build's features and known gaps.
 
 ## Documentation
 
 * `pixelox docs <command>` prints a command's full reference page offline;
-  `pixelox docs contract`, `addressing`, `pipelines`, `sidecars`, `mcp`, and `errors`
-  cover the concepts.
+  `pixelox docs contract`, `addressing`, `pipelines`, `sidecars`, `mcp`, `atlas` (the
+  bundled maps and their codes), and `errors` cover the concepts.
 * `pixelox docs build-site --out target/docs-site` writes the mdBook site source.
 * [PRD.md](PRD.md), [architecture decisions](docs/decisions/), and the
   [contributor guide](docs/dev/AUTHORING.md).

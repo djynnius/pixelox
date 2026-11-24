@@ -4,6 +4,49 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 and the project uses [Semantic Versioning](https://semver.org/) for its CLI contract: a breaking
 change to any `--json` envelope, schema, sidecar, or exit code is a major version.
 
+## [Unreleased]
+
+### Added
+- Bundled JavaScript libraries and map data (ADR 0018): d3 7.9.0, three.js r187 (the core
+  plus `THREE.SVGRenderer`, `THREE.Projector`, `THREE.RoundedBoxGeometry`), topojson-client
+  3.1.0, world-atlas 2.0.2 (Natural Earth countries and land, 1:110m and 1:50m), and us-atlas
+  3.0.1 (Census state and nation outlines, unprojected and Albers USA), pinned, verified
+  against npm's integrity, with their licenses under `crates/pixelox-render/vendor/` and
+  about 0.8 MB in the binary. `render d3` and `render three` run without `--lib`.
+- `--with d3,three,topojson` (each optionally `name@version`, or `none`) on `render js`,
+  `render d3`, and `render three` chooses the bundled libraries; `render js --with d3` opts in.
+  With `--with d3`, a `--lib` UMD plugin (d3-sankey) extends the bundled d3; its `require`
+  serves the bundled libraries.
+- `px.atlas(name)` returns a bundled map as TopoJSON (`world-110m`, `world-50m`, `land-110m`,
+  `us-states`, `us-states-albers`, `us-nation`) with join codes on its features (`iso_a2` and
+  `iso_a3` on countries, `postal` and `fips` on states); `px.atlases()` lists them.
+  `pixelox docs atlas` lists every state and country with its codes.
+- Sidecars record a `bundled` list (each library file and atlas used: package, version,
+  SHA-256, license) and recipes pin the versions (`with: d3@7.9.0,topojson@3.1.0`); a replay
+  on a build that bundles another version stops with PX1552. `verify` reports the bundled
+  files (PXW1551 when this build's differ). New codes PX1550–PX1553, PXW1550–PXW1551.
+- Cookbook: charts and maps with d3 and three.js (bar chart, donut, U.S. choropleth, world
+  map, treemap, 3D bar chart).
+
+### Changed
+- `render d3` and `render three` no longer stop with PX1520 without `--lib`; PX1520 remains
+  for `--with none` without a `--lib`, and for a `--lib` bundle that defines no `d3`/`THREE`.
+  A `--lib` file given without `--with` replaces the bundled d3/three (warning PXW1550).
+- SVG results of `render js|d3|three` rasterize with the font database `text add` uses
+  (`PIXELOX_SYSTEM_FONTS`, `fonts add`, `fonts get`, the embedded Tuffy) and map the CSS
+  generic families to installed faces, so `<text>` draws where Arial or Times New Roman is
+  missing (containers); the faces used are recorded in the sidecar. Where they are
+  installed, output is unchanged.
+- When d3 is loaded, inert `setTimeout`/`setInterval` let d3-timer load (they never fire);
+  PX6020's hint explains synchronous layouts when a script waited for a timer.
+- `pixelox version --json` reports `vendored_d3_three: true`, the bundled library versions,
+  and the atlases; `pixelox doctor` no longer lists the missing bundles; `pixelox docs`
+  lists every topic.
+
+### Fixed
+- Replaying a `render js|d3|three` raster without `--size` drew the SVG at the 800x600
+  default instead of its own size; the recipe now records `size: null`.
+
 ## [0.5.1] — 2026-11-22
 
 ### Added

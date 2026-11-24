@@ -23,6 +23,12 @@ The recipe is the whole chain back to the source files, so replay needs no inter
 `.pxo`. Values detected at run time (an auto angle, an auto white balance) are recorded as
 plain values, so a replay does not detect again.
 
+`render d3`, `render three`, and `render js --with ...` add `bundled`: every bundled library
+file and atlas the script used, with package, version, SHA-256, and license (ADR 0018), and
+pin the versions in the step (`"with": "d3@7.9.0,topojson@3.1.0"`), so a replay on a build that
+bundles another version stops with PX1552. `verify` reports whether this build bundles the
+same files.
+
 * `pixelox replay X.pixelox.json -o Y [--input role=path] [--allow-input-drift] [--strict]`
   re-runs the recipe. Recorded input hashes are checked first (PX1601 on drift). `--strict`
   requires a bit-identical result (PX1602 otherwise).
