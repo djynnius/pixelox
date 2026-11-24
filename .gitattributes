@@ -5,3 +5,7 @@
 *.jpg binary
 *.ttf binary
 *.pxo binary
+
+# vendored third-party files are embedded and hashed byte for byte (ADR 0018)
+crates/pixelox-render/vendor/**/*.js -text
+crates/pixelox-render/vendor/**/*.json -text
