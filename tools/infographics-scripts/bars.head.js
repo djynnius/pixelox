@@ -8,8 +8,8 @@
 //   series=2024,2025         series names: turns the legend on
 // Form params (all optional):
 //   dir=v                    v = columns, h = horizontal bars (use h for long names or more than 7 categories)
-//   mode=group               group | stack | percent (stack scaled to 100%) | diverge (two series as left and right
-//                            bars from a middle column of names: a butterfly chart)
+//   mode=group               group | stack | percent (two or more series stacked to 100%; one series draws its plain
+//                            values) | diverge (two series as left and right bars from a middle column of names: a butterfly chart)
 //   max=0                    top of the value axis (0 = a round number above the data); ticks=4 divisions
 //   axis=1 gridlines=1       value axis labels and gridlines (columns: on; bars: off; give axis=1 to turn on)
 //   vlabels=1                value labels: 1 (at the bar end), inside (bars), 0
@@ -21,7 +21,8 @@
 //   labelwidth=0.34          bars only: the most the category names may take, as a fraction of the box width
 //   labelpos=left            bars only: left (names beside the bars) | above (each name on its own line over its bar:
 //                            full-width bars) | inside (names inside the bars)
-// Columns may go below zero (values=12,-5,8): the axis then runs from a round negative number and zero is a line.
+// Columns and bars may go below zero in mode=group (values=12,-5,8): the axis then runs from a round negative number
+// and zero is a line. stack, percent, diverge, and track=1 draw a negative value as 0, and the log's "warnings" says so.
 // Shared params (every chart script): box=x,y,w,h in % of the image (default 0,0,100,100); colors=#hex,#hex;
 //   ink=#1f2933 (text) muted=#6b7785 (axis text) grid=#d5dbe1 bg=transparent; fs=label size in px;
 //   font='Family, Fallback, sans-serif' (a family name: font classes such as @condensed do not work inside a script)

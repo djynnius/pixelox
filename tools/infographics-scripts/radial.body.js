@@ -1,6 +1,6 @@
 const vals = (rows('values', '')[0] || []).map((v) => Math.max(0, v)), labels = list('labels'), hasV = vals.length > 0, n = Math.max(vals.length, labels.length, 1);
 const sweep = Math.min(360, num('sweep', 360)), start = num('start', 0), inner = Math.max(0.1, Math.min(0.9, num('inner', hasV ? 0.36 : 0.62))), rp = str('rotate', 'auto').toLowerCase(), rot = rp === 'auto' ? n > 12 : on('rotate', 0);
-const bwid = num('barwidth', 0.62), vmax = num('max', 0) > 0 ? num('max', 0) : Math.max.apply(null, vals.concat([1])), nr = Math.round(num('rings', 0)), showV = hasV && on('vlabels', 1), track = on('track', 0), hi = Math.round(num('highlight', 0)), accent = str('accent', '#f97316');
+const bwid = num('barwidth', 0.62), vmax = num('max', 0) > 0 ? num('max', 0) : vmaxOf(vals), nr = Math.round(num('rings', 0)), showV = hasV && on('vlabels', 1), track = on('track', 0), hi = Math.round(num('highlight', 0)), accent = str('accent', '#f97316');
 const g = el(svg, 'g', {}), small = fs * 0.9, slot = sweep / (sweep >= 360 ? n : Math.max(1, n - 1 + 1)), ang = (i) => start + slot * (i + (sweep >= 360 ? 0 : 0.5)), C = (i) => (hi ? (i + 1 === hi ? accent : col(0)) : COLORS.length > 1 ? col(i) : col(0));
 const labLen = labels.reduce((a, s) => Math.max(a, tw(s, small)), 0), vLen = showV ? Math.max.apply(null, vals.map((v) => tw(fmt(v), small, 1))) + small * 0.5 : 0;
 const fixed = P.r !== undefined && P.r !== '', margin = rot ? labLen + vLen + small * 0.9 : 0, mx = rot ? 0 : labLen + small * 0.9, my = rot ? 0 : small * 1.6;

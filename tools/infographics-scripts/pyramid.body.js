@@ -1,7 +1,7 @@
-const labels = list('labels', 'Vision|Strategy|Projects|Daily tasks'), notes = list('notes'), vals = rows('values', '')[0] || [], funnel = /^f/i.test(str('kind', vals.length ? 'funnel' : 'pyramid'));
-const n = Math.max(labels.length, vals.length, 2), flip = on('flip', 0), lp = str('labelpos', funnel ? 'in' : 'right').toLowerCase(), gap = num('gap', 6), ts = num('titlesize', 0) || fs * 1.15, linec = str('line', '#c3cad2');
+const labels = list('labels', str('values', '') || str('notes', '') ? '' : 'Vision|Strategy|Projects|Daily tasks'), notes = list('notes'), vals = rows('values', '')[0] || [], funnel = /^f/i.test(str('kind', vals.length ? 'funnel' : 'pyramid'));
+const n = Math.max(labels.length, vals.length, notes.length, 2), flip = on('flip', 0), lp = str('labelpos', funnel ? 'in' : 'right').toLowerCase(), gap = num('gap', 6), ts = num('titlesize', 0) || fs * 1.15, linec = str('line', '#c3cad2');
 const g = el(svg, 'g', {}), u = Math.max(0.6, Math.min(B.w, B.h) / 500), side = lp === 'right' || lp === 'left', showV = funnel && on('showvalues', 1), showP = on('pct', 0);
-const sw = side ? B.w * num('width', 0.5) : B.w, sx = lp === 'left' ? B.x + B.w - sw : B.x, cx = sx + sw / 2, th = (B.h - gap * (n - 1)) / n, vmax = Math.max.apply(null, vals.concat([1]));
+const sw = side ? B.w * num('width', 0.5) : B.w, sx = lp === 'left' ? B.x + B.w - sw : B.x, cx = sx + sw / 2, th = (B.h - gap * (n - 1)) / n, vmax = vmaxOf(vals);
 // half-width of the shape at height fraction t (0 = top of the box, 1 = bottom)
 const wAt = (i, top) => { if (funnel) { const a = (vals[i] || 0) / vmax, b = i + 1 < n ? (vals[i + 1] || 0) / vmax : a * 0.72; return (sw / 2) * (top ? a : b); } const y = (i * (th + gap) + (top ? 0 : th)) / B.h, t = flip ? 1 - y : y; return (sw / 2) * t; };
 const measure = (i, maxw) => { const tl = labels[i] ? wrap(labels[i], maxw, ts, 1) : [], nl = []; if (notes[i]) for (const para of notes[i].split('\\n')) for (const ln of wrap(para, maxw, fs)) nl.push(ln); return { tl, nl, h: tl.length * ts * 1.18 + nl.length * fs * 1.3 + (tl.length && nl.length ? fs * 0.25 : 0) }; };

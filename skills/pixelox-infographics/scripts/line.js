@@ -13,6 +13,8 @@
 //   vlabels=last             last | all | none: which points get their value written
 //   endlabels=1              series names at the right ends of the lines (0 = use the legend)
 //   min=0 max=0              value axis range (max=0: a round number above the data); a min other than 0 must be stated on the chart
+//                            (data below zero: the axis starts at a round number under it and zero is a line). Series may have
+//                            different lengths (a year without data yet): each ends at its own last point.
 //   ticks=4 axis=1 gridlines=1 legend=top
 //   width=4                  line width in px (scales with the box)
 //   spark=0                  1 = sparkline: no axis, no grid, no labels except the last value
@@ -50,13 +52,28 @@ const tw = (s, size, bold) => { let w = 0; for (const ch of String(s)) w += /[il
 const wrap = (s, maxw, size, bold) => { const out = []; let line = ''; for (const word of String(s).split(/\s+/)) { const t = line ? line + ' ' + word : word; if (line && tw(t, size, bold) > maxw) { out.push(line); line = word; } else line = t; } if (line) out.push(line); return out; };
 // multi-line text block; returns the y after the last line. o.anchor as in T; o.lh = line height factor (1.25)
 const TB = (g, x, y, s, maxw, o) => { o = o || {}; const size = o.size || fs, lh = size * (o.lh || 1.25); let yy = y; for (const para of String(s).split('\\n')) for (const line of wrap(para, maxw, size, (o.weight || wt) >= 600)) { T(g, x, yy, line, o); yy += lh; } return yy; };
-const rgb = (c) => { let m = /^#?([0-9a-f]{3,8})$/i.exec(String(c).trim()), h = m ? m[1] : '808080'; if (h.length < 6) h = h.split('').slice(0, 3).map((x) => x + x).join(''); return [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16)); };
+// color -> [r, g, b]: #hex (3, 4, 6, or 8 digits), common CSS names, rgb()/rgba(), hsl()/hsla(); anything else is mid gray
+const NAMED = { black: '000000', white: 'ffffff', red: 'ff0000', green: '008000', blue: '0000ff', yellow: 'ffff00', orange: 'ffa500', purple: '800080', pink: 'ffc0cb', gray: '808080', grey: '808080', silver: 'c0c0c0', navy: '000080', teal: '008080', maroon: '800000', olive: '808000', lime: '00ff00', aqua: '00ffff', cyan: '00ffff', fuchsia: 'ff00ff', magenta: 'ff00ff', gold: 'ffd700', coral: 'ff7f50', crimson: 'dc143c', indigo: '4b0082', violet: 'ee82ee', turquoise: '40e0d0', tomato: 'ff6347', salmon: 'fa8072', khaki: 'f0e68c', beige: 'f5f5dc', ivory: 'fffff0', brown: 'a52a2a', tan: 'd2b48c', chocolate: 'd2691e', goldenrod: 'daa520', orchid: 'da70d6', plum: 'dda0dd', lavender: 'e6e6fa', skyblue: '87ceeb', steelblue: '4682b4', royalblue: '4169e1', slategray: '708090', darkgray: 'a9a9a9', lightgray: 'd3d3d3', whitesmoke: 'f5f5f5', darkblue: '00008b', darkgreen: '006400', darkred: '8b0000', forestgreen: '228b22', seagreen: '2e8b57' };
+const rgb = (c) => {
+  const s = String(c).trim().toLowerCase(), f = /^(rgba?|hsla?)\(([^)]*)\)$/.exec(s);
+  if (f) {
+    const parts = f[2].split(/[\s,\/]+/).filter(Boolean), p = parts.map(parseFloat);
+    if (f[1][0] === 'r') return p.slice(0, 3).map((v, i) => (/%$/.test(parts[i]) ? v * 2.55 : v));
+    const hh = (((p[0] % 360) + 360) % 360) / 360, sat = p[1] / 100, l = p[2] / 100, q = l < 0.5 ? l * (1 + sat) : l + sat - l * sat, pp = 2 * l - q;
+    const hue = (t) => { t = (t + 1) % 1; return t < 1 / 6 ? pp + (q - pp) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? pp + (q - pp) * (2 / 3 - t) * 6 : pp; };
+    return [hue(hh + 1 / 3), hue(hh), hue(hh - 1 / 3)].map((v) => v * 255);
+  }
+  const m = /^#?([0-9a-f]{3,8})$/.exec(s);
+  let h = m ? m[1] : NAMED[s] || '808080'; if (h.length < 6) h = h.split('').slice(0, 3).map((x) => x + x).join('');
+  return [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16));
+};
 const hex = (a) => '#' + a.map((v) => ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2)).join('');
 const mix = (a, b, t) => { const x = rgb(a), y = rgb(b); return hex(x.map((v, i) => v + (y[i] - v) * t)); };
 const lum = (c) => { const v = rgb(c).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
 const onc = (c) => (lum(c) > 0.3 ? '#1f2933' : '#ffffff'); // readable text color on a fill: dark on light and mid tones, white on dark
 const pre = str('prefix', ''), suf = str('suffix', ''), dec = num('decimals', -1), compact = on('compact', 0);
 const fmt = (v, d) => { let a = Math.abs(v), u = ''; if (compact) { if (a >= 1e9) { a /= 1e9; u = 'B'; } else if (a >= 1e6) { a /= 1e6; u = 'M'; } else if (a >= 1e3) { a /= 1e3; u = 'K'; } } const k = d !== undefined ? d : dec >= 0 ? dec : Math.abs(a - Math.round(a)) < 1e-9 ? 0 : a < 100 ? 1 : 0; const p = a.toFixed(k).split('.'); if (!u) p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ','); return (v < 0 ? '-' : '') + pre + p.join('.') + u + suf; };
+const vmaxOf = (a) => { const m = Math.max.apply(null, a.concat([0])); return m > 0 ? m : 1; }; // the largest value, or 1 when nothing is above zero (fractions keep their full length)
 const nice1 = (max, n) => { const raw = max / Math.max(1, n), p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p, step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; return { step, max: Math.ceil(max / step - 1e-9) * step }; };
 const nice = (max, n) => { if (!(max > 0)) return { step: 1, max: 1 }; const a = nice1(max, n), b = nice1(max, n + 1); return b.max < a.max ? b : a; }; // a round axis top just above the data
 const stepFor = (lo, hi, n) => { const range = hi - lo; if (!(range > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(range / Math.max(1, n)))); let best = p, bd = 1e9; for (const m of [1, 2, 2.5, 5, 10, 20, 25, 50]) { const st = m * p, cnt = Math.ceil((hi - Math.floor(lo / st) * st) / st - 1e-9), d = Math.abs(cnt - n) + (cnt > n ? 0.1 : 0); if (d < bd) { bd = d; best = st; } } return best; }; // class width that gives n classes (or the nearest count) between round limits
@@ -72,7 +89,12 @@ const S = rows('values', '12,18,17,26,31,44'), labels = list('labels'), names = 
 const spark = on('spark', 0), areaP = str('area', '0').toLowerCase(), stack = areaP === 'stack' && ns > 1, area = stack || on('area', 0), smooth = on('smooth', 0);
 const cum = S.map((s) => s.slice()); if (stack) for (let s = 1; s < ns; s++) for (let i = 0; i < n; i++) cum[s][i] = (cum[s - 1][i] || 0) + (S[s][i] || 0);
 const dmax = Math.max.apply(null, cum.map((s) => Math.max.apply(null, s))), dmin = Math.min.apply(null, S.map((s) => Math.min.apply(null, s)));
-const nt = Math.round(num('ticks', 4)), lo = spark ? dmin - (dmax - dmin) * 0.1 : num('min', 0), sc0 = num('max', 0) > lo ? { max: num('max', 0), step: (num('max', 0) - lo) / nt } : nice(dmax - lo, nt), hiV = spark ? dmax + (dmax - dmin) * 0.1 : num('max', 0) > lo ? sc0.max : lo + sc0.max;
+// value range: from min= (default 0), or from a round number under the data when it goes below zero; a flat sparkline gets a padded range
+const nt = Math.round(num('ticks', 4)), pad = dmax > dmin ? (dmax - dmin) * 0.1 : Math.abs(dmax) * 0.1 || 1;
+const negStep = !spark && str('min', '') === '' && dmin < 0 ? stepFor(dmin, Math.max(dmax, 0), nt) : 0;
+const lo = spark ? dmin - pad : negStep ? Math.floor(dmin / negStep) * negStep : num('min', 0);
+const sc0 = negStep ? { step: negStep, max: (num('max', 0) > 0 ? num('max', 0) : Math.max(negStep, Math.ceil(Math.max(dmax, 0) / negStep - 1e-9) * negStep)) - lo } : num('max', 0) > lo ? { max: num('max', 0), step: (num('max', 0) - lo) / nt } : nice(dmax - lo, nt);
+const hiV = spark ? dmax + pad : negStep ? lo + sc0.max : num('max', 0) > lo ? sc0.max : lo + sc0.max, span = hiV - lo > 0 ? hiV - lo : 1;
 const u = Math.max(0.6, Math.min(B.w, B.h) / 500), small = fs * 0.9, showAxis = !spark && on('axis', 1), showGrid = !spark && on('gridlines', 1), lw = num('width', 4) * u;
 const vl = str('vlabels', 'last').toLowerCase(), endl = !spark && names.length > 0 && on('endlabels', 1) && !stack, markers = !spark && on('markers', 1) && n <= 24 && !stack;
 const g = el(svg, 'g', {});
@@ -86,30 +108,30 @@ if (labels.length && !spark) bottom -= small * 1.75;
 top += vl === 'none' || spark ? lw : fs * 1.4;
 if (!showAxis && !spark) left += labels.length ? tw(labels[0], small) / 2 : lw;
 if (spark) { left += lw; bottom -= lw; }
-const x0 = left, x1 = right, y0 = bottom, y1 = top, X = (i) => (n > 1 ? x0 + ((x1 - x0) * i) / (n - 1) : (x0 + x1) / 2), Y = (v) => y0 - ((v - lo) / (hiV - lo)) * (y0 - y1);
+const x0 = left, x1 = right, y0 = bottom, y1 = top, X = (i) => (n > 1 ? x0 + ((x1 - x0) * i) / (n - 1) : (x0 + x1) / 2), Y = (v) => y0 - ((v - lo) / span) * (y0 - y1), yz = lo < 0 && hiV > 0 && !spark ? Y(0) : y0;
 if (showGrid) for (const v of ticks) el(g, 'line', { x1: r2(x0), x2: r2(x1), y1: r2(Y(v)), y2: r2(Y(v)), stroke: gridc, 'stroke-width': r2(u) });
 if (showAxis) for (const v of ticks) T(g, x0 - fs * 0.5, Y(v) + mid(small), fmt(v), { size: small, fill: muted, anchor: 'end' });
 const path = (pts) => { if (!smooth || pts.length < 3) return pts.map((p, i) => (i ? 'L ' : 'M ') + r2(p[0]) + ' ' + r2(p[1])).join(' '); let d = 'M ' + r2(pts[0][0]) + ' ' + r2(pts[0][1]); for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)], t = 0.18; d += ' C ' + r2(p1[0] + (p2[0] - p0[0]) * t) + ' ' + r2(p1[1] + (p2[1] - p0[1]) * t) + ' ' + r2(p2[0] - (p3[0] - p1[0]) * t) + ' ' + r2(p2[1] - (p3[1] - p1[1]) * t) + ' ' + r2(p2[0]) + ' ' + r2(p2[1]); } return d; };
 const P_ = cum.map((s) => s.map((v, i) => [X(i), Y(v)]));
 for (let s = ns - 1; s >= 0; s--) if (area) {
-  const base = stack && s > 0 ? P_[s - 1].slice().reverse() : [[X(n - 1), y0], [X(0), y0]];
+  const base = stack && s > 0 ? P_[s - 1].slice().reverse() : [[X(P_[s].length - 1), yz], [X(0), yz]];
   el(g, 'path', { d: path(P_[s]) + ' ' + base.map((p) => 'L ' + r2(p[0]) + ' ' + r2(p[1])).join(' ') + ' Z', fill: col(s), 'fill-opacity': stack ? 1 : ns > 1 ? 0.22 : 0.18 });
 }
-if (!spark) el(g, 'line', { x1: r2(x0), x2: r2(x1), y1: r2(y0), y2: r2(y0), stroke: muted, 'stroke-width': r2(1.5 * u) });
+if (!spark) el(g, 'line', { x1: r2(x0), x2: r2(x1), y1: r2(yz), y2: r2(yz), stroke: muted, 'stroke-width': r2(1.5 * u) });
 const step = Math.max(1, Math.ceil((labels.reduce((a, s) => Math.max(a, tw(s, small)), 0) + small) / Math.max(1, (x1 - x0) / Math.max(1, n - 1))));
 if (!spark) labels.forEach((s, i) => { if (i % step === 0 || i === n - 1 && (n - 1) % step >= step / 2) T(g, X(i), y0 + small * 1.45, s, { size: small, fill: muted, anchor: 'middle' }); });
 let ends = [];
 for (let s = 0; s < ns; s++) {
   if (!stack) el(g, 'path', { d: path(P_[s]), fill: 'none', stroke: col(s), 'stroke-width': r2(lw), 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
   if (markers) P_[s].forEach((p) => el(g, 'circle', { cx: r2(p[0]), cy: r2(p[1]), r: r2(lw * 1.25), fill: bg === 'transparent' ? '#ffffff' : bg, stroke: col(s), 'stroke-width': r2(lw * 0.7) }));
-  if (spark) { const p = P_[s][n - 1]; el(g, 'circle', { cx: r2(p[0]), cy: r2(p[1]), r: r2(lw * 1.3), fill: col(s) }); }
+  if (spark) { const p = P_[s][P_[s].length - 1]; el(g, 'circle', { cx: r2(p[0]), cy: r2(p[1]), r: r2(lw * 1.3), fill: col(s) }); }
   P_[s].forEach((p, i) => { A('p' + (s + 1) + '.' + (i + 1), (labels[i] || '') + (names[s] ? ' / ' + names[s] : ''), p[0], p[1], { value: S[s][i] }); if (vl === 'all' && !stack) T(g, p[0], p[1] - fs * 0.65, fmt(S[s][i]), { size: small, weight: numwt, font: numfont, anchor: 'middle', fill: ns > 1 ? col(s) : ink }); });
-  ends.push({ s, y: P_[s][n - 1][1] });
+  ends.push({ s, i: P_[s].length - 1, y: P_[s][P_[s].length - 1][1] }); // a shorter series ends at its own last point
 }
 // end labels and last values, nudged apart so they never overlap
 ends.sort((a, b) => a.y - b.y); const lh = (endl && vl === 'last' ? small * 2.25 : fs * 1.2); for (let k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < lh) ends[k].y = ends[k - 1].y + lh;
 for (const e of ends) { const s = e.s, xe = X(n - 1) + lw * 1.6 + fs * 0.25;
-  if (endl) { T(g, xe, e.y + (vl === 'last' ? -small * 0.1 : mid(small)), names[s], { size: small, weight: 700, fill: col(s) }); if (vl === 'last') T(g, xe, e.y + small * 1.05, fmt(S[s][n - 1]), { size: small, fill: muted, font: numfont }); }
-  else if (vl === 'last' && !stack) T(g, xe, e.y + mid(fs), fmt(S[s][n - 1]), { size: fs, weight: numwt, font: numfont, fill: ns > 1 ? col(s) : ink });
+  if (endl) { T(g, xe, e.y + (vl === 'last' ? -small * 0.1 : mid(small)), names[s], { size: small, weight: 700, fill: col(s) }); if (vl === 'last') T(g, xe, e.y + small * 1.05, fmt(S[s][e.i]), { size: small, fill: muted, font: numfont }); }
+  else if (vl === 'last' && !stack) T(g, xe, e.y + mid(fs), fmt(S[s][e.i]), { size: fs, weight: numwt, font: numfont, fill: ns > 1 ? col(s) : ink });
 }
 done('line', { plot: [x0, y1, x1 - x0, y0 - y1].map(Math.round), min: lo, max: hiV });

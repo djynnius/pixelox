@@ -1,4 +1,4 @@
-const labels = list('labels', 'Plan|Build|Measure|Learn'), notes = list('notes'), n = Math.max(labels.length, notes.length, 2);
+const labels = list('labels', str('notes', '') ? '' : 'Plan|Build|Measure|Learn'), notes = list('notes'), n = Math.max(labels.length, notes.length, 2);
 const bp = str('badges', ''), badges = /^(none|0|off)$/i.test(bp) ? [] : bp ? split(bp) : Array.from({ length: n }, (_, i) => String(i + 1));
 const style = str('style', 'nodes').toLowerCase(), start = num('start', 0), linec = str('line', '#c3cad2'), nodefill = str('nodefill', ''), ts = num('titlesize', 0) || fs * 1.15, one = on('onecolor', 0), C = (i) => (one ? col(0) : col(i));
 const g = el(svg, 'g', {}), u = Math.max(0.6, Math.min(B.w, B.h) / 500), lw = B.w * num('labelwidth', 0.22), hasText = labels.length + notes.length > 0;

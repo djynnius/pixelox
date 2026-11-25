@@ -6,7 +6,7 @@
 //   seats=48,5,47            seats per group, in order from the left end of the arc to the right end
 //   labels=A,B,C             group names (legend, and the count labels)
 // Form params (all optional):
-//   rows=0                   number of concentric rows (0 = chosen from the seat count: 3 to 12)
+//   rows=0                   number of concentric rows (0 = chosen from the seat count: 2 to 14)
 //   inner=0.38               radius of the empty middle as a fraction of the outer radius
 //   sweep=180                degrees covered (180 = half circle; 200 to 240 = horseshoe)
 //   flip=0                   1 = open side up (a bowl), for a second chamber drawn under the first
@@ -15,7 +15,8 @@
 //   hollow=                  1-based group numbers drawn as outlines only (for example vacant or undecided seats)
 //   center= sub=             big text and small text in the empty middle (for example the total and 'seats')
 //   centersize=              size of the center text in px (default: fitted to the middle)
-//   counts=1                 write each group's count under its end of the arc (groups at the ends) or in the legend
+//   counts=1                 add each group's seat count to its legend entry (needs labels=; without labels no
+//                            count is written: put counts on the canvas with text add at the logged anchors)
 //   legend=bottom            bottom | top | none
 //   majority=0               1 = a thin tick at the middle of the arc (the halfway line)
 //   cx= cy= r=               place by center instead of box: center x in % of the width, center y in % of the height,

@@ -1,5 +1,5 @@
 const vals = (rows('values', '52,80,31,60')[0] || []).map((v) => Math.max(0, v)), labels = list('labels'), n = vals.length, cyl = /^c/i.test(str('shape', 'box'));
-const depth = num('depth', 1), gap = num('gap', 0.7), vmax = num('max', 0) > 0 ? num('max', 0) : Math.max.apply(null, vals.concat([1])), floorc = str('floor', '#e2e6ea'), showV = on('vlabels', 1), lt = num('light', 0.22), dk = num('dark', 0.28);
+const depth = num('depth', 1), gap = num('gap', 0.7), vmax = num('max', 0) > 0 ? num('max', 0) : vmaxOf(vals), floorc = str('floor', '#e2e6ea'), showV = on('vlabels', 1), lt = num('light', 0.22), dk = num('dark', 0.28);
 const g = el(svg, 'g', {}), small = fs * 0.9, C30 = Math.cos(Math.PI / 6), S30 = 0.5;
 // unit space: blocks of width 1 along x, depth 'depth' along z, height up to hmax; iso: sx = (x - z) * C30, sy = (x + z) * S30 - y
 const span = n + (n - 1) * gap, pad = 0.35, top = showV ? fs * 1.7 : fs * 0.4, bot = labels.length ? small * 2.1 : fs * 0.4;
