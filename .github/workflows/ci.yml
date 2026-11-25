@@ -120,3 +120,13 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check licenses bans sources
+
+  skills:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skill indexes and generated scripts are up to date
+        run: |
+          python3 skills/pixelox-design/build-index.py --check
+          python3 skills/pixelox-infographics/build-index.py --check
+          python3 tools/infographics-scripts/build.py --check

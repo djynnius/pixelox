@@ -7,6 +7,16 @@ change to any `--json` envelope, schema, sidecar, or exit code is a major versio
 ## [Unreleased]
 
 ### Added
+- Companion skill `skills/pixelox-infographics`: an information-design playbook for
+  infographics, charts, dashboards, timelines, process diagrams, results graphics, and maps,
+  from raw data or a vague brief. It ships text descriptions of 55 studied infographics (data
+  story, modules and reading order, grid in percent, palette with what each color encodes,
+  type table, a tested build recipe, variations, data-integrity pitfalls), an index that says
+  which to combine for which brief, 73 tested chart and diagram recipes with stable IDs
+  (`C-donut`, `C-hemicycle`, `C-waffle`, `C-us-choropleth`, ...), data-driven `render js` and
+  `render d3` generators that take the values and place the labels, and palette, type, and
+  icon guides. No images are included. Every documented command is parsed by the contract
+  test.
 - Bundled JavaScript libraries and map data (ADR 0018): d3 7.9.0, three.js r187 (the core
   plus `THREE.SVGRenderer`, `THREE.Projector`, `THREE.RoundedBoxGeometry`), topojson-client
   3.1.0, world-atlas 2.0.2 (Natural Earth countries and land, 1:110m and 1:50m), and us-atlas
