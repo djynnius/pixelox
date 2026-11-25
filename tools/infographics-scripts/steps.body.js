@@ -1,5 +1,5 @@
-const labels = list('labels', 'Research|Design|Build|Launch'), notes = list('notes'), n = Math.max(labels.length, notes.length, 1);
-const bp = str('badges', ''), badges = /^(none|0|off)$/i.test(bp) ? [] : bp ? split(bp) : labels.map((_, i) => (i < 9 ? '0' : '') + (i + 1));
+const labels = list('labels', str('notes', '') ? '' : 'Research|Design|Build|Launch'), notes = list('notes'), n = Math.max(labels.length, notes.length, 1);
+const bp = str('badges', ''), badges = /^(none|0|off)$/i.test(bp) ? [] : bp ? split(bp) : Array.from({ length: n }, (_, i) => (i < 9 ? '0' : '') + (i + 1));
 const vert = /^v/i.test(str('dir', 'h')), alt = /^a/i.test(str('side', 'one')), style = str('style', 'circle').toLowerCase(), conn = str('connector', 'line').toLowerCase();
 const linec = str('line', '#c3cad2'), nodefill = str('nodefill', '#ffffff'), ts = num('titlesize', 0) || fs * 1.15, one = on('onecolor', 0), C = (i) => (one ? col(0) : col(i));
 const g = el(svg, 'g', {}), u = Math.max(0.6, Math.min(B.w, B.h) / 500), dot = style === 'dot';

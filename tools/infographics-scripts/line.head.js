@@ -13,6 +13,8 @@
 //   vlabels=last             last | all | none: which points get their value written
 //   endlabels=1              series names at the right ends of the lines (0 = use the legend)
 //   min=0 max=0              value axis range (max=0: a round number above the data); a min other than 0 must be stated on the chart
+//                            (data below zero: the axis starts at a round number under it and zero is a line). Series may have
+//                            different lengths (a year without data yet): each ends at its own last point.
 //   ticks=4 axis=1 gridlines=1 legend=top
 //   width=4                  line width in px (scales with the box)
 //   spark=0                  1 = sparkline: no axis, no grid, no labels except the last value
