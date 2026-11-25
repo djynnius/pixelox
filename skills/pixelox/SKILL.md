@@ -51,6 +51,7 @@ place them. Every masking feature: `pixelox docs masking`.
 | Brush a mask or shadow | `pixelox paint stroke doc.pxo --in-place --layer Sky --target mask --points '0,70% 100%,72%' --size 400 --flow 10 --color black` |
 | Final grade | `pixelox layer stamp doc.pxo --in-place --name Grade` → `pixelox adjust clarity doc.pxo --in-place --layer Grade --amount 25` · `adjust dehaze` · `adjust texture` |
 | Design a poster, flyer, ad, or social post | start from a brief, not from commands: the pixelox-design skill has 126 studied layouts, 80 effect recipes (`T-smoke`, `T-duotone`, ...), fonts, and palettes |
+| Make an infographic, chart, dashboard, timeline, or map from data | the pixelox-infographics skill: 55 studied infographics, chart generators that take the data (`C-donut`, `C-hemicycle`, `C-us-choropleth`, ...), never hand-computed geometry |
 | Type | `pixelox text add doc.pxo --in-place --content "Hello" --font sans-serif --size 48pt --at 50%,10% --anchor t` |
 | Shapes and styles | `pixelox shape rect doc.pxo --in-place --rect 40,40,300x120 --radius 16 --fill '#0ea5e9'` · `pixelox fx drop-shadow doc.pxo --in-place --layer Title --offset 0,6 --blur 12` |
 | Icons, codes, depth | `pixelox shape icon doc.pxo map-pin --in-place --size 48 --at 10%,90%` (`shape icons --search WORD`) · `pixelox shape qr doc.pxo --in-place --data 'https://example.com' --background-color white` · `shape barcode --type ean13` · `fx long-shadow` · `fx extrude` · `fx reflection` |

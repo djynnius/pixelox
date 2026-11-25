@@ -73,6 +73,12 @@ prints any command's reference page.
     the bundled d3 7.9 (no `--lib`); `px.atlas('us-states' | 'world-110m' | ...)` gives map
     outlines with join codes (`pixelox docs atlas`); `render three` has three.js r187
     (`docs/guides/cookbook/charts-and-maps-with-d3.md`).
+14. Infographics from data or a brief (charts, dashboards, timelines, process diagrams,
+    results graphics, maps of values): `skills/pixelox-infographics/SKILL.md` is the playbook.
+    Find the one message, pick the chart by the data's relationship, combine 2 to 4 of its
+    55 studied infographics (`references/index.md`), and draw every chart with its generator
+    scripts (`references/charts.md`), which take the data and place the labels; never compute
+    bar heights or arcs by hand. Label units, state the source, start bars at zero.
 
 ## Addressing
 
@@ -120,6 +126,9 @@ Tools: `pixelox_describe`, `pixelox_schema`, `pixelox_run`, `pixelox_info`,
   change with `UPDATE_SNAPSHOTS=1 cargo test -p pixelox --test contract`.
 * Lint: `cargo clippy --workspace --all-targets -- -D warnings`; format: `cargo fmt --all`.
 * Examples: `examples/run-all.sh` (needs a built binary; `PIXELOX=target/debug/pixelox`).
+* Skills: after changing a skill's references, run its `build-index.py`; the
+  pixelox-infographics chart scripts are built from `tools/infographics-scripts/` (edit the
+  sources there, then `python3 tools/infographics-scripts/build.py`). CI checks both.
 * How commands are defined: [docs/dev/AUTHORING.md](docs/dev/AUTHORING.md). Decisions:
   [docs/decisions/](docs/decisions/). Schemas live in the op specs; snapshots in
   `crates/pixelox-cli/tests/snapshots/schema/`.

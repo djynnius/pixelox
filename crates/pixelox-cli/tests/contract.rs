@@ -310,6 +310,7 @@ fn guide_and_readme_examples_parse() {
         root.join("skills/pixelox/SKILL.md"),
         root.join("skills/pixelox-retouch/SKILL.md"),
         root.join("skills/pixelox-design/SKILL.md"),
+        root.join("skills/pixelox-infographics/SKILL.md"),
     ];
     fn walk(d: &Path, out: &mut Vec<PathBuf>) {
         if let Ok(rd) = std::fs::read_dir(d) {
@@ -326,6 +327,8 @@ fn guide_and_readme_examples_parse() {
     walk(&root.join("docs/guides"), &mut files);
     // the design skill's technique recipes and its poster descriptions (one recipe each)
     walk(&root.join("skills/pixelox-design/references"), &mut files);
+    // the infographics skill's chart recipes and its infographic descriptions
+    walk(&root.join("skills/pixelox-infographics/references"), &mut files);
     walk(&Path::new(env!("CARGO_MANIFEST_DIR")).join("topics"), &mut files);
     let mut bad = Vec::new();
     let mut n = 0;

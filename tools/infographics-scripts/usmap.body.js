@@ -1,0 +1,46 @@
+const us = px.atlas('us-states-albers'), feats = topojson.feature(us, us.objects.states).features, gp = d3.geoPath();
+const kv = (k) => { const m = {}; for (const it of split(str(k, ''))) { const p = it.split(':'); if (p.length > 1 && !isNaN(parseFloat(p[1]))) m[p[0].trim().toUpperCase()] = parseFloat(p[1]); } return m; };
+const groups = kv('groups'), values = kv('values'), bub = kv('bubbles'), names = list('names'), hl = list('highlight').map((s) => s.toUpperCase());
+const byVal = Object.keys(values).length > 0, byGrp = Object.keys(groups).length > 0, ramp = list('ramp', '#dbeafe,#1d4ed8'), empty = str('empty', '#e2e6ea'), accent = str('accent', '#f97316');
+const stroke = str('stroke', '#ffffff'), sw = num('strokewidth', 1.2), lab = str('labels', 'codes').toLowerCase(), smalls = on('smalls', 1) && lab !== 'none', small = fs * 0.9, g = el(svg, 'g', {});
+const vs = Object.keys(values).map((k) => values[k]), lo = P.min !== undefined && P.min !== '' ? num('min', 0) : Math.min.apply(null, vs.length ? vs : [0]), hi = P.max !== undefined && P.max !== '' ? num('max', 1) : Math.max.apply(null, vs.length ? vs : [1]);
+const rampAt = (t) => { t = Math.max(0, Math.min(1, t)); if (ramp.length >= 3) return t < 0.5 ? mix(ramp[0], ramp[1], t * 2) : mix(ramp[1], ramp[2], (t - 0.5) * 2); return mix(ramp[0], ramp[1] || ramp[0], t); };
+const brk = (rows('breaks', '')[0] || []).slice().sort((a, b) => a - b), nb0 = 0;
+const nbP = Math.round(num('bins', 0)), nstep = nbP > 1 ? stepFor(lo, hi, nbP) : 1, nstart = Math.floor(lo / nstep) * nstep;
+const limits = brk.length ? brk : nbP > 1 ? Array.from({ length: 12 }, (_, i) => r2(nstart + nstep * (i + 1))).filter((v) => v < hi) : [];
+const nb = limits.length ? limits.length + 1 : 0, cls = (v) => { let i = 0; while (i < limits.length && v >= limits[i]) i++; return i; }, clsColor = (i) => rampAt(nb > 1 ? i / (nb - 1) : 1);
+const fillOf = (code) => { if (hl.length) return hl.indexOf(code) >= 0 ? accent : empty; if (byVal) return values[code] === undefined ? (byGrp && groups[code] ? col(Math.round(groups[code]) - 1) : empty) : nb > 1 ? clsColor(cls(values[code])) : rampAt(hi > lo ? (values[code] - lo) / (hi - lo) : 1); return groups[code] ? col(Math.round(groups[code]) - 1) : empty; };
+const colorByGroup = byGrp && !hl.length, fillFor = (code) => (colorByGroup && groups[code] ? col(Math.round(groups[code]) - 1) : fillOf(code));
+// legend
+const lg = str('legend', (byVal && !colorByGroup) || names.length ? 'bottom' : 'none').toLowerCase(); let ay = B.y, ah = B.h;
+const used = []; for (const k in groups) if (used.indexOf(Math.round(groups[k])) < 0) used.push(Math.round(groups[k])); used.sort((a, b) => a - b);
+const rng = (i) => (i === 0 ? 'under ' + fmt(limits[0]) : i === nb - 1 ? fmt(limits[nb - 2]) + ' or more' : fmt(limits[i - 1]) + ' to ' + fmt(limits[i]));
+const items = colorByGroup ? used.map((i) => ({ label: names[i - 1] || 'Group ' + i, color: col(i - 1) })) : nb > 1 ? Array.from({ length: nb }, (_, i) => ({ label: rng(i), color: clsColor(i) })) : [];
+const lgH = lg === 'none' ? 0 : items.length ? Math.ceil(items.reduce((a, it) => a + small * 2.6 + tw(it.label, small), 0) / B.w) * small * 1.7 : small * 2.6;
+const drawLegend = (y) => { if (items.length) legend(g, items, B.x + B.w / 2, y, B.w, small); else { const w = Math.min(B.w * 0.42, 360 * (fs / 20)), x = B.x + (B.w - w) / 2, lgd = el(defs, 'linearGradient', { id: 'ramp', x1: 0, y1: 0, x2: 1, y2: 0 }); ramp.forEach((c, i) => el(lgd, 'stop', { offset: ramp.length > 1 ? i / (ramp.length - 1) : 0, 'stop-color': c })); el(g, 'rect', { x: r2(x), y: r2(y), width: r2(w), height: r2(small * 0.7), rx: r2(small * 0.2), fill: 'url(#ramp)' }); T(g, x - small * 0.5, y + small * 0.35 + mid(small), fmt(lo), { size: small, fill: muted, anchor: 'end' }); T(g, x + w + small * 0.5, y + small * 0.35 + mid(small), fmt(hi), { size: small, fill: muted }); } };
+if (lg === 'top') { drawLegend(B.y); ay += lgH + fs * 0.5; ah -= lgH + fs * 0.5; } else if (lg !== 'none') { drawLegend(B.y + B.h - lgH + small * 0.3); ah -= lgH + fs * 0.6; }
+// the atlas is already projected into a 975 x 610 frame
+const SMALL = ['VT', 'NH', 'MA', 'RI', 'CT', 'NJ', 'DE', 'MD', 'DC'], colW = smalls && Object.keys(bub).length === 0 ? fs * (lab === 'both' || lab === 'values' ? 5.2 : 3.4) : 0;
+const s = Math.min((B.w - colW) / 975, ah / 610), gx = B.x + (B.w - colW - 975 * s) / 2, gy = ay + (ah - 610 * s) / 2, X = (p) => [gx + p[0] * s, gy + p[1] * s];
+const mg = el(g, 'g', { transform: 'translate(' + r2(gx) + ' ' + r2(gy) + ') scale(' + r2(s) + ')' });
+const info = {};
+for (const f of feats) { const code = f.properties.postal, fill = fillFor(code); el(mg, 'path', { d: gp(f), fill }); const c = X(gp.centroid(f)), b = gp.bounds(f); info[code] = { c, w: (b[1][0] - b[0][0]) * s, h: (b[1][1] - b[0][1]) * s, fill, name: f.properties.name }; }
+if (stroke !== 'none') el(mg, 'path', { d: gp(topojson.mesh(us, us.objects.states, (a, b) => a !== b)), fill: 'none', stroke, 'stroke-width': r2(sw / s), 'stroke-linejoin': 'round' });
+if (P.outline) el(mg, 'path', { d: gp(topojson.mesh(us, us.objects.states, (a, b) => a === b)), fill: 'none', stroke: str('outline', ink), 'stroke-width': r2((sw * 1.2) / s), 'stroke-linejoin': 'round' });
+const NUDGE = { FL: [0.1, 0.02], LA: [-0.25, 0], MI: [0.25, 0.3], HI: [0.3, 0.1], CA: [-0.1, 0], ID: [0, 0.25], KY: [0.1, 0.05], WV: [-0.08, 0.05], VA: [0.1, 0.1], MN: [-0.12, 0], NY: [0.1, 0.05] };
+const hasB = Object.keys(bub).length > 0, text = (code) => (lab === 'values' ? (values[code] !== undefined ? fmt(values[code]) : '') : code), ls = Math.max(11, fs * 0.72);
+if (lab !== 'none' && !hasB) for (const code in info) { const o = info[code]; if (SMALL.indexOf(code) >= 0) continue; const n = NUDGE[code] || [0, 0], x = o.c[0] + n[0] * o.w, y = o.c[1] + n[1] * o.h, both = lab === 'both' && values[code] !== undefined, t = text(code); if (!t || (code !== 'HI' && (o.w < tw(t, ls, 1) * 1.05 || o.h < ls * (both ? 2.3 : 1.2)))) continue;
+  const tc = code === 'HI' ? ink : onc(o.fill); T(g, x, y + mid(ls) - (both ? ls * 0.55 : 0), t, { size: ls, weight: 700, anchor: 'middle', fill: tc }); if (both) T(g, x, y + mid(ls) + ls * 0.6, fmt(values[code]), { size: ls * 0.92, anchor: 'middle', fill: tc, font: numfont }); }
+if (smalls && !hasB) { const L = SMALL.filter((c) => info[c]).sort((a, b) => info[a].c[1] - info[b].c[1]), x = gx + 975 * s + fs * 0.6, lh = ls * 1.75, y0 = gy + 610 * s * 0.2;
+  L.forEach((code, i) => { const o = info[code], y = y0 + i * lh; el(g, 'line', { x1: r2(o.c[0]), y1: r2(o.c[1]), x2: r2(x - ls * 0.3), y2: r2(y), stroke: muted, 'stroke-width': 0.8, 'stroke-opacity': 0.6 }); el(g, 'rect', { x: r2(x), y: r2(y - ls * 0.5), width: r2(ls), height: r2(ls), rx: r2(ls * 0.18), fill: o.fill, stroke: stroke === 'none' ? undefined : muted, 'stroke-width': 0.6 });
+    T(g, x + ls * 1.4, y + mid(ls), code + ((lab === 'both' || lab === 'values') && values[code] !== undefined ? '  ' + fmt(values[code]) : ''), { size: ls, weight: 700, fill: ink }); }); }
+// bubbles: area proportional to the value; pushed apart where they would overlap
+if (hasB) { const bmax = Math.max.apply(null, Object.keys(bub).map((k) => bub[k])), maxr = num('maxr', 0.07) * 975 * s, bc = str('bubblecolor', '#ffffff'), bl = str('bubbleline', ink), showN = on('bubblelabels', 1);
+  const N = Object.keys(bub).filter((k) => info[k]).map((k) => ({ k, v: bub[k], r: Math.max(fs * 0.55, maxr * Math.sqrt(Math.max(0, bub[k]) / bmax)), x: info[k].c[0], y: info[k].c[1], ox: info[k].c[0], oy: info[k].c[1] }));
+  for (let it = 0; it < 120; it++) for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) { const a = N[i], b = N[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01, need = a.r + b.r + 2; if (d < need) { const push = (need - d) / 2, ux = dx / d, uy = dy / d, wa = b.r / (a.r + b.r), wb = a.r / (a.r + b.r); a.x -= ux * push * wa * 1.0; a.y -= uy * push * wa; b.x += ux * push * wb; b.y += uy * push * wb; } }
+  for (const q of N) { q.x = Math.max(gx + q.r, Math.min(gx + 975 * s - q.r, q.x)); q.y = Math.max(gy + q.r, Math.min(gy + 610 * s - q.r, q.y)); }
+  N.sort((a, b) => b.r - a.r).forEach((n) => { if (Math.hypot(n.x - n.ox, n.y - n.oy) > n.r) el(g, 'line', { x1: r2(n.ox), y1: r2(n.oy), x2: r2(n.x), y2: r2(n.y), stroke: bl, 'stroke-width': 1 }); el(g, 'circle', { cx: r2(n.x), cy: r2(n.y), r: r2(n.r), fill: bc, stroke: bl, 'stroke-width': r2(Math.max(1.2, fs * 0.07)) });
+    if (showN) { const t = fmt(n.v), sz = Math.min(n.r * 0.95, (n.r * 1.5) / Math.max(0.6, tw(t, 1, 1))); T(g, n.x, n.y + mid(sz), t, { size: sz, weight: numwt, font: numfont, anchor: 'middle', fill: onc(bc) }); }
+    if (lab !== 'none') T(g, n.x, n.y + n.r + ls * 1.05, n.k, { size: ls, weight: 700, anchor: 'middle', fill: muted, halo: str('halo', '') || undefined }); info[n.k].b = [n.x, n.y, n.r]; }); }
+for (const code in info) A(code, info[code].name, info[code].c[0], info[code].c[1], Object.assign(values[code] !== undefined ? { value: values[code] } : {}, info[code].b ? { bx: Math.round(info[code].b[0]), by: Math.round(info[code].b[1]), br: Math.round(info[code].b[2]) } : {}));
+done('usmap', { map: [gx, gy, 975 * s, 610 * s].map(Math.round), classes: nb > 1 ? limits.map((v) => r2(v)) : [] });
